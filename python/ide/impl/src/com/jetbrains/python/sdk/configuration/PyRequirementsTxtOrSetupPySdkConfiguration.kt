@@ -5,7 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
@@ -43,12 +43,10 @@ import javax.swing.JPanel
 
 class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExtension {
 
-  private val LOGGER = Logger.getInstance(PyRequirementsTxtOrSetupPySdkConfiguration::class.java)
-
   override fun createAndAddSdkForConfigurator(module: Module) = createAndAddSdk(module, Source.CONFIGURATOR)
 
   override fun getIntention(module: Module): @IntentionName String? =
-    getRequirementsTxtOrSetupPy(module)?.let {  PyCharmCommunityCustomizationBundle.message("sdk.create.venv.suggestion", it.name)}
+    getRequirementsTxtOrSetupPy(module)?.let { PyCharmCommunityCustomizationBundle.message("sdk.create.venv.suggestion", it.name) }
 
   override fun createAndAddSdkForInspection(module: Module) = createAndAddSdk(module, Source.INSPECTION)
 
@@ -84,7 +82,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
       permitted = dialog.showAndGet()
       envData = dialog.envData
 
-      LOGGER.debug("Dialog exit code: ${dialog.exitCode}, $permitted")
+      thisLogger().debug("Dialog exit code: ${dialog.exitCode}, $permitted")
     }
 
     PySdkConfigurationCollector.logVirtualEnvDialog(
@@ -103,14 +101,14 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
                                requirementsTxtOrSetupPy: String,
                                existingSdks: List<Sdk>): Sdk? {
     ProgressManager.progress(PySdkBundle.message("python.creating.venv.sentence"))
-    LOGGER.debug("Creating virtual environment")
+    thisLogger().debug("Creating virtual environment")
 
     val path = try {
       PyPackageManagerImpl.getInstance(baseSdk).createVirtualEnv(location, false)
     }
     catch (e: ExecutionException) {
       PySdkConfigurationCollector.logVirtualEnv(module.project, VirtualEnvResult.CREATION_FAILURE)
-      LOGGER.warn("Exception during creating virtual environment", e)
+      thisLogger().warn("Exception during creating virtual environment", e)
       showSdkExecutionException(baseSdk, e, PySdkBundle.message("python.creating.venv.failed.title"))
       return null
     }.also {
@@ -120,11 +118,11 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
     if (module.isDisposed) return null
     val basePath = module.basePath
 
-    LOGGER.debug("Setting up associated virtual environment: $path, $basePath")
+    thisLogger().debug("Setting up associated virtual environment: $path, $basePath")
     val sdk = PyDetectedSdk(path).setupAssociated(existingSdks, basePath) ?: return null
 
     ApplicationManager.getApplication().invokeAndWait {
-      LOGGER.debug("Adding associated virtual environment: $path, $basePath")
+      thisLogger().debug("Adding associated virtual environment: $path, $basePath")
       SdkConfigurationUtil.addSdk(sdk)
       sdk.associateWithModule(module, null)
     }
@@ -132,11 +130,11 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
     val requirementsTxtOrSetupPyFile = VfsUtil.findFile(Paths.get(requirementsTxtOrSetupPy), false)
     if (requirementsTxtOrSetupPyFile == null) {
       PySdkConfigurationCollector.logVirtualEnv(module.project, VirtualEnvResult.DEPS_NOT_FOUND)
-      LOGGER.warn("File with dependencies is not found: $requirementsTxtOrSetupPy")
+      thisLogger().warn("File with dependencies is not found: $requirementsTxtOrSetupPy")
     }
     else {
       ProgressManager.progress(PyBundle.message("python.packaging.installing.packages"))
-      LOGGER.debug("Installing packages")
+      thisLogger().debug("Installing packages")
 
       try {
         val packageManager = PyPackageManager.getInstance(sdk)
@@ -151,7 +149,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
       }
       catch (e: ExecutionException) {
         PySdkConfigurationCollector.logVirtualEnv(module.project, VirtualEnvResult.INSTALLATION_FAILURE)
-        LOGGER.warn("Exception during installing packages", e)
+        thisLogger().warn("Exception during installing packages", e)
         showSdkExecutionException(sdk, e, PyBundle.message("python.packaging.failed.to.install.packages.title"))
       }
     }
