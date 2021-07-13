@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 interface I {
     val p: Int
 }
