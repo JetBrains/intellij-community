@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.text.OrdinalFormat;
@@ -11,8 +10,11 @@ import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
-import java.util.*;
-import java.util.function.Consumer;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+import java.util.function.BiConsumer;
 
 @ApiStatus.NonExtendable
 @ApiStatus.Internal
@@ -87,13 +89,6 @@ public abstract class BundleBase {
     return messageOrDefault(bundle, key, null, params);
   }
 
-  /**
-   * Created for UI tests. {@code {translationConsumerList}} is used from robot-server plugin to collect `text` to `key` pairs
-   * which are useful when writing UI tests for different locales, not to depend on language specific texts.
-   */
-  @TestOnly
-  public static final List<Consumer<Pair<String, String>>> translationConsumerList = Collections.synchronizedList(new ArrayList<>());
-
   public static @Nls String messageOrDefault(@Nullable ResourceBundle bundle,
                                              @NotNull String key,
                                              @Nullable @Nls String defaultValue,
@@ -113,9 +108,8 @@ public abstract class BundleBase {
 
     String result = postprocessValue(bundle, value, params);
 
-    if (!translationConsumerList.isEmpty()) {
-      translationConsumerList.forEach((consumer -> consumer.accept(new Pair<>(key, result))));
-    }
+    BiConsumer<String, String> consumer = ourTranslationConsumer;
+    if (consumer != null) consumer.accept(key, result);
 
     if (!resourceFound) {
       return result;
@@ -240,4 +234,14 @@ public abstract class BundleBase {
     @NlsSafe String result = builder.toString();
     return result;
   }
+
+  //<editor-fold desc="Test stuff">
+  private static volatile @Nullable BiConsumer<String, String> ourTranslationConsumer;
+
+  /** The consumer is used by the "robot-server" plugin to collect key/text pairs - handy for writing UI tests for different locales. */
+  @TestOnly
+  public static void setTranslationConsumer(@Nullable BiConsumer<String, String> consumer) {
+    ourTranslationConsumer = consumer;
+  }
+  //</editor-fold>
 }
