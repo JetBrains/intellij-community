@@ -12,6 +12,8 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.impl.InternalDecoratorImpl
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.util.ui.UIUtil
@@ -22,7 +24,10 @@ import com.intellij.xdebugger.impl.frame.XFramesView
 import com.intellij.xdebugger.impl.frame.XVariablesView
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl
 import java.awt.Dimension
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import javax.swing.Icon
+import javax.swing.JComponent
 
 class XDebugSessionTab3(
   session: XDebugSessionImpl,
@@ -43,7 +48,13 @@ class XDebugSessionTab3(
 
   private val lifetime = Disposer.newDisposable()
 
-  private val splitter = OnePixelSplitter(viewProportionKey, 0.35f)
+  private val splitter = OnePixelSplitter(viewProportionKey, 0.35f).apply {
+    addPropertyChangeListener {
+      if ("ancestor" == it.propertyName && it.newValue != null) {
+        updateSplitterOrientation()
+      }
+    }
+  }
   private val xThreadsFramesView = XFramesView(myProject)
 
   private var variables: XVariablesView? = null
@@ -167,6 +178,14 @@ class XDebugSessionTab3(
     }
 
     super.registerAdditionalActions(leftToolbar, topLeftToolbar, settings)
+  }
+
+  private fun updateSplitterOrientation() {
+    splitter.orientation = UIUtil.getParentOfType(InternalDecoratorImpl::class.java, splitter)
+                             ?.let(PlatformDataKeys.TOOL_WINDOW::getData)
+                             ?.let {
+                               it.anchor == ToolWindowAnchor.LEFT || it.anchor == ToolWindowAnchor.RIGHT
+                             } ?: false
   }
 
   override fun dispose() {
