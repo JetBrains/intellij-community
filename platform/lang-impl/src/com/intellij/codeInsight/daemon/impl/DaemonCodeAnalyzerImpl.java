@@ -895,8 +895,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           entry.setValue(dumbAwarePasses);
           hasPasses |= dumbAwarePasses.length != 0;
         }
+
+        HeavyProcessLatch.INSTANCE.executeOutOfHeavyProcessButType(
+          HeavyProcessLatch.Type.Syncing,
+          () -> dca.stopProcess(true, "re-scheduled to execute after all heavy processes (except VFS) finished"));
+
         if (!hasPasses) {
-          // will be re-scheduled by HeavyLatch listener in DaemonListeners
           return;
         }
       }
