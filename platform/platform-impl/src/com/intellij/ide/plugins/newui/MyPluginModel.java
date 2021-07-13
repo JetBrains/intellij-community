@@ -219,8 +219,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       PluginEnabledState oldState = pair.getSecond();
       PluginEnabledState newState = getState(pluginId);
 
-      if ((descriptor instanceof IdeaPluginDescriptorImpl) && ((IdeaPluginDescriptorImpl)descriptor).isDeleted() ||
-          (descriptor.isImplementationDetail() && !newState.isEnabled()) ||
+      if (isDeleted(descriptor) ||
+          (isHiddenImplementationDetail(descriptor) && newState.isDisabled()) ||
           !isLoaded(pluginId) /* if enableMap contains null for id => enable/disable checkbox don't touch */) {
         continue;
       }
@@ -1024,7 +1024,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
   public @NotNull List<? extends HtmlChunk> getErrors(@NotNull IdeaPluginDescriptor descriptor) {
     PluginId pluginId = descriptor.getPluginId();
-    if (descriptor instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)descriptor).isDeleted() ||
+    if (isDeleted(descriptor) ||
         InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(pluginId) ||
         InstalledPluginsState.getInstance().wasInstalledWithoutRestart(pluginId)) {
       // we'll actually install the plugin when the configurable is closed; at this time we don't know if there's any loadingError

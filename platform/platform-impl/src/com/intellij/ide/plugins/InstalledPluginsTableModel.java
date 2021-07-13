@@ -19,7 +19,7 @@ import java.util.function.BiConsumer;
 
 public class InstalledPluginsTableModel {
 
-  private static final boolean HIDE_IMPLEMENTATION_DETAILS = !Boolean.getBoolean("startup.performance.framework");
+  protected static final boolean HIDE_IMPLEMENTATION_DETAILS = !Boolean.getBoolean("startup.performance.framework");
   private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
 
   protected final List<IdeaPluginDescriptor> view = new ArrayList<>();
@@ -121,11 +121,8 @@ public class InstalledPluginsTableModel {
     for (final IdeaPluginDescriptor rootDescriptor : view) {
       final PluginId pluginId = rootDescriptor.getPluginId();
       myDependentToRequiredListMap.remove(pluginId);
-      if (rootDescriptor instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)rootDescriptor).isDeleted()) {
-        continue;
-      }
-
-      if (isDisabled(pluginId)) {
+      if (isDeleted(rootDescriptor) ||
+          isDisabled(pluginId)) {
         continue;
       }
 
@@ -363,8 +360,16 @@ public class InstalledPluginsTableModel {
     return enabledMap.get(pluginId) != null;
   }
 
+  protected static boolean isDeleted(@NotNull IdeaPluginDescriptor descriptor) {
+    return descriptor instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)descriptor).isDeleted();
+  }
+
+  protected static boolean isHiddenImplementationDetail(@NotNull IdeaPluginDescriptor descriptor) {
+    return HIDE_IMPLEMENTATION_DETAILS && descriptor.isImplementationDetail();
+  }
+
   protected static boolean isHidden(@NotNull IdeaPluginDescriptor descriptor) {
-    return (descriptor instanceof IdeaPluginDescriptorImpl) && ((IdeaPluginDescriptorImpl)descriptor).isDeleted() ||
-           HIDE_IMPLEMENTATION_DETAILS && descriptor.isImplementationDetail();
+    return isDeleted(descriptor) ||
+           isHiddenImplementationDetail(descriptor);
   }
 }
