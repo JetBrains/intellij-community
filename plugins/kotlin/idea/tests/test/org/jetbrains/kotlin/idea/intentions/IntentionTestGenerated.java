@@ -1507,6 +1507,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/addNameToArgument/ambiguousCall.kt");
         }
 
+        @TestMetadata("annotationCall.kt")
+        public void testAnnotationCall() throws Exception {
+            runTest("testData/intentions/addNameToArgument/annotationCall.kt");
+        }
+
         @TestMetadata("backtickedArgument.kt")
         public void testBacktickedArgument() throws Exception {
             runTest("testData/intentions/addNameToArgument/backtickedArgument.kt");
@@ -1530,6 +1535,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("beforeOtherNamed.kt")
         public void testBeforeOtherNamed() throws Exception {
             runTest("testData/intentions/addNameToArgument/beforeOtherNamed.kt");
+        }
+
+        @TestMetadata("delegatedConstructor.kt")
+        public void testDelegatedConstructor() throws Exception {
+            runTest("testData/intentions/addNameToArgument/delegatedConstructor.kt");
         }
 
         @TestMetadata("functionLiteralArgument.kt")
