@@ -365,7 +365,7 @@ public class EnterHandler extends BaseEnterHandler {
         Commenter langCommenter = language != null ? LanguageCommenters.INSTANCE.forLanguage(language) : null;
         CodeDocumentationUtil.CommentContext commentContext
           = CodeDocumentationUtil.tryParseCommentContext(langCommenter, chars, lineStart);
-        boolean isBeforeEof = myOffset == chars.length() && chars.charAt(myOffset - 1) == '\n';
+        boolean isBeforeEof = myOffset > 0 && myOffset == chars.length() && chars.charAt(myOffset - 1) == '\n';
 
         PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(getProject());
         if (commentContext.docStart) {
