@@ -15904,6 +15904,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/samConversionToAnonymousObject/typeArgument6.kt");
         }
 
+        @TestMetadata("typeArgument7.kt")
+        public void testTypeArgument7() throws Exception {
+            runTest("testData/intentions/samConversionToAnonymousObject/typeArgument7.kt");
+        }
+
         @TestMetadata("typeArgument_ni.kt")
         public void testTypeArgument_ni() throws Exception {
             runTest("testData/intentions/samConversionToAnonymousObject/typeArgument_ni.kt");

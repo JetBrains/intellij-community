@@ -7,23 +7,23 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.sam.JavaSingleAbstractMethodUtils
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtFunctionLiteral
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.sam.getSingleAbstractMethodOrNull
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeConstructor
+import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.isFlexible
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
@@ -65,6 +66,9 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
 
         if (bindingContext.diagnostics.forElement(functionLiteral).any { it.severity == Severity.ERROR }) return null
 
+        val typeAlias = (callee.mainReference?.resolve() as? KtTypeAlias)?.resolveToDescriptorIfAny() as? TypeAliasDescriptor
+        if (typeAlias != null && typeAlias.expandedType.hasVariance()) return null
+
         return callee.textRange
     }
 
@@ -87,6 +91,13 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
 
     private fun KtFunctionLiteral.functionDescriptor(context: BindingContext): AnonymousFunctionDescriptor? =
         context[BindingContext.FUNCTION, this] as? AnonymousFunctionDescriptor
+
+    private fun KotlinType.hasVariance(): Boolean {
+        return arguments.any {
+            val projectKind = it.projectionKind
+            projectKind == Variance.IN_VARIANCE || projectKind == Variance.OUT_VARIANCE || it.type.hasVariance()
+        }
+    }
 
     companion object {
         fun convertToAnonymousObject(
