@@ -543,8 +543,6 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   public void dispose() {
-    if (!myInitialized) return;  // Android Studio: IDEA-239606 Avoid hang on exit in tests
-
     try {
       for (UpdatableIndex<?, ?, ?> index : getAsyncState().myIndices.values()) {
         index.dispose();
