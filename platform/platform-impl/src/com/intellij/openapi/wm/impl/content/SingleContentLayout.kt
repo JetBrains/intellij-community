@@ -189,29 +189,43 @@ internal class SingleContentLayout(
       val component = myUi.tabComponent
       component.bounds = component.bounds.apply { width = component.parent.width }
 
-      var toolbarWidth = myIdLabel.x + myIdLabel.width
+      val labelWidth = myIdLabel.x + myIdLabel.preferredSize.width
+      var tabsWidth = tabAdapter?.preferredSize?.width ?: 0
+      var mainToolbarWidth = toolbars[ActionToolbarPosition.LEFT]?.component?.preferredSize?.width ?: 0
+      var wrapperWidth = wrapper?.preferredSize?.width ?: 0
+      val contentToolbarWidth = toolbars[ActionToolbarPosition.RIGHT]?.component?.preferredSize?.width ?: 0
+
+      val fixedWidth = labelWidth + mainToolbarWidth + contentToolbarWidth
+      val freeWidth = component.bounds.width - fixedWidth
+
+      if (freeWidth < 0) {
+        mainToolbarWidth += freeWidth
+      }
+
+      tabsWidth = maxOf(0, minOf(freeWidth, tabsWidth))
+      wrapperWidth = maxOf(0, freeWidth - tabsWidth)
+
+      var x = labelWidth
 
       tabAdapter?.apply {
-        bounds = Rectangle(toolbarWidth, 0, preferredSize.width, component.height)
-        toolbarWidth += bounds.width
+        bounds = Rectangle(x, 0, tabsWidth, component.height)
+        x += tabsWidth
       }
-
-      val rightToolbarWidth = toolbars[ActionToolbarPosition.RIGHT]?.component?.run {
-        bounds = Rectangle(component.width - preferredSize.width, 0, preferredSize.width, component.height)
-        bounds.width
-      } ?: 0
 
       toolbars[ActionToolbarPosition.LEFT]?.component?.apply {
-        bounds = Rectangle(
-          toolbarWidth,
-          0,
-          minOf(preferredSize.width, component.width - rightToolbarWidth - toolbarWidth),
-          component.height
-        )
-        toolbarWidth += bounds.width
+        bounds = Rectangle(x, 0, mainToolbarWidth, component.height)
+        x += mainToolbarWidth
       }
 
-      wrapper?.bounds = Rectangle(toolbarWidth, 0, maxOf(component.width - rightToolbarWidth - toolbarWidth, 0), component.height)
+      wrapper?.apply {
+        bounds = Rectangle(x, 0, wrapperWidth, component.height)
+        x += wrapperWidth
+      }
+
+      toolbars[ActionToolbarPosition.RIGHT]?.component?.apply {
+        bounds = Rectangle(x, 0, contentToolbarWidth, component.height)
+        x += contentToolbarWidth
+      }
     }
   }
 
