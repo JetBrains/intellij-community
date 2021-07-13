@@ -49,7 +49,9 @@ final class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
   public String toString() {
     return "PersistentRangeHighlighter" +
            (isGreedyToLeft() ? "[" : "(") +
-           (isValid() ? "valid" : "invalid") + "," + getStartOffset() + "," + getEndOffset() +
+           (isValid() ? "valid" : "invalid") + "," +
+           (getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE ? "whole-line" : "exact") + "," +
+           getStartOffset() + "," + getEndOffset() +
            (isGreedyToRight() ? "]" : ")");
   }
 }

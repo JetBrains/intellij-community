@@ -1452,4 +1452,13 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       l.readLock().unlock();
     }
   }
+
+  String dumpState() {
+    StringBuilder b = new StringBuilder("[\n");
+    processAll(i -> {
+      b.append(' ').append(i).append('\n');
+      return true;
+    });
+    return b.append("]").toString();
+  }
 }
