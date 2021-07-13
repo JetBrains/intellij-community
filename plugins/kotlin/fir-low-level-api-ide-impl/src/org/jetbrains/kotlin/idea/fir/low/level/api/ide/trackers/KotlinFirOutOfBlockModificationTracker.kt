@@ -22,6 +22,8 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.fir.low.level.api.element.builder.getNonLocalContainingInBodyDeclarationWith
 import org.jetbrains.kotlin.idea.fir.low.level.api.file.structure.isReanalyzableContainer
 import org.jetbrains.kotlin.idea.util.module
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 internal class KotlinFirModificationTrackerService(project: Project) : Disposable {
     init {
@@ -29,8 +31,9 @@ internal class KotlinFirModificationTrackerService(project: Project) : Disposabl
         subscribeForRootChanges(project)
     }
 
-    var projectGlobalOutOfBlockInKotlinFilesModificationCount = 0L
-        private set
+    private val _projectGlobalOutOfBlockInKotlinFilesModificationCount = AtomicLong()
+    val projectGlobalOutOfBlockInKotlinFilesModificationCount: Long
+        get() = _projectGlobalOutOfBlockInKotlinFilesModificationCount.get()
 
     fun getOutOfBlockModificationCountForModules(module: Module): Long =
         moduleModificationsState.getModificationsCountForModule(module)
@@ -41,7 +44,7 @@ internal class KotlinFirModificationTrackerService(project: Project) : Disposabl
     override fun dispose() {}
 
     fun increaseModificationCountForAllModules() {
-        projectGlobalOutOfBlockInKotlinFilesModificationCount++
+        _projectGlobalOutOfBlockInKotlinFilesModificationCount.incrementAndGet()
         moduleModificationsState.increaseModificationCountForAllModules()
     }
 
@@ -107,14 +110,14 @@ internal class KotlinFirModificationTrackerService(project: Project) : Disposabl
             }
 
             if (isOutOfBlockChangeInAnyModule) {
-                projectGlobalOutOfBlockInKotlinFilesModificationCount++
+                _projectGlobalOutOfBlockInKotlinFilesModificationCount.incrementAndGet()
             }
         }
 
         private fun incrementModificationCountForFileChange(changeSet: TreeChangeEvent) {
             val fileElement = changeSet.rootElement as FileElement ?: return
             incrementModificationTrackerForContainingModule(fileElement)
-            projectGlobalOutOfBlockInKotlinFilesModificationCount++
+            _projectGlobalOutOfBlockInKotlinFilesModificationCount.incrementAndGet()
         }
 
         private fun incrementModificationTrackerForContainingModule(element: ASTNode) {
@@ -143,26 +146,28 @@ internal class KotlinFirModificationTrackerService(project: Project) : Disposabl
 }
 
 private class ModuleModificationsState {
-    private val modificationCountForModule = hashMapOf<Module, ModuleModifications>()
-    private var state: Long = 0L
+    private val modificationCountForModule = ConcurrentHashMap<Module, ModuleModifications>()
+    private val state = AtomicLong()
 
     fun getModificationsCountForModule(module: Module) = modificationCountForModule.compute(module) { _, modifications ->
+        val currentState = state.get()
         when {
-            modifications == null -> ModuleModifications(0, state)
-            modifications.state == state -> modifications
-            else -> ModuleModifications(modificationsCount = modifications.modificationsCount + 1, state = state)
+            modifications == null -> ModuleModifications(0, currentState)
+            modifications.state == currentState -> modifications
+            else -> ModuleModifications(modificationsCount = modifications.modificationsCount + 1, state = currentState)
         }
     }!!.modificationsCount
 
     fun increaseModificationCountForAllModules() {
-        state++
+        state.incrementAndGet()
     }
 
     fun increaseModificationCountForModule(module: Module) {
         modificationCountForModule.compute(module) { _, modifications ->
+            val currentState = state.get()
             when (modifications) {
-                null -> ModuleModifications(0, state)
-                else -> ModuleModifications(modifications.modificationsCount + 1, state)
+                null -> ModuleModifications(0, currentState)
+                else -> ModuleModifications(modifications.modificationsCount + 1, currentState)
             }
         }
     }
