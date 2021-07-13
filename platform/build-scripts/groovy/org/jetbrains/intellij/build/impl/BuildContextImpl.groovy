@@ -84,6 +84,11 @@ final class BuildContextImpl extends BuildContext {
     if (productProperties.productCode == null && applicationInfo.productCode != null) {
       productProperties.productCode = applicationInfo.productCode
     }
+
+    if (systemSelector.contains(" ")) {
+      messages.error("System selector must not contain spaces: " + systemSelector)
+    }
+
     messages.info("Build steps to be skipped: ${options.buildStepsToSkip.join(',')}")
   }
 
