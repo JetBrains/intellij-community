@@ -18,10 +18,10 @@ import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.uast.UastModificationTracker;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +33,7 @@ import java.util.stream.Stream;
  * NB: Supposed to be used for annotations used in libraries and frameworks only, external annotations are not considered.
  */
 public abstract class MetaAnnotationUtil {
-  private static final Hash.Strategy<PsiClass> HASHING_STRATEGY = new Hash.Strategy<>() {
+  private static final HashingStrategy<PsiClass> HASHING_STRATEGY = new HashingStrategy<>() {
     @Override
     public int hashCode(PsiClass object) {
       String qualifiedName = object == null ? null : object.getQualifiedName();
@@ -84,7 +84,7 @@ public abstract class MetaAnnotationUtil {
       return Collections.emptySet();
     }
 
-    Set<PsiClass> result = new ObjectOpenCustomHashSet<>(HASHING_STRATEGY);
+    Set<PsiClass> result = CollectionFactory.createCustomHashingStrategySet(HASHING_STRATEGY);
     AnnotatedElementsSearch.searchPsiClasses(psiClass, scope).forEach(processorResult -> {
       ProgressManager.checkCanceled();
       if (processorResult.isAnnotationType()) {
@@ -121,7 +121,7 @@ public abstract class MetaAnnotationUtil {
 
   @NotNull
   private static Collection<PsiClass> getAnnotationTypesWithChildren(PsiClass annotationClass, GlobalSearchScope scope) {
-    Set<PsiClass> classes = new ObjectOpenCustomHashSet<>(HASHING_STRATEGY);
+    Set<PsiClass> classes = CollectionFactory.createCustomHashingStrategySet(HASHING_STRATEGY);
     collectClassWithChildren(annotationClass, classes, scope);
 
     if (classes.isEmpty()) return Collections.emptySet();

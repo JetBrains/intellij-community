@@ -21,8 +21,8 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -63,7 +64,7 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
   private static final ElementPattern<PsiElement> IN_ANNOTATION = PlatformPatterns
     .psiElement().withParent(PlatformPatterns.psiElement(GrReferenceExpression.class).withParent(GrAnnotationNameValuePair.class));
 
-  private static final Hash.Strategy<TypeConstraint> EXPECTED_TYPE_INFO_STRATEGY = new Hash.Strategy<>() {
+  private static final HashingStrategy<TypeConstraint> EXPECTED_TYPE_INFO_STRATEGY = new HashingStrategy<>() {
     @Override
     public int hashCode(@Nullable TypeConstraint object) {
       return object == null ? 0 : object.getType().hashCode();
@@ -401,7 +402,9 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
   }
 
   private static Set<TypeConstraint> getExpectedTypeInfos(final CompletionParameters params) {
-    return new ObjectOpenCustomHashSet<>(getExpectedTypes(params), EXPECTED_TYPE_INFO_STRATEGY);
+    Set<TypeConstraint> set = CollectionFactory.createCustomHashingStrategySet(EXPECTED_TYPE_INFO_STRATEGY);
+    Collections.addAll(set, getExpectedTypes(params));
+    return set;
   }
 
   public static TypeConstraint @NotNull [] getExpectedTypes(CompletionParameters params) {

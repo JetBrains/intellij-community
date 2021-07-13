@@ -8,6 +8,8 @@ import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.HashingStrategy
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitContentRevision
 import git4idea.GitRevisionNumber
@@ -28,7 +30,7 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
   override val changesByCommits = mutableMapOf<String, List<Change>>()
   override val linearHistory: Boolean
 
-  private val diffDataByChange = Object2ObjectOpenCustomHashMap<Change, GHPRChangeDiffData>(object : Hash.Strategy<Change> {
+  private val diffDataByChange = CollectionFactory.createCustomHashingStrategyMap<Change, GHPRChangeDiffData>(object : HashingStrategy<Change> {
     override fun equals(o1: Change?, o2: Change?): Boolean {
       return o1 == o2 &&
              o1?.beforeRevision == o2?.beforeRevision &&

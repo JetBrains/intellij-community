@@ -8,10 +8,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.TaskManagerImpl;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.xmlb.XmlSerializer;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,9 +24,9 @@ import java.util.*;
 @State(name = "RecentTaskRepositories", storages = @Storage(StoragePathMacros.NON_ROAMABLE_FILE))
 @Service(Service.Level.APP)
 public final class RecentTaskRepositories implements PersistentStateComponent<Element>, Disposable {
-  private final Set<TaskRepository> myRepositories = new ObjectOpenCustomHashSet<>(HASHING_STRATEGY);
+  private final Set<TaskRepository> myRepositories = CollectionFactory.createCustomHashingStrategySet(HASHING_STRATEGY);
 
-  private static final Hash.Strategy<TaskRepository> HASHING_STRATEGY = new Hash.Strategy<>() {
+  private static final HashingStrategy<TaskRepository> HASHING_STRATEGY = new HashingStrategy<>() {
     @Override
     public int hashCode(@Nullable TaskRepository object) {
       return object == null || object.getUrl() == null ? 0 : object.getUrl().hashCode();
@@ -53,9 +53,9 @@ public final class RecentTaskRepositories implements PersistentStateComponent<El
   }
 
   public Set<TaskRepository> getRepositories() {
-    return new ObjectOpenCustomHashSet<>(ContainerUtil.findAll(myRepositories, repository -> {
-      return !StringUtil.isEmptyOrSpaces(repository.getUrl());
-    }), HASHING_STRATEGY);
+    Set<TaskRepository> set = CollectionFactory.createCustomHashingStrategySet(HASHING_STRATEGY);
+    set.addAll(ContainerUtil.findAll(myRepositories, repository -> !StringUtil.isEmptyOrSpaces(repository.getUrl())));
+    return set;
   }
 
   public void addRepositories(Collection<TaskRepository> repositories) {

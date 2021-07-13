@@ -15,12 +15,12 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.commit.EditedCommitNode;
 import com.intellij.vcsUtil.VcsUtil;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -499,7 +499,7 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
 
     @Override
     public boolean value(Change change) {
-      if (seen == null) seen = new ObjectOpenCustomHashSet<>(ChangeListChange.HASHING_STRATEGY);
+      if (seen == null) seen = CollectionFactory.createCustomHashingStrategySet(ChangeListChange.HASHING_STRATEGY);
       return seen.add(change);
     }
   }

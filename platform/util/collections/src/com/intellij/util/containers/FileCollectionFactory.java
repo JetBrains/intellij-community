@@ -20,7 +20,7 @@ import java.util.Set;
  * Creates map or set with canonicalized path hash strategy.
  */
 public final class FileCollectionFactory {
-  private static final Hash.Strategy<File> FILE_HASH_STRATEGY = new FastUtilHashingStrategies.SerializableHashStrategy<File>() {
+  private static final HashingStrategy<File> FILE_HASH_STRATEGY = new HashingStrategy<File>() {
     @Override
     public int hashCode(@Nullable File o) {
       return FileUtilRt.pathHashCode(o == null ? null : o.getPath());
@@ -32,7 +32,7 @@ public final class FileCollectionFactory {
     }
   };
 
-  private static final Hash.Strategy<String> FILE_PATH_HASH_STRATEGY = new FastUtilHashingStrategies.SerializableHashStrategy<String>() {
+  private static final HashingStrategy<String> FILE_PATH_HASH_STRATEGY = new HashingStrategy<String>() {
     @Override
     public int hashCode(@Nullable String value) {
       return FileUtilRt.pathHashCode(value);
@@ -45,40 +45,54 @@ public final class FileCollectionFactory {
   };
 
   public static @NotNull <V> Map<String, V> createCanonicalFilePathMap() {
-    return new Object2ObjectOpenCustomHashMap<>(FILE_PATH_HASH_STRATEGY);
+    return CollectionFactory.createCustomHashingStrategyMap(FILE_PATH_HASH_STRATEGY);
   }
 
   /**
    * Create linked map with canonicalized key hash strategy.
    */
   public static @NotNull <V> Map<String, V> createCanonicalFilePathLinkedMap() {
-    return new Object2ObjectLinkedOpenCustomHashMap<>(FILE_PATH_HASH_STRATEGY);
+    return new Object2ObjectLinkedOpenCustomHashMap<>(new Hash.Strategy<String>() {
+      @Override
+      public int hashCode(@Nullable String value) {
+        return FileUtilRt.pathHashCode(value);
+      }
+
+      @Override
+      public boolean equals(@Nullable String val1, @Nullable String val2) {
+        return FileUtilRt.pathsEqual(val1, val2);
+      }
+    });
   }
 
   public static @NotNull <V> Map<File, V> createCanonicalFileMap() {
-    return new Object2ObjectOpenCustomHashMap<>(FILE_HASH_STRATEGY);
+    return CollectionFactory.createCustomHashingStrategyMap(FILE_HASH_STRATEGY);
   }
 
   public static @NotNull <V> Map<File, V> createCanonicalFileMap(int expected) {
-    return new Object2ObjectOpenCustomHashMap<>(expected, FILE_HASH_STRATEGY);
+    return CollectionFactory.createCustomHashingStrategyMap(expected, FILE_HASH_STRATEGY);
   }
 
-  public static @NotNull <V> Map<File, V> createCanonicalFileMap(@NotNull Map<File, V> map) {
+  public static @NotNull <V> Map<File, V> createCanonicalFileMap(@NotNull Map<? extends File, ? extends V> map) {
     if (map instanceof Object2ObjectOpenCustomHashMap) {
       Object2ObjectOpenCustomHashMap<File, V> m = (Object2ObjectOpenCustomHashMap<File, V>)map;
       if (m.strategy() == FILE_HASH_STRATEGY) {
         return m.clone();
       }
     }
-    return new Object2ObjectOpenCustomHashMap<>(map, FILE_HASH_STRATEGY);
+    Map<File, V> result = createCanonicalFileMap(map.size());
+    result.putAll(map);
+    return result;
   }
 
   public static @NotNull Set<File> createCanonicalFileSet() {
-    return new ObjectOpenCustomHashSet<>(FILE_HASH_STRATEGY);
+    return CollectionFactory.createCustomHashingStrategySet(FILE_HASH_STRATEGY);
   }
 
   public static @NotNull Set<File> createCanonicalFileSet(@NotNull Collection<? extends File> files) {
-    return new ObjectOpenCustomHashSet<>(files, FILE_HASH_STRATEGY);
+    Set<File> set = createCanonicalFileSet();
+    set.addAll(files);
+    return set;
   }
 
   public static @NotNull Set<Path> createCanonicalPathSet() {
@@ -90,7 +104,17 @@ public final class FileCollectionFactory {
   }
 
   public static @NotNull Set<File> createCanonicalFileLinkedSet() {
-    return new ObjectLinkedOpenCustomHashSet<>(FILE_HASH_STRATEGY);
+    return new ObjectLinkedOpenCustomHashSet<>(new Hash.Strategy<File>() {
+      @Override
+      public int hashCode(@Nullable File o) {
+        return FileUtilRt.pathHashCode(o == null ? null : o.getPath());
+      }
+
+      @Override
+      public boolean equals(@Nullable File a, @Nullable File b) {
+        return FileUtilRt.pathsEqual(a == null ? null : a.getPath(), b == null ? null : b.getPath());
+      }
+    });
   }
 
   private static final class PathSerializableHashStrategy implements FastUtilHashingStrategies.SerializableHashStrategy<Path> {

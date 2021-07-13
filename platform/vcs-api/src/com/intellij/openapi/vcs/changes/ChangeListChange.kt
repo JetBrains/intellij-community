@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.util.NlsSafe
-import it.unimi.dsi.fastutil.Hash
+import com.intellij.util.containers.HashingStrategy
 import org.jetbrains.annotations.NonNls
 
 class ChangeListChange(
@@ -13,7 +13,7 @@ class ChangeListChange(
 
   companion object {
     @JvmField
-    val HASHING_STRATEGY: Hash.Strategy<Any> = object : Hash.Strategy<Any> {
+    val HASHING_STRATEGY: HashingStrategy<Any> = object : HashingStrategy<Any> {
       override fun hashCode(o: Any?): Int = o?.hashCode() ?: 0
 
       override fun equals(o1: Any?, o2: Any?): Boolean {

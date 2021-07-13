@@ -5,8 +5,8 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +68,7 @@ public final class VirtualFilePointerTracker {
     }
 
     try {
-      Set<VirtualFilePointer> leaked = new ObjectOpenCustomHashSet<>(pointers, new Hash.Strategy<>() {
+      Set<VirtualFilePointer> leaked = CollectionFactory.createCustomHashingStrategySet(new HashingStrategy<>() {
         @Override
         public int hashCode(@Nullable VirtualFilePointer pointer) {
           if (pointer == null) {
@@ -86,6 +86,7 @@ public final class VirtualFilePointerTracker {
                                : o1.getUrl().equalsIgnoreCase(o2.getUrl())));
         }
       });
+      leaked.addAll(pointers);
       leaked.removeAll(storedPointers);
 
       for (VirtualFilePointer pointer : leaked) {

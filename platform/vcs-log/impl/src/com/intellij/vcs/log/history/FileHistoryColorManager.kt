@@ -3,6 +3,7 @@ package com.intellij.vcs.log.history
 
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.vcs.log.VcsLogDataPack
 import com.intellij.vcs.log.history.FileHistoryPaths.filePaths
 import com.intellij.vcs.log.ui.VcsLogColorManager
@@ -24,7 +25,7 @@ internal class FileHistoryColorManager(private val root: VirtualFile, private va
       baseColorManager = VcsLogColorManagerImpl(setOf(path))
     }
     else {
-      val newPaths = ObjectLinkedOpenCustomHashSet(baseColorManager.paths, FILE_PATH_HASHING_STRATEGY)
+      val newPaths = CollectionFactory.createLinkedCustomHashingStrategySet(FILE_PATH_HASHING_STRATEGY).also { it.addAll(baseColorManager.paths) }
       newPaths.retainAll(pathsFromPack)
       newPaths.addAll(pathsFromPack)
       baseColorManager = VcsLogColorManagerImpl(newPaths)

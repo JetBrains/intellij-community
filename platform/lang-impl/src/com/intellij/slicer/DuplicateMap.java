@@ -5,8 +5,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.usageView.UsageInfo;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +14,7 @@ import java.util.Map;
 
 // rehash map on each PSI modification since SmartPsiPointer's hashCode() and equals() are changed
 public final class DuplicateMap {
-  private static final Hash.Strategy<SliceUsage> USAGE_INFO_EQUALITY = new Hash.Strategy<>() {
+  private static final HashingStrategy<SliceUsage> USAGE_INFO_EQUALITY = new HashingStrategy<>() {
     @Override
     public int hashCode(@Nullable SliceUsage object) {
       if (object == null) {
@@ -31,7 +31,7 @@ public final class DuplicateMap {
       return o1 == o2 || (o1 != null && o2 != null && o1.getUsageInfo().equals(o2.getUsageInfo()));
     }
   };
-  private final Map<SliceUsage, SliceNode> myDuplicates = new Object2ObjectOpenCustomHashMap<>(USAGE_INFO_EQUALITY);
+  private final Map<SliceUsage, SliceNode> myDuplicates = CollectionFactory.createCustomHashingStrategyMap(USAGE_INFO_EQUALITY);
 
   SliceNode putNodeCheckDupe(@NotNull SliceNode node) {
     return ApplicationManager.getApplication().runReadAction((Computable<? extends SliceNode>)() -> {

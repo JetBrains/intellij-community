@@ -9,15 +9,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.FastUtilHashingStrategies;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -74,16 +73,13 @@ final class Win32FsCache {
     FileAttributes attributes = nestedMap != null ? nestedMap.get(name) : null;
 
     if (attributes == null) {
-      if (nestedMap != null && !(nestedMap instanceof IncompleteChildrenMap)) {
-        return null; // our info from parent doesn't mention the child in this refresh session
-      }
       FileInfo info = myKernel.getInfo(file.getPath());
       if (info == null) {
         return null;
       }
       attributes = info.toFileAttributes();
       if (nestedMap == null) {
-        nestedMap = new IncompleteChildrenMap<>();
+        nestedMap = createIncompleteChildrenMap();
         map.put(parentId, nestedMap);
       }
       nestedMap.put(name, attributes);
@@ -91,9 +87,7 @@ final class Win32FsCache {
     return attributes;
   }
 
-  private static final class IncompleteChildrenMap<V> extends Object2ObjectOpenCustomHashMap<String, V> {
-    IncompleteChildrenMap() {
-      super(FastUtilHashingStrategies.getStringStrategy(SystemInfoRt.isFileSystemCaseSensitive));
-    }
+  private static <V> @NotNull Map<String, V> createIncompleteChildrenMap() {
+    return SystemInfoRt.isFileSystemCaseSensitive ? new HashMap<>() : CollectionFactory.createCaseInsensitiveStringMap();
   }
 }
