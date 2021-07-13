@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
@@ -36,7 +36,6 @@ import com.intellij.util.containers.mapSmart
 import com.intellij.util.containers.nullize
 import org.jdom.Element
 import java.util.*
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.KeyStroke
 
 private const val KEY_MAP = "keymap"
@@ -686,11 +685,6 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
   companion object {
     private val LOG = logger<KeymapImpl>()
-
-    internal val NOTIFICATION_MANAGER by lazy {
-      // we use name "Password Safe" instead of "Credentials Store" because it was named so previously (and no much sense to rename it)
-      SingletonNotificationManager(NotificationGroup("Keymap", NotificationDisplayType.STICKY_BALLOON, true), NotificationType.ERROR)
-    }
   }
 }
 
@@ -730,12 +724,9 @@ private val vsForMacKeymap = "com.intellij.plugins.vsformackeymap"
 
 internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.NotificationContent message: String, isParent: Boolean) {
   val connection = ApplicationManager.getApplication().messageBus.connect()
-  val notificationScheduled = AtomicBoolean(false)
   connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
     override fun projectOpened(project: Project) {
-      if (!notificationScheduled.compareAndSet(false, true)) {
-        return
-      }
+      connection.disconnect()
 
       ApplicationManager.getApplication().invokeLater(
         {
@@ -767,7 +758,8 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
             "VSCode OSX"-> vsCodeKeymap
             else -> null
           }
-          val action: AnAction? = when (pluginId) {
+
+          val action: AnAction = when (pluginId) {
             null -> object : NotificationAction(IdeBundle.message("action.text.search.for.keymap", keymapName)) {
               override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                 //TODO enableSearch("$keymapName /tag:Keymap")?.run()
@@ -788,9 +780,7 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
                           KeymapManagerEx.getInstanceEx().activeKeymap = keymap
                           successMessage = IdeBundle.message("notification.content.keymap.successfully.activated", keymapName)
                         }
-                        val group = NotificationGroup("Keymap", NotificationDisplayType.BALLOON, true)
-                        val notificationManager = SingletonNotificationManager(group, NotificationType.INFORMATION)
-                        notificationManager.notify(successMessage, project)
+                        Notification("Keymap", successMessage, NotificationType.INFORMATION).notify(e.project)
                       }
                     }
                   }
@@ -817,13 +807,11 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
               }
             }
           }
-          KeymapImpl.NOTIFICATION_MANAGER.notify(IdeBundle.message("notification.group.missing.keymap"), message, action = action)
+
+          Notification("Keymap", IdeBundle.message("notification.group.missing.keymap"), message, NotificationType.ERROR)
+            .addAction(action)
+            .notify(project)
         }, ModalityState.NON_MODAL)
     }
-
-    override fun projectClosed(project: Project) {
-      KeymapImpl.NOTIFICATION_MANAGER.clear()
-    }
-  }
-  )
+  })
 }
