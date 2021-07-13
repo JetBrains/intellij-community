@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.*
@@ -10,12 +11,15 @@ import com.intellij.psi.impl.compiled.ClsTypeElementImpl
 import com.intellij.psi.impl.compiled.SignatureParsing
 import com.intellij.psi.impl.compiled.StubBuildingVisitor
 import com.intellij.psi.util.PsiTypesUtil
+import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalTypeOrSubtype
 import org.jetbrains.kotlin.codegen.signature.BothSignatureWriter
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationArgumentVisitor
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.synthetic.SyntheticMemberDescriptor
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -42,8 +46,7 @@ import org.jetbrains.kotlin.resolve.calls.inference.model.TypeVariableTypeConstr
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.tower.NewResolvedCallImpl
-import org.jetbrains.kotlin.resolve.constants.IntegerLiteralTypeConstructor
-import org.jetbrains.kotlin.resolve.constants.IntegerValueTypeConstructor
+import org.jetbrains.kotlin.resolve.constants.*
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.sam.SamConstructorDescriptor
 import org.jetbrains.kotlin.resolve.source.getPsi
@@ -168,7 +171,7 @@ internal fun KotlinType.toPsiType(lightDeclaration: PsiModifierListOwner?, conte
                 }
             }
         }
-        if (psiType != null) return psiType
+        if (psiType != null) return psiType.annotate(buildAnnotationProvider(this, lightDeclaration ?: context))
     }
 
     if (this.containsLocalTypes()) return UastErrorType
@@ -203,6 +206,59 @@ internal fun KotlinType.toPsiType(lightDeclaration: PsiModifierListOwner?, conte
             )
     }
     return ClsTypeElementImpl(parent, typeText, '\u0000').type
+}
+
+private fun renderAnnotation(annotation: AnnotationDescriptor): String {
+    val fqn = annotation.fqName?.asString() ?: return "<ERROR>"
+    val valueArguments = annotation.allValueArguments
+    val valueesList = SmartList<String>().apply {
+        for ((k, v) in valueArguments.entries) {
+            add("${k.identifier} = ${renderConstantValue(v)}")
+        }
+    }
+    return "@$fqn(${valueesList.joinToString(", ")})"
+}
+
+private fun renderConstantValue(value: ConstantValue<*>?): String? = value?.accept(object : AnnotationArgumentVisitor<String?, String?> {
+    override fun visitLongValue(value: LongValue, data: String?): String = value.value.toString()
+    override fun visitIntValue(value: IntValue, data: String?): String = value.value.toString()
+    override fun visitErrorValue(value: ErrorValue?, data: String?): String? = null
+    override fun visitShortValue(value: ShortValue, data: String?): String = value.value.toString()
+    override fun visitByteValue(value: ByteValue, data: String?): String = value.value.toString()
+    override fun visitDoubleValue(value: DoubleValue, data: String?): String = value.value.toString()
+    override fun visitFloatValue(value: FloatValue, data: String?): String = value.value.toString()
+    override fun visitBooleanValue(value: BooleanValue, data: String?): String = value.value.toString()
+    override fun visitCharValue(value: CharValue, data: String?): String = "'${value.value}'"
+    override fun visitStringValue(value: StringValue, data: String?): String = "\"${value.value}\""
+    override fun visitNullValue(value: NullValue?, data: String?): String = "null"
+    override fun visitEnumValue(value: EnumValue, data: String?): String =
+        value.value.run { first.asSingleFqName().asString() + "." + second.asString() }
+
+    override fun visitArrayValue(value: ArrayValue, data: String?): String =
+        value.value.mapNotNull { renderConstantValue(it) }.joinToString(", ", "{", "}")
+
+    override fun visitAnnotationValue(value: AnnotationValue, data: String?): String = renderAnnotation(value.value)
+    override fun visitKClassValue(value: KClassValue, data: String?): String = value.value.toString() + ".class"
+    override fun visitUByteValue(value: UByteValue, data: String?): String = value.value.toString()
+    override fun visitUShortValue(value: UShortValue, data: String?): String = value.value.toString()
+    override fun visitUIntValue(value: UIntValue, data: String?): String = value.value.toString()
+    override fun visitULongValue(value: ULongValue, data: String?): String = value.value.toString()
+}, null)
+
+private fun buildAnnotationProvider(ktType: KotlinType, context: PsiElement): TypeAnnotationProvider {
+    val result = SmartList<PsiAnnotation>()
+    val psiElementFactory = PsiElementFactory.getInstance(context.project)
+    for (annotation in ktType.annotations) {
+        val annotationText = renderAnnotation(annotation)
+        try {
+            result.add(psiElementFactory.createAnnotationFromText(annotationText, context))
+        } catch (e: Exception) {
+            Logger.getInstance("org.jetbrains.uast.kotlin.KotlinInternalUastUtils")
+                .error("failed to create annotation from text", e, Attachment("annotationText.txt", annotationText))
+        }
+    }
+    if (result.isEmpty()) return TypeAnnotationProvider.EMPTY
+    return TypeAnnotationProvider.Static.create(result.toArray(PsiAnnotation.EMPTY_ARRAY))
 }
 
 internal fun KtTypeReference?.toPsiType(source: UElement, boxed: Boolean = false): PsiType {
