@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicabilityRange
 import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicatorInputProvider
 import org.jetbrains.kotlin.idea.fir.api.applicator.applicabilityRanges
 import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
+import org.jetbrains.kotlin.idea.frontend.api.calls.KtCallWithArguments
 import org.jetbrains.kotlin.idea.frontend.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.idea.frontend.api.calls.getSingleCandidateSymbolOrNull
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
@@ -43,9 +44,8 @@ class HLAddNameToArgumentIntention :
         val shouldBeLastUnnamed = !element.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)
         if (shouldBeLastUnnamed && element != argumentList.arguments.last { !it.isNamed() }) return@inputProvider null
 
-        // TODO: Cast to KtCallElement (need to handle other subtypes in KtCallResolver mixin)
-        val callElement = argumentList.parent as? KtCallExpression ?: return@inputProvider null
-        val resolvedCall = callElement.resolveCall() as? KtFunctionCall ?: return@inputProvider null
+        val callElement = argumentList.parent as? KtCallElement ?: return@inputProvider null
+        val resolvedCall = callElement.resolveCall() as? KtCallWithArguments ?: return@inputProvider null
 
         if (resolvedCall.targetFunction.getSingleCandidateSymbolOrNull()?.hasStableParameterNames != true) {
             return@inputProvider null
