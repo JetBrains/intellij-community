@@ -108,6 +108,11 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
         runTest("testData/copyPaste/FileWithNoPackageStatement.java");
     }
 
+    @TestMetadata("GetterWithError.java")
+    public void testGetterWithError() throws Exception {
+        runTest("testData/copyPaste/GetterWithError.java");
+    }
+
     @TestMetadata("HalfTheWhiteSpace.java")
     public void testHalfTheWhiteSpace() throws Exception {
         runTest("testData/copyPaste/HalfTheWhiteSpace.java");
