@@ -602,6 +602,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         PersistentIndicesConfiguration.saveConfiguration();
 
         for (VirtualFile file : getChangedFilesCollector().getAllPossibleFilesToUpdate()) {
+          PingProgress.interactWithEdtProgress();
           int fileId = getFileId(file);
           try {
             removeDataFromIndicesForFile(fileId, file);
