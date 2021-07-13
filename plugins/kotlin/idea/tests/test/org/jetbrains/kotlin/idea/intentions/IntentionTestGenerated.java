@@ -5457,6 +5457,36 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertLambdaToReference/generic4.kt");
         }
 
+        @TestMetadata("genericExtension.kt")
+        public void testGenericExtension() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/genericExtension.kt");
+        }
+
+        @TestMetadata("genericExtensionWithTypealias.kt")
+        public void testGenericExtensionWithTypealias() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/genericExtensionWithTypealias.kt");
+        }
+
+        @TestMetadata("genericExtensionWithTypealias2.kt")
+        public void testGenericExtensionWithTypealias2() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/genericExtensionWithTypealias2.kt");
+        }
+
+        @TestMetadata("genericExtensionWithTypealias3.kt")
+        public void testGenericExtensionWithTypealias3() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/genericExtensionWithTypealias3.kt");
+        }
+
+        @TestMetadata("genericExtensionWithTypealias4.kt")
+        public void testGenericExtensionWithTypealias4() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/genericExtensionWithTypealias4.kt");
+        }
+
+        @TestMetadata("genericExtensionWithTypealias5.kt")
+        public void testGenericExtensionWithTypealias5() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/genericExtensionWithTypealias5.kt");
+        }
+
         @TestMetadata("globalProperty.kt")
         public void testGlobalProperty() throws Exception {
             runTest("testData/intentions/convertLambdaToReference/globalProperty.kt");
@@ -5570,6 +5600,31 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("object.kt")
         public void testObject() throws Exception {
             runTest("testData/intentions/convertLambdaToReference/object.kt");
+        }
+
+        @TestMetadata("overloadedFunctions.kt")
+        public void testOverloadedFunctions() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/overloadedFunctions.kt");
+        }
+
+        @TestMetadata("overloadedFunctions2.kt")
+        public void testOverloadedFunctions2() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/overloadedFunctions2.kt");
+        }
+
+        @TestMetadata("overloadedFunctions3.kt")
+        public void testOverloadedFunctions3() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/overloadedFunctions3.kt");
+        }
+
+        @TestMetadata("overloadedFunctions4.kt")
+        public void testOverloadedFunctions4() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/overloadedFunctions4.kt");
+        }
+
+        @TestMetadata("overloadedFunctions5.kt")
+        public void testOverloadedFunctions5() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/overloadedFunctions5.kt");
         }
 
         @TestMetadata("platformType.kt")
@@ -5695,6 +5750,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("unit2.kt")
         public void testUnit2() throws Exception {
             runTest("testData/intentions/convertLambdaToReference/unit2.kt");
+        }
+
+        @TestMetadata("unitWithOverloadedFunctions.kt")
+        public void testUnitWithOverloadedFunctions() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/unitWithOverloadedFunctions.kt");
         }
 
         @TestMetadata("unwrap.kt")
