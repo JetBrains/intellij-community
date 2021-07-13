@@ -7,6 +7,8 @@ import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -24,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
@@ -251,10 +254,15 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
   }
 
   private void updateDefaultJrePresentation() {
-    StatusText text = myComboboxEditor.getEmptyText();
-    text.clear();
-    text.appendText(ExecutionBundle.message("default.jre.name"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    text.appendText(myDefaultJreSelector.getDescriptionString(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    ReadAction
+      .nonBlocking(() -> myDefaultJreSelector.getDescriptionString())
+      .finishOnUiThread(ModalityState.any(), result -> {
+        StatusText text = myComboboxEditor.getEmptyText();
+        text.clear();
+        text.appendText(ExecutionBundle.message("default.jre.name"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        text.appendText(result, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private JreComboBoxItem findOrAddCustomJre(@NotNull String pathOrName) {
