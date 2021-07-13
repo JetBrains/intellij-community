@@ -4,12 +4,16 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.LoggedErrorProcessor
+import junit.framework.TestCase
 import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerCMDState
+import org.jetbrains.idea.maven.server.MavenServerManager
 import org.junit.Test
 
 class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
@@ -27,7 +31,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testShouldShowWarningIfBadJDK() {
+  fun testShouldShowWarningIfProjectJDKIsNullAndRollbackToInternal() {
     val oldLogger = LoggedErrorProcessor.getInstance()
     val projectSdk = ProjectRootManager.getInstance(myProject).projectSdk
     val jdkForImporter = MavenWorkspaceSettingsComponent.getInstance(myProject).settings.importingSettings.jdkForImporter
@@ -37,7 +41,9 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
         .settings.getImportingSettings().jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK;
       WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(myProject).projectSdk = null }
       createAndImportProject()
-      assertEvent { it.message.startsWith("Project JDK is not specified") }
+      val connectors = MavenServerManager.getInstance().allConnectors.filter { it.project == myProject }
+      assertNotEmpty(connectors)
+      TestCase.assertEquals(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(), connectors[0].jdk);
     }
     finally {
       WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(myProject).projectSdk = projectSdk }
