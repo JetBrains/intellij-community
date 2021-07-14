@@ -1,2 +1,0 @@
-// IGNORE_FIR
-<!HIGHLIGHTING("severity='ERROR'; descr='[WRONG_MODIFIER_TARGET] Modifier 'open' is not applicable to 'top level function''; textAttributesKey='ERRORS_ATTRIBUTES'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>open<!> <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>suspend<!> fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>f<!>() {}
