@@ -55,6 +55,7 @@ import org.jetbrains.kotlin.incremental.storage.RelativeFileToPathConverter
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
@@ -232,13 +233,9 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         val originalFqNames = extractFqNames(element).ifEmpty { return null }
         val virtualFile = PsiUtilCore.getVirtualFile(element) ?: return null
         if (projectFileIndex.isInSource(virtualFile) && virtualFile in dirtyScopeHolder) return null
-        val fqNames: List<FqName> = originalFqNames + if (projectFileIndex.isInLibrary(virtualFile)) {
-            computeInLibraryScope { findHierarchyInLibrary(element) }
-        } else {
-            emptyList()
-        }
+        if (projectFileIndex.isInLibrary(virtualFile)) return null
 
-        return fqNames.flatMapTo(mutableSetOf()) { currentFqName ->
+        return originalFqNames.flatMapTo(mutableSetOf()) { currentFqName ->
             val name = currentFqName.shortName().asString()
             val scope = currentFqName.parent().takeUnless(FqName::isRoot)?.asString() ?: ""
             storage.get(LookupSymbol(name, scope)).mapNotNull { VfsUtil.findFile(Path(it), true) }
@@ -264,7 +261,14 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         }
 
     private fun findHierarchyInLibrary(basePsiElement: PsiElement): List<FqName> {
-        val overridden = mutableListOf<FqName>()
+        val baseClass = when (basePsiElement) {
+            is KtClassOrObject, is PsiClass -> basePsiElement
+            is PsiMember -> basePsiElement.containingClass
+            is KtDeclaration -> basePsiElement.containingClassOrObject
+            else -> null
+        } ?: return emptyList()
+
+        val overridden: MutableList<FqName> = baseClass.getKotlinFqName()?.let { mutableListOf(it) } ?: mutableListOf()
         val processor = Processor { clazz: PsiClass ->
             clazz.takeUnless { it.hasModifierProperty(PsiModifier.PRIVATE) }
                 ?.let { runReadAction { it.qualifiedName } }
@@ -274,7 +278,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         }
 
         HierarchySearchRequest(
-            originalElement = basePsiElement,
+            originalElement = baseClass,
             searchScope = ProjectScope.getLibrariesScope(project),
             searchDeeply = true,
         ).searchInheritors().forEach(processor)
