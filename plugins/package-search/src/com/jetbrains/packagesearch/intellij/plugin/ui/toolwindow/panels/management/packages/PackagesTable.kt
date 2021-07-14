@@ -2,6 +2,8 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.intellij.ide.CopyProvider
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SpeedSearchComparator
 import com.intellij.ui.TableSpeedSearch
@@ -56,7 +58,7 @@ internal class PackagesTable(
     private val operationExecutor: OperationExecutor,
     operationFactory: PackageSearchOperationFactory,
     private val onItemSelectionChanged: SelectedPackageModelListener
-) : JBTable(), CopyProvider, Displayable<PackagesTable.ViewModel> {
+) : JBTable(), CopyProvider, DataProvider, Displayable<PackagesTable.ViewModel> {
 
     private val operationFactory = PackageSearchOperationFactory()
 
@@ -294,6 +296,11 @@ internal class PackagesTable(
             logDebug(viewModel.traceInfo, "PackagesTable#displayData()") { "Previous selection not available anymore, clearing..." }
         }
         updateAndRepaint()
+    }
+
+    override fun getData(dataId: String): Any? = when {
+        PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> this
+        else -> null
     }
 
     override fun performCopy(dataContext: DataContext) {
