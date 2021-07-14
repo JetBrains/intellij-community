@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.util.text.VersionComparatorUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
@@ -32,27 +33,33 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
         CopyPasteManager.getInstance().setContents(StringSelection(getTextForCopy(packageModel)))
 
     private fun getTextForCopy(packageModel: PackageModel) = buildString {
-        appendLine("${packageModel.groupId}/${packageModel.artifactId}")
+        appendLine("${packageModel.groupId}:${packageModel.artifactId}")
 
         append(additionalCopyText())
 
         packageModel.remoteInfo?.versions?.let { versions ->
             if (versions.any()) {
                 appendLine()
-                append("  ${PackageSearchBundle.message("packagesearch.package.copyableInfo.availableVersions")} ")
-                append(versions.joinToString("; ") { it.version })
+                append("${PackageSearchBundle.message("packagesearch.package.copyableInfo.availableVersions")} ")
+                append(
+                    versions.map { it.version }
+                        .distinct()
+                        .sortedWith(VersionComparatorUtil.COMPARATOR)
+                        .joinToString(", ")
+                        .removeSuffix(", ")
+                )
             }
         }
 
         packageModel.remoteInfo?.gitHub?.let { gitHub ->
             appendLine()
-            append("  ")
             append(PackageSearchBundle.message("packagesearch.package.copyableInfo.githubStats"))
             gitHub.stars?.let { ghStars ->
                 append(" ")
                 append(PackageSearchBundle.message("packagesearch.package.copyableInfo.githubStats.stars", ghStars))
             }
             gitHub.forks?.let { ghForks ->
+                if (gitHub.stars != null) append(',')
                 append(" ")
                 append(PackageSearchBundle.message("packagesearch.package.copyableInfo.githubStats.forks", ghForks))
             }
@@ -61,8 +68,11 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
         packageModel.remoteInfo?.stackOverflow?.tags?.let { tags ->
             if (tags.any()) {
                 appendLine()
-                append("  ${PackageSearchBundle.message("packagesearch.package.copyableInfo.stackOverflowTags")} ")
-                append(tags.joinToString("; ") { "${it.tag} (${it.count})" })
+                append("${PackageSearchBundle.message("packagesearch.package.copyableInfo.stackOverflowTags")} ")
+                append(
+                    tags.joinToString(", ") { "${it.tag} (${it.count})" }
+                        .removeSuffix(", ")
+                )
             }
         }
     }
@@ -87,11 +97,12 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
             if (packageModel.usageInfo.isEmpty()) return@buildString
 
             appendLine()
-            append("  ${PackageSearchBundle.message("packagesearch.package.copyableInfo.installedVersions")} : ")
+            append("${PackageSearchBundle.message("packagesearch.package.copyableInfo.installedVersions")} ")
             append(
                 packageModel.usageInfo.map { it.version }
                     .distinct()
-                    .joinToString("; ")
+                    .joinToString(", ")
+                    .removeSuffix(", ")
             )
         }
     }
