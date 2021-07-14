@@ -73,11 +73,13 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
         private val searchQueryClearEvent = GROUP.registerEvent(FUSGroupIds.SEARCH_QUERY_CLEAR)
         private val upgradeAllEvent = GROUP.registerEvent(FUSGroupIds.UPGRADE_ALL)
 
-        private fun EventId3<String?, String?, String?>.logPackage(dependency: UnifiedDependency, targetModule: ProjectModule) = tryDoing {
-            val coordinates = dependency.coordinates.displayName
-            val scope = dependency.scope
-            val buildSystem = targetModule.buildSystemType.name
-            log(coordinates, scope, buildSystem)
+        private fun EventId3<String?, String?, String?>.logPackage(dependency: UnifiedDependency, targetModule: ProjectModule) {
+            tryDoing {
+                val coordinates = dependency.coordinates.displayName
+                val scope = dependency.scope
+                val buildSystem = targetModule.buildSystemType.name
+                log(coordinates, scope, buildSystem)
+            }
         }
 
         fun logPackageInstalled(dependency: UnifiedDependency, targetModule: ProjectModule) = ifLoggingEnabled {
