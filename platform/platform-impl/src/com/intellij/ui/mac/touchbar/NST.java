@@ -181,19 +181,6 @@ final class NST {
       action); // called from AppKit, uses per-event autorelease-pool
   }
 
-  static ID createPopover(String uid,
-                                 int itemWidth,
-                                 String text,
-                                 Icon icon,
-                                 ID tbObjExpand,
-                                 ID tbObjTapAndHold) {
-    final BufferedImage img = _getImg4ByteRGBA(icon);
-    final Pointer raster4ByteRGBA = _getRaster(img);
-    final int w = _getImgW(img);
-    final int h = _getImgH(img);
-    return ourNSTLibrary.createPopover(uid, itemWidth, text, raster4ByteRGBA, w, h, tbObjExpand, tbObjTapAndHold); // called from AppKit, uses per-event autorelease-pool
-  }
-
   // NOTE: due to optimization scrubber is created without icons
   // icons must be updated async via updateScrubberItems
   @SuppressWarnings("unused")
