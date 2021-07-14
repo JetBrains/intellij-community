@@ -30,7 +30,7 @@ public final class CopyrightOnSaveInfoProvider extends ActionOnSaveInfoProvider 
   
   @Override
   protected @NotNull Collection<? extends ActionOnSaveInfo> getActionOnSaveInfos(@NotNull ActionOnSaveContext context) {
-    return List.of(new ActionOnSaveInfoBase(context, CopyrightBundle.message("before.checkin.update.copyright"), UPDATE_COPYRIGHT_ON_SAVE, UPDATE_COPYRIGHT_BY_DEFAULT) {
+    return List.of(new ActionOnSaveInfoBase(context, CopyrightBundle.message("checkbox.update.copyright.notice"), UPDATE_COPYRIGHT_ON_SAVE, UPDATE_COPYRIGHT_BY_DEFAULT) {
       @Override
       public @NotNull List<? extends ActionLink> getActionLinks() {
         return List.of(createGoToPageInSettingsLink(CopyrightBundle.message("link.label.configure.copyright.settings"),
