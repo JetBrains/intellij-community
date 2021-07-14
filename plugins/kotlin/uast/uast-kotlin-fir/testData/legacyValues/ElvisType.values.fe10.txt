@@ -18,11 +18,11 @@ UFile (package = ) [public final class ElvisTypeKt {...]
                             UDeclarationsExpression [var var63c495f9: java.lang.String = text] = Nothing
                                 ULocalVariable (name = var63c495f9) [var var63c495f9: java.lang.String = text]
                                     USimpleNameReferenceExpression (identifier = text) [text] = Undetermined
-                            UIfExpression [if (var63c495f9 != null) var63c495f9 else return] = Undetermined
+                            UIfExpression [if (var63c495f9 != null) var63c495f9 else return] = external var63c495f9()
                                 UBinaryExpression (operator = !=) [var63c495f9 != null] = Undetermined
-                                    USimpleNameReferenceExpression (identifier = var63c495f9) [var63c495f9] = Undetermined
+                                    USimpleNameReferenceExpression (identifier = var63c495f9) [var63c495f9] = external var63c495f9()
                                     ULiteralExpression (value = null) [null] = null
-                                USimpleNameReferenceExpression (identifier = var63c495f9) [var63c495f9] = Undetermined
+                                USimpleNameReferenceExpression (identifier = var63c495f9) [var63c495f9] = external var63c495f9()
                                 UReturnExpression [return] = Nothing
         UMethod (name = bar) [public static final fun bar(@org.jetbrains.annotations.NotNull o: java.lang.Object) : void {...}]
             UParameter (name = o) [@org.jetbrains.annotations.NotNull var o: java.lang.Object]
