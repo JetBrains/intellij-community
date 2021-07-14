@@ -675,9 +675,11 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       }
 
       LookupItem<?> item = element.as(LookupItem.CLASS_CONDITION_KEY);
+
       if (forcedTail != null && !(element instanceof JavaPsiClassReferenceElement)) {
         element = TailTypeDecorator.withTail(element, forcedTail);
       }
+
       if (inSwitchLabel && !smart) {
         element = new IndentingDecorator(element);
       }
@@ -1002,7 +1004,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   static PsiJavaCodeReferenceElement getAnnotationNameIfInside(@Nullable PsiElement position) {
     PsiAnnotation anno = PsiTreeUtil.getParentOfType(position, PsiAnnotation.class);
     PsiJavaCodeReferenceElement ref = anno == null ? null : anno.getNameReferenceElement();
-    return position != null && PsiTreeUtil.isAncestor(ref, position, false) ? ref : null;
+    return ref != null && PsiTreeUtil.isAncestor(ref, position, false) ? ref : null;
   }
 
   @Nullable

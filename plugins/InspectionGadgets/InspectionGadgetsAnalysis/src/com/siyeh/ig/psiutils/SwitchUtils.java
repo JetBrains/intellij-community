@@ -161,26 +161,16 @@ public final class SwitchUtils {
       return false;
     }
 
-    final PsiSwitchLabelStatementBase label = PsiTreeUtil.getChildOfType(block.getBody(), PsiSwitchLabelStatementBase.class);
-
-    if (label == null || isBeingCompletedSwitchLabel(label)) {
-      return block instanceof PsiSwitchExpression;
+    final PsiCodeBlock switchBody = block.getBody();
+    if (switchBody != null) {
+      for (var child = switchBody.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (child instanceof PsiSwitchLabelStatementBase && !(child.getLastChild() instanceof PsiErrorElement)) {
+          return child instanceof PsiSwitchLabeledRuleStatement;
+        }
+      }
     }
 
-    return label instanceof PsiSwitchLabeledRuleStatement;
-  }
-
-  /**
-   * Checks if the passed switch label is the one that is being completed
-   * (see {@link com.intellij.codeInsight.completion.CompletionProvider}).
-   * A switch label that is being completed is distinct from the other switch labels
-   * by the fact that the very last child of the label is a {@link PsiErrorElement}
-   * which notifies that the colon character <code>":"</code> is expected.
-   * @param label a case label to check
-   * @return true if the passed case label is the one that is being completed right now.
-   */
-  private static boolean isBeingCompletedSwitchLabel(@NotNull PsiSwitchLabelStatementBase label) {
-    return label.getLastChild() instanceof PsiErrorElement;
+    return block instanceof PsiSwitchExpression;
   }
 
   public static boolean canBeSwitchSelectorExpression(PsiExpression expression, LanguageLevel languageLevel) {
@@ -202,9 +192,7 @@ public final class SwitchUtils {
       if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7) && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         return true;
       }
-      if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(expression)) {
-        return true;
-      }
+      return HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(expression);
     }
     return false;
   }
