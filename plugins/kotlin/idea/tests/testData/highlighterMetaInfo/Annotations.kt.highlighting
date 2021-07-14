@@ -15,13 +15,4 @@ fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_D
     <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> 3 + 4
 
     <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>bar<!> <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> { 1 }
-
-    @<!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference: Err'; textAttributesKey='null'")!>Err<!>
-    5
 }
-
-@<!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference: Err'; textAttributesKey='null'")!>Err<!> class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Err1<!>
-
-class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>NotAnn<!>
-<!HIGHLIGHTING("severity='ERROR'; descr='[NOT_AN_ANNOTATION_CLASS] 'NotAnn' is not an annotation class'; textAttributesKey='ERRORS_ATTRIBUTES'")!>@NotAnn<!>
-class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>C<!>
