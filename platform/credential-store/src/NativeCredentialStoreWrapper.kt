@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -19,11 +19,7 @@ import java.io.Closeable
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
 
-internal val NOTIFICATION_MANAGER by lazy {
-  // we use name "Password Safe" instead of "Credentials Store" because it was named so previously (and no much sense to rename it)
-  SingletonNotificationManager(NotificationGroup("Password Safe", displayType = NotificationDisplayType.STICKY_BALLOON,
-                                                 isLogByDefault = true), NotificationType.ERROR)
-}
+internal val NOTIFICATION_MANAGER by lazy { SingletonNotificationManager("Password Safe", NotificationType.ERROR) }
 
 private val REMOVED_CREDENTIALS = Credentials("REMOVED_CREDENTIALS")
 
@@ -122,7 +118,7 @@ private fun notifyUnsatisfiedLinkError(e: UnsatisfiedLinkError) {
     message += "\n";
     message += CredentialStoreBundle.message("notification.content.native.keychain.unavailable.linux.addition");
   }
-  NOTIFICATION_MANAGER.notify(CredentialStoreBundle.message("notification.title.native.keychain.unavailable"), message)
+  NOTIFICATION_MANAGER.notify(CredentialStoreBundle.message("notification.title.native.keychain.unavailable"), message, null)
 }
 
 private class MacOsCredentialStoreFactory : CredentialStoreFactory {

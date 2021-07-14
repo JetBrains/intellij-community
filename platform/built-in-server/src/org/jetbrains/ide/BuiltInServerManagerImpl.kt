@@ -1,16 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.intellij.idea.StartupUtil
-import com.intellij.notification.NotificationDisplayType
-import com.intellij.notification.NotificationGroup
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.Url
@@ -141,10 +139,8 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
         }
         catch (e: Throwable) {
           LOG.info(e)
-          NOTIFICATION_GROUP.value.createNotification(
-            BuiltInServerBundle.message("notification.content.cannot.start.internal.http.server.and.ask.for.restart.0", ApplicationNamesInfo.getInstance().fullProductName),
-            NotificationType.ERROR
-          ).notify(null)
+          val message = BuiltInServerBundle.message("notification.content.cannot.start.internal.http.server.and.ask.for.restart.0", ApplicationNamesInfo.getInstance().fullProductName)
+          Notification(NOTIFICATION_GROUP, message, NotificationType.ERROR).notify(null)
           return@Consumer
         }
 

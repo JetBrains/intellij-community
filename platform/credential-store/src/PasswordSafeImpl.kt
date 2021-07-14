@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("PackageDirectoryMismatch")
 
 package com.intellij.ide.passwordSafe.impl
@@ -9,9 +9,7 @@ import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.credentialStore.keePass.*
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.PasswordStorage
-import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -182,17 +180,9 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   }
 
   fun showError(@NlsContexts.NotificationTitle title: String) {
-    NOTIFICATION_MANAGER.notify(title = title,
-                                content = CredentialStoreBundle.message("notification.content.in.memory.storage"),
-                                action = object: NotificationAction(
-                                  CredentialStoreBundle.message("notification.content.password.settings.action")
-                                ) {
-                                  override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-                                    // to hide before Settings open, otherwise dialog and notification are shown at the same time
-                                    notification.expire()
-                                    openSettings(e.project)
-                                  }
-                                })
+    NOTIFICATION_MANAGER.notify(title, CredentialStoreBundle.message("notification.content.in.memory.storage"), null) {
+      it.addAction(NotificationAction.createExpiring(CredentialStoreBundle.message("notification.content.password.settings.action")) { e, _ -> openSettings(e.project) })
+    }
   }
 
   if (settings.providerType == ProviderType.KEEPASS) {
