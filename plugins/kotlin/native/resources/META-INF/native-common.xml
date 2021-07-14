@@ -18,7 +18,6 @@
         <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind"/>
         <idePlatformKindTooling implementation="org.jetbrains.kotlin.ide.konan.NativeIdePlatformKindTooling"/>
         <idePlatformKindResolution implementation="org.jetbrains.kotlin.ide.konan.NativePlatformKindResolution"/>
-        <projectConfigurator implementation="org.jetbrains.kotlin.ide.konan.gradle.KotlinNativeGradleConfigurator"/>
       </extensions>
 
 </idea-plugin>

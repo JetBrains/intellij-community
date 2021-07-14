@@ -20,6 +20,8 @@
         <buildSystemTypeDetector implementation="org.jetbrains.kotlin.idea.configuration.GradleDetector"/>
         <scriptDiagnosticFixProvider implementation="org.jetbrains.kotlin.idea.gradle.scripting.GradleScriptDiagnosticFixProvider"/>
         <experimentalFeature implementation="org.jetbrains.kotlin.idea.gradle.scripting.GradleScriptConfigurationsImportingFeature"/>
+
+        <projectConfigurator implementation="org.jetbrains.kotlin.idea.gradle.konan.KotlinNativeGradleConfigurator"/>
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
@@ -41,6 +43,8 @@
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
+        <postStartupActivity implementation="org.jetbrains.kotlin.idea.gradle.konan.KotlinNativeABICompatibilityChecker"/>
+
         <projectTaskRunner implementation="org.jetbrains.kotlin.idea.gradle.execution.KotlinMPPGradleProjectTaskRunner" id="gradle.mpp" order="first, before gradle"/>
         <externalProjectDataService implementation="org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetDataService"/>
         <externalProjectDataService implementation="org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleProjectSettingsDataService"/>
@@ -58,6 +62,7 @@
 
         <projectService serviceImplementation="org.jetbrains.kotlin.idea.gradle.scripting.legacy.GradleStandaloneScriptActionsManager"/>
         <projectService serviceImplementation="org.jetbrains.kotlin.idea.gradle.scripting.settings.StandaloneScriptsStorage"/>
+        <projectService serviceImplementation="org.jetbrains.kotlin.idea.gradle.konan.KotlinNativeABICompatibilityCheckerService" />
 
         <applicationService serviceInterface="org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleFacade"
                             serviceImplementation="org.jetbrains.kotlin.idea.gradle.KotlinGradleFacadeImpl"/>
