@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import java.util.*
 import java.util.function.Function
+import javax.swing.SwingUtilities
 
 class RunToolbarSlotManager(val project: Project) {
   companion object {
@@ -137,7 +138,9 @@ class RunToolbarSlotManager(val project: Project) {
         slotsData.remove(id)
         dataIds.remove(id)
 
-        listeners.forEach { it.slotRemoved(index) }
+        SwingUtilities.invokeLater {
+          listeners.forEach { it.slotRemoved(index) }
+        }
       }
 
       getData(index)?.let { slotDate ->

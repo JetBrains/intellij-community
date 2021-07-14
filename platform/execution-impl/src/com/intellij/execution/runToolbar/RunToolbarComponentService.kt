@@ -10,39 +10,29 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 
-class RunToolbarComponentService(project: Project) {
-  companion object {
-    private val LOGGER = Logger.getInstance(RunToolbarComponentService::class.java)
-  }
-
-  private val extraSlots =  RunToolbarSlotManager.getInstance(project)
+class RunToolbarComponentService(val project: Project) {
+  private val extraSlots = RunToolbarSlotManager.getInstance(project)
 
   private val executions: MutableMap<Long, ExecutionEnvironment> = mutableMapOf()
+
   init {
     if (RunToolbarProcess.isAvailable()) {
       ExecutionManager.EXECUTION_TOPIC.subscribe(project, object : ExecutionListener {
         override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
           ApplicationManager.getApplication().invokeLater {
-            if(LOGGER.isTraceEnabled) {
-              LOGGER.trace("Execution started: ${env.executionId} executor: $executorId" +
-                                              "${if(handler.isProcessTerminated) "terminated" else if(handler.isProcessTerminating) " terminating" else ""} ")
+            if (env.project == project) {
+              start(env)
             }
-            start(env)
           }
         }
 
         override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
           ApplicationManager.getApplication().invokeLater {
-            if(LOGGER.isTraceEnabled) {
-              LOGGER.trace("Execution stopped: " +
-                                              "${env.executionId}, " +
-                                              "executor: $executorId, " +
-                                              "exitCode: $exitCode, " +
-                                              "${if(handler.isProcessTerminated) "terminated" else if(handler.isProcessTerminating) " terminating" else ""} ")
+            if (env.project == project) {
+              stop(env)
             }
-            stop(env)
           }
-        }
+          }
       })
     }
   }
