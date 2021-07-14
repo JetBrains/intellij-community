@@ -35,7 +35,7 @@ final class ModuleStructureValidator {
   private BuildContext buildContext
   private MultiMap<String, String> moduleJars = new MultiMap<String, String>()
   private Set<String> moduleNames = new HashSet<String>()
-  private List<GString> errors = new ArrayList<>()
+  private List<String> errors = new ArrayList<>()
 
   ModuleStructureValidator(BuildContext buildContext, MultiMap<String, String> moduleJars) {
     this.buildContext = buildContext
@@ -49,7 +49,9 @@ final class ModuleStructureValidator {
     }
   }
 
-  void validate() {
+  List<String> validate() {
+    errors.clear()
+
     buildContext.messages.info("Validating jars...")
     validateJarModules()
 
@@ -68,11 +70,8 @@ final class ModuleStructureValidator {
     if (errors.isEmpty()) {
       buildContext.messages.info("Validation finished successfully")
     }
-    else {
-      if (errors.any()) {
-        buildContext.messages.warning("Validation errors: \n" + errors.join("\n"))
-      }
-    }
+
+    return errors
   }
 
   private void validateJarModules() {
@@ -111,7 +110,7 @@ final class ModuleStructureValidator {
         }
 
         if (!moduleNames.contains(dependantModule.name)) {
-          errors.add("Missing dependency found: ${module.name} -> ${dependantModule.name} [${role.scope.name()}]")
+          errors.add("Missing dependency found: ${module.name} -> ${dependantModule.name} [${role.scope.name()}]".toString())
           continue
         }
 
@@ -130,10 +129,10 @@ final class ModuleStructureValidator {
     }
 
     // Start validating from product xml descriptor
-    def productDescriptorName = "META-INF\\${buildContext.productProperties.platformPrefix}Plugin.xml"
+    def productDescriptorName = "META-INF/${buildContext.productProperties.platformPrefix}Plugin.xml"
     def productDescriptorFile = findDescriptorFile(productDescriptorName, roots)
     if (productDescriptorFile == null) {
-      errors.add("Can not find product descriptor $productDescriptorName")
+      errors.add("Can not find product descriptor $productDescriptorName".toString())
       return
     }
 
@@ -161,7 +160,7 @@ final class ModuleStructureValidator {
           buildContext.messages.info("Ignore optional missing xml descriptor '$ref' referenced in '${descriptor.name}'")
         }
         else {
-          errors.add("Can not find xml descriptor '$ref' referenced in '${descriptor.name}'")
+          errors.add("Can not find xml descriptor '$ref' referenced in '${descriptor.name}'".toString())
         }
       }
       else {
@@ -246,6 +245,6 @@ final class ModuleStructureValidator {
     if (value.isEmpty() || classes.contains(value)) {
       return
     }
-    errors.add("Unresolved registration '$value' in $source")
+    errors.add("Unresolved registration '$value' in $source".toString())
   }
 }
