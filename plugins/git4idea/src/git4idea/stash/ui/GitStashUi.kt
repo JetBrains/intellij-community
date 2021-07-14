@@ -17,15 +17,20 @@ import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
+import com.intellij.util.containers.orNull
+import git4idea.index.ui.ProportionKey
+import git4idea.index.ui.TwoKeySplitter
+import git4idea.ui.StashInfo
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class GitStashUi(private val project: Project, isEditorDiffPreview: Boolean, disposable: Disposable) :
+class GitStashUi(private val project: Project, isVertical: Boolean, isEditorDiffPreview: Boolean, disposable: Disposable) :
   JPanel(BorderLayout()), Disposable, DataProvider {
 
   private val tree: ChangesTree
   private val changesBrowser: GitStashChangesBrowser
+  private val treeChangesSplitter: TwoKeySplitter
   private val treeDiffSplitter: OnePixelSplitter
   private val toolbar: JComponent
 
@@ -47,13 +52,16 @@ class GitStashUi(private val project: Project, isEditorDiffPreview: Boolean, dis
     treePanel.add(toolbar, BorderLayout.NORTH)
     treePanel.add(ScrollPaneFactory.createScrollPane(tree, SideBorder.TOP), BorderLayout.CENTER)
 
-    val treeChangesSplitter = OnePixelSplitter(true, "git.stash.changes.splitter", 0.5f)
+    treeChangesSplitter = TwoKeySplitter(isVertical,
+                                         ProportionKey("git.stash.changes.splitter.vertical", 0.5f,
+                                                       "git.stash.changes.splitter.horizontal", 0.5f))
     treeChangesSplitter.firstComponent = treePanel
     treeChangesSplitter.secondComponent = changesBrowser
 
     treeDiffSplitter = OnePixelSplitter("git.stash.diff.splitter", 0.5f)
     treeDiffSplitter.firstComponent = treeChangesSplitter
-    setDiffPreviewInEditor(isEditorDiffPreview, force = true)
+
+    updateLayout(isVertical, isEditorDiffPreview, forceDiffPreview = true)
 
     add(treeDiffSplitter, BorderLayout.CENTER)
 
@@ -70,7 +78,16 @@ class GitStashUi(private val project: Project, isEditorDiffPreview: Boolean, dis
     return toolbar.component
   }
 
-  fun setDiffPreviewInEditor(isInEditor: Boolean, force: Boolean = false) {
+  fun updateLayout(isVertical: Boolean, canUseEditorDiffPreview: Boolean, forceDiffPreview: Boolean = false) {
+    val isEditorDiffPreview = canUseEditorDiffPreview || isVertical
+    val isChangesSplitterVertical = isVertical || !isEditorDiffPreview
+    if (treeChangesSplitter.orientation != isChangesSplitterVertical) {
+      treeChangesSplitter.orientation = isChangesSplitterVertical
+    }
+    setDiffPreviewInEditor(isEditorDiffPreview, forceDiffPreview)
+  }
+
+  private fun setDiffPreviewInEditor(isInEditor: Boolean, force: Boolean = false) {
     if (!force && (isInEditor == (editorTabPreview != null))) return
 
     if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
