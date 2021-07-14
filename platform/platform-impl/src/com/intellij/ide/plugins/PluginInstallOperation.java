@@ -4,6 +4,7 @@ package com.intellij.ide.plugins;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
@@ -55,6 +56,7 @@ public final class PluginInstallOperation {
   private final List<PendingDynamicPluginInstall> myPendingDynamicPluginInstalls = new ArrayList<>();
   private boolean myRestartRequired = false;
   private boolean myShownErrors;
+  private MarketplacePluginDownloadService myDownloadService;
 
   /**
    * @deprecated use {@link #PluginInstallOperation(List, Collection, PluginEnabler, ProgressIndicator)} instead
@@ -118,6 +120,10 @@ public final class PluginInstallOperation {
     ActionCallback callback = new ActionCallback();
     ourInstallCallbacks.put(id, callback);
     myLocalInstallCallbacks.put(id, callback);
+  }
+
+  public void setDownloadService(MarketplacePluginDownloadService downloadService) {
+    myDownloadService = downloadService;
   }
 
   public void setAllowInstallWithoutRestart(boolean allowInstallWithoutRestart) {
