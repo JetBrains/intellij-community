@@ -402,6 +402,11 @@ public final class EditorWindow {
     myTabbedPane.requestFocus(forced);
   }
 
+  public void toFront() {
+    Window window = UIUtil.getWindow(myTabbedPane.getComponent());
+    UIUtil.toFront(window);
+  }
+
   protected static class TComp extends JPanel implements DataProvider, EditorWindowHolder {
     final @NotNull EditorWithProviderComposite myEditor;
     protected final EditorWindow myWindow;
