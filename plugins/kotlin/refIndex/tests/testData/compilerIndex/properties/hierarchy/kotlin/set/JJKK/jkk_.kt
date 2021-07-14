@@ -1,0 +1,3 @@
+fun jkk() {
+    JKK().property
+}
