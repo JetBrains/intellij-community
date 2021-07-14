@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.dvcs.ui.SelectChildTextFieldWithBrowseButton
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.editor.EditorModificationUtil
@@ -41,6 +42,7 @@ import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.sampleRestoreNotification
 import training.ui.LearningUiHighlightingManager
+import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.KeyEvent
 import javax.swing.JButton
@@ -51,6 +53,8 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
   override val existedFile = "git/puss_in_boots.yml"
   private val fileToChange = existedFile.substringAfterLast('/')
   private val textToHighlight = "green"
+
+  private var backupSearchEverywhereLocation: Point? = null
 
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
@@ -75,6 +79,11 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
     }
 
     task("Git.Clone") {
+      before {
+        if (backupSearchEverywhereLocation == null) {
+          backupSearchEverywhereLocation = adjustPopupPosition(SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY)
+        }
+      }
       text(GitLessonsBundle.message("git.quick.start.type.clone", code(StringUtil.removeEllipsisSuffix(cloneActionText))))
       triggerByListItemAndHighlight { item ->
         item.toString().contains(cloneActionText)
@@ -269,5 +278,10 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
   override fun prepare(project: Project) {
     super.prepare(project)
     GitProjectUtil.createRemoteProject("origin", project)
+  }
+
+  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+    LessonUtil.restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupSearchEverywhereLocation)
+    backupSearchEverywhereLocation = null
   }
 }
