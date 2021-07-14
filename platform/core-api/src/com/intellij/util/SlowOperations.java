@@ -8,12 +8,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringHash;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EDT;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +25,6 @@ public final class SlowOperations {
   public static final String GENERIC = "generic";
   public static final String FAST_TRACK = "  fast track  ";
 
-  private static final IntSet ourReportedTraceHashCodes = new IntOpenHashSet();
   private static final String[] misbehavingFrames = {
     "org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler",
     "com.intellij.apiwatcher.plugin.presentation.bytecode.UsageHighlighter",
@@ -98,14 +95,15 @@ public final class SlowOperations {
       }
     }
 
+    Throwable throwable = new Throwable();
+    if (ThrowableInterner.intern(throwable) != throwable) {
+      return;
+    }
     String stackTrace = ExceptionUtil.currentStackTrace();
     for (String t : misbehavingFrames) {
       if (stackTrace.contains(t)) {
         return;
       }
-    }
-    if (!ourReportedTraceHashCodes.add(StringHash.murmur(stackTrace))) {
-      return;
     }
     LOG.error("Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.");
   }
