@@ -121,7 +121,7 @@ public final class MethodReferencesSearch extends ExtensibleQueryFactory<PsiRefe
                                                  inReadAction, processor));
   }
 
-  public static @NotNull Query<PsiReference> search(final SearchParameters parameters) {
+  public static @NotNull Query<PsiReference> search(@NotNull SearchParameters parameters) {
     final Query<PsiReference> result = INSTANCE.createQuery(parameters);
     if (parameters.isSharedOptimizer) {
       return uniqueResults(result);
@@ -133,11 +133,11 @@ public final class MethodReferencesSearch extends ExtensibleQueryFactory<PsiRefe
     return uniqueResults(new MergeQuery<>(result, new SearchRequestQuery(project, requests)));
   }
 
-  public static @NotNull Query<PsiReference> search(final PsiMethod method, final boolean strictSignatureSearch) {
+  public static @NotNull Query<PsiReference> search(@NotNull PsiMethod method, final boolean strictSignatureSearch) {
     return search(method, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(method)), strictSignatureSearch);
   }
 
-  public static @NotNull Query<PsiReference> search(final PsiMethod method) {
+  public static @NotNull Query<PsiReference> search(@NotNull PsiMethod method) {
     return search(method, true);
   }
 
