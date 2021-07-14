@@ -364,7 +364,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         g.setColor(JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND);
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
-        Color backgroundBorder = JBUI.CurrentTheme.DragAndDrop.Area.BORDER_COLOR;
+        Color backgroundBorder = JBUI.CurrentTheme.DragAndDrop.BORDER_COLOR;
         g.setColor(backgroundBorder);
         g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
         g.drawRect(bounds.x + 1, bounds.y + 1, bounds.width - 2, bounds.height - 2);

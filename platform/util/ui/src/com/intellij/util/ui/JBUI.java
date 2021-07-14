@@ -664,7 +664,6 @@ public class JBUI {
       interface Area {
         Color FOREGROUND = JBColor.namedColor("DragAndDrop.areaForeground", 0x787878, 0xBABABA);
         Color BACKGROUND = JBColor.namedColor("DragAndDrop.areaBackground", 0x3D7DCC, 0x404A57);
-        Color BORDER_COLOR = JBColor.namedColor("DragAndDrop.areaBorderColor", 0x8AB2DE, 0x4F73A8);
       }
     }
 

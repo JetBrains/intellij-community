@@ -1216,6 +1216,19 @@
       "since": "2021.3"
     },
     {
+      "key": "DragAndDrop.areaBackground",
+      "description": "Drag & Drop area background"
+    },
+    {
+      "deprecated": true,
+      "key": "DragAndDrop.areaBorderColor",
+      "description": "Use DragAndDrop.borderColor instead"
+    },
+    {
+      "key": "DragAndDrop.areaForeground",
+      "description": "Drag & Drop area foreground"
+    },
+    {
       "key": "DragAndDrop.borderColor",
       "description": "Drop position highlighting (line/rectangle) for drag-n-drop in trees and lists",
       "since": "2021.2"
