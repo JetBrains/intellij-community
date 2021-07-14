@@ -11,7 +11,7 @@ fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_D
     }
 
     <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LABEL'")!>loop2@<!> for (<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>i<!> in 1..100) {
-        break<!HIGHLIGHTING("severity='ERROR'; descr='There should be no space or comments before '@' in label reference'; textAttributesKey='null'")!> <!><!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LABEL'")!>@loop2<!>
+        break<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LABEL'")!>@loop2<!>
     }
 
     return 1
