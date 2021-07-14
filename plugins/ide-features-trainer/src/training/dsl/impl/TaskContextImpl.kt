@@ -12,7 +12,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.ui.EditorNotifications
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.intellij.lang.annotations.Language
@@ -99,16 +98,17 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
         }
       }
 
-    val selectedTextEditor = FileEditorManager.getInstance(project).selectedTextEditor ?: return null
+    fun selectedTextEditor() = FileEditorManager.getInstance(project).selectedTextEditor
     if (lessonExecutor.lesson.lessonType.isSingleEditor) {
-      if (selectedTextEditor != lessonExecutor.predefinedEditor) {
+      if (selectedTextEditor() != lessonExecutor.predefinedEditor) {
         val file = lessonExecutor.predefinedFile ?: return null
         return restoreNotification(file)
       }
     }
     else {
       val file = runtimeContext.previous.file ?: return null
-      val currentFile = FileDocumentManager.getInstance().getFile(selectedTextEditor.document)
+      val document = selectedTextEditor()?.document ?: return restoreNotification(file)
+      val currentFile = FileDocumentManager.getInstance().getFile(document)
       if (file != currentFile) {
         return restoreNotification(file)
       }
@@ -137,7 +137,6 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
       val lessonManager = LessonManager.instance
       val activeNotification = lessonManager.shownRestoreNotification
       if (notification != null && notification.message != activeNotification?.message) {
-        EditorNotifications.getInstance(runtimeContext.project).updateNotifications(lessonExecutor.virtualFile)
         setNotification(notification)
         StatisticBase.logRestorePerformed(lessonExecutor.lesson, taskId.idx)
       }
