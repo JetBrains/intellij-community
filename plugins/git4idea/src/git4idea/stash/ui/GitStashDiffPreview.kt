@@ -49,6 +49,7 @@ class GitStashDiffPreview(project: Project, private val tree: ChangesTree, isInE
   }
 
   override fun getSelectedChanges(): Stream<Wrapper> {
+    if (tree.selectionCount == 0) return allChanges
     return wrap(VcsTreeModelData.selected(tree))
   }
 
