@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -54,8 +54,11 @@ class RerunFailedTestsAction extends AnAction {
       if (action instanceof AbstractRerunFailedTestsAction) {
         if (execute) {
           ((AbstractRerunFailedTestsAction)action).execute(e, environment);
+          return true;
         }
-        return true;
+        else {
+          return ((AbstractRerunFailedTestsAction)action).isActive(e);
+        }
       }
     }
     return false;
