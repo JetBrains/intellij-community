@@ -5,6 +5,7 @@
     <xi:include href="noarg-dep-gradle.xml" xpointer="xpointer(/idea-plugin/*)"/>
     <xi:include href="sam-with-receiver-dep-gradle.xml" xpointer="xpointer(/idea-plugin/*)"/>
     <xi:include href="kapt-dep-gradle.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="kotlinx-serialization-dep-gradle.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
     <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
         <testTasksProvider implementation="org.jetbrains.kotlin.idea.run.KotlinMPPGradleTestTasksProvider"/>
@@ -47,8 +48,6 @@
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
-        <gradleProjectImportHandler implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.kotlinxSerialization.KotlinSerializationGradleImportHandler"/>
-
         <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinGradleModuleConfigurator"/>
         <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJsGradleModuleConfigurator"/>
         <gradleModelFacade implementation="org.jetbrains.kotlin.idea.inspections.gradle.DefaultGradleModelFacade"/>
