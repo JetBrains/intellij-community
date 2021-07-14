@@ -58,10 +58,7 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
   override fun createClientBootstrap() = NettyUtil.nioClientBootstrap(server!!.eventLoopGroup)
 
   companion object {
-    @JvmField
-    internal val NOTIFICATION_GROUP: NotNullLazyValue<NotificationGroup> = NotNullLazyValue.lazy {
-      NotificationGroup("Built-in Server", NotificationDisplayType.STICKY_BALLOON, true)
-    }
+    internal const val NOTIFICATION_GROUP = "Built-in Server"
 
     @JvmStatic
     fun isOnBuiltInWebServerByAuthority(authority: String): Boolean {
