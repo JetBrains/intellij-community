@@ -9,6 +9,8 @@ import com.intellij.ide.actionsOnSave.ActionOnSaveContext;
 import com.intellij.ide.actionsOnSave.ActionOnSaveInfo;
 import com.intellij.ide.actionsOnSave.ActionOnSaveInfoProvider;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.ActionLink;
 import com.maddyhome.idea.copyright.ui.CopyrightProjectConfigurable;
@@ -36,6 +38,11 @@ public final class CopyrightOnSaveInfoProvider extends ActionOnSaveInfoProvider 
       }
 
       private boolean hasCopyrights() {
+        Configurable configurable = getSettings().getConfigurableWithInitializedUiComponent(CopyrightProjectConfigurable.ID, false);
+        CopyrightProjectConfigurable copyrightProjectConfigurable = ConfigurableWrapper.cast(CopyrightProjectConfigurable.class, configurable);
+        if (copyrightProjectConfigurable != null) {
+          return copyrightProjectConfigurable.hasAnyCopyrights();
+        }
         return CopyrightManager.getInstance(context.getProject()).hasAnyCopyrights();
       }
 

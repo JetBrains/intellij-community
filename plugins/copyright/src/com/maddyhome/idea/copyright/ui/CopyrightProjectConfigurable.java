@@ -89,4 +89,7 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
     }
   }
 
+  public boolean hasAnyCopyrights() {
+    return myOptionsPanel.hasAnyCopyrights();
+  }
 }
