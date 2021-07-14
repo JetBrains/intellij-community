@@ -28,8 +28,9 @@ internal class MarkdownDocxFileDropHandler : CustomFileDropHandler() {
     return if (vFileToImport != null) {
       val suggestedFilePath = MarkdownImportExportUtils.suggestFileNameToCreate(project, vFileToImport, dataContext)
       val importTaskTitle = MarkdownBundle.message("markdown.import.docx.convert.task.title")
+      val importDialogTitle = MarkdownBundle.message("markdown.import.from.docx.dialog.title")
 
-      MarkdownImportDocxDialog(vFileToImport, importTaskTitle, project, suggestedFilePath).show()
+      MarkdownImportDocxDialog(vFileToImport, importTaskTitle, importDialogTitle, project, suggestedFilePath).show()
       true
     }
     else false

@@ -126,7 +126,6 @@ object MarkdownImportExportUtils {
 
       override fun onSuccess() {
         if (output.stderrLines.isEmpty()) {
-          vFileToImport.copySelectedFile(project, dirToImport, newFileName)
           OpenFileAction.openFile(createdFilePath, project)
         }
         else {
@@ -134,28 +133,6 @@ object MarkdownImportExportUtils {
         }
       }
     }.queue()
-  }
-
-  /**
-   * Copies the selected file to the specified directory.
-   * If the copying failed, sends a notification to the user about it.
-   */
-  private fun VirtualFile.copySelectedFile(project: Project, dirToImport: String, newFileName: String) {
-    val fileNameWithExtension = "$newFileName.${MarkdownDocxExportProvider.format.extension}"
-
-    try {
-      val localFS = LocalFileSystem.getInstance()
-      val dirToImportVF = localFS.findFileByPath(dirToImport) ?: localFS.findFileByPath(project.basePath!!)!!
-
-      runWriteAction {
-        val directory = PsiManager.getInstance(project).findDirectory(dirToImportVF)!!
-        val file = PsiManager.getInstance(project).findFile(this)!!
-        directory.copyFileFrom(fileNameWithExtension, file)
-      }
-    }
-    catch (exception: Throwable) {
-      MarkdownNotifier.notifyIfConvertFailed(project, "[$fileNameWithExtension] ${exception.localizedMessage}")
-    }
   }
 
   private const val TARGET_FORMAT_NAME = "markdown"

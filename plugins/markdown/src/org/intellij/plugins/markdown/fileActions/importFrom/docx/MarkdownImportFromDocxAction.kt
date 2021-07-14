@@ -22,8 +22,9 @@ internal class MarkdownImportFromDocxAction : AnAction() {
         if (descriptor.isFileSelectable(vFileToImport)) {
           val suggestedFilePath = MarkdownImportExportUtils.suggestFileNameToCreate(project, vFileToImport, event.dataContext)
           val importTaskTitle = MarkdownBundle.message("markdown.import.docx.convert.task.title")
+          val importDialogTitle = MarkdownBundle.message("markdown.import.from.docx.dialog.title")
 
-          MarkdownImportDocxDialog(vFileToImport, importTaskTitle, project, suggestedFilePath).show()
+          MarkdownImportDocxDialog(vFileToImport, importTaskTitle, importDialogTitle, project, suggestedFilePath).show()
         }
       }
     }

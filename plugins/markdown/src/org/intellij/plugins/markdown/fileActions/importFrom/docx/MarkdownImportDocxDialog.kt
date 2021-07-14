@@ -2,8 +2,11 @@
 package org.intellij.plugins.markdown.fileActions.importFrom.docx
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.layout.*
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.fileActions.MarkdownFileActionsBaseDialog
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils
@@ -12,12 +15,13 @@ import org.jetbrains.annotations.Nls
 internal class MarkdownImportDocxDialog(
   private val fileToImport: VirtualFile,
   private val importTaskTitle: @Nls String,
+  importDialogTitle: @Nls String,
   project: Project,
   suggestedFilePath: String,
 ) : MarkdownFileActionsBaseDialog(project, suggestedFilePath, fileToImport) {
 
   init {
-    title = MarkdownBundle.message("markdown.import.from.docx.dialog.title")
+    title = importDialogTitle
     setOKButtonText(MarkdownBundle.message("markdown.import.dialog.ok.button"))
   }
 
@@ -28,7 +32,6 @@ internal class MarkdownImportDocxDialog(
   override fun getFileNameIfExist(dir: String, fileNameWithoutExtension: String): String? {
     return when {
       FileUtil.exists(FileUtil.join(dir, "$fileNameWithoutExtension.md")) -> "$fileNameWithoutExtension.md"
-      FileUtil.exists(FileUtil.join(dir, "$fileNameWithoutExtension.docx")) -> "$fileNameWithoutExtension.docx"
       else -> null
     }
   }

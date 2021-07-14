@@ -37,7 +37,7 @@ import javax.swing.JPanel
 abstract class MarkdownFileActionsBaseDialog(
   protected val project: Project,
   protected val suggestedFilePath: String,
-  protected val targetFile: VirtualFile
+  protected val targetFile: VirtualFile,
 ) : DialogWrapper(project, true) {
   private val fileNameField = EditorTextField()
   private val targetDirectoryField = TextFieldWithHistoryWithBrowseButton()
