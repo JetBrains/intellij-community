@@ -30,11 +30,11 @@ UFile (package = ) [public final class TypeReferencesKt {...]
                             UDeclarationsExpression [var var708e23eb: T = arg] = Undetermined
                                 ULocalVariable (name = var708e23eb) [var var708e23eb: T = arg]
                                     USimpleNameReferenceExpression (identifier = arg) [arg] = Undetermined
-                            UIfExpression [if (var708e23eb != null) var708e23eb else return] = Undetermined
+                            UIfExpression [if (var708e23eb != null) var708e23eb else return] = external var708e23eb()
                                 UBinaryExpression (operator = !=) [var708e23eb != null] = Undetermined
-                                    USimpleNameReferenceExpression (identifier = var708e23eb) [var708e23eb] = Undetermined
+                                    USimpleNameReferenceExpression (identifier = var708e23eb) [var708e23eb] = external var708e23eb()
                                     ULiteralExpression (value = null) [null] = null
-                                USimpleNameReferenceExpression (identifier = var708e23eb) [var708e23eb] = Undetermined
+                                USimpleNameReferenceExpression (identifier = var708e23eb) [var708e23eb] = external var708e23eb()
                                 UReturnExpression [return] = Nothing
                 UDeclarationsExpression [var tl: java.util.List<? extends T> = listOf(at)] = Undetermined
                     ULocalVariable (name = tl) [var tl: java.util.List<? extends T> = listOf(at)]

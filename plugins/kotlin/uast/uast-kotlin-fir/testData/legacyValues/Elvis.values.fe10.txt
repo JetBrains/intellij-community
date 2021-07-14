@@ -23,20 +23,20 @@ UFile (package = ) [public final class ElvisKt {...]
                                                 UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
                                                 USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] = external foo("Lorem ipsum")("Lorem ipsum")
                                                 ULiteralExpression (value = "Lorem ipsum") ["Lorem ipsum"] = "Lorem ipsum"
-                                    UIfExpression [if (varc4aef569 != null) varc4aef569 else foo("dolor sit amet")] = Undetermined
+                                    UIfExpression [if (varc4aef569 != null) varc4aef569 else foo("dolor sit amet")] = Phi(external varc4aef569(), external foo("dolor sit amet")("dolor sit amet"))
                                         UBinaryExpression (operator = !=) [varc4aef569 != null] = Undetermined
-                                            USimpleNameReferenceExpression (identifier = varc4aef569) [varc4aef569] = Undetermined
+                                            USimpleNameReferenceExpression (identifier = varc4aef569) [varc4aef569] = external varc4aef569()
                                             ULiteralExpression (value = null) [null] = null
-                                        USimpleNameReferenceExpression (identifier = varc4aef569) [varc4aef569] = Undetermined
+                                        USimpleNameReferenceExpression (identifier = varc4aef569) [varc4aef569] = external varc4aef569()
                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [foo("dolor sit amet")] = external foo("dolor sit amet")("dolor sit amet")
                                             UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
                                             USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] = external foo("dolor sit amet")("dolor sit amet")
                                             ULiteralExpression (value = "dolor sit amet") ["dolor sit amet"] = "dolor sit amet"
-                        UIfExpression [if (var243c51a0 != null) var243c51a0 else bar().toString()] = Undetermined
+                        UIfExpression [if (var243c51a0 != null) var243c51a0 else bar().toString()] = Phi(external var243c51a0(), external toString()())
                             UBinaryExpression (operator = !=) [var243c51a0 != null] = Undetermined
-                                USimpleNameReferenceExpression (identifier = var243c51a0) [var243c51a0] = Undetermined
+                                USimpleNameReferenceExpression (identifier = var243c51a0) [var243c51a0] = external var243c51a0()
                                 ULiteralExpression (value = null) [null] = null
-                            USimpleNameReferenceExpression (identifier = var243c51a0) [var243c51a0] = Undetermined
+                            USimpleNameReferenceExpression (identifier = var243c51a0) [var243c51a0] = external var243c51a0()
                             UQualifiedReferenceExpression [bar().toString()] = external toString()()
                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [bar()] = external bar()()
                                     UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
