@@ -628,6 +628,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 runTest("testData/compilerIndex/properties/fromCompanion/isVariable/");
             }
 
+            @TestMetadata("javaStaticField")
+            public void testJavaStaticField() throws Exception {
+                runTest("testData/compilerIndex/properties/fromCompanion/javaStaticField/");
+            }
+
             @TestMetadata("property")
             public void testProperty() throws Exception {
                 runTest("testData/compilerIndex/properties/fromCompanion/property/");
@@ -833,6 +838,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @TestMetadata("isVariable")
             public void testIsVariable() throws Exception {
                 runTest("testData/compilerIndex/properties/members/isVariable/");
+            }
+
+            @TestMetadata("javaField")
+            public void testJavaField() throws Exception {
+                runTest("testData/compilerIndex/properties/members/javaField/");
             }
 
             @TestMetadata("property")

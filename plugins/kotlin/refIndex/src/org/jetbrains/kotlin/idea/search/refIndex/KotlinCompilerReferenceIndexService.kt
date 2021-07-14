@@ -9,6 +9,7 @@ import com.intellij.compiler.server.BuildManagerListener
 import com.intellij.compiler.server.CustomBuilderMessageHandler
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.components.Service
@@ -361,6 +362,7 @@ private fun extractFqName(element: PsiElement): FqName? = when (element) {
     is KtNamedFunction -> element.fqName
     is KtProperty -> element.takeUnless(KtProperty::isOverridable)?.fqName
     is PsiMethod -> if (element.isConstructor) element.containingClass?.getKotlinFqName() else element.getKotlinFqName()
+    is PsiField -> element.takeIf { it.hasModifier(JvmModifier.STATIC) }?.getKotlinFqName()
     else -> null
 }
 
