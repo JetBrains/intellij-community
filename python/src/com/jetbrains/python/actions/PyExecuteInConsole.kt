@@ -76,6 +76,9 @@ object PyExecuteInConsole {
       DescriptorType.STARTING -> {
         return Pair(null, null)
       }
+      DescriptorType.NON_INTERACTIVE -> {
+        throw IllegalStateException("This code shouldn't be called for non-interactive descriptor")
+      }
       else -> {
         throw IllegalStateException("Custom descriptor for ${virtualFile} is null")
       }
