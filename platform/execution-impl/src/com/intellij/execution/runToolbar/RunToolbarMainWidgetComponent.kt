@@ -25,6 +25,10 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
   }
 
   internal var isOpened = false
+    set(value) {
+      field = value
+      //updateActionsImmediately(true)
+    }
 
   private fun presentationChanged(event: PropertyChangeEvent) {
     presentation.getClientProperty(PROP_POJECT)?.let { project ->

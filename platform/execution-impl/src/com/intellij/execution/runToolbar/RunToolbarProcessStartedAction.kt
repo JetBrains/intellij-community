@@ -88,7 +88,6 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
       }
 
       private fun updatePresentation(it: RunToolbarProcess) {
-        putClientProperty("JButton.backgroundColor", it.pillColor)
         setting.text = presentation.text
         presentation.icon?.let {
           icon = it
@@ -99,7 +98,7 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
         }
 
        // setting.isEnabled = presentation.isEnabled
-        pane.isEnabled = presentation.isEnabled
+        // pane.isEnabled = presentation.isEnabled
         toolTipText = presentation.description
         process.text = it.name
         putClientProperty("JButton.backgroundColor", it.pillColor)

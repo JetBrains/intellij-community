@@ -398,10 +398,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public void updateUI() {
       super.updateUI();
-      updateMargin();
-    }
-
-    protected void updateMargin() {
       setMargin(JBUI.insets(0, 8, 0, 5));
     }
 

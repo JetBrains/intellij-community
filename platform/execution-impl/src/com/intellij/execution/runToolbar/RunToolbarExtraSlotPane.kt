@@ -15,8 +15,10 @@ import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.SwingUtilities
+import kotlin.math.absoluteValue
 
-class RunToolbarExtraSlotPane(val project: Project) {
+class RunToolbarExtraSlotPane(val project: Project, val cancel: () -> Unit) {
   private val manager = RunToolbarSlotManager.getInstance(project)
   val slotPane = JPanel(VerticalLayout(JBUI.scale(2))).apply {
     isOpaque = false
@@ -31,8 +33,9 @@ class RunToolbarExtraSlotPane(val project: Project) {
 
     override fun slotRemoved(index: Int) {
       if(index >= 0 && index < components.size) {
-        removeComponent(components[index])
-      } else {
+        removeSingleComponent(components[index])
+      }
+      else {
         rebuild()
       }
     }
@@ -44,9 +47,16 @@ class RunToolbarExtraSlotPane(val project: Project) {
 
   private val pane = object : JPanel(VerticalLayout(JBUI.scale(2))) {
     override fun addNotify() {
-      super.addNotify()
       manager.addListener(managerListener)
-      rebuild()
+      if (manager.slotsCount() == 0) {
+        manager.addNewSlot()
+      } else {
+        build()
+      }
+      super.addNotify()
+      SwingUtilities.invokeLater {
+        pack()
+      }
     }
 
     override fun removeNotify() {
@@ -57,8 +67,9 @@ class RunToolbarExtraSlotPane(val project: Project) {
     border = JBUI.Borders.empty(3)
     add(slotPane)
 
-    add(JPanel(MigLayout("ins 0, novisualpadding", "[min!]push[min!][min!]")).apply {
+    add(JPanel(MigLayout("ins 0, novisualpadding", "[min!]push[min!]")).apply {
       isOpaque = false
+      border = JBUI.Borders.empty(2, 1, 0, 5)
       this.add(JLabel(AllIcons.Toolbar.AddSlot).apply {
         this.addMouseListener(object : MouseAdapter() {
           override fun mouseClicked(e: MouseEvent) {
@@ -66,7 +77,6 @@ class RunToolbarExtraSlotPane(val project: Project) {
           }
         })
       })
-      this.add(JLabel(AllIcons.Toolbar.Pin).apply { text = "Dock" })
       this.add(JLabel(AllIcons.General.GearPlain))
     })
   }
@@ -74,13 +84,29 @@ class RunToolbarExtraSlotPane(val project: Project) {
   internal fun getView(): JComponent = pane
 
   private fun rebuild() {
-    slotPane.removeAll()
-    components.clear()
+    build()
+    if(manager.slotsCount() > 0) {
+      pack()
+    }
+  }
 
+  private fun cancelPopup() {
+    SwingUtilities.invokeLater{
+      cancel()
+    }
+  }
+
+  private fun build() {
     val count = manager.slotsCount()
-    repeat(count) { addNewSlot() }
-
-    pack()
+    if(count == 0) {
+      slotPane.removeAll()
+      components.clear()
+      cancelPopup()
+      return
+    } else {
+      val diff = count - components.size
+      repeat(diff.absoluteValue) { if(diff > 0) addNewSlot() else removeComponent(components[it])}
+    }
   }
 
   private fun addSingleSlot() {
@@ -105,6 +131,9 @@ class RunToolbarExtraSlotPane(val project: Project) {
   private fun pack() {
     slotPane.revalidate()
     pane.revalidate()
+
+    slotPane.repaint()
+    pane.repaint()
     UIUtil.getWindow(pane)?.let {
       if (it.isShowing) {
         it.pack()
@@ -112,10 +141,19 @@ class RunToolbarExtraSlotPane(val project: Project) {
     }
   }
 
+  private fun removeSingleComponent(component: SlotComponent) {
+    removeComponent(component)
+    if (components.isNotEmpty()) {
+      pack()
+    }
+  }
+
   private fun removeComponent(component: SlotComponent) {
     slotPane.remove(component.view)
     components.remove(component)
-    pack()
+    if (components.isEmpty()) {
+      cancelPopup()
+    }
   }
 
   private fun getData(component: SlotComponent): SlotDate? {
