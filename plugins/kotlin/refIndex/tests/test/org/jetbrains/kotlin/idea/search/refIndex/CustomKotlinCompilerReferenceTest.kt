@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.test.KotlinRoot
 import kotlin.io.path.Path
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
+import kotlin.io.path.isDirectory
 import kotlin.reflect.KFunction
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredMemberFunctions
@@ -36,8 +37,10 @@ class CustomKotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
     fun `test match testData with tests`() {
         val testNames = this::class.declaredMemberFunctions.filter { it.visibility == KVisibility.PUBLIC }.map(KFunction<*>::name).toSet()
         for (testDirectory in Path(testDataPath).listDirectoryEntries()) {
-            val testName = testDirectory.name
-            assertTrue("Test not found for '$testName' directory", testName in testNames)
+            if (!testDirectory.isDirectory() || testDirectory.listDirectoryEntries().isEmpty()) continue
+
+            val testDirectoryName = testDirectory.name
+            assertTrue("Test not found for '$testDirectoryName' directory", testDirectoryName in testNames)
         }
     }
 
