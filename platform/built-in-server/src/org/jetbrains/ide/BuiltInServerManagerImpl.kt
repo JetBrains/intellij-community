@@ -40,11 +40,10 @@ private val LOG = logger<BuiltInServerManager>()
 
 class BuiltInServerManagerImpl : BuiltInServerManager() {
   private var serverStartFuture: Future<*>? = null
-
   private var server: BuiltInServer? = null
 
   override val port: Int
-    get() = if (server == null) defaultPort else server!!.port
+    get() = server?.port ?: defaultPort
 
   override val serverDisposable: Disposable?
     get() = server

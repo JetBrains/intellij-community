@@ -1,6 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("PackageDirectoryMismatch")
-
 package com.intellij.ide.passwordSafe.impl
 
 import com.intellij.configurationStore.SettingsSavingComponent
@@ -72,13 +71,11 @@ open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSaf
     }
   }
 
-  internal fun createMasterKeyEncryptionSpec(): EncryptionSpec {
-    val pgpKey = settings.state.pgpKeyId
-    return when (pgpKey) {
+  internal fun createMasterKeyEncryptionSpec(): EncryptionSpec =
+    when (val pgpKey = settings.state.pgpKeyId) {
       null -> EncryptionSpec(type = getDefaultEncryptionType(), pgpKeyId = null)
       else -> EncryptionSpec(type = EncryptionType.PGP_KEY, pgpKeyId = pgpKey)
     }
-  }
 
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
   protected val memoryHelperProvider: Lazy<CredentialStore> = lazy { InMemoryCredentialStore() }

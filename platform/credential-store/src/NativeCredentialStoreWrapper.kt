@@ -23,8 +23,8 @@ internal val NOTIFICATION_MANAGER by lazy { SingletonNotificationManager("Passwo
 
 private val REMOVED_CREDENTIALS = Credentials("REMOVED_CREDENTIALS")
 
-// used only for native keychains, not for KeePass, so, postponedCredentials and other is not overhead if KeePass is used
-private class NativeCredentialStoreWrapper internal constructor(
+// used only for native keychains, not for KeePass, so `postponedCredentials` and others do not add any overhead when KeePass is used
+private class NativeCredentialStoreWrapper(
   private val store: CredentialStore,
   private val queueProcessor: QueueProcessor<() -> Unit>
 ) : CredentialStore, Closeable {
@@ -113,10 +113,10 @@ private class NativeCredentialStoreWrapper internal constructor(
 private fun notifyUnsatisfiedLinkError(e: UnsatisfiedLinkError) {
   LOG.error(e)
   var message = CredentialStoreBundle.message("notification.content.native.keychain.unavailable",
-                                              ApplicationNamesInfo.getInstance().fullProductName);
+                                              ApplicationNamesInfo.getInstance().fullProductName)
   if (SystemInfo.isLinux) {
-    message += "\n";
-    message += CredentialStoreBundle.message("notification.content.native.keychain.unavailable.linux.addition");
+    message += "\n"
+    message += CredentialStoreBundle.message("notification.content.native.keychain.unavailable.linux.addition")
   }
   NOTIFICATION_MANAGER.notify(CredentialStoreBundle.message("notification.title.native.keychain.unavailable"), message, null)
 }
@@ -131,7 +131,7 @@ private class MacOsCredentialStoreFactory : CredentialStoreFactory {
 private class LinuxCredentialStoreFactory : CredentialStoreFactory {
   override fun create(): CredentialStore? = when {
     SystemInfo.isLinux -> {
-      val preferWallet = Registry.`is`("credentialStore.linux.prefer.kwallet", false)
+      @Suppress("SpellCheckingInspection") val preferWallet = Registry.`is`("credentialStore.linux.prefer.kwallet", false)
       var res: CredentialStore? = if (preferWallet)
         KWalletCredentialStore.create()
       else

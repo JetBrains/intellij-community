@@ -45,7 +45,7 @@ import static com.intellij.openapi.util.NlsContexts.*;
  */
 public class Notification {
   /**
-   * Which actions to keep and which to show under the "Actions" dropdown link if actions do not fit horizontally
+   * Tells which actions to keep (i.e. do not put under the "Actions" dropdown) when actions do not fit horizontally
    * into the width of the notification.
    */
   public enum CollapseActionsDirection {KEEP_LEFTMOST, KEEP_RIGHTMOST}

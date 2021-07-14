@@ -27,7 +27,6 @@ import static com.intellij.patterns.uast.UastPatterns.uExpression;
 import static com.intellij.psi.UastReferenceRegistrar.registerUastReferenceProvider;
 
 public class NotificationGroupIdReferenceContributor extends PsiReferenceContributor {
-
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registerUastReferenceProvider(registrar,
