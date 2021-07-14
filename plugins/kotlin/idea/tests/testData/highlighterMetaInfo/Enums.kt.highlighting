@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 package testing
 
 <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>enum<!> class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ENUM'")!>Test<!> {

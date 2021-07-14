@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 fun test() {
     Test("text", "text")() // BUG
 }

@@ -1,5 +1,3 @@
-// IGNORE_FIR
-
 @Target(AnnotationTarget.CLASS, AnnotationTarget.EXPRESSION)
 @Retention(AnnotationRetention.SOURCE)
 annotation class Ann

@@ -5,11 +5,11 @@ fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_D
         return<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LABEL'")!>@label<!> 2
     }
 
-    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LABEL'")!>loop@<!> for (<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>i<!> in 1..100) {
+    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LABEL'")!>loop@<!> for (<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>i<!> in 1..100) {
         break<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LABEL'")!>@loop<!>
     }
 
-    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LABEL'")!>loop2@<!> for (<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>i<!> in 1..100) {
+    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LABEL'")!>loop2@<!> for (<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>i<!> in 1..100) {
         break<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LABEL'")!>@loop2<!>
     }
 

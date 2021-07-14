@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 val <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>packageSize<!> = 0
 val <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION'")!>packageSizeGetter<!>
 <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_KEYWORD'")!>get<!>() = <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>packageSize<!> * 2

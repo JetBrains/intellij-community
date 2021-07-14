@@ -7,14 +7,14 @@ val <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PACKAGE_PR
     <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CONSTRUCTOR'")!>T2<!>().<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_CALL'")!>nonSuspend<!>()
     .<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_SUSPEND_FUNCTION_CALL'")!>suspend1<!>(<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>fn<!>)
     .<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_SUSPEND_FUNCTION_CALL'")!>suspend1<!> {  }
-        .<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_SUSPEND_FUNCTION_CALL'")!>suspend1<!> { <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LOCAL_VARIABLE'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_SUSPEND_FUNCTION_CALL'")!>res<!>(5) }
-    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LOCAL_VARIABLE'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_SUSPEND_FUNCTION_CALL'")!>res<!>(5)
-    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PACKAGE_PROPERTY'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_SUSPEND_FUNCTION_CALL'")!>fnType<!>()
+        .<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_SUSPEND_FUNCTION_CALL'")!>suspend1<!> { <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LOCAL_VARIABLE'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION'")!>res<!>(5) }
+    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LOCAL_VARIABLE'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION'")!>res<!>(5)
+    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PACKAGE_PROPERTY'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION'")!>fnType<!>()
     <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PACKAGE_PROPERTY'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION'")!>fnFnType<!>().<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_SUSPEND_FUNCTION_CALL'")!>invoke<!>()
 }
 class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>T2<!> {
     <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>suspend<!> <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>inline<!> fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>suspend1<!>(<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>block<!>: <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>suspend<!> () -> <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_OBJECT'")!>Unit<!>): <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>T2<!> {
-        <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_SUSPEND_FUNCTION_CALL'")!>block<!>()
+        <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION'")!>block<!>()
         return this
     }
     fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>nonSuspend<!>() = this

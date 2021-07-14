@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 var my = 0
     get() = field
     set(arg) {

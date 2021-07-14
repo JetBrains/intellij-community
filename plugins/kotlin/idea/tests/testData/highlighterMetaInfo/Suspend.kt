@@ -1,5 +1,3 @@
-// IGNORE_FIR
-
 val fnType : suspend () -> Unit = {}
 
 val fnFnType: () -> suspend () -> Unit = {  -> {}}
