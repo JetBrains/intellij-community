@@ -1,8 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.util
 
+import com.intellij.build.BuildContentManager
 import com.intellij.execution.CantRunException
 import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.runners.ExecutionUtil
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -34,7 +40,24 @@ class UnknownAlternativeSdkResolver(private val project: Project) {
   }
 
   @Throws(CantRunException::class)
-  fun tryResolveJre(jreHome: String) : Sdk? {
+  fun notifyUserToResolveJreAndFail(jreHome: String) : Nothing {
+    val notification = Notification("JDK resolve problems", ProjectBundle.message("failed.to.resolve.sdk.notification.title"), "", NotificationType.INFORMATION)
+    notification.addAction(object : AnAction(ProjectBundle.message("try.to.find.sdk.notification.action")) {
+      override fun actionPerformed(e: AnActionEvent) {
+        try {
+          tryResolveJre(jreHome)
+        } catch (e: CantRunException) {
+          val buildToolWindowId = BuildContentManager.getInstance(project).orCreateToolWindow.id
+          ExecutionUtil.handleExecutionError(project, buildToolWindowId, ProjectBundle.message("resolve.sdk.task.name"), e)
+        }
+      }
+    })
+    notification.notify(project)
+    throw CantRunException.CustomProcessedCantRunException()
+  }
+
+  @Throws(CantRunException::class)
+  private fun tryResolveJre(jreHome: String) : Sdk? {
     if (!Registry.`is`("jdk.auto.run.configurations")) return null
 
     val javaSdk = JavaSdk.getInstance()

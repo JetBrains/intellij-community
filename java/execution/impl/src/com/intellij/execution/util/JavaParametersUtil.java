@@ -163,10 +163,8 @@ public final class JavaParametersUtil {
       return javaSdk.createJdk(ObjectUtils.notNull(javaSdk.getVersionString(jreHome), ""), jreHome);
     }
 
-    Sdk resolved = UnknownAlternativeSdkResolver.getInstance(project).tryResolveJre(jreHome);
-    if (resolved != null) return resolved;
-
-    throw new CantRunException(ExecutionBundle.message("jre.path.is.not.valid.jre.home.error.message", jreHome));
+    UnknownAlternativeSdkResolver.getInstance(project).notifyUserToResolveJreAndFail(jreHome);
+    throw new IllegalStateException();
   }
 
   public static void checkAlternativeJRE(@NotNull CommonJavaRunConfigurationParameters configuration) throws RuntimeConfigurationWarning {

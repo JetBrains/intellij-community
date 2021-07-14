@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.openapi.module.Module;
@@ -53,5 +53,14 @@ public class CantRunException extends ExecutionException {
 
   public static CantRunException noJdkConfigured() {
     return new CantRunException(ExecutionBundle.message("project.has.no.jdk.configured.error.message"));
+  }
+
+  /**
+   * Exceptions implementing it are skipped and the notification is not shown.
+   */
+  public static class CustomProcessedCantRunException extends CantRunException {
+    public CustomProcessedCantRunException() {
+      super("");
+    }
   }
 }

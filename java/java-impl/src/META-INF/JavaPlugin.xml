@@ -278,6 +278,9 @@
                        displayType="TOOL_WINDOW"
                        bundle="messages.JavaCompilerBundle"
                        key="notification.group.title.jps.cannot.start.compiler" />
+    <notificationGroup id="JDK resolve problems"
+                       toolWindowId="Build"
+                       displayType="BALLOON" />
 
     <registryKey key="ide.jps.use.build.tool.window" defaultValue="true" description="Enables 'Build' toolwindow for JPS compilation messages"/>
     <applicationService serviceImplementation="com.intellij.compiler.server.BuildManager" preload="true"/>

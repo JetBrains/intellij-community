@@ -69,6 +69,9 @@ public final class ExecutionUtil {
     }
 
     LOG.debug(e);
+    if (e instanceof CantRunException.CustomProcessedCantRunException) {
+      return;
+    }
 
     String description = e.getMessage();
     HyperlinkListener listener = null;
