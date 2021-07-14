@@ -58,6 +58,8 @@ import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.text.JTextComponent
+import javax.swing.text.html.HTMLEditorKit
+import javax.swing.text.html.parser.ParserDelegator
 
 private val minPopupMenuWidth = 175.scaled()
 
@@ -309,7 +311,20 @@ internal class PackageDetailsHeaderPanel(
             ?: return
 
         CopyPasteManager.getInstance()
-            .setContents(StringSelection(text))
+            .setContents(StringSelection(text.stripHtml()))
+    }
+
+    private fun String.stripHtml(): String {
+        val stringBuilder = StringBuilder()
+
+        val parserDelegator = ParserDelegator()
+        val parserCallback: HTMLEditorKit.ParserCallback = object : HTMLEditorKit.ParserCallback() {
+            override fun handleText(data: CharArray, pos: Int) {
+                stringBuilder.append(data)
+            }
+        }
+        parserDelegator.parse(this.reader(), parserCallback, true)
+        return stringBuilder.toString()
     }
 }
 
