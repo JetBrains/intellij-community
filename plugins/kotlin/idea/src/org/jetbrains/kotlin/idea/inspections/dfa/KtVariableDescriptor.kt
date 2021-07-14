@@ -10,19 +10,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isStableVal
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
-import org.jetbrains.kotlin.idea.search.usagesSearch.descriptorCompat
 import org.jetbrains.kotlin.idea.util.findAnnotation
-import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
-import org.jetbrains.kotlin.resolve.descriptorUtil.classValueType
 import org.jetbrains.kotlin.resolve.jvm.annotations.VOLATILE_ANNOTATION_FQ_NAME
 
 class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescriptor {
@@ -69,7 +65,15 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
     override fun toString(): String = variable.name ?: "<unknown>"
     
     companion object {
-        fun createVariable(factory: DfaValueFactory, expr: KtExpression?): DfaVariableValue? {
+        fun createFromQualified(factory: DfaValueFactory, expr: KtExpression?): DfaVariableValue? {
+            var selector = expr
+            while (selector is KtQualifiedExpression) {
+                selector = selector.selectorExpression
+            }
+            return createFromSimpleName(factory, selector)
+        }
+
+        fun createFromSimpleName(factory: DfaValueFactory, expr: KtExpression?): DfaVariableValue? {
             val varFactory = factory.varFactory
             if (expr is KtSimpleNameExpression) {
                 val target = expr.mainReference.resolve()
@@ -85,7 +89,7 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
                         var qualifier: DfaVariableValue? = null
                         if (parent is KtQualifiedExpression && parent.selectorExpression == expr) {
                             val receiver = parent.receiverExpression
-                            qualifier = createVariable(factory, receiver)
+                            qualifier = createFromSimpleName(factory, receiver)
                         } else {
                             val classOrObject = target.containingClassOrObject?.resolveToDescriptorIfAny()
                             if (classOrObject != null) {

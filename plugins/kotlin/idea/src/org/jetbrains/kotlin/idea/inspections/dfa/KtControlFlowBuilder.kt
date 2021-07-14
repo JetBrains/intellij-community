@@ -480,7 +480,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val anchor = KotlinExpressionAnchor(expr)
         if (operand != null) {
             val dfType = operand.getKotlinType().toDfType(expr)
-            val dfVar = KtVariableDescriptor.createVariable(factory, operand)
+            val dfVar = KtVariableDescriptor.createFromQualified(factory, operand)
             val ref = expr.operationReference.text
             if (dfType is DfIntegralType) {
                 when (ref) {
@@ -523,7 +523,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (ref == "++" || ref == "--") {
             if (operand != null) {
                 val dfType = operand.getKotlinType().toDfType(expr)
-                val dfVar = KtVariableDescriptor.createVariable(factory, operand)
+                val dfVar = KtVariableDescriptor.createFromQualified(factory, operand)
                 if (dfVar != null) {
                     if (dfType is DfIntegralType) {
                         addInstruction(DupInstruction())
@@ -535,6 +535,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                         // Custom inc/dec may update the variable
                         addInstruction(FlushVariableInstruction(dfVar))
                     }
+                } else {
+                    // Unknown value updated
+                    addInstruction(FlushFieldsInstruction())
                 }
             }
         } else if (ref == "!!") {
@@ -755,7 +758,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun processReferenceExpression(expr: KtSimpleNameExpression) {
-        val dfVar = KtVariableDescriptor.createVariable(factory, expr)
+        val dfVar = KtVariableDescriptor.createFromSimpleName(factory, expr)
         if (dfVar != null) {
             addInstruction(JvmPushInstruction(dfVar, KotlinExpressionAnchor(expr)))
             var realExpr : KtExpression = expr
@@ -890,11 +893,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processAssignmentExpression(expr: KtBinaryExpression) {
         val left = expr.left
         val right = expr.right
-        var leftSelector = left
-        while (leftSelector is KtQualifiedExpression) {
-            leftSelector = leftSelector.selectorExpression
-        }
-        val dfVar = KtVariableDescriptor.createVariable(factory, leftSelector)
+        val dfVar = KtVariableDescriptor.createFromQualified(factory, left)
         val leftType = left?.getKotlinType()
         val rightType = right?.getKotlinType()
         if (dfVar == null) {

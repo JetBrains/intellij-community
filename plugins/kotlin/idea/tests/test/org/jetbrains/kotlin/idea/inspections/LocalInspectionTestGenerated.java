@@ -4901,6 +4901,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/qualifiedCompoundAssignment.kt");
         }
 
+        @TestMetadata("qualifiedIncrement.kt")
+        public void testQualifiedIncrement() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/qualifiedIncrement.kt");
+        }
+
         @TestMetadata("qualifiedProperty.kt")
         public void testQualifiedProperty() throws Exception {
             runTest("testData/inspectionsLocal/dfa/qualifiedProperty.kt");
