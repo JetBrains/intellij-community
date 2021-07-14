@@ -73,7 +73,9 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinLightCodeInsightFixtureT
         }
     }
 
-    private fun File.getExpectedHighlightingFile(): File {
-        return resolveSibling("$name.$HIGHLIGHTING_EXTENSION")
+    protected fun File.getExpectedHighlightingFile(suffix: String = highlightingFileNameSuffix(this)): File {
+        return resolveSibling("$name.$suffix")
     }
+
+    protected open fun highlightingFileNameSuffix(ktFilePath: File): String = HIGHLIGHTING_EXTENSION
 }

@@ -1,4 +1,3 @@
-// IGNORE_FIR
 fun bar(block: () -> Int) = block()
 
 fun foo(): Int {

@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 interface <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_TRAIT'")!>FunctionLike<!> {
     <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>operator<!> fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>invoke<!>() {
     }

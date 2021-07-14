@@ -1,4 +1,3 @@
-// IGNORE_FIR
 class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>My<!>(val <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!>: <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Int<!>?)
 
 fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>My<!>?.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>(): <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Int<!> {
