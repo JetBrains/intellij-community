@@ -250,9 +250,6 @@
         <element id="archive" name="kotlin-properties.jar">
           <element id="module-output" name="kotlin.properties" />
         </element>
-        <element id="archive" name="kotlin-native-gradle.jar">
-          <element id="module-output" name="kotlin.native.native-gradle" />
-        </element>
         <element id="archive" name="kotlin-project-wizard-maven.jar">
           <element id="module-output" name="kotlin.project-wizard.maven" />
         </element>

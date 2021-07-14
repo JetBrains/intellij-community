@@ -88,7 +88,6 @@
     <orderEntry type="module" module-name="kotlin.spellchecker" />
     <orderEntry type="module" module-name="kotlin.jvm-decompiler" />
     <orderEntry type="module" module-name="kotlin.properties" />
-    <orderEntry type="module" module-name="kotlin.native.native-gradle" />
     <orderEntry type="module" module-name="kotlin.project-wizard.maven" />
     <orderEntry type="module" module-name="kotlin.project-wizard.gradle" />
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" />

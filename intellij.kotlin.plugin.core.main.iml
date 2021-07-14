@@ -69,7 +69,6 @@
     <orderEntry type="module" module-name="kotlin.spellchecker" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-decompiler" exported="" />
     <orderEntry type="module" module-name="kotlin.properties" exported="" />
-    <orderEntry type="module" module-name="kotlin.native.native-gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.gradle" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler" level="project" />
