@@ -7,11 +7,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.fileActions.MarkdownFileActionsBaseDialog
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils
+import org.jetbrains.annotations.Nls
 
 internal class MarkdownImportDocxDialog(
   private val fileToImport: VirtualFile,
+  private val importTaskTitle: @Nls String,
   project: Project,
-  suggestedFilePath: String
+  suggestedFilePath: String,
 ) : MarkdownFileActionsBaseDialog(project, suggestedFilePath, fileToImport) {
 
   init {
@@ -20,7 +22,7 @@ internal class MarkdownImportDocxDialog(
   }
 
   override fun doAction(selectedFileUrl: String) {
-    MarkdownImportExportUtils.copyAndConvertToMd(project, fileToImport, selectedFileUrl)
+    MarkdownImportExportUtils.copyAndConvertToMd(project, fileToImport, selectedFileUrl, importTaskTitle)
   }
 
   override fun getFileNameIfExist(dir: String, fileNameWithoutExtension: String): String? {

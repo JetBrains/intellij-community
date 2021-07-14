@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -94,8 +95,11 @@ object MarkdownImportExportUtils {
    * converts the specified docx file using the pandoc utility,
    * and also calls the copy method for it to the same directory if the conversion was successful.
    */
-  fun copyAndConvertToMd(project: Project, vFileToImport: VirtualFile, selectedFileUrl: String) {
-    object : Task.Modal(project, MarkdownBundle.message("markdown.import.docx.convert"), true) {
+  fun copyAndConvertToMd(project: Project,
+                         vFileToImport: VirtualFile,
+                         selectedFileUrl: String,
+                         @NlsContexts.DialogTitle taskTitle: String) {
+    object : Task.Modal(project, taskTitle, true) {
       private lateinit var createdFilePath: String
       private lateinit var output: ProcessOutput
 

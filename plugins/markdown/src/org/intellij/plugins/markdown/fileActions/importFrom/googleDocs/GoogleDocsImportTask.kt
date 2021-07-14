@@ -21,7 +21,9 @@ internal class GoogleDocsImportTask(project: Project, private val credential: Cr
   override fun onSuccess() {
     if (loadedFile != null) {
       val suggestedFilePath = project.basePath!!
-      MarkdownImportDocxDialog(loadedFile!!, project, suggestedFilePath).show()
+      val importTaskTitle =  MarkdownBundle.message("markdown.google.docs.import.task.title")
+
+      MarkdownImportDocxDialog(loadedFile!!, importTaskTitle, project, suggestedFilePath).show()
     }
   }
 }
