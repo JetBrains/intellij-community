@@ -148,7 +148,7 @@ public abstract class ToolbarUpdater implements Activatable {
       JComponent component = updater == null ? null : updater.myComponent;
       if (component == null ||
           !ApplicationManager.getApplication().isUnitTestMode() &&
-          (!component.isDisplayable() || !component.isShowing() && !myIncludeInvisible)) {
+          !UIUtil.isShowing(component) && (!component.isDisplayable() || !myIncludeInvisible)) {
         return;
       }
 
