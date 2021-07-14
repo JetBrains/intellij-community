@@ -12,9 +12,7 @@ import com.intellij.ide.actions.ExternalJavaDocAction;
 import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
-import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.lang.documentation.ExternalDocumentationHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -32,34 +30,25 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorCssFontResolver;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
@@ -73,7 +62,10 @@ import com.intellij.util.*;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManager;
 
 import javax.imageio.ImageIO;
@@ -97,12 +89,9 @@ import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.List;
 import java.util.Vector;
 import java.util.*;
-import java.util.regex.Pattern;
 
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider, WidthBasedLayout {
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
@@ -116,9 +105,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private static final int PREFERRED_HEIGHT_MAX_EM = 10;
   private static final JBDimension MAX_DEFAULT = new JBDimension(650, 500);
   private static final JBDimension MIN_DEFAULT = new JBDimension(300, 36);
-
-  private static final Pattern EXTERNAL_LINK_PATTERN = Pattern.compile("(<a\\s*href=[\"']http[^>]*>)([^>]*)(</a>)");
-  private static final @NlsSafe String EXTERNAL_LINK_REPLACEMENT = "$1$2<icon src='AllIcons.Ide.External_link_arrow'>$3";
 
   private final ExternalDocAction myExternalDocAction;
 
@@ -153,7 +139,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final MyScrollPane myScrollPane;
   private final JEditorPane myEditorPane;
   private @Nls String myText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
-  private @Nls String myDecoratedText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
   private final JComponent myControlPanel;
   private boolean myControlPanelVisible;
   private int myHighlightedLink = -1;
@@ -266,7 +251,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     DataProvider helpDataProvider = dataId -> PlatformDataKeys.HELP_ID.is(dataId) ? DOCUMENTATION_TOPIC_ID : null;
     myEditorPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
     myText = "";
-    myDecoratedText = "";
     myEditorPane.setEditable(false);
     if (ScreenReader.isActive()) {
       // Note: Making the caret visible is merely for convenience
@@ -747,7 +731,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     if (element != null && element.getElement() != null) {
       myManager.updateToolWindowTabName(element.getElement());
     }
-    myDecoratedText = decorate(text);
 
     showHint(viewRect, ref);
 
@@ -772,7 +755,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     highlightLink(-1);
 
-    myEditorPane.setText(myDecoratedText);
+    myEditorPane.setText(myText);
     applyFontProps();
 
     showHint();
@@ -865,7 +848,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   @Override
   public int getPreferredHeight(int width) {
     myEditorPane.setBounds(0, 0, width, MAX_DEFAULT.height);
-    myEditorPane.setText(myDecoratedText);
+    myEditorPane.setText(myText);
     Dimension preferredSize = myEditorPane.getPreferredSize();
 
     int height = preferredSize.height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0);
@@ -946,187 +929,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       View definition = findDefinition(view.getView(i));
       if (definition != null) return definition;
     }
-    return null;
-  }
-
-  @Contract(pure = true)
-  private String decorate(String text) {
-    text = StringUtil.replaceIgnoreCase(text, "</html>", "");
-    text = StringUtil.replaceIgnoreCase(text, "</body>", "");
-    text = StringUtil.replaceIgnoreCase(text, DocumentationMarkup.SECTIONS_START + DocumentationMarkup.SECTIONS_END, "");
-    text = StringUtil.replaceIgnoreCase(text, DocumentationMarkup.SECTIONS_START + "<p>" + DocumentationMarkup.SECTIONS_END, "");
-    boolean hasContent = text.contains(DocumentationMarkup.CONTENT_START);
-    if (!hasContent) {
-      if (!text.contains(DocumentationMarkup.DEFINITION_START)) {
-        int bodyStart = findContentStart(text);
-        if (bodyStart > 0) {
-          text = text.substring(0, bodyStart) +
-                 DocumentationMarkup.CONTENT_START +
-                 text.substring(bodyStart) +
-                 DocumentationMarkup.CONTENT_END;
-        }
-        else {
-          text = DocumentationMarkup.CONTENT_START + text + DocumentationMarkup.CONTENT_END;
-        }
-        hasContent = true;
-      } else if (!text.contains(DocumentationMarkup.SECTIONS_START)){
-        text = StringUtil.replaceIgnoreCase(text, DocumentationMarkup.DEFINITION_START, "<div class='definition-only'><pre>");
-      }
-    }
-    if (!text.contains(DocumentationMarkup.DEFINITION_START)) {
-      text = text.replace("class='content'", "class='content-only'");
-    }
-    String location = getLocationText();
-    if (location != null) {
-      text = text + getBottom(hasContent) + location + "</div>";
-    }
-    String links = getExternalText(myManager, getElement(), myExternalUrl, myProvider);
-    if (links != null) {
-      text = text + getBottom(location != null) + links;
-    }
-    //workaround for Swing html renderer not removing empty paragraphs before non-inline tags
-    text = text.replaceAll("<p>\\s*(<(?:[uo]l|h\\d|p))", "$1");
-    text = addExternalLinksIcon(text);
-    return text;
-  }
-
-  @Nullable
-  private static @Nls String getExternalText(@NotNull DocumentationManager manager,
-                                        @Nullable PsiElement element,
-                                        @Nullable String externalUrl,
-                                        @Nullable DocumentationProvider provider) {
-    if (element == null || provider == null) return null;
-
-    PsiElement originalElement = DocumentationManager.getOriginalElement(element);
-    if (!shouldShowExternalDocumentationLink(provider, element, originalElement)) {
-      return null;
-    }
-
-    String title = manager.getTitle(element);
-    if (externalUrl == null) {
-      List<String> urls = provider.getUrlFor(element, originalElement);
-      if (urls != null) {
-        boolean hasBadUrl = false;
-        @Nls StringBuilder result = new StringBuilder();
-        for (String url : urls) {
-          String link = getLink(title, url);
-          if (link == null) {
-            hasBadUrl = true;
-            break;
-          }
-
-          if (result.length() > 0) result.append("<p>");
-          result.append(link);
-        }
-        if (!hasBadUrl) return result.toString();
-      }
-      else {
-        return null;
-      }
-    }
-    else {
-      String link = getLink(title, externalUrl);
-      if (link != null) return link;
-    }
-
-    String linkText = CodeInsightBundle.message("html.external.documentation.component.header", title, title == null ? 0 : 1);
-    return HtmlChunk.link("external_doc", linkText)
-      .child(HtmlChunk.tag("icon").attr("src", "AllIcons.Ide.External_link_arrow")).toString();
-  }
-
-  private static @Nls String getLink(@Nls String title, String url) {
-    String hostname = getHostname(url);
-    if (hostname == null) {
-      return null;
-    }
-
-    String linkText;
-    if (title == null) {
-      linkText = CodeInsightBundle.message("link.text.documentation.on", hostname);
-    }
-    else {
-      linkText = CodeInsightBundle.message("link.text.element.documentation.on.url", title, hostname);
-    }
-    return HtmlChunk.link(url, linkText).toString();
-  }
-
-  static boolean shouldShowExternalDocumentationLink(DocumentationProvider provider,
-                                                     PsiElement element,
-                                                     PsiElement originalElement) {
-    if (provider instanceof CompositeDocumentationProvider) {
-      List<DocumentationProvider> providers = ((CompositeDocumentationProvider)provider).getProviders();
-      for (DocumentationProvider p : providers) {
-        if (p instanceof ExternalDocumentationHandler) {
-          return ((ExternalDocumentationHandler)p).canHandleExternal(element, originalElement);
-        }
-      }
-    }
-    else if (provider instanceof ExternalDocumentationHandler) {
-      return ((ExternalDocumentationHandler)provider).canHandleExternal(element, originalElement);
-    }
-    return true;
-  }
-
-  private static String getHostname(String url) {
-    try {
-      return new URL(url).toURI().getHost();
-    }
-    catch (URISyntaxException | MalformedURLException ignored) { }
-    return null;
-  }
-
-  private static int findContentStart(String text) {
-    int index = StringUtil.indexOfIgnoreCase(text, "<body>", 0);
-    if (index >= 0) return index + 6;
-    index = StringUtil.indexOfIgnoreCase(text, "</head>", 0);
-    if (index >= 0) return index + 7;
-    index = StringUtil.indexOfIgnoreCase(text, "</style>", 0);
-    if (index >= 0) return index + 8;
-    index = StringUtil.indexOfIgnoreCase(text, "<html>", 0);
-    if (index >= 0) return index + 6;
-    return -1;
-  }
-
-  @NotNull
-  private static String getBottom(boolean hasContent) {
-    return "<div class='" + (hasContent ? "bottom" : "bottom-no-content") + "'>";
-  }
-
-  @Contract(pure = true)
-  public static String addExternalLinksIcon(String text) {
-    return EXTERNAL_LINK_PATTERN.matcher(text).replaceAll(EXTERNAL_LINK_REPLACEMENT);
-  }
-
-  private @NlsSafe String getLocationText() {
-    PsiElement element = getElement();
-    if (element != null) {
-      PsiFile file = element.getContainingFile();
-      VirtualFile vfile = file == null ? null : file.getVirtualFile();
-
-      if (vfile == null) return null;
-
-      SearchScope scope = element.getUseScope();
-      if (scope instanceof LocalSearchScope) {
-        return null;
-      }
-
-      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
-      Module module = fileIndex.getModuleForFile(vfile);
-
-      if (module != null && !ModuleType.isInternal(module)) {
-        if (ModuleManager.getInstance(element.getProject()).getModules().length == 1) return null;
-        return "<icon src='" + ModuleType.get(module).getId() + "'>&nbsp;" + module.getName().replace("<", "&lt;");
-      }
-      else {
-        List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(vfile);
-        for (OrderEntry order : entries) {
-          if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
-            return "<icon src='AllIcons.Nodes.PpLibFolder" + "'>&nbsp;" + order.getPresentableName().replace("<", "&lt;");
-          }
-        }
-      }
-    }
-
     return null;
   }
 
@@ -1503,8 +1305,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return myText;
   }
 
-  public String getDecoratedText() {
-    return myDecoratedText;
+  public @Nls String getDecoratedText() {
+    return myText;
   }
 
   @Override
