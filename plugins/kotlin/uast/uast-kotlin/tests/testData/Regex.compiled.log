@@ -29,6 +29,16 @@ UClass (name = Regex)
         UParameter (name = input)
             UAnnotation (fqName = org.jetbrains.annotations.NotNull)
         UBlockExpression
+    UMethod (name = matchAt)
+        UParameter (name = input)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+        UParameter (name = index)
+        UBlockExpression
+    UMethod (name = matchesAt)
+        UParameter (name = input)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+        UParameter (name = index)
+        UBlockExpression
     UMethod (name = replace)
         UParameter (name = input)
             UAnnotation (fqName = org.jetbrains.annotations.NotNull)
