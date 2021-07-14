@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import com.intellij.util.containers.IntObjectMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +14,7 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  */
 public final class TestIconMapper implements PoolOfTestIcons {
-  private final static Int2ObjectMap<TestStateInfo.Magnitude> magnitudes = new Int2ObjectOpenHashMap<>();
+  private final static IntObjectMap<TestStateInfo.Magnitude> magnitudes = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   static {
     for (TestStateInfo.Magnitude value : TestStateInfo.Magnitude.values()) {

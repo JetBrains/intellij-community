@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.update;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
 import com.intellij.openapi.Disposable;
@@ -11,15 +12,13 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.intellij.util.AlarmFactory;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -39,7 +38,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   private volatile boolean myActive;
   private volatile boolean mySuspended;
 
-  private final Int2ObjectRBTreeMap<Map<Update, Update>> myScheduledUpdates = new Int2ObjectRBTreeMap<>();
+  private final ConcurrentIntObjectMap<Map<Update, Update>> myScheduledUpdates = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   private final Alarm myWaiterForMerge;
 
@@ -269,8 +268,9 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
         for (Update each : all) {
           each.setProcessed();
         }
-
-        execute(all.toArray(new Update[0]));
+        Update[] array = all.toArray(new Update[0]);
+        Arrays.sort(array, Comparator.comparingInt(Update::getPriority));
+        execute(array);
       }
       finally {
         myFlushing = false;
@@ -397,7 +397,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   private void put(@NotNull Update update) {
-    Map<Update, Update> updates = myScheduledUpdates.computeIfAbsent(update.getPriority(), __ -> new LinkedHashMap<>());
+    Map<Update, Update> updates = myScheduledUpdates.cacheOrGet(update.getPriority(), new LinkedHashMap<>());
     final Update existing = updates.remove(update);
     if (existing != null && existing != update) {
       existing.setProcessed();

@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.suggested
 
-import it.unimi.dsi.fastutil.ints.IntArrayList
+import com.intellij.util.containers.IntArrayList
 
 /**
  * Finds an increasing subsequence of element in the list with the maximum sum of [weightFunction] for all elements.
@@ -38,5 +38,5 @@ internal fun <T : Comparable<T>> findMaximumWeightIncreasingSubsequence(list: Li
     result.add(index)
     index = subsequenceLastButOneItems[index]
   }
-  return result.toIntArray().reversedArray()
+  return result.toArray().reversedArray()
 }

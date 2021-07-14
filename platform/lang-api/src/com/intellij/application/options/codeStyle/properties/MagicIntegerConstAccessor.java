@@ -1,11 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.properties;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.CollectionFactory;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
+import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.containers.IntObjectMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,8 +14,8 @@ import java.util.List;
 import java.util.Map;
 
 public class MagicIntegerConstAccessor extends ExternalStringAccessor<Integer> implements CodeStyleChoiceList {
-  private final Int2ObjectMap<String> myValueMap = new Int2ObjectOpenHashMap<>();
-  private final Map<String, IntList> myValueToKeysMap = CollectionFactory.createSmallMemoryFootprintMap();
+  private final IntObjectMap<String> myValueMap = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+  private final Map<String, IntArrayList> myValueToKeysMap = CollectionFactory.createSmallMemoryFootprintMap();
 
   public MagicIntegerConstAccessor(@NotNull Object object,
                                    @NotNull Field field,
@@ -33,8 +32,8 @@ public class MagicIntegerConstAccessor extends ExternalStringAccessor<Integer> i
 
   @Override
   protected final @Nullable Integer fromExternal(@NotNull String str) {
-    IntList keys = myValueToKeysMap.get(str);
-    return keys != null && keys.size() > 0 ? keys.getInt(0) : null;
+    IntArrayList keys = myValueToKeysMap.get(str);
+    return keys != null && keys.size() > 0 ? keys.get(0) : null;
   }
 
   @Override

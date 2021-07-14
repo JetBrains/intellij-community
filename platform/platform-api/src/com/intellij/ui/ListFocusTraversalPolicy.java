@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +15,7 @@ import java.util.List;
  */
 public final class ListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
   private final Component[] myComponents;
-  private final Object2IntMap<Component> myComponentToIndex;
+  private final ObjectIntMap<Component> myComponentToIndex;
 
   public ListFocusTraversalPolicy(@NotNull List<? extends Component> components) {
     myComponents = components.toArray(new Component[0]);
@@ -42,7 +42,8 @@ public final class ListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
     if (!myComponentToIndex.containsKey(aComponent)) {
       return null;
     }
-    return getNextComponent(myComponentToIndex.getInt(aComponent) + 1);
+    int i = myComponentToIndex.get(aComponent);
+    return getNextComponent((i==-1?0:i) + 1);
   }
 
   @Override
@@ -50,7 +51,8 @@ public final class ListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
     if (!myComponentToIndex.containsKey(aComponent)) {
       return null;
     }
-    return getPreviousComponent(myComponentToIndex.getInt(aComponent) - 1);
+    int i = myComponentToIndex.get(aComponent);
+    return getPreviousComponent((i==-1 ?0:i) - 1);
   }
 
   @Nullable
@@ -87,10 +89,12 @@ public final class ListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
     return null;
   }
 
-  private static @NotNull <X> Object2IntMap<X> indexMap(X @NotNull [] array) {
-    Object2IntMap<X> map = new Object2IntOpenHashMap<>(array.length);
+  private static @NotNull <X> ObjectIntMap<X> indexMap(X @NotNull [] array) {
+    ObjectIntMap<X> map = new ObjectIntHashMap<>(array.length);
     for (X x : array) {
-      map.putIfAbsent(x, map.size());
+      if (!map.containsKey(x)) {
+        map.put(x, map.size());
+      }
     }
     return map;
   }

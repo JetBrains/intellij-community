@@ -13,10 +13,9 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import com.intellij.util.ui.JBUI;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMaps;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -39,7 +38,7 @@ public final class DimensionService extends SimpleModificationTracker implements
 
   private final Map<String, Point> myKeyToLocation = new LinkedHashMap<>();
   private final Map<String, Dimension> myKeToSize = new LinkedHashMap<>();
-  private final Object2IntMap<String> myKeyToExtendedState = new Object2IntOpenHashMap<>();
+  private final ObjectIntMap<String> myKeyToExtendedState = new ObjectIntHashMap<>();
   @NonNls private static final String EXTENDED_STATE = "extendedState";
   @NonNls private static final String KEY = "key";
   @NonNls private static final String STATE = "state";
@@ -207,10 +206,11 @@ public final class DimensionService extends SimpleModificationTracker implements
     }
 
     // save extended states
-    for (Object2IntMap.Entry<String> entry : Object2IntMaps.fastIterable(myKeyToExtendedState)) {
+
+    for (ObjectIntMap.Entry<String> entry : myKeyToExtendedState.entries()) {
       Element e = new Element(EXTENDED_STATE);
       e.setAttribute(KEY, entry.getKey());
-      e.setAttribute(STATE, Integer.toString(entry.getIntValue()));
+      e.setAttribute(STATE, Integer.toString(entry.getValue()));
       element.addContent(e);
     }
     return element;

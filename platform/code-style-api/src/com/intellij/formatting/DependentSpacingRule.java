@@ -2,8 +2,8 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,7 +23,7 @@ public final class DependentSpacingRule {
   public static final DependentSpacingRule DEFAULT =
     new DependentSpacingRule(Trigger.HAS_LINE_FEEDS).registerData(Anchor.MIN_LINE_FEEDS, 1);
 
-  private final Object2IntMap<Anchor> myData = new Object2IntOpenHashMap<>();
+  private final ObjectIntMap<Anchor> myData = new ObjectIntHashMap<>();
 
   @NotNull private final Trigger myTrigger;
 
@@ -71,6 +71,6 @@ public final class DependentSpacingRule {
         "No data is registered for the dependent spacing rule %s. Registered: %s", anchor, myData
       ));
     }
-    return myData.getInt(anchor);
+    return myData.get(anchor);
   }
 }
