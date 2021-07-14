@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification
 
 import com.intellij.openapi.actionSystem.AnAction
@@ -30,7 +30,7 @@ class SingletonNotificationManager(private val group: NotificationGroup, private
              action: AnAction? = null): Boolean {
     val oldNotification = notification.get()
     if (oldNotification != null) {
-      if (!isExpired(oldNotification, group.toolWindowId, project)) {
+      if (isVisible(oldNotification, project)) {
         return false
       }
       oldNotification.whenExpired(null)
@@ -50,14 +50,14 @@ class SingletonNotificationManager(private val group: NotificationGroup, private
     return true
   }
 
-  // oldNotification.isExpired() is not enough - notification could be closed, but not expired
-  private fun isExpired(oldNotification: Notification, toolWindowId: String?, project: Project?) =
-    oldNotification.isExpired ||
-    toolWindowId == null ||
-    oldNotification.balloon == null && (
-      project == null ||
-      group.displayType != NotificationDisplayType.TOOL_WINDOW ||
-      ToolWindowManager.getInstance(project).getToolWindowBalloon(toolWindowId) == null)
+  private fun isVisible(notification: Notification, project: Project?): Boolean {
+    val balloon = when {
+      group.displayType != NotificationDisplayType.TOOL_WINDOW -> notification.balloon
+      project != null -> ToolWindowManager.getInstance(project).getToolWindowBalloon(group.toolWindowId!!)
+      else -> null
+    }
+    return balloon != null && !balloon.isDisposed
+  }
 
   fun clear() {
     notification.getAndSet(null)?.let {
