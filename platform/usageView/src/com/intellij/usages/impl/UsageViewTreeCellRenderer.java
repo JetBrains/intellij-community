@@ -71,7 +71,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       Object userObject = treeNode.getUserObject();
 
       Rectangle visibleRect = ((JViewport)tree.getParent()).getViewRect();
-      if (!visibleRect.isEmpty()) {
+      if (row >= 0 && !visibleRect.isEmpty()) {
         //Protection against SOE on some OSes and JDKs IDEA-120631
         RowLocation visible = myRowBoundsCalled ? RowLocation.INSIDE_VISIBLE_RECT : isRowVisible(row, visibleRect);
         myRowBoundsCalled = false;
