@@ -4,6 +4,7 @@ package com.intellij.ui.layout
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Font
 import javax.swing.BoxLayout
@@ -14,7 +15,24 @@ import javax.swing.event.HyperlinkListener
 
 /**
  * Supports multiline (\n) and hyperlink (<hyperlink>...</hyperlink>)
+ * Should be rewritten with more flexible way
+ * 1. Support several hyperlinks
+ * 2. Replace components that use <br> tag in text, use \n instead
+ * 3. Remove several JLabel instances from implementation
+ * 4. Use <a> instead of <hyperlink>
+ * 5. Support html links out-of-the-box
+ * 6. Rename hyperlink
+ * 7. HyperlinkLabel/JLabel have different left indents
+ * 7. etc
+ *
+ * noteRow method should be replaced by this method (or vice versa), other methods/classes with duplicate functionality should be removed
+ *
+ * @see com.intellij.ui.layout.Cell.comment
+ * @see com.intellij.ui.layout.Cell.label
+ * @see com.intellij.ui.layout.RowBuilder.noteRow
+ * @see com.intellij.ui.layout.RowBuilder.commentRow
  */
+@ApiStatus.Internal
 fun Cell.hyperlink(@NlsContexts.Label text: String,
                    style: UIUtil.ComponentStyle? = null,
                    color: Color? = null,
