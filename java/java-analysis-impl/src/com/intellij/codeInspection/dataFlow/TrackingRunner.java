@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.ibm.icu.text.ListFormatter;
+import com.intellij.DynamicBundle;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -29,7 +31,6 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
@@ -61,6 +62,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1383,7 +1385,9 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   private CauseItem fromSingleContract(@NotNull MemoryStateChange history, @NotNull PsiMethodCallExpression call,
                                        @NotNull PsiMethod method, @NotNull MethodContract contract) {
     List<ContractValue> conditions = contract.getConditions();
-    String conditionsText = conditions.stream().map(c -> c.getPresentationText(call)).collect(NlsMessages.joiningAnd());
+    Collector<String, ?, @Nls String> collector = Collectors.collectingAndThen(Collectors.toList(), list -> ListFormatter.getInstance(
+      DynamicBundle.getLocale(), ListFormatter.Type.AND, ListFormatter.Width.WIDE).format(list));
+    String conditionsText = conditions.stream().map(c -> c.getPresentationText(call)).collect(collector);
     String message;
     if (contract.getReturnValue().isFail()) {
       message = JavaAnalysisBundle.message("dfa.find.cause.contract.throws.on.condition",
