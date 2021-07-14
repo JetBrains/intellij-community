@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 
 public class LocalMavenRemoteProcessSupportFactory implements MavenRemoteProcessSupportFactory {
@@ -12,9 +11,10 @@ public class LocalMavenRemoteProcessSupportFactory implements MavenRemoteProcess
                                           String vmOptions,
                                           MavenDistribution distribution,
                                           Project project,
-                                          Integer debugPort) {
+                                          Integer debugPort,
+                                          String baseMultimoduleDirectory) {
     MavenActionsUsagesCollector.trigger(project, MavenActionsUsagesCollector.ActionID.StartLocalMavenServer);
-    return new LocalMavenServerRemoteProcessSupport(jdk, vmOptions, distribution, project, debugPort);
+    return new LocalMavenServerRemoteProcessSupport(jdk, vmOptions, distribution, project, debugPort, baseMultimoduleDirectory);
   }
 
   @Override

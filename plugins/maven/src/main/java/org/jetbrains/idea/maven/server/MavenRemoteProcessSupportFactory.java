@@ -4,12 +4,9 @@ package org.jetbrains.idea.maven.server;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.MavenDisposable;
 
 import java.util.function.Consumer;
 
@@ -20,7 +17,8 @@ public interface MavenRemoteProcessSupportFactory {
                                    String vmOptions,
                                    MavenDistribution distribution,
                                    Project project,
-                                   Integer debugPort);
+                                   Integer debugPort,
+                                   String baseMultimoduleDirectory);
 
   @NotNull
   static MavenRemoteProcessSupportFactory forProject(@NotNull Project project) {

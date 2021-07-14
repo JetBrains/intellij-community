@@ -246,15 +246,15 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     @Override
     public void run() {
       ProgressIndicator indicator = new EmptyProgressIndicator();
-      String dirForLogs = myMultimoduleDirectories.iterator().next();
-      MavenLog.LOG.info("Connecting maven connector in " + dirForLogs);
+      String baseMultimoduleDirectory = myMultimoduleDirectories.iterator().next();
+      MavenLog.LOG.info("Connecting maven connector in " + baseMultimoduleDirectory);
       try {
         if (myDebugPort != null) {
           //noinspection UseOfSystemOutOrSystemErr
           System.out.println("Listening for transport dt_socket at address: " + myDebugPort);
         }
         MavenRemoteProcessSupportFactory factory = MavenRemoteProcessSupportFactory.forProject(myProject);
-        mySupport = factory.create(myJdk, myVmOptions, myDistribution, myProject, myDebugPort);
+        mySupport = factory.create(myJdk, myVmOptions, myDistribution, myProject, myDebugPort, baseMultimoduleDirectory);
         mySupport.onTerminate(e -> {
           myManager.cleanUp(MavenServerConnectorImpl.this);
         });
@@ -268,10 +268,10 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
 
         server.set(myLogger, myDownloadListener, MavenRemoteObjectWrapper.ourToken);
         myServerPromise.setResult(server);
-        MavenLog.LOG.info("Connector in " + dirForLogs + " has been connected");
+        MavenLog.LOG.info("Connector in " + baseMultimoduleDirectory + " has been connected");
       }
       catch (Throwable e) {
-        MavenLog.LOG.warn("Cannot connect connector in " + dirForLogs, e);
+        MavenLog.LOG.warn("Cannot connect connector in " + baseMultimoduleDirectory, e);
         myServerPromise.setError(e);
       }
     }

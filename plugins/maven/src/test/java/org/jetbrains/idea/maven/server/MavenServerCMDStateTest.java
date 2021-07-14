@@ -1,8 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.openapi.util.SystemInfo;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.nio.file.Paths;
 
 public class MavenServerCMDStateTest {
 
@@ -57,5 +60,27 @@ public class MavenServerCMDStateTest {
   public void testMaxXmxStringValueSecondGreatOtherUnitGigabyte() {
     String xmxProperty = MavenServerCMDState.getMaxXmxStringValue("-Xmx1m", "-Xms1G");
     Assert.assertEquals("-Xmx1g", xmxProperty);
+  }
+
+  @Test
+  public void testFixJavaAgentParameterRelativePath() {
+    if (SystemInfo.isWindows) return;
+    String multimoduleDirectory = "/home/user/multimoduleDirectory/";
+    String relativePath = "lombok.jar=ECJ2";
+    String property = MavenServerCMDState.fixParameterPath("-javaagent:" + relativePath, multimoduleDirectory);
+    Assert.assertEquals("-javaagent:" + Paths.get(multimoduleDirectory, relativePath), property);
+
+    multimoduleDirectory = "/home/user/multimoduleDirectory";
+    property = MavenServerCMDState.fixParameterPath("-javaagent:" + relativePath, multimoduleDirectory);
+    Assert.assertEquals("-javaagent:" + Paths.get(multimoduleDirectory, relativePath), property);
+  }
+
+  @Test
+  public void testFixJavaAgentParameterAbsolutePath() {
+    if (SystemInfo.isWindows) return;
+    String multimoduleDirectory = "/home/user/multimoduleDirectory/";
+    String libPath = "/home/user/lombok.jar=ECJ2";
+    String property = MavenServerCMDState.fixParameterPath("-javaagent:" + libPath, multimoduleDirectory);
+    Assert.assertEquals("-javaagent:" + libPath, property);
   }
 }

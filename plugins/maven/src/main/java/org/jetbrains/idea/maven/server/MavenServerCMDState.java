@@ -29,6 +29,8 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.slf4j.Logger;
 import org.slf4j.impl.Log4jLoggerFactory;
 
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,16 +50,19 @@ public class MavenServerCMDState extends CommandLineState {
   protected final String myVmOptions;
   protected final MavenDistribution myDistribution;
   protected final Integer myDebugPort;
+  protected final String myMultimoduleDirectory;
 
   public MavenServerCMDState(@NotNull Sdk jdk,
                              @Nullable String vmOptions,
                              @NotNull MavenDistribution mavenDistribution,
-                             @Nullable Integer debugPort) {
+                             @Nullable Integer debugPort,
+                             @Nullable String multimoduleDirectory) {
     super(null);
     myJdk = jdk;
     myVmOptions = vmOptions;
     myDistribution = mavenDistribution;
     myDebugPort = debugPort;
+    myMultimoduleDirectory = multimoduleDirectory;
   }
 
   protected SimpleJavaParameters createJavaParameters() {
@@ -101,6 +106,9 @@ public class MavenServerCMDState extends CommandLineState {
         if (param.startsWith("-Xms")) {
           xmsProperty = param;
           continue;
+        }
+        if (param.startsWith("-javaagent")) {
+          param = fixParameterPath(param, myMultimoduleDirectory);
         }
         params.getVMParametersList().add(param);
       }
@@ -226,6 +234,16 @@ public class MavenServerCMDState extends CommandLineState {
   @TestOnly
   public static void resetThrowExceptionOnNextServerStart() {
     setupThrowMainClass = false;
+  }
+
+  static String fixParameterPath(String param, String multimoduleDirectory) {
+    if (multimoduleDirectory == null) return param;
+    String[] split = param.split(":");
+    if (split.length != 2) return param;
+    File file = new File(split[1]);
+    if (file.isAbsolute()) return param;
+
+    return split[0] + ":" + Paths.get(multimoduleDirectory, split[1]);
   }
 
   @Nullable

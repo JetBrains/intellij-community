@@ -14,11 +14,12 @@ internal class WslMavenServerRemoteProcessSupport(private val myWslDistribution:
                                                   vmOptions: String?,
                                                   mavenDistribution: WslMavenDistribution,
                                                   project: Project,
-                                                  debugPort: Int?) : AbstractMavenServerRemoteProcessSupport(jdk, vmOptions,
-                                                                                                             mavenDistribution,
-                                                                                                             project, debugPort) {
+                                                  debugPort: Int?,
+                                                  multimoduleDirectory: String?)
+  : AbstractMavenServerRemoteProcessSupport(jdk, vmOptions, mavenDistribution, project, debugPort, multimoduleDirectory) {
   override fun getRunProfileState(target: Any, configuration: Any, executor: Executor): RunProfileState {
-    return WslMavenCmdState(myWslDistribution, myJdk, myOptions, myDistribution as WslMavenDistribution, myDebugPort, myProject, remoteHost)
+    return WslMavenCmdState(myWslDistribution, myJdk, myOptions, myDistribution as WslMavenDistribution,
+                            myDebugPort, myProject, remoteHost, myMultimoduleDirectory)
   }
 
   override fun getRemoteHost(): String = myWslDistribution.wslIp
