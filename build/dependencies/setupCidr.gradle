@@ -35,7 +35,7 @@ task setupCidr
     version: "e0cccbacab5cf5ee621edddca1ea452353192e6b",
     platforms: [
       win: [
-        version: "1e0f8f649a3b18bcc2ddda7311cdb9b9faabd042",
+        version: "d7e9446e17ad4d3b1234a9a557a3037109646503",
         archs: ["x64", "x86"]
       ],
       linux: [archs: ["x64"]],
