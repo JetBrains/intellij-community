@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import kotlin.io.path.Path
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
@@ -22,11 +23,18 @@ abstract class AbstractKotlinCompilerReferenceTest : KotlinCompilerReferenceTest
 
         val usages = config["usages"]?.asJsonArray?.map { it.asString }
         val mainFile = config["mainFile"]?.asString ?: usages?.first() ?: error("Main file not found")
+        val shouldBeFixed = config["shouldBeUsage"]?.asJsonArray?.map { it.asString }.orEmpty()
 
         val allFiles = listOf(mainFile) + Path(testDataFilePath).listDirectoryEntries().map { it.name }.minus(mainFile)
 
         myFixture.configureByFiles(*allFiles.toTypedArray())
         rebuildProject()
-        assertEquals(usages?.toSet(), getReferentFilesForElementUnderCaret())
+
+        assertEquals(
+            usages?.toSet(),
+            getReferentFilesForElementUnderCaret()?.also {
+                it.intersect(shouldBeFixed).ifNotEmpty { error("$it should be removed from 'shouldBeFixed'") }
+            }?.plus(shouldBeFixed)
+        )
     }
 }

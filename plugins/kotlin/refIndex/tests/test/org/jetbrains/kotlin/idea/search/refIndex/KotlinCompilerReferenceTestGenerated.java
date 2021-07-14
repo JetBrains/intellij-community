@@ -195,6 +195,136 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/compilerIndex/functions/hierarchy")
+        public abstract static class Hierarchy extends AbstractKotlinCompilerReferenceTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/compilerIndex/functions/hierarchy/java")
+            public static class Java extends AbstractKotlinCompilerReferenceTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("J")
+                public void testJ() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/java/J/");
+                }
+
+                @TestMetadata("JJ")
+                public void testJJ() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/java/JJ/");
+                }
+
+                @TestMetadata("JJJ")
+                public void testJJJ() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/java/JJJ/");
+                }
+
+                @TestMetadata("JKJ")
+                public void testJKJ() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/java/JKJ/");
+                }
+
+                @TestMetadata("KJ")
+                public void testKJ() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/java/KJ/");
+                }
+
+                @TestMetadata("KJJ")
+                public void testKJJ() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/java/KJJ/");
+                }
+
+                @TestMetadata("KKJ")
+                public void testKKJ() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/java/KKJ/");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/compilerIndex/functions/hierarchy/kotlin")
+            public static class Kotlin extends AbstractKotlinCompilerReferenceTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("JJJK")
+                public void testJJJK() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/kotlin/JJJK/");
+                }
+
+                @TestMetadata("JJK")
+                public void testJJK() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/kotlin/JJK/");
+                }
+
+                @TestMetadata("JJKK")
+                public void testJJKK() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/kotlin/JJKK/");
+                }
+
+                @TestMetadata("JK")
+                public void testJK() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/kotlin/JK/");
+                }
+
+                @TestMetadata("JKJK")
+                public void testJKJK() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/kotlin/JKJK/");
+                }
+
+                @TestMetadata("JKK")
+                public void testJKK() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/kotlin/JKK/");
+                }
+
+                @TestMetadata("JKKK")
+                public void testJKKK() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/kotlin/JKKK/");
+                }
+
+                @TestMetadata("K")
+                public void testK() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/kotlin/K/");
+                }
+
+                @TestMetadata("KJJK")
+                public void testKJJK() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/kotlin/KJJK/");
+                }
+
+                @TestMetadata("KJK")
+                public void testKJK() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/kotlin/KJK/");
+                }
+
+                @TestMetadata("KJKK")
+                public void testKJKK() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/kotlin/KJKK/");
+                }
+
+                @TestMetadata("KK")
+                public void testKK() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/kotlin/KK/");
+                }
+
+                @TestMetadata("KKJK")
+                public void testKKJK() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/kotlin/KKJK/");
+                }
+
+                @TestMetadata("KKK")
+                public void testKKK() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/kotlin/KKK/");
+                }
+
+                @TestMetadata("KKKK")
+                public void testKKKK() throws Exception {
+                    runTest("testData/compilerIndex/functions/hierarchy/kotlin/KKKK/");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compilerIndex/functions/members")
         public static class Members extends AbstractKotlinCompilerReferenceTest {
             private void runTest(String testDataFilePath) throws Exception {

@@ -1,0 +1,3 @@
+fun kjj() {
+    KJJ().test()
+}
