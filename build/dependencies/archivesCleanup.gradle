@@ -2,7 +2,7 @@
 project.ext.deleteObsoleteArchivesTask = { String type, String dir ->
   // Delete all files older than 30 days except one with the latest modification date
   tasks.create(name: "deleteObsolete${type}Archives", type: Delete) {
-    def deleteThreshold = new Date() - 30
+    def deleteThreshold = new Date() - 7
 
     delete fileTree(dir: dir)
              .matching { include '*.tar.gz' }
