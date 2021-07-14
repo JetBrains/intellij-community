@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net;
 
+import com.google.common.net.HostAndPort;
+import com.google.common.net.InetAddresses;
+import com.google.common.net.InternetDomainName;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -201,5 +204,33 @@ public final class NetUtils {
 
   public static boolean isSniEnabled() {
     return SystemProperties.getBooleanProperty("jsse.enableSNIExtension", true);
+  }
+
+  public enum ValidHostInfo {
+    INVALID, VALID, VALID_PROXY
+  }
+  public static @NotNull ValidHostInfo isValidHost(@NotNull String host) {
+    try {
+      HostAndPort parsedHost = HostAndPort.fromString(host);
+      if (parsedHost.hasPort()) {
+        return ValidHostInfo.INVALID;
+      }
+      host = parsedHost.getHost();
+
+      try {
+        InetAddresses.forString(host);
+        return ValidHostInfo.VALID;
+      }
+      catch (IllegalArgumentException e) {
+        // it is not an IPv4 or IPv6 literal
+      }
+
+      InternetDomainName.from(host);
+    }
+    catch (IllegalArgumentException e) {
+      return ValidHostInfo.INVALID;
+    }
+
+    return ValidHostInfo.VALID_PROXY;
   }
 }

@@ -1,9 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net;
 
-import com.google.common.net.HostAndPort;
-import com.google.common.net.InetAddresses;
-import com.google.common.net.InternetDomainName;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -232,27 +229,14 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
         return IdeBundle.message("dialog.message.host.name.empty");
       }
 
-      try {
-        HostAndPort parsedHost = HostAndPort.fromString(host);
-        if (parsedHost.hasPort()) {
+      switch (NetUtils.isValidHost(host)) {
+        case INVALID:
           return IdeBundle.message("dialog.message.invalid.host.value");
-        }
-        host = parsedHost.getHost();
-
-        try {
-          InetAddresses.forString(host);
+        case VALID:
           return null;
-        }
-        catch (IllegalArgumentException e) {
-          // it is not an IPv4 or IPv6 literal
-        }
-
-        InternetDomainName.from(host);
+        case VALID_PROXY:
+          break;
       }
-      catch (IllegalArgumentException e) {
-        return IdeBundle.message("dialog.message.invalid.host.value");
-      }
-
       if (myProxyAuthCheckBox.isSelected()) {
         if (StringUtil.isEmptyOrSpaces(myProxyLoginTextField.getText())) {
           return IdeBundle.message("dialog.message.login.empty");
