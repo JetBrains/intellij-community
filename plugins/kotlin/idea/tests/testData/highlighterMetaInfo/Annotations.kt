@@ -15,13 +15,4 @@ fun foo() {
     @Ann 3 + 4
 
     bar @Ann { 1 }
-
-    @Err
-    5
 }
-
-@Err class Err1
-
-class NotAnn
-@NotAnn
-class C

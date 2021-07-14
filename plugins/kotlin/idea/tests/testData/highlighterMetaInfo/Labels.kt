@@ -11,7 +11,7 @@ fun foo(): Int {
     }
 
     loop2@ for (i in 1..100) {
-        break @loop2
+        break@loop2
     }
 
     return 1
