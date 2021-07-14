@@ -1215,7 +1215,10 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     FileType[] fileTypes = myFileTypeManager.getRegisteredFileTypes();
     LOG.debug("Registered file types: "+fileTypes.length);
     for (FileType fileType : fileTypes) {
-      if (fileType.getClass() == AbstractFileType.class) continue;
+      assertEquals(fileType, fileType); // assert reflexivity
+      if (fileType.getClass() == AbstractFileType.class) {
+        continue;
+      }
       Constructor<?>[] constructors = fileType.getClass().getDeclaredConstructors();
       for (Constructor<?> constructor : constructors) {
         assertFalse("FileType constructor must be non-public to avoid duplicates but got: " + constructor, Modifier.isPublic(constructor.getModifiers()));
