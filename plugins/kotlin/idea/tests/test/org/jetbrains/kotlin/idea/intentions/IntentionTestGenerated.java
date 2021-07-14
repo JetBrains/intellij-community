@@ -7053,6 +7053,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("assignmentToGlobalVariable.kt")
+        public void testAssignmentToGlobalVariable() throws Exception {
+            runTest("testData/intentions/convertSecondaryConstructorToPrimary/assignmentToGlobalVariable.kt");
+        }
+
         @TestMetadata("defaultValueChain.kt")
         public void testDefaultValueChain() throws Exception {
             runTest("testData/intentions/convertSecondaryConstructorToPrimary/defaultValueChain.kt");
