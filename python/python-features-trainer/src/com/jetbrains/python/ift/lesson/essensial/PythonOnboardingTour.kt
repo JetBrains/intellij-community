@@ -618,6 +618,7 @@ class PythonOnboardingTour :
       restoreState(restoreId = openLearnTaskId) {
         learningToolWindow(project)?.isVisible?.not() ?: true
       }
+      restoreIfModified(sample)
       proceedLink()
     }
     prepareRuntimeTask {
