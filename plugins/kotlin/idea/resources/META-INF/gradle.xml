@@ -4,47 +4,46 @@
 
     <extensionPoints>
         <extensionPoint qualifiedName="org.jetbrains.kotlin.gradleProjectImportHandler" area="IDEA_PROJECT"
-                        interface="org.jetbrains.kotlin.idea.configuration.GradleProjectImportHandler"
+                        interface="org.jetbrains.kotlin.idea.gradle.configuration.GradleProjectImportHandler"
                         dynamic="true"/>
 
         <extensionPoint qualifiedName="org.jetbrains.kotlin.gradleModelFacade"
-                        interface="org.jetbrains.kotlin.idea.inspections.gradle.KotlinGradleModelFacade"
+                        interface="org.jetbrains.kotlin.idea.gradle.inspections.KotlinGradleModelFacade"
+                        dynamic="true"/>
+
+        <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.gradleBuildScriptSupport"
+                        interface="org.jetbrains.kotlin.idea.extensions.gradle.GradleBuildScriptSupport"
                         dynamic="true"/>
     </extensionPoints>
 
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
         <buildSystemTypeDetector implementation="org.jetbrains.kotlin.idea.configuration.GradleDetector"/>
-        <scriptDiagnosticFixProvider implementation="org.jetbrains.kotlin.idea.scripting.gradle.GradleScriptDiagnosticFixProvider"/>
-        <experimentalFeature implementation="org.jetbrains.kotlin.idea.scripting.gradle.GradleScriptConfigurationsImportingFeature"/>
+        <scriptDiagnosticFixProvider implementation="org.jetbrains.kotlin.idea.gradle.scripting.GradleScriptDiagnosticFixProvider"/>
+        <experimentalFeature implementation="org.jetbrains.kotlin.idea.gradle.scripting.GradleScriptConfigurationsImportingFeature"/>
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
-      <gradleBuildScriptSupport implementation="org.jetbrains.kotlin.idea.configuration.KotlinGradleBuildScriptSupport"/>
+      <gradleBuildScriptSupport implementation="org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleBuildScriptSupport"/>
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.kotlin.scripting.idea">
-        <listener order="first" implementation="org.jetbrains.kotlin.idea.scripting.gradle.GradleScriptListener"/>
-
-        <loader order="first" implementation="org.jetbrains.kotlin.idea.scripting.gradle.legacy.GradleLegacyScriptConfigurationLoader"/>
-
-        <scriptingSupport implementation="org.jetbrains.kotlin.idea.scripting.gradle.roots.GradleBuildRootsManager"/>
-
-        <settings.provider implementation="org.jetbrains.kotlin.idea.scripting.gradle.settings.GradleSettingsProvider"/>
+        <listener order="first" implementation="org.jetbrains.kotlin.idea.gradle.scripting.GradleScriptListener"/>
+        <loader order="first" implementation="org.jetbrains.kotlin.idea.gradle.scripting.legacy.GradleLegacyScriptConfigurationLoader"/>
+        <scriptingSupport implementation="org.jetbrains.kotlin.idea.gradle.scripting.roots.GradleBuildRootsManager"/>
+        <settings.provider implementation="org.jetbrains.kotlin.idea.gradle.scripting.settings.GradleSettingsProvider"/>
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
         <orderEnumerationHandlerFactory implementation="org.jetbrains.kotlin.idea.gradle.execution.KotlinGradleOrderEnumerationHandler$Factory" order="first"/>
-        <projectResolve implementation="org.jetbrains.kotlin.idea.configuration.KotlinMPPGradleProjectResolver"/>
-
-        <projectModelContributor implementation="org.jetbrains.kotlin.idea.scripting.gradle.importing.KotlinDslScriptModelContributor"/>
+        <projectResolve implementation="org.jetbrains.kotlin.idea.gradle.configuration.KotlinMPPGradleProjectResolver"/>
+        <projectModelContributor implementation="org.jetbrains.kotlin.idea.gradle.scripting.importing.KotlinDslScriptModelContributor"/>
         <executionEnvironmentProvider implementation="org.jetbrains.kotlin.idea.gradle.execution.KotlinGradleAppEnvProvider"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
-        <projectTaskRunner implementation="org.jetbrains.kotlin.idea.gradle.execution.KotlinMPPGradleProjectTaskRunner"
-                           id="gradle.mpp" order="first, before gradle"/>
-        <externalProjectDataService implementation="org.jetbrains.kotlin.idea.configuration.KotlinSourceSetDataService"/>
-        <externalProjectDataService implementation="org.jetbrains.kotlin.idea.configuration.KotlinGradleProjectSettingsDataService"/>
+        <projectTaskRunner implementation="org.jetbrains.kotlin.idea.gradle.execution.KotlinMPPGradleProjectTaskRunner" id="gradle.mpp" order="first, before gradle"/>
+        <externalProjectDataService implementation="org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetDataService"/>
+        <externalProjectDataService implementation="org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleProjectSettingsDataService"/>
 
         <registryKey key="kotlin.mpp.tests.force.gradle"
                      description="Run multi-platform tests with Gradle runner even if the platform runner is used by default.
@@ -57,20 +56,20 @@
                      defaultValue="true"
                      restartRequired="false"/>
 
-        <projectService serviceImplementation="org.jetbrains.kotlin.idea.scripting.gradle.legacy.GradleStandaloneScriptActionsManager"/>
-        <projectService serviceImplementation="org.jetbrains.kotlin.idea.scripting.gradle.settings.StandaloneScriptsStorage"/>
+        <projectService serviceImplementation="org.jetbrains.kotlin.idea.gradle.scripting.legacy.GradleStandaloneScriptActionsManager"/>
+        <projectService serviceImplementation="org.jetbrains.kotlin.idea.gradle.scripting.settings.StandaloneScriptsStorage"/>
 
         <applicationService serviceInterface="org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleFacade"
                             serviceImplementation="org.jetbrains.kotlin.idea.gradle.KotlinGradleFacadeImpl"/>
 
-        <postStartupActivity implementation="org.jetbrains.kotlin.idea.statistics.KotlinGradleFUSLogger"/>
+        <postStartupActivity implementation="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger"/>
     </extensions>
 
     <actions>
-        <action id="Kotlin.Gradle.ShowDslLogs" class="org.jetbrains.kotlin.idea.actions.ShowKotlinGradleDslLogs">
+        <action id="Kotlin.Gradle.ShowDslLogs" class="org.jetbrains.kotlin.idea.gradle.actions.ShowKotlinGradleDslLogs">
         </action>
 
-        <action id="LoadConfigurationAction" class="org.jetbrains.kotlin.idea.scripting.gradle.LoadConfigurationAction">
+        <action id="LoadConfigurationAction" class="org.jetbrains.kotlin.idea.gradle.scripting.LoadConfigurationAction">
             <add-to-group group-id="ExternalSystem.ProjectRefreshActionGroup" anchor="first"/>
         </action>
     </actions>

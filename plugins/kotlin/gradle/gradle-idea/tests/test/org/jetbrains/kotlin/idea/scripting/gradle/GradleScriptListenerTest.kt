@@ -9,8 +9,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationLoadingTest
-import org.jetbrains.kotlin.idea.scripting.gradle.legacy.GradleStandaloneScriptActionsManager
-import org.jetbrains.kotlin.idea.scripting.gradle.roots.GradleBuildRootsManager
+import org.jetbrains.kotlin.idea.gradle.scripting.legacy.GradleStandaloneScriptActionsManager
+import org.jetbrains.kotlin.idea.gradle.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners

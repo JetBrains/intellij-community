@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.ide.konan.gradle
 import org.jetbrains.kotlin.ide.konan.KotlinGradleNativeBundle
 import org.jetbrains.kotlin.ide.konan.hasKotlinNativeRuntimeInScope
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
-import org.jetbrains.kotlin.idea.configuration.KotlinWithGradleConfigurator
+import org.jetbrains.kotlin.idea.gradle.configuration.KotlinWithGradleConfigurator
 import org.jetbrains.kotlin.idea.configuration.ModuleSourceRootGroup
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 

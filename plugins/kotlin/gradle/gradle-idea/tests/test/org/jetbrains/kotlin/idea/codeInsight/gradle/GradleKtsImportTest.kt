@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.core.script.configuration.loader.DefaultScriptC
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoadingContext
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.areSimilar
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
-import org.jetbrains.kotlin.idea.scripting.gradle.importing.KotlinGradleDslErrorReporter.Companion.build_script_errors_group
+import org.jetbrains.kotlin.idea.gradle.scripting.importing.KotlinGradleDslErrorReporter.Companion.build_script_errors_group
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper

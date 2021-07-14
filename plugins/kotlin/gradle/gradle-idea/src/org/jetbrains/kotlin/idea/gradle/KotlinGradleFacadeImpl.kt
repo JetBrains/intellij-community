@@ -7,9 +7,9 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiFile
 import icons.GradleIcons
-import org.jetbrains.kotlin.idea.configuration.GradleVersionProviderImpl
+import org.jetbrains.kotlin.idea.gradle.configuration.GradleVersionProviderImpl
 import org.jetbrains.kotlin.idea.extensions.gradle.*
-import org.jetbrains.kotlin.idea.inspections.gradle.getResolvedVersionByModuleData
+import org.jetbrains.kotlin.idea.gradle.inspections.getResolvedVersionByModuleData
 import org.jetbrains.kotlin.idea.roots.findAll
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType

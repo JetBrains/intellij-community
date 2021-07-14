@@ -6,7 +6,7 @@ import org.gradle.api.internal.file.IdentityFileResolver
 import org.gradle.groovy.scripts.TextResourceScriptSource
 import org.gradle.internal.exceptions.LocationAwareException
 import org.gradle.internal.resource.UriTextResource
-import org.jetbrains.kotlin.idea.scripting.gradle.importing.parsePositionFromException
+import org.jetbrains.kotlin.idea.gradle.scripting.importing.parsePositionFromException
 import org.junit.Test
 import kotlin.io.path.*
 import kotlin.test.assertEquals

@@ -4,7 +4,8 @@ package org.jetbrains.kotlin.idea.configuration.klib
 
 import com.intellij.testFramework.PlatformTestUtil.getTestName
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.configuration.klib.KlibInfo.NativeTargets.CommonizerIdentity
+import org.jetbrains.kotlin.idea.gradle.configuration.klib.*
+import org.jetbrains.kotlin.idea.gradle.configuration.klib.KlibInfo.NativeTargets.CommonizerIdentity
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.konan.library.*
 import org.jetbrains.kotlin.konan.target.KonanTarget

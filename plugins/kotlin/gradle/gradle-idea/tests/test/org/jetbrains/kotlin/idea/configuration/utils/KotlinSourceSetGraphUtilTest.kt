@@ -8,6 +8,7 @@ import com.google.common.graph.GraphBuilder
 import org.jetbrains.kotlin.gradle.*
 import org.jetbrains.kotlin.gradle.KotlinSourceSet.Companion.COMMON_MAIN_SOURCE_SET_NAME
 import org.jetbrains.kotlin.gradle.KotlinSourceSet.Companion.COMMON_TEST_SOURCE_SET_NAME
+import org.jetbrains.kotlin.idea.gradle.configuration.utils.*
 import org.junit.Test
 import kotlin.test.assertEquals
 

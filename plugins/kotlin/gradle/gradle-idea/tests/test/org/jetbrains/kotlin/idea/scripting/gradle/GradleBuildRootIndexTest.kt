@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.scripting.gradle
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationLoadingTest
-import org.jetbrains.kotlin.idea.scripting.gradle.roots.GradleBuildRootsManager
-import org.jetbrains.kotlin.idea.scripting.gradle.settings.StandaloneScriptsStorage
+import org.jetbrains.kotlin.idea.gradle.scripting.roots.GradleBuildRootsManager
+import org.jetbrains.kotlin.idea.gradle.scripting.settings.StandaloneScriptsStorage
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.KotlinRoot

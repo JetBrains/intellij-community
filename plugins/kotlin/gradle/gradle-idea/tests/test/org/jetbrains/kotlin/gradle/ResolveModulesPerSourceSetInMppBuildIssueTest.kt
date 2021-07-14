@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.gradle
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.LightPlatformTestCase
-import org.jetbrains.kotlin.idea.configuration.ResolveModulesPerSourceSetInMppBuildIssue
+import org.jetbrains.kotlin.idea.gradle.configuration.ResolveModulesPerSourceSetInMppBuildIssue
 import org.jetbrains.plugins.gradle.service.project.open.setupGradleSettings
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings

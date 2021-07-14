@@ -83,10 +83,6 @@
                         interface="org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider"
                         dynamic="true"/>
 
-        <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.gradleBuildScriptSupport"
-                        interface="org.jetbrains.kotlin.idea.extensions.gradle.GradleBuildScriptSupport"
-                        dynamic="true"/>
-
         <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.kotlinJvmDebuggerFacade"
                         interface="org.jetbrains.kotlin.idea.extensions.KotlinJvmDebuggerFacade"
                         dynamic="true"/>

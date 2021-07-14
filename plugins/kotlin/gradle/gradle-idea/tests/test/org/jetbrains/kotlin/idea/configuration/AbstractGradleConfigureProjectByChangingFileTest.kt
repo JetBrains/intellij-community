@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
+import org.jetbrains.kotlin.idea.gradle.configuration.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import java.io.File

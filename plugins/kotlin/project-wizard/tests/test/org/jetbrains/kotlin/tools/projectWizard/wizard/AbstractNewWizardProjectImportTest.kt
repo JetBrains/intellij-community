@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
-import org.jetbrains.kotlin.idea.scripting.gradle.getGradleProjectSettings
+import org.jetbrains.kotlin.idea.gradle.scripting.getGradleProjectSettings
 import org.jetbrains.kotlin.idea.test.KotlinSdkCreationChecker
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.test.runAll

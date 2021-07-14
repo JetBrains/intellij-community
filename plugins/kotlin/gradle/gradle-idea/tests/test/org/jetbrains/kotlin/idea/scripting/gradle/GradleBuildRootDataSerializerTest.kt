@@ -2,10 +2,11 @@
 
 package org.jetbrains.kotlin.idea.scripting.gradle
 
-import org.jetbrains.kotlin.idea.scripting.gradle.importing.KotlinDslScriptModel
-import org.jetbrains.kotlin.idea.scripting.gradle.roots.GradleBuildRootData
-import org.jetbrains.kotlin.idea.scripting.gradle.roots.readKotlinDslScriptModels
-import org.jetbrains.kotlin.idea.scripting.gradle.roots.writeKotlinDslScriptModels
+import org.jetbrains.kotlin.idea.gradle.scripting.GradleKotlinScriptConfigurationInputs
+import org.jetbrains.kotlin.idea.gradle.scripting.importing.KotlinDslScriptModel
+import org.jetbrains.kotlin.idea.gradle.scripting.roots.GradleBuildRootData
+import org.jetbrains.kotlin.idea.gradle.scripting.roots.readKotlinDslScriptModels
+import org.jetbrains.kotlin.idea.gradle.scripting.roots.writeKotlinDslScriptModels
 import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream

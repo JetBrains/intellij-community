@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.scripting.gradle
 
+import org.jetbrains.kotlin.idea.gradle.scripting.LastModifiedFiles
 import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream

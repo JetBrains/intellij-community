@@ -4,8 +4,9 @@ package org.jetbrains.kotlin.idea.configuration.klib
 
 
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibraryNameUtil.isGradleLibraryName
-import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibraryNameUtil.parseIDELibraryName
+import org.jetbrains.kotlin.idea.gradle.configuration.klib.*
+import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.isGradleLibraryName
+import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.parseIDELibraryName
 import java.io.File
 
 class KotlinNativeLibraryNameUtilTest : TestCase() {

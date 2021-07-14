@@ -6,8 +6,8 @@ import com.intellij.openapi.externalSystem.test.ExternalSystemTestCase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.gradle.textWithoutTags
-import org.jetbrains.kotlin.idea.run.KotlinJvmTestClassGradleConfigurationProducer
-import org.jetbrains.kotlin.idea.run.KotlinJvmTestMethodGradleConfigurationProducer
+import org.jetbrains.kotlin.idea.gradle.run.KotlinJvmTestClassGradleConfigurationProducer
+import org.jetbrains.kotlin.idea.gradle.run.KotlinJvmTestMethodGradleConfigurationProducer
 import org.jetbrains.kotlin.idea.run.getConfiguration
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer

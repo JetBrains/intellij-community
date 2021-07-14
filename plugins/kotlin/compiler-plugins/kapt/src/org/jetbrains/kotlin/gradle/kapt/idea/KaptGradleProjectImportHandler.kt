@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.gradle.kapt.idea
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
-import org.jetbrains.kotlin.idea.configuration.GradleProjectImportHandler
+import org.jetbrains.kotlin.idea.gradle.configuration.GradleProjectImportHandler
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import java.io.File
