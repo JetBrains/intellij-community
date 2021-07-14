@@ -98,16 +98,6 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : VariableDescri
                         }
                     }
                 }
-            } else if (expr is KtQualifiedExpression) {
-                val receiver = expr.receiverExpression
-                val qualifier = createVariable(factory, receiver)
-                if (qualifier == null) {
-                    return null
-                }
-                val target = expr.selectorExpression?.mainReference?.resolve()
-                if (target is KtCallableDeclaration && isTrackableProperty(target)) {
-                    return varFactory.createVariableValue(KtVariableDescriptor(target), qualifier)
-                }
             }
             return null
         }

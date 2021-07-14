@@ -758,7 +758,14 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val dfVar = KtVariableDescriptor.createVariable(factory, expr)
         if (dfVar != null) {
             addInstruction(JvmPushInstruction(dfVar, KotlinExpressionAnchor(expr)))
-            val exprType = expr.getKotlinType()
+            var realExpr : KtExpression = expr
+            while (true) {
+                val parent = realExpr.parent
+                if (parent is KtQualifiedExpression && parent.selectorExpression == realExpr) {
+                    realExpr = parent
+                } else break
+            }
+            val exprType = realExpr.getKotlinType()
             val declaredType = (dfVar.descriptor as? KtVariableDescriptor)?.variable?.type()
             addImplicitConversion(expr, declaredType, exprType)
             return
@@ -883,7 +890,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processAssignmentExpression(expr: KtBinaryExpression) {
         val left = expr.left
         val right = expr.right
-        val dfVar = KtVariableDescriptor.createVariable(factory, left)
+        var leftSelector = left
+        while (leftSelector is KtQualifiedExpression) {
+            leftSelector = leftSelector.selectorExpression
+        }
+        val dfVar = KtVariableDescriptor.createVariable(factory, leftSelector)
         val leftType = left?.getKotlinType()
         val rightType = right?.getKotlinType()
         if (dfVar == null) {

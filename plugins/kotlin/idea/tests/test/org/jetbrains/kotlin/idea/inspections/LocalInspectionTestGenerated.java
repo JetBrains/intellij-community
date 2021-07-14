@@ -4856,6 +4856,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/nullAsNullable.kt");
         }
 
+        @TestMetadata("nullCheckComparison.kt")
+        public void testNullCheckComparison() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/nullCheckComparison.kt");
+        }
+
         @TestMetadata("nullableArraySize.kt")
         public void testNullableArraySize() throws Exception {
             runTest("testData/inspectionsLocal/dfa/nullableArraySize.kt");
