@@ -3438,8 +3438,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   void beforeModalityStateChanged() {
     myScrollingModel.beforeModalityStateChanged();
-    myGutterComponent.resetMousePointer();
-    resetMousePointer();
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      myGutterComponent.resetMousePointer();
+      resetMousePointer();
+    }
   }
 
   private EditorDropHandler getDropHandler() {
