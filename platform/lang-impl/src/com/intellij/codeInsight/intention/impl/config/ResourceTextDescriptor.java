@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.DynamicBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ResourceUtil;
@@ -15,6 +16,7 @@ import java.util.Objects;
 import static com.intellij.DynamicBundle.findLanguageBundle;
 
 final class ResourceTextDescriptor implements TextDescriptor {
+  private static final Logger LOG = Logger.getInstance(ResourceTextDescriptor.class);
   private final ClassLoader myLoader;
   private final String myResourcePath;
 
@@ -40,28 +42,33 @@ final class ResourceTextDescriptor implements TextDescriptor {
   @NotNull
   @Override
   public String getText() throws IOException {
-    InputStream stream = getStream();
+    InputStream stream = myLoader.getResourceAsStream(myResourcePath);
+    if (stream == null) throw new IOException("Resource not found: " + myResourcePath);
 
-    if (stream == null) {
-      throw new IOException("Resource not found: " + myResourcePath);
+    InputStream languageStream = getLanguageStream();
+    if (languageStream == null || !myResourcePath.endsWith(BeforeAfterActionMetaData.DESCRIPTION_FILE_NAME)) {
+      return ResourceUtil.loadText(stream); //NON-NLS;
     }
-    return ResourceUtil.loadText(stream); //NON-NLS
+
+    try {
+      return ResourceUtil.loadText(languageStream); //NON-NLS
+    }
+    catch (IOException e) {
+      LOG.error("Cannot find localized resource: " + myResourcePath, e);
+      return ResourceUtil.loadText(stream); //NON-NLS
+    }
   }
 
   @Nullable
-  private InputStream getStream() {
-    InputStream stream = myLoader.getResourceAsStream(myResourcePath);
-
-    if (!myResourcePath.endsWith(BeforeAfterActionMetaData.DESCRIPTION_FILE_NAME)) return stream;
-
+  private InputStream getLanguageStream() {
     DynamicBundle.LanguageBundleEP langBundle = findLanguageBundle();
-    if (langBundle == null) return stream;
+    if (langBundle == null) return null;
 
     PluginDescriptor descriptor = langBundle.pluginDescriptor;
-    if (descriptor == null) return stream;
+    if (descriptor == null) return null;
 
     ClassLoader classLoader = descriptor.getPluginClassLoader();
-    return classLoader != null ? classLoader.getResourceAsStream(myResourcePath) : stream;
+    return classLoader != null ? classLoader.getResourceAsStream(myResourcePath) : null;
   }
 
   @NotNull
