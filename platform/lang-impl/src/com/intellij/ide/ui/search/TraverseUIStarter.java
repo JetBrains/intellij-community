@@ -61,11 +61,9 @@ public final class TraverseUIStarter implements ApplicationStarter {
   private static final @NonNls String HIT = "hit";
 
   private static final String ROOT_ACTION_MODULE = "intellij.platform.ide";
-  private static final String I18N_PROPERTY = "intellij.searchableOptions.i18n.enabled";
 
   private String OUTPUT_PATH;
   private boolean SPLIT_BY_RESOURCE_PATH;
-  private boolean I18N_SO_PROPERTY;
 
   @Override
   public String getCommandName() {
@@ -81,14 +79,13 @@ public final class TraverseUIStarter implements ApplicationStarter {
   public void premain(@NotNull List<String> args) {
     OUTPUT_PATH = args.get(1);
     SPLIT_BY_RESOURCE_PATH = args.size() > 2 && Boolean.parseBoolean(args.get(2));
-    I18N_SO_PROPERTY = Boolean.getBoolean(I18N_PROPERTY);
   }
 
   @Override
   public void main(@NotNull List<String> args) {
     System.out.println("Starting searchable options index builder");
     try {
-      startup(Path.of(OUTPUT_PATH), SPLIT_BY_RESOURCE_PATH, I18N_SO_PROPERTY);
+      startup(Path.of(OUTPUT_PATH), SPLIT_BY_RESOURCE_PATH);
       ApplicationManagerEx.getApplicationEx().exit(ApplicationEx.FORCE_EXIT | ApplicationEx.EXIT_CONFIRMED);
       System.out.println("Searchable options index builder completed");
     }
@@ -100,10 +97,6 @@ public final class TraverseUIStarter implements ApplicationStarter {
   }
 
   public static void startup(@NotNull Path outputPath, boolean splitByResourcePath) throws IOException {
-    startup(outputPath, splitByResourcePath, false);
-  }
-
-  public static void startup(@NotNull Path outputPath, boolean splitByResourcePath, boolean i18n) throws IOException {
     Map<SearchableConfigurable, Set<OptionDescription>> options = new LinkedHashMap<>();
     Map<String, Element> roots = new HashMap<>();
     try {
@@ -112,7 +105,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
           extension.beforeStart();
         }
 
-        SearchUtil.processConfigurables(ShowSettingsUtilImpl.getConfigurables(ProjectManager.getInstance().getDefaultProject(), true), options, i18n);
+        SearchUtil.processConfigurables(ShowSettingsUtilImpl.getConfigurables(ProjectManager.getInstance().getDefaultProject(), true), options);
 
         for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
           extension.afterTraversal(options);
