@@ -11,6 +11,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import one.util.streamex.StreamEx;
@@ -20,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 public class DeleteSwitchLabelFix implements LocalQuickFix {
   private final String myName;
@@ -92,8 +92,8 @@ public class DeleteSwitchLabelFix implements LocalQuickFix {
         if (e instanceof PsiDeclarationStatement && nextLabel != null) {
           PsiDeclarationStatement declaration = (PsiDeclarationStatement)e;
           PsiElement[] elements = declaration.getDeclaredElements();
-          boolean declarationIsReused = Stream.of(elements).anyMatch(element ->
-              ReferencesSearch.search(element, new LocalSearchScope(scope)).anyMatch(ref -> ref.getElement().getTextOffset() > end));
+          boolean declarationIsReused = ContainerUtil.or(elements, element ->
+            ReferencesSearch.search(element, new LocalSearchScope(scope)).anyMatch(ref -> ref.getElement().getTextOffset() > end));
           if (declarationIsReused) {
             StreamEx.of(elements).select(PsiVariable.class).map(PsiVariable::getInitializer).nonNull().into(toDelete);
             declarations.add(declaration);
