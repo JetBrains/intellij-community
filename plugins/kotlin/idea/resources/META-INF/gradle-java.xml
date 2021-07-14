@@ -21,7 +21,7 @@
         <projectResolve implementation="org.jetbrains.kotlin.idea.cocoapods.KotlinCocoaPodsModelResolver" order="last"/>
         <projectResolve implementation="org.jetbrains.kotlin.idea.configuration.KotlinGradleProjectResolverExtension" order="first"/>
         <projectResolve implementation="org.jetbrains.kotlin.idea.configuration.KotlinGradleCoroutineDebugProjectResolver" order="last"/>
-        <projectResolve implementation="org.jetbrains.kotlin.kapt.idea.KaptProjectResolverExtension" order="last"/>
+        <projectResolve implementation="org.jetbrains.kotlin.gradle.kapt.idea.KaptProjectResolverExtension" order="last"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -47,7 +47,7 @@
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
-        <gradleProjectImportHandler implementation="org.jetbrains.kotlin.kapt.idea.KaptGradleProjectImportHandler"/>
+        <gradleProjectImportHandler implementation="org.jetbrains.kotlin.gradle.kapt.idea.KaptGradleProjectImportHandler"/>
         <gradleProjectImportHandler implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.kotlinxSerialization.KotlinSerializationGradleImportHandler"/>
 
         <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinGradleModuleConfigurator"/>
