@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 
 public final class RunContentBuilder extends RunTab {
   private static final String JAVA_RUNNER = "JavaRunner";
@@ -106,19 +107,11 @@ public final class RunContentBuilder extends RunTab {
       if (myUi instanceof RunnerLayoutUiImpl) {
         ((RunnerLayoutUiImpl)myUi).setLeftToolbarVisible(false);
       }
-      boolean isToolbarVisibleAnywhere = false;
-      for (Component component : UIUtil.uiTraverser(contentDescriptor.getComponent())) {
-        if (component instanceof ActionToolbarImpl) {
-          ActionGroup group = ((ActionToolbarImpl)component).getActionGroup();
-          if (group instanceof RunTab.ToolbarActionGroup) {
-            isToolbarVisibleAnywhere = true;
-            break;
-          }
-        }
-      }
-      if (!isToolbarVisibleAnywhere) {
-        myUi.getOptions().setTopLeftToolbar(toolbar, ActionPlaces.RUNNER_TOOLBAR);
-      }
+      // wrapped into DefaultActionGroup to prevent loading all actions instantly
+      DefaultActionGroup topToolbar = new DefaultActionGroup(
+        new EmptyWhenDuplicate(toolbar, group -> group instanceof RunTab.ToolbarActionGroup)
+      );
+      myUi.getOptions().setTopLeftToolbar(topToolbar, ActionPlaces.RUNNER_TOOLBAR);
     } else {
       myUi.getOptions().setLeftToolbar(toolbar, ActionPlaces.RUNNER_TOOLBAR);
     }
@@ -278,6 +271,44 @@ public final class RunContentBuilder extends RunTab {
         RunContentManager.getInstance(myProject).toFrontRunContent(myExecutor, myRunContentDescriptor);
         myUi.selectAndFocus(myUi.findContent(ExecutionConsole.CONSOLE_CONTENT_ID), false, false);
       }
+    }
+  }
+
+  private static class EmptyWhenDuplicate extends ActionGroup {
+
+    private final @NotNull ActionGroup myDelegate;
+    private final @NotNull Predicate<ActionGroup> myDuplicatePredicate;
+
+    private EmptyWhenDuplicate(@NotNull ActionGroup delegate, @NotNull Predicate<ActionGroup> isDuplicate) {
+      myDelegate = delegate;
+      myDuplicatePredicate = isDuplicate;
+    }
+
+    @Override
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+      if (isToolbarDuplicatedAnywhere(getEventComponent(e))) {
+        return AnAction.EMPTY_ARRAY;
+      }
+      return myDelegate.getChildren(e);
+    }
+
+    @Nullable
+    protected Component getEventComponent(@Nullable AnActionEvent e) {
+      if (e == null) return null;
+      SingleContentSupplier supplier = e.getData(SingleContentSupplier.KEY);
+      return supplier != null ? supplier.getTabs().getComponent() : null;
+    }
+
+    private boolean isToolbarDuplicatedAnywhere(@Nullable Component parent) {
+      for (Component component : UIUtil.uiTraverser(parent)) {
+        if (component instanceof ActionToolbarImpl) {
+          ActionGroup group = ((ActionToolbarImpl)component).getActionGroup();
+          if (myDuplicatePredicate.test(group)) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
   }
 
