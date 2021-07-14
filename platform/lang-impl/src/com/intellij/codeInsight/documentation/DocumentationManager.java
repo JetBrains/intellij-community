@@ -1297,11 +1297,18 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     }
     else if (url.startsWith(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL)) {
-      Pair<@NotNull PsiElement, @Nullable String> target = getTarget(psiElement, url);
-      if (target != null) {
-        cancelAndFetchDocInfoByLink(component,
-                                    new MyCollector(myProject, target.first, null, target.second, false, false));
-      }
+      ActionCallback callback = createActionCallback();
+      callback.doWhenDone(() -> component.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)));
+      ReadAction.nonBlocking(
+        () -> getTarget(psiElement, url)
+      ).finishOnUiThread(ModalityState.defaultModalityState(), target -> {
+        if (target == null) {
+          callback.setDone();
+          return;
+        }
+        cancelAndFetchDocInfoByLink(component, new MyCollector(myProject, target.first, null, target.second, callback, false, false));
+      }).submit(AppExecutorUtil.getAppExecutorService());
+      return;
     }
     else {
       DocumentationProvider provider = getProviderFromElement(psiElement);
@@ -1345,6 +1352,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     component.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+  }
+
+  @RequiresBackgroundThread
+  private static PsiElement getElement(@Nullable PsiElement context, @NotNull DocumentationComponent component) {
+    return context != null ? context : component.getElement();
   }
 
   protected ActionCallback cancelAndFetchDocInfoByLink(@NotNull DocumentationComponent component, @NotNull DocumentationCollector provider) {
