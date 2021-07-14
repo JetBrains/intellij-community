@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -8,6 +8,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationBuilder;
 import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.SingletonNotificationManager;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
@@ -34,7 +35,8 @@ public class NotificationGroupIdReferenceContributor extends PsiReferenceContrib
                                     uExpression().constructorParameter(0, Notification.class.getName()),
                                     uExpression().constructorParameter(0, NotificationBuilder.class.getName()),
                                     uExpression().methodCallParameter(0, psiMethod().withName("getNotificationGroup")
-                                      .definedInClass(NotificationGroupManager.class.getName()))
+                                      .definedInClass(NotificationGroupManager.class.getName())),
+                                    uExpression().constructorParameter(0, SingletonNotificationManager.class.getName())
                                   ),
 
                                   new UastInjectionHostReferenceProvider() {
