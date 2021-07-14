@@ -245,6 +245,7 @@ object ProjectUtils {
     val stamp = PropertiesComponent.getInstance(project).getValue(LEARNING_PROJECT_MODIFICATION)?.toLong() ?: 0
     val needReplace = mutableListOf<Path>()
     val validContent = mutableListOf<Path>()
+    val directories = mutableListOf<Path>()
     val root = getProjectRoot(project)
     invokeAndWaitIfNeeded {
       FileDocumentManager.getInstance().saveAllDocuments()
@@ -261,9 +262,13 @@ object ProjectUtils {
              file.name == FEATURE_TRAINER_VERSION ||
              file.name.endsWith(".iml")) return false
 
-          if (file.isDirectory) return true
-
           val path = file.toNioPath()
+
+          if (file.isDirectory) {
+            directories.add(path)
+            return true
+          }
+
           if (file.timeStamp > stamp) {
             needReplace.add(path)
           }
@@ -290,9 +295,23 @@ object ProjectUtils {
       needCopy
     })
 
+    for (path in directories) {
+      if (isEmptyDir(path)) {
+        modified = true
+        path.delete()
+      }
+    }
+
     if (modified) {
       VfsUtil.markDirtyAndRefresh(false, true, true, root)
       PropertiesComponent.getInstance(project).setValue(LEARNING_PROJECT_MODIFICATION, System.currentTimeMillis().toString())
     }
+  }
+
+  private fun isEmptyDir(path: Path): Boolean {
+    if (Files.isDirectory(path)) {
+      Files.newDirectoryStream(path).use { directory -> return !directory.iterator().hasNext() }
+    }
+    return false
   }
 }
