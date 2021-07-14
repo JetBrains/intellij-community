@@ -1,12 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash
 
-import com.github.benmanes.caffeine.cache.CacheLoader
+import com.github.benmanes.caffeine.cache.AsyncCacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.LowMemoryWatcher
@@ -20,31 +20,39 @@ import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.Hash
 import git4idea.ui.StashInfo
 import java.util.*
-import java.util.concurrent.Callable
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionException
+import java.util.concurrent.Executor
+import java.util.function.Supplier
 
 class GitStashCache(val project: Project) : Disposable {
   private val executor = MoreExecutors.listeningDecorator(AppExecutorUtil.createBoundedApplicationPoolExecutor("Git Stash Loader", 1))
 
   private val cache = Caffeine.newBuilder()
     .maximumSize(100)
-    .build<CommitId, ListenableFuture<StashData>>(CacheLoader { scheduleLoading(it) })
+    .executor(executor)
+    .buildAsync<CommitId, StashData>(AsyncCacheLoader { commitId, executor -> scheduleLoading(commitId, executor) })
 
   init {
-    LowMemoryWatcher.register(Runnable { cache.invalidateAll() }, this)
+    LowMemoryWatcher.register(Runnable { cache.synchronous().invalidateAll() }, this)
   }
 
-  private fun scheduleLoading(commitId: CommitId): ListenableFuture<StashData>? {
-    val future = executor.submit(Callable {
+  private fun scheduleLoading(commitId: CommitId, executor: Executor): CompletableFuture<StashData>? {
+    val future = CompletableFuture.supplyAsync(Supplier {
       try {
         LOG.debug("Loading stash at '${commitId.hash}' in '${commitId.root}'")
-        return@Callable StashData.ChangeList(GitStashOperations.loadStashedChanges(project, commitId.root, commitId.hash, false))
+        return@Supplier StashData.ChangeList(GitStashOperations.loadStashedChanges(project, commitId.root, commitId.hash, false))
       }
       catch (e: VcsException) {
         LOG.warn("Could not load stash at '${commitId.hash}' in '${commitId.root}'", e)
-        return@Callable StashData.Error(e)
+        return@Supplier StashData.Error(e)
       }
-    })
-    future.addListener(Runnable {
+      catch (e: Exception) {
+        if (e !is ProcessCanceledException) LOG.error("Could not load stash at '${commitId.hash}' in '${commitId.root}'", e)
+        throw CompletionException(e);
+      }
+    }, executor);
+    future.thenRunAsync(Runnable {
       project.messageBus.syncPublisher(GIT_STASH_LOADED).stashLoaded(commitId.root, commitId.hash)
     }, EdtExecutorService.getInstance())
     return future
@@ -66,7 +74,7 @@ class GitStashCache(val project: Project) : Disposable {
 
   override fun dispose() {
     executor.shutdown()
-    cache.invalidateAll()
+    cache.synchronous().invalidateAll()
   }
 
   companion object {
