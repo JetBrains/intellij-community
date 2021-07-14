@@ -1,5 +1,3 @@
-// IGNORE_FIR
-
 fun test() {
     val vect = MyIterable<Int>()
 

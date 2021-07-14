@@ -1,4 +1,3 @@
-// IGNORE_FIR
 class My(val x: Int?)
 
 fun My?.foo(): Int {

@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 /**
  * @param x foo and [baz]
  * @param y bar
