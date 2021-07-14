@@ -67,9 +67,11 @@ class GitStashCache(val project: Project) : Disposable {
   }
 
   fun loadStashData(stashInfo: StashInfo) {
-    if (!Disposer.isDisposed(this)) {
-      cache.get(CommitId(stashInfo.hash, stashInfo.root))
-    }
+    if (Disposer.isDisposed(this)) return
+
+    val commitId = CommitId(stashInfo.hash, stashInfo.root)
+    val future = cache.get(commitId)
+    if (future.isCancelled) cache.synchronous().refresh(commitId)
   }
 
   override fun dispose() {
