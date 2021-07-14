@@ -70,7 +70,7 @@ class SingletonNotificationManager(groupId: String, private val type: Notificati
   //<editor-fold desc="Deprecated stuff.">
   @Deprecated("please use `#SingletonNotificationManager(String, NotificationType)` instead")
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
-  constructor(group: NotificationGroup, type: NotificationType, defaultListener: NotificationListener? = null) : this(group.displayId, type) {
+  constructor(group: NotificationGroup, type: NotificationType, defaultListener: NotificationListener?) : this(group.displayId, type) {
     this.defaultListener = defaultListener
   }
 
