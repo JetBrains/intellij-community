@@ -37,15 +37,15 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinLightCodeInsightFixtureT
 
     /**
      * This filter serves two purposes:
+     * - Fail the test on ERRORS, since we don't want to have ERRORS in the tests for a regular highlighting
      * - Filter WARNINGS, since they are provided by the compiler and (usually) are not interesting to us in the context of highlighting
      * - Filter exact highlightings duplicates. It is a workaround about a bug in old FE10 highlighting, which sometimes highlights
      * something twice
      */
     private fun createMetaInfoFilter(): (CodeMetaInfo) -> Boolean {
-        val severitiesToFilter = setOf(
-            HighlightSeverity.WARNING,
-            HighlightSeverity.WEAK_WARNING
-        )
+        val forbiddenSeverities = setOf(HighlightSeverity.ERROR)
+
+        val ignoredSeverities = setOf(HighlightSeverity.WARNING, HighlightSeverity.WEAK_WARNING)
 
         val seenMetaInfos = THashSet(object : TObjectHashingStrategy<HighlightingCodeMetaInfo> {
             override fun equals(left: HighlightingCodeMetaInfo, right: HighlightingCodeMetaInfo): Boolean =
@@ -60,8 +60,16 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinLightCodeInsightFixtureT
 
         return { metaInfo ->
             require(metaInfo is HighlightingCodeMetaInfo)
+            val highlightingInfo = metaInfo.highlightingInfo
 
-            metaInfo.highlightingInfo.severity !in severitiesToFilter && seenMetaInfos.add(metaInfo)
+            require(highlightingInfo.severity !in forbiddenSeverities) {
+                """
+                    |Severity ${highlightingInfo.severity} should never appear in highlighting tests. Please, correct the testData.
+                    |HighlightingInfo=$highlightingInfo
+                """.trimMargin()
+            }
+
+            highlightingInfo.severity !in ignoredSeverities && seenMetaInfos.add(metaInfo)
         }
     }
 
