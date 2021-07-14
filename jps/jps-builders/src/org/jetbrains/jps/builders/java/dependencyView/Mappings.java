@@ -2575,7 +2575,6 @@ public final class Mappings {
   private void cleanupBackDependency(final int className, @Nullable Set<? extends UsageRepr.Usage> usages, final IntIntMultiMaplet buffer) {
     if (usages == null) {
       final ClassFileRepr repr = getReprByName(null, className);
-
       if (repr != null) {
         usages = repr.getUsages();
       }
@@ -2583,7 +2582,10 @@ public final class Mappings {
 
     if (usages != null) {
       for (final UsageRepr.Usage u : usages) {
-        buffer.put(u.getOwner(), className);
+        final int owner = u.getOwner();
+        if (owner != className) {
+          buffer.put(owner, className);
+        }
       }
     }
   }
