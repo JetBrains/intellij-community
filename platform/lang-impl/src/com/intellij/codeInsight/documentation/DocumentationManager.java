@@ -1262,12 +1262,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   public void navigateByLink(@NotNull DocumentationComponent component, @Nullable PsiElement context, @NotNull String url) {
     myPrecalculatedDocumentation = null;
     component.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-    PsiElement psiElement = context;
+    PsiElement psiElement = context != null ? context : component.getElement();
     if (psiElement == null) {
-      psiElement = component.getElement();
-      if (psiElement == null) {
-        return;
-      }
+      return;
     }
     PsiManager manager = PsiManager.getInstance(getProject(psiElement));
     if (url.equals("external_doc")) {
@@ -1312,11 +1309,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           ExternalDocumentationHandler externalHandler = (ExternalDocumentationHandler)p;
           if (externalHandler.canFetchDocumentationLink(url)) {
             String ref = externalHandler.extractRefFromLink(url);
-            PsiElement finalPsiElement = psiElement;
-            cancelAndFetchDocInfoByLink(component, new DocumentationCollector(finalPsiElement, url, ref, p, false) {
+            cancelAndFetchDocInfoByLink(component, new DocumentationCollector(psiElement, url, ref, p, false) {
               @Override
               public String getDocumentation() {
-                return externalHandler.fetchExternalDocumentation(url, finalPsiElement);
+                return externalHandler.fetchExternalDocumentation(url, psiElement);
               }
             });
             processed = true;
