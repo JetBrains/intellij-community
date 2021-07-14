@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
@@ -195,7 +195,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     assert isValid();
     Instruction[] result = SoftReference.dereference(myControlFlow);
     if (result == null) {
-      result = new ControlFlowBuilder().buildControlFlow(this);
+      result = ControlFlowBuilder.buildControlFlow(this);
       myControlFlow = new SoftReference<>(result);
     }
     return result;

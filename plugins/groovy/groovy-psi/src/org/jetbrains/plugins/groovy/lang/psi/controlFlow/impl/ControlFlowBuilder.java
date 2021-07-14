@@ -88,11 +88,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private int myInstructionNumber;
   private final GrControlFlowPolicy myPolicy;
 
-  public ControlFlowBuilder() {
-    this(GrResolverPolicy.getInstance());
-  }
-
-  public ControlFlowBuilder(GrControlFlowPolicy policy) {
+  private ControlFlowBuilder(GrControlFlowPolicy policy) {
     myPolicy = policy;
   }
 
@@ -147,7 +143,15 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     return null;
   }
 
-  public Instruction[] buildControlFlow(GroovyPsiElement scope) {
+  public static @NotNull Instruction @NotNull [] buildControlFlow(@NotNull GroovyPsiElement scope) {
+    return buildControlFlow(scope, GrResolverPolicy.getInstance());
+  }
+
+  public static @NotNull Instruction @NotNull [] buildControlFlow(@NotNull GroovyPsiElement scope, @NotNull GrControlFlowPolicy policy) {
+    return new ControlFlowBuilder(policy).doBuildControlFlow(scope);
+  }
+
+  private Instruction[] doBuildControlFlow(GroovyPsiElement scope) {
     if (scope instanceof GrLambdaExpression) {
       GrLambdaBody body = ((GrLambdaExpression)scope).getBody();
       return body != null ? body.getControlFlow() : Instruction.EMPTY_ARRAY;
@@ -1295,7 +1299,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       public void visitField(@NotNull GrField field) {
         GrExpression initializer = field.getInitializerGroovy();
         if (initializer != null) {
-          Instruction[] flow = new ControlFlowBuilder().buildControlFlow(initializer);
+          Instruction[] flow = buildControlFlow(initializer);
           collectVars(flow);
         }
       }

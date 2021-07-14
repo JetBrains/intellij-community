@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy
 
 import com.intellij.psi.PsiElement
@@ -70,8 +70,7 @@ class ReachingDefsTest extends LightJavaCodeInsightFixtureTestCase {
     GrStatement lastStatement = getStatement(end, owner)
 
     final GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(firstStatement)
-    final ControlFlowBuilder flowBuilder = new ControlFlowBuilder(GrAllVarsInitializedPolicy.getInstance())
-    final Instruction[] flow = flowBuilder.buildControlFlow(flowOwner)
+    final Instruction[] flow = ControlFlowBuilder.buildControlFlow(flowOwner, GrAllVarsInitializedPolicy.getInstance())
     final FragmentVariableInfos fragmentVariableInfos = ReachingDefinitionsCollector.obtainVariableFlowInformation(firstStatement, lastStatement, flowOwner, flow)
 
     assertEquals(data.get(1), dumpInfo(fragmentVariableInfos).trim())

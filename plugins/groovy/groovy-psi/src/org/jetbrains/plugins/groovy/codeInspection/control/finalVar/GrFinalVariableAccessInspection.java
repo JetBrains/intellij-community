@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -404,7 +404,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
   }
 
   private static Instruction @NotNull [] buildFlowForField(@NotNull GrOpenBlock block) {
-    return new ControlFlowBuilder(GrFieldControlFlowPolicy.getInstance()).buildControlFlow(block);
+    return ControlFlowBuilder.buildControlFlow(block, GrFieldControlFlowPolicy.getInstance());
   }
 
 
@@ -432,7 +432,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
   private static Instruction @NotNull [] getFlow(@NotNull PsiElement element) {
     return element instanceof GrControlFlowOwner
            ? ((GrControlFlowOwner)element).getControlFlow()
-           : new ControlFlowBuilder().buildControlFlow((GroovyPsiElement)element);
+           : ControlFlowBuilder.buildControlFlow((GroovyPsiElement)element);
   }
 
 

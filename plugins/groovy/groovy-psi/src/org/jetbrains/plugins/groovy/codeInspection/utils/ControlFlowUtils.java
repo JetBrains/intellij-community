@@ -437,7 +437,7 @@ public final class ControlFlowUtils {
       flow = ((GrControlFlowOwner)element).getControlFlow();
     }
     else {
-      flow = new ControlFlowBuilder().buildControlFlow((GroovyPsiElement)element);
+      flow = ControlFlowBuilder.buildControlFlow((GroovyPsiElement)element);
     }
     return collectReturns(flow, allExitPoints);
   }
