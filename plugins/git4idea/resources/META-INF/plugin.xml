@@ -379,6 +379,13 @@
       <reference id="Vcs.ShowDiffWithLocal"/>
       <reference id="Vcs.ShowDiffWithLocal.Before"/>
     </group>
+    <group id="Git.Stash.ChangesBrowser.ContextMenu">
+      <reference ref="Vcs.ShowDiffWithLocal"/>
+      <reference ref="Vcs.ShowDiffWithLocal.Before"/>
+      <reference ref="Vcs.EditSource"/>
+      <reference ref="Vcs.OpenRepositoryVersion"/>
+      <reference ref="Vcs.ApplySelectedChanges"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
