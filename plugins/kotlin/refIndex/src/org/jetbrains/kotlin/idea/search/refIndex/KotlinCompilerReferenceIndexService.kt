@@ -40,6 +40,7 @@ import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
@@ -54,7 +55,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
-import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
 import java.nio.file.Path
@@ -358,14 +358,15 @@ private fun extractFqNames(element: PsiElement): List<FqName> {
 private fun extractFqName(element: PsiElement): FqName? = when (element) {
     is KtClassOrObject, is PsiClass -> element.getKotlinFqName()
     is KtConstructor<*> -> element.getContainingClassOrObject().fqName
-    is KtNamedFunction, is KtProperty -> element.cast<KtCallableDeclaration>().fqName
-    is PsiMethod -> element.takeIf { it.isConstructor }?.containingClass?.getKotlinFqName()
+    is KtNamedFunction -> element.fqName
+    is KtProperty -> element.takeUnless(KtProperty::isOverridable)?.fqName
+    is PsiMethod -> element.takeIf(PsiMethod::isConstructor)?.containingClass?.getKotlinFqName()
     else -> null
 }
 
 private fun extractFqNamesFromParameter(parameter: KtParameter): List<FqName> {
     val parameterFqName = parameter.takeIf(KtParameter::hasValOrVar)?.fqName ?: return emptyList()
-    if (parameter.containingClass()?.isData() == false) return listOf(parameterFqName)
+    if (parameter.containingClass()?.isData() == false) return listOfNotNull(parameterFqName.takeUnless { parameter.isOverridable })
 
     val parameterIndex = parameter.parameterIndex().takeUnless { it == -1 }?.plus(1) ?: return emptyList()
     return listOf(parameterFqName, FqName(parameterFqName.parent().asString() + ".component$parameterIndex"))
