@@ -140,6 +140,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 runTest("testData/compilerIndex/functions/fromCompanion/functionWithJvmStatic/");
             }
 
+            @TestMetadata("javaStaticMethod")
+            public void testJavaStaticMethod() throws Exception {
+                runTest("testData/compilerIndex/functions/fromCompanion/javaStaticMethod/");
+            }
+
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/fromCompanion/operators")
             public static class Operators extends AbstractKotlinCompilerReferenceTest {
@@ -339,6 +344,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             @TestMetadata("function")
             public void testFunction() throws Exception {
                 runTest("testData/compilerIndex/functions/members/function/");
+            }
+
+            @TestMetadata("javaMethod")
+            public void testJavaMethod() throws Exception {
+                runTest("testData/compilerIndex/functions/members/javaMethod/");
             }
 
             @RunWith(JUnit3RunnerWithInners.class)

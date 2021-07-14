@@ -3,8 +3,11 @@
         "JJK.java",
         "JJJK.java",
         "jjk_.java",
+        "jjk_.kt",
         "jjjk_.java",
-        "kjjk_.java"
+        "jjjk_.kt",
+        "kjjk_.java",
+        "kjjk_.kt"
     ],
     "shouldBeUsage": [
         "kjjk_.java"

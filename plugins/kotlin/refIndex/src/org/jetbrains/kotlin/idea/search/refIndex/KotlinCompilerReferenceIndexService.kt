@@ -360,7 +360,7 @@ private fun extractFqName(element: PsiElement): FqName? = when (element) {
     is KtConstructor<*> -> element.getContainingClassOrObject().fqName
     is KtNamedFunction -> element.fqName
     is KtProperty -> element.takeUnless(KtProperty::isOverridable)?.fqName
-    is PsiMethod -> element.takeIf(PsiMethod::isConstructor)?.containingClass?.getKotlinFqName()
+    is PsiMethod -> if (element.isConstructor) element.containingClass?.getKotlinFqName() else element.getKotlinFqName()
     else -> null
 }
 
