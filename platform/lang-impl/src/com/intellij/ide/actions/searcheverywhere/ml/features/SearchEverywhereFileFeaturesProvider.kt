@@ -3,7 +3,9 @@ package com.intellij.ide.actions.searcheverywhere.ml.features
 
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.favoritesTreeView.FavoritesManager
+import com.intellij.internal.statistic.local.FileTypeUsageLocalSummary
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.project.Project
@@ -12,11 +14,13 @@ import com.intellij.psi.PsiElement
 
 internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
   companion object {
-    private const val FILETYPE_DATA_KEY = "filetype"
+    private const val FILETYPE_DATA_KEY = "fileType"
     private const val IS_FAVORITE_DATA_KEY = "isFavorite"
     private const val IS_OPENED_DATA_KEY = "isOpened"
     private const val RECENT_INDEX_DATA_KEY = "recentFilesIndex"
     private const val TIME_SINCE_LAST_MODIFICATION_DATA_KEY = "timeSinceLastModification"
+    private const val FILETYPE_USAGE_RATIO_DATA_KEY = "fileTypeUsageRatio"
+    private const val FILETYPE_LAST_USAGE_DATA_KEY = "fileTypeLastUsage"
   }
 
   override fun getElementFeatures(element: Any,
@@ -39,7 +43,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
       FILETYPE_DATA_KEY to element.containingFile.fileType,
       RECENT_INDEX_DATA_KEY to getRecentFilesIndex(virtualFile, project),
       TIME_SINCE_LAST_MODIFICATION_DATA_KEY to currentTime - element.containingFile.virtualFile.timeStamp,
-    )
+    ) + getFileTypeStats(virtualFile)
   }
 
   private fun isFavorite(virtualFile: VirtualFile, project: Project): Boolean {
@@ -63,5 +67,27 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
 
     // Give the most recent files the lowest index value
     return recentFilesList.size - fileIndex
+  }
+
+  private fun getFileTypeStats(virtualFile: VirtualFile): Map<String, Any> {
+    val fileTypeName = virtualFile.fileType.name
+    val localSummary = service<FileTypeUsageLocalSummary>()
+    val allFileTypesStats = localSummary.getFileTypeStats()
+
+    val totalUsage = allFileTypesStats.values.sumBy { it.usageCount }
+    val stats = allFileTypesStats[fileTypeName]
+
+    return if (stats == null) {
+      hashMapOf(
+        FILETYPE_USAGE_RATIO_DATA_KEY to 0.0,
+        FILETYPE_LAST_USAGE_DATA_KEY to 0.0,
+      )
+    }
+    else {
+      hashMapOf(
+        FILETYPE_USAGE_RATIO_DATA_KEY to stats.usageCount.toDouble() / totalUsage,
+        FILETYPE_LAST_USAGE_DATA_KEY to stats.lastUsed
+      )
+    }
   }
 }
