@@ -34,6 +34,7 @@ public final class SearchUtil {
   private static final String DEBUGGER_CONFIGURABLE_CLASS = "com.intellij.xdebugger.impl.settings.DebuggerConfigurable";
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
   private static final Pattern QUOTED = Pattern.compile("\"([^\"]+)\"");
+  private static final Pattern NON_WORD_PATTERN = Pattern.compile("[^\\pL&&[^\\p{Punct}\\p{Blank}]]");
 
   public static final String HIGHLIGHT_WITH_BORDER = "searchUtil.highlightWithBorder";
   private static final String STYLE_END = "</style>";
@@ -41,7 +42,7 @@ public final class SearchUtil {
   private SearchUtil() { }
 
   static void processConfigurables(@NotNull List<? extends Configurable> configurables,
-                                   @NotNull Map<SearchableConfigurable, @NotNull Set<OptionDescription>> options, boolean  i18n) {
+                                   @NotNull Map<SearchableConfigurable, @NotNull Set<OptionDescription>> options) {
     for (final Configurable configurable : configurables) {
       if (!(configurable instanceof SearchableConfigurable)) {
         continue;
@@ -64,11 +65,11 @@ public final class SearchUtil {
       if (configurable instanceof MasterDetails) {
         final MasterDetails md = (MasterDetails)configurable;
         md.initUi();
-        processComponent(searchableConfigurable, configurableOptions, md.getMaster(), i18n);
-        processComponent(searchableConfigurable, configurableOptions, md.getDetails().getComponent(), i18n);
+        processComponent(searchableConfigurable, configurableOptions, md.getMaster());
+        processComponent(searchableConfigurable, configurableOptions, md.getDetails().getComponent());
       }
       else {
-        processComponent(searchableConfigurable, configurableOptions, configurable.createComponent(), i18n);
+        processComponent(searchableConfigurable, configurableOptions, configurable.createComponent());
         final Configurable unwrapped = unwrapConfigurable(configurable);
         if (unwrapped instanceof CompositeConfigurable) {
           unwrapped.disposeUIResources();
@@ -78,11 +79,11 @@ public final class SearchUtil {
             options.put(new SearchableConfigurableAdapter(searchableConfigurable, child), childConfigurableOptions);
 
             if (child instanceof SearchableConfigurable) {
-              processUILabel(((SearchableConfigurable)child).getDisplayName(), childConfigurableOptions, null, i18n);
+              processUILabel(((SearchableConfigurable)child).getDisplayName(), childConfigurableOptions, null);
             }
             final JComponent component = child.createComponent();
             if (component != null) {
-              processComponent(component, childConfigurableOptions, null, i18n);
+              processComponent(component, childConfigurableOptions, null);
             }
 
             configurableOptions.removeAll(childConfigurableOptions);
@@ -113,17 +114,14 @@ public final class SearchUtil {
     return configurable;
   }
 
-  private static void processComponent(SearchableConfigurable configurable,
-                                       Set<OptionDescription> configurableOptions,
-                                       JComponent component,
-                                       boolean i18n) {
+  private static void processComponent(SearchableConfigurable configurable, Set<OptionDescription> configurableOptions, JComponent component) {
     if (component != null) {
       for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
         extension.beforeComponent(configurable, component, configurableOptions);
       }
 
-      processUILabel(configurable.getDisplayName(), configurableOptions, null, i18n);
-      processComponent(component, configurableOptions, null, i18n);
+      processUILabel(configurable.getDisplayName(), configurableOptions, null);
+      processComponent(component, configurableOptions, null);
 
       for (TraverseUIHelper extension : TraverseUIHelper.helperExtensionPoint.getExtensionList()) {
         extension.afterComponent(configurable, component, configurableOptions);
@@ -131,7 +129,7 @@ public final class SearchUtil {
     }
   }
 
-  private static void processComponent(JComponent component, Set<OptionDescription> configurableOptions, String path, boolean i18n) {
+  private static void processComponent(JComponent component, Set<OptionDescription> configurableOptions, String path) {
     if (component instanceof SkipSelfSearchComponent) {
       return;
     }
@@ -140,17 +138,17 @@ public final class SearchUtil {
       final TitledBorder titledBorder = (TitledBorder)border;
       final String title = titledBorder.getTitle();
       if (title != null) {
-        processUILabel(title, configurableOptions, path, i18n);
+        processUILabel(title, configurableOptions, path);
       }
     }
     String label = getLabelFromComponent(component);
     if (label != null) {
-      processUILabel(label, configurableOptions, path, i18n);
+      processUILabel(label, configurableOptions, path);
     }
     else if (component instanceof JComboBox) {
       List<String> labels = getItemsFromComboBox((JComboBox<?>)component);
       for (String each : labels) {
-        processUILabel(each, configurableOptions, path, i18n);
+        processUILabel(each, configurableOptions, path);
       }
     }
     else if (component instanceof JTabbedPane) {
@@ -158,10 +156,10 @@ public final class SearchUtil {
       final int tabCount = tabbedPane.getTabCount();
       for (int i = 0; i < tabCount; i++) {
         final String title = path != null ? path + '.' + tabbedPane.getTitleAt(i) : tabbedPane.getTitleAt(i);
-        processUILabel(title, configurableOptions, title, i18n);
+        processUILabel(title, configurableOptions, title);
         final Component tabComponent = tabbedPane.getComponentAt(i);
         if (tabComponent instanceof JComponent) {
-          processComponent((JComponent)tabComponent, configurableOptions, title, i18n);
+          processComponent((JComponent)tabComponent, configurableOptions, title);
         }
       }
     }
@@ -171,10 +169,10 @@ public final class SearchUtil {
       for (int i = 0; i < tabCount; i++) {
         String tabTitle = tabbedPane.getTitleAt(i);
         final String title = path != null ? path + '.' + tabTitle : tabTitle;
-        processUILabel(title, configurableOptions, title, i18n);
+        processUILabel(title, configurableOptions, title);
         final JComponent tabComponent = tabbedPane.getComponentAt(i);
         if (tabComponent != null) {
-          processComponent(tabComponent, configurableOptions, title, i18n);
+          processComponent(tabComponent, configurableOptions, title);
         }
       }
     }
@@ -183,7 +181,7 @@ public final class SearchUtil {
       if (components != null) {
         for (Component child : components) {
           if (child instanceof JComponent) {
-            processComponent((JComponent)child, configurableOptions, path, i18n);
+            processComponent((JComponent)child, configurableOptions, path);
           }
         }
       }
@@ -233,7 +231,9 @@ public final class SearchUtil {
     return result;
   }
 
-  private static void processUILabel(String title, Set<OptionDescription> configurableOptions, String path, boolean i18n) {
+  private static void processUILabel(String title,
+                                     Set<OptionDescription> configurableOptions,
+                                     String path) {
     int headStart = title.indexOf("<head>");
     int headEnd = headStart >= 0 ? title.indexOf("</head>") : -1;
     if (headEnd > headStart) {
@@ -244,17 +244,11 @@ public final class SearchUtil {
     Set<String> words = new HashSet<>();
     SearchableOptionsRegistrarImpl.collectProcessedWordsWithoutStemming(title, words, Collections.emptySet());
     title = title.replace(BundleBase.MNEMONIC_STRING, "");
-    title = getNonWordPattern(i18n).matcher(title).replaceAll(" ");
+    title = NON_WORD_PATTERN.matcher(title).replaceAll(" ");
     for (@NlsSafe String option : words) {
       configurableOptions.add(new OptionDescription(option, title, path));
     }
   }
-
-  @NotNull
-  private static Pattern getNonWordPattern(boolean i18n) {
-    return Pattern.compile("[" + (i18n ? "^\\pL" : "\\W") + "&&[^\\p{Punct}\\p{Blank}]]");
-  }
-
 
   public static void lightOptions(SearchableConfigurable configurable, JComponent component, String option) {
     if (!traverseComponentsTree(configurable, component, option, true)) {
@@ -547,7 +541,7 @@ public final class SearchUtil {
                                           final String filter) {
     if (pos < end) {
       final Set<String> filters = SearchableOptionsRegistrar.getInstance().getProcessedWords(filter);
-      final String[] words = text.substring(pos, end).split("[\\W&&[^-]]+");
+      final String[] words = text.substring(pos, end).split("[^\\pL&&[^-]]+");
       for (String word : words) {
         if (filters.contains(PorterStemmerUtil.stem(Strings.toLowerCase(word)))) {
           selectedWords.add(word);
