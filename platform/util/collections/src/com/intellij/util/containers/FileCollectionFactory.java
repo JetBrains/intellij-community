@@ -20,7 +20,7 @@ import java.util.Set;
  * Creates map or set with canonicalized path hash strategy.
  */
 public final class FileCollectionFactory {
-  private static final HashingStrategy<File> FILE_HASH_STRATEGY = new HashingStrategy<File>() {
+  private static final HashingStrategy<File> FILE_HASH_STRATEGY = new HashingStrategy.Serializable<File>() {
     @Override
     public int hashCode(@Nullable File o) {
       return FileUtilRt.pathHashCode(o == null ? null : o.getPath());
@@ -32,7 +32,7 @@ public final class FileCollectionFactory {
     }
   };
 
-  private static final HashingStrategy<String> FILE_PATH_HASH_STRATEGY = new HashingStrategy<String>() {
+  private static final HashingStrategy<String> FILE_PATH_HASH_STRATEGY = new HashingStrategy.Serializable<String>() {
     @Override
     public int hashCode(@Nullable String value) {
       return FileUtilRt.pathHashCode(value);

@@ -30,6 +30,14 @@ public interface HashingStrategy<T> {
   static @NotNull HashingStrategy<CharSequence> caseInsensitiveCharSequence() {
     return CaseInsensitiveCharSequenceHashingStrategy.INSTANCE;
   }
+
+  /**
+   * Serializable version of HashingStrategy.
+   * Useful when (for some inexplicable reason) someone desperately needs a serializable map.
+   * In this case when passed the serializable 'strategy' argument to the {@link CollectionFactory#createCustomHashingStrategySet} (or similar factory method) it will return serializable map.
+   */
+  interface Serializable<T> extends HashingStrategy<T>, java.io.Serializable {
+  }
 }
 
 class CaseInsensitiveCharSequenceHashingStrategy implements HashingStrategy<CharSequence> {
