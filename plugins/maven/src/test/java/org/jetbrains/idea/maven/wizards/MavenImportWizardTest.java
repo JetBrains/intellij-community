@@ -68,15 +68,6 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     assertEquals(MavenServerManager.BUNDLED_MAVEN_3, mavenHome);
   }
 
-  public void testImportProjectAndSetupProjectJdk() throws Exception {
-    Path pom = createPom();
-    Module module = importProjectFrom(pom.toString(), null, new MavenProjectImportProvider());
-    Sdk projectSdk = ProjectRootManager.getInstance(module.getProject()).getProjectSdk();
-    assertNotNull(projectSdk);
-    MavenServerConnector connector = MavenServerManager.getInstance().getConnector(module.getProject(), pom.getParent().toString());
-    assertEquals(projectSdk, connector.getJdk());
-  }
-
   private @NotNull Path createPom() throws IOException {
     return createTempFile("pom.xml", MavenTestCase.createPomXml("<groupId>test</groupId>" +
                                                                 "<artifactId>project</artifactId>" +
