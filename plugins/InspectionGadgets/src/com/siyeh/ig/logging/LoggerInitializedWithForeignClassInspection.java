@@ -133,12 +133,10 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
       @Override
       protected boolean accepts(@NotNull Accessor accessor, @NotNull Object bean, @Nullable Object beanValue) {
         final @NonNls String factoryName = accessor.getName();
-        if ("loggerClassName".equals(factoryName) && DEFAULT_FACTORY_CLASS_NAMES.equals(beanValue)) {
-          return false;
-        }
-        if ("loggerFactoryMethodNames".equals(factoryName) && DEFAULT_FACTORY_METHOD_NAMES.equals(beanValue)) {
-          return false;
-        }
+        if ("loggerClassName".equals(factoryName) && DEFAULT_FACTORY_CLASS_NAMES.equals(beanValue)) return false;
+        if ("loggerFactoryMethodNames".equals(factoryName) && DEFAULT_FACTORY_METHOD_NAMES.equals(beanValue)) return false;
+        if ("ignoreSuperClass".equals(factoryName) && !ignoreSuperClass) return false;
+        if ("ignoreNonPublicClasses".equals(factoryName) && !ignoreNonPublicClasses) return false;
         return true;
       }
     });
