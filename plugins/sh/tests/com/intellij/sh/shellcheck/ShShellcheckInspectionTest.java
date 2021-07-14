@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.sh.shellcheck.intention.ShDisableInspectionIntention;
-import com.intellij.sh.shellcheck.intention.SuppressInspectionIntention;
+import com.intellij.sh.shellcheck.intention.ShSuppressInspectionIntention;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,11 +38,11 @@ public class ShShellcheckInspectionTest extends BasePlatformTestCase {
   }
 
   public void testSuppressInspection() {
-    doTest(SuppressInspectionIntention.class);
+    doTest(ShSuppressInspectionIntention.class);
   }
 
   public void testSuppressSameInspection() {
-    doTest(SuppressInspectionIntention.class);
+    doTest(ShSuppressInspectionIntention.class);
   }
 
   public void testQuickFix() {

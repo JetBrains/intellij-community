@@ -11,14 +11,12 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.sh.statistics.ShCounterUsagesCollector.SUPPRESS_INSPECTION_USED_EVENT_ID;
-
-public class SuppressInspectionIntention implements IntentionAction {
+public class ShSuppressInspectionIntention implements IntentionAction {
   private final String myInspectionCode;
   private final String myMessage;
   private final int myOffset;
 
-  public SuppressInspectionIntention(String message, String inspectionCode, int offset) {
+  public ShSuppressInspectionIntention(String message, String inspectionCode, int offset) {
     myInspectionCode = inspectionCode;
     myMessage = message;
     myOffset = offset;
@@ -48,7 +46,6 @@ public class SuppressInspectionIntention implements IntentionAction {
     int lineStartOffset = DocumentUtil.getLineStartOffset(myOffset, document);
     CharSequence indent = DocumentUtil.getIndent(document, lineStartOffset);
     document.insertString(lineStartOffset, indent + "# shellcheck disable=" + myInspectionCode + "\n");
-    SUPPRESS_INSPECTION_USED_EVENT_ID.log();
   }
 
   @Override

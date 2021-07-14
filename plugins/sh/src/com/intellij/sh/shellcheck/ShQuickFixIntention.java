@@ -14,8 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
-import static com.intellij.sh.statistics.ShCounterUsagesCollector.QUICK_FIX_USED_EVENT_ID;
-
 public class ShQuickFixIntention implements IntentionAction {
   private final ShShellcheckExternalAnnotator.Fix fix;
   private final long timestamp;
@@ -73,7 +71,6 @@ public class ShQuickFixIntention implements IntentionAction {
       // applying replacements from right to left not to break offsets in document
       .sorted(Comparator.comparingInt(it -> -it.endOffset))
       .forEach(it -> document.replaceString(it.startOffset, it.endOffset, it.replacement));
-    QUICK_FIX_USED_EVENT_ID.log();
   }
 
   private static int calcOffset(Document document, int line, int column) {
