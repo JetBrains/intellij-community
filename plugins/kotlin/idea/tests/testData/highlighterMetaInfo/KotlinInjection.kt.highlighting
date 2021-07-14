@@ -1,4 +1,3 @@
-// IGNORE_FIR
 package language_injection
 
 <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_KEYWORD'")!>import<!> org.intellij.lang.annotations.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>Language<!>

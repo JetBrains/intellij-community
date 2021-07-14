@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // <!HIGHLIGHTING("severity='INFORMATION'; descr='TODO This is a todo in line comment'; textAttributesKey='null'")!>TODO This is a todo in line comment<!>
 
 /* <!HIGHLIGHTING("severity='INFORMATION'; descr='TODO This is a todo in block comment '; textAttributesKey='null'")!>TODO This is a todo in block comment <!>*/

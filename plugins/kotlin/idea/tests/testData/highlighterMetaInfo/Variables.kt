@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 var x = 5
 
 val Int.sq : Int
