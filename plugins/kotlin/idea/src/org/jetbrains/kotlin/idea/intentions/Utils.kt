@@ -222,24 +222,25 @@ fun KtElement?.isZero() = this?.text == "0"
 
 fun KtElement?.isOne() = this?.text == "1"
 
-private fun KtExpression.isExpressionOfTypeOrSubtype(predicate: (KotlinType) -> Boolean): Boolean {
-    val returnType = resolveToCall()?.resultingDescriptor?.returnType
-    return returnType != null && (returnType.constructor.supertypes + returnType).any(predicate)
-}
-
-fun KtElement?.isSizeOrLength(): Boolean {
-    if (this !is KtDotQualifiedExpression) return false
-
-    return when (selectorExpression?.text) {
-        "size" -> receiverExpression.isExpressionOfTypeOrSubtype { type ->
+fun KtExpression?.receiverTypeIfSelectorIsSizeOrLength(): KotlinType? {
+    val selector = (this as? KtDotQualifiedExpression)?.selectorExpression ?: this
+    val predicate: (KotlinType) -> Boolean = when (selector?.text) {
+        "size" -> { type ->
             KotlinBuiltIns.isArray(type) ||
                     KotlinBuiltIns.isPrimitiveArray(type) ||
                     KotlinBuiltIns.isCollectionOrNullableCollection(type) ||
                     KotlinBuiltIns.isMapOrNullableMap(type)
         }
-        "length" -> receiverExpression.isExpressionOfTypeOrSubtype(KotlinBuiltIns::isCharSequenceOrNullableCharSequence)
-        else -> false
+        "length" -> KotlinBuiltIns::isCharSequenceOrNullableCharSequence
+        else -> return null
     }
+    val resolvedCall = selector.resolveToCall() ?: return null
+    val receiverType = (resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver)?.type ?: return null
+    return if ((receiverType.constructor.supertypes + receiverType).any(predicate)) receiverType else null
+}
+
+fun KtExpression?.isSizeOrLength(): Boolean {
+    return receiverTypeIfSelectorIsSizeOrLength() != null
 }
 
 private val COUNT_FUNCTIONS = listOf(FqName("kotlin.collections.count"), FqName("kotlin.text.count"))

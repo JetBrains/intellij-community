@@ -12145,6 +12145,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/forNotTarget.kt");
         }
 
+        @TestMetadata("implicitReceiver.kt")
+        public void testImplicitReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/implicitReceiver.kt");
+        }
+
+        @TestMetadata("implicitReceiverFor.kt")
+        public void testImplicitReceiverFor() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/implicitReceiverFor.kt");
+        }
+
+        @TestMetadata("implicitReceiverUntil.kt")
+        public void testImplicitReceiverUntil() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/implicitReceiverUntil.kt");
+        }
+
         @TestMetadata("indexInLvalue.kt")
         public void testIndexInLvalue() throws Exception {
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/indexInLvalue.kt");

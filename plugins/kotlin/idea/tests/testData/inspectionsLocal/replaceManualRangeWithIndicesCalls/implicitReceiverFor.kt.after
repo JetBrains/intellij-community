@@ -1,0 +1,6 @@
+// WITH_RUNTIME
+fun Array<String>.test() {
+    for (element in this) {
+        val out = element
+    }
+}
