@@ -4,7 +4,7 @@ fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_D
     <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>vect<!>
         .<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_CALL'")!>filter<!> { <!HIGHLIGHTING("severity='INFORMATION'; descr='Automatically declared based on the expected type'; textAttributesKey='KOTLIN_CLOSURE_DEFAULT_PARAMETER'")!>it<!> != 2 }
         .<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_CALL'")!>forEach<!> { <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>it<!>: <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Int<!> ->
-            <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>it<!>.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_CALL'")!>toString<!>()
+            <!HIGHLIGHTING("severity='INFORMATION'; descr='Automatically declared based on the expected type'; textAttributesKey='KOTLIN_CLOSURE_DEFAULT_PARAMETER'")!>it<!>.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_CALL'")!>toString<!>()
         }
 }
 

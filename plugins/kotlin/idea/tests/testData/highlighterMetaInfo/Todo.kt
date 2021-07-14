@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // TODO This is a todo in line comment
 
 /* TODO This is a todo in block comment */

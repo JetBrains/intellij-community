@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 val packageSize = 0
 val packageSizeGetter
 get() = packageSize * 2

@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 /**
  * @param <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KDOC_LINK'")!>x<!> foo and <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KDOC_LINK'")!>[baz]<!>
  * @param <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KDOC_LINK'")!>y<!> bar

@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 var <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_MUTABLE_VARIABLE'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PACKAGE_PROPERTY'")!>x<!> = 5
 
 val <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Int<!>.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_EXTENSION_PROPERTY'")!>sq<!> : <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Int<!>
