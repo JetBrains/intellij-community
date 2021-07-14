@@ -286,20 +286,7 @@ public class XDebuggerTreeInlayPopup<D> {
     }
     myPopup.setSize(new Dimension(0, 0));
     myPopup.show(new RelativePoint(myEditor.getContentComponent(), myPoint));
-
-    ((XDebuggerTree)tree).addTreeListener(new XDebuggerTreeListener() {
-      @Override
-      public void childrenLoaded(@NotNull XDebuggerTreeNode node,
-                                 @NotNull List<? extends XValueContainerNode<?>> children,
-                                 boolean last) {
-        if (last) {
-          updateDebugPopupBounds(tree, myToolbar, myPopup);
-          ((XDebuggerTree)tree).removeTreeListener(this);
-        }
-      }
-    });
-
-    updateDebugPopupBounds(tree, myToolbar, myPopup);
+    setAutoResize(tree, myToolbar, myPopup);
   }
 
   private void resize(final TreePath path, JTree tree) {
@@ -322,22 +309,42 @@ public class XDebuggerTreeInlayPopup<D> {
     popupWindow.repaint();
   }
 
-  public static void updateDebugPopupBounds(final Tree tree, JComponent toolbar, JBPopup popup) {
+  public static void setAutoResize(Tree tree, JComponent myToolbar, JBPopup myPopup) {
+    final boolean[] canShrink = {true};
+    ((XDebuggerTree)tree).addTreeListener(new XDebuggerTreeListener() {
+      @Override
+      public void childrenLoaded(@NotNull XDebuggerTreeNode node,
+                                 @NotNull List<? extends XValueContainerNode<?>> children,
+                                 boolean last) {
+        if (last) {
+          updateDebugPopupBounds(tree, myToolbar, myPopup, canShrink[0]);
+          canShrink[0] = false;
+        }
+      }
+    });
+    updateDebugPopupBounds(tree, myToolbar, myPopup, canShrink[0]);
+  }
+
+  public static void updateDebugPopupBounds(final Tree tree, JComponent toolbar, JBPopup popup, boolean canShrink) {
     final Window popupWindow = SwingUtilities.windowForComponent(popup.getContent());
     final Dimension size = tree.getPreferredSize();
     final Point location = popupWindow.getLocation();
-    int hMargin = JBUI.scale(150);
-    int width = Math.max(size.width, toolbar.getPreferredSize().width) + hMargin;
-    int maxWidth = JBUI.scale(600);
-    int row = Math.min(12, tree.getRowCount() - 1);
-    Rectangle bounds = tree.getRowBounds(row);
+    int hMargin = JBUI.scale(30);
     int vMargin = JBUI.scale(30);
+    int width = Math.max(size.width, toolbar.getPreferredSize().width) + hMargin;
+    Rectangle bounds = tree.getRowBounds(tree.getRowCount() - 1);
     int height = toolbar.getHeight() + vMargin + (bounds == null ? 0 : bounds.y + bounds.height);
+    int maxWidth = ScreenUtil.getScreenRectangle(toolbar).width / 2;
+    int maxHeight = ScreenUtil.getScreenRectangle(toolbar).height / 2;
     final Rectangle targetBounds = new Rectangle(location.x,
                                                  location.y,
                                                  Math.min(width, maxWidth),
-                                                 height);
+                                                 Math.min(height, maxHeight));
 
+    if (!canShrink) {
+      targetBounds.width = Math.max(targetBounds.width, popupWindow.getWidth());
+      targetBounds.height = Math.max(targetBounds.height, popupWindow.getHeight());
+    }
     ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
     popupWindow.setBounds(targetBounds);
     popupWindow.validate();
