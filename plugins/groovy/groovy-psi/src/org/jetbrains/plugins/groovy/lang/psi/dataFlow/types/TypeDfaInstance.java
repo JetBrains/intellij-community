@@ -6,25 +6,22 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentsInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
-import org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.function.BiConsumer;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
@@ -60,8 +57,37 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     else if (instruction instanceof NegatingGotoInstruction) {
       handleNegation(state, (NegatingGotoInstruction)instruction);
     }
-    else if (instruction.getElement() instanceof GrFunctionalExpression) {
-      handleFunctionalExpression(state, instruction);
+    else if (instruction instanceof FunctionalBlockBeginInstruction) {
+      handleStartFunctionalExpression(state, (FunctionalBlockBeginInstruction)instruction);
+    }
+    else if (instruction instanceof FunctionalBlockEndInstruction) {
+      handleFunctionalExpression(state, (FunctionalBlockEndInstruction)instruction);
+    }
+  }
+
+  private void handleStartFunctionalExpression(TypeDfaState state, FunctionalBlockBeginInstruction instruction) {
+    state.addClosureState(state);
+  }
+
+  private void handleFunctionalExpression(@NotNull TypeDfaState state, @NotNull FunctionalBlockEndInstruction instruction) {
+    GrFunctionalExpression block = instruction.getElement();
+    InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
+    switch (kind) {
+      case IN_PLACE_ONCE:
+        break;
+      case IN_PLACE_UNKNOWN:
+        TypeDfaState previousClosureState = state.getTopClosureState();
+        assert previousClosureState != null : "Encountered end of closure without closure start";
+        for (var newDescriptor : state.getVarTypes().keySet()) {
+          if (!previousClosureState.containsVariable(newDescriptor)) {
+            state.removeBinding(newDescriptor);
+          }
+        }
+        state.joinState(previousClosureState, myManager);
+        state.popClosureState();
+        break;
+      case UNKNOWN:
+        break;
     }
   }
 
@@ -173,58 +199,58 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
   }
 
-  private void handleFunctionalExpression(@NotNull TypeDfaState state, @NotNull Instruction instruction) {
-    if (!FunctionalExpressionFlowUtil.isNestedFlowProcessingAllowed()) {
-      return;
-    }
-    GrFunctionalExpression block = Objects.requireNonNull((GrFunctionalExpression)instruction.getElement());
-    if (CompileStaticUtil.isCompileStatic(block)) {
-      return;
-    }
-    GrControlFlowOwner blockFlowOwner = FunctionalExpressionFlowUtil.getControlFlowOwner(block);
-    if (blockFlowOwner == null) {
-      return;
-    }
-    if (!myFlowInfo.getInterestingInstructions().contains(instruction)) {
-      ControlFlowUtils.getForeignVariableDescriptors(blockFlowOwner).forEach(descriptor -> state.removeBinding(descriptor, myFlowInfo.getVarIndexes()));
-      return;
-    }
-    if (instruction.num() > lastInterestingInstructionIndex) {
-      return;
-    }
-    ControlFlowUtils.getForeignVariableDescriptors(blockFlowOwner).forEach(descriptor1 -> state.restoreBinding(descriptor1, myFlowInfo.getVarIndexes()));
-    InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
-    Map<VariableDescriptor, DFAType> initialTypes = state.getVarTypes();
-    switch (kind) {
-      case IN_PLACE_ONCE:
-        handleClosureDFAResult(instruction, blockFlowOwner, initialTypes, state::putType);
-        break;
-      case IN_PLACE_UNKNOWN:
-        handleClosureDFAResult(instruction, blockFlowOwner, initialTypes, (descriptor, dfaType) -> {
-          DFAType existingType = state.getVariableType(descriptor);
-          if (existingType != null) {
-            DFAType mergedType = DFAType.create(dfaType, existingType, block.getManager());
-            state.putType(descriptor, mergedType);
-          }
-        });
-        break;
-      case UNKNOWN:
-        runWithCycleCheck(instruction, () -> {
-          for (VariableDescriptor descriptor : myFlowInfo.getInterestingDescriptors()) {
-            var initialTypesWithNullizedDescriptorType = new HashMap<VariableDescriptor, DFAType>(initialTypes);
-            initialTypesWithNullizedDescriptorType.putIfAbsent(descriptor, DFAType.create(null));
-            PsiType upperBoundByWrites = TypeDfaInstanceUtilKt.getLeastUpperBoundByAllWrites(blockFlowOwner, initialTypesWithNullizedDescriptorType, descriptor);
-            if (upperBoundByWrites != PsiType.NULL) {
-              DFAType existingType = state.getVariableType(descriptor);
-              if (existingType == null) existingType = DFAType.create(null);
-              DFAType flushedType = existingType.addFlushingType(upperBoundByWrites, myManager);
-              state.putType(descriptor, flushedType);
-            }
-          }
-          return null;
-        });
-    }
-  }
+  //private void handleFunctionalExpression(@NotNull TypeDfaState state, @NotNull Instruction instruction) {
+  //  if (!FunctionalExpressionFlowUtil.isNestedFlowProcessingAllowed()) {
+  //    return;
+  //  }
+  //  GrFunctionalExpression block = Objects.requireNonNull((GrFunctionalExpression)instruction.getElement());
+  //  if (CompileStaticUtil.isCompileStatic(block)) {
+  //    return;
+  //  }
+  //  GrControlFlowOwner blockFlowOwner = FunctionalExpressionFlowUtil.getControlFlowOwner(block);
+  //  if (blockFlowOwner == null) {
+  //    return;
+  //  }
+  //  if (!myFlowInfo.getInterestingInstructions().contains(instruction)) {
+  //    ControlFlowUtils.getForeignVariableDescriptors(blockFlowOwner).forEach(descriptor -> state.removeBinding(descriptor, myFlowInfo.getVarIndexes()));
+  //    return;
+  //  }
+  //  if (instruction.num() > lastInterestingInstructionIndex) {
+  //    return;
+  //  }
+  //  ControlFlowUtils.getForeignVariableDescriptors(blockFlowOwner).forEach(descriptor1 -> state.restoreBinding(descriptor1, myFlowInfo.getVarIndexes()));
+  //  InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
+  //  Map<VariableDescriptor, DFAType> initialTypes = state.getVarTypes();
+  //  switch (kind) {
+  //    case IN_PLACE_ONCE:
+  //      handleClosureDFAResult(instruction, blockFlowOwner, initialTypes, state::putType);
+  //      break;
+  //    case IN_PLACE_UNKNOWN:
+  //      handleClosureDFAResult(instruction, blockFlowOwner, initialTypes, (descriptor, dfaType) -> {
+  //        DFAType existingType = state.getVariableType(descriptor);
+  //        if (existingType != null) {
+  //          DFAType mergedType = DFAType.create(dfaType, existingType, block.getManager());
+  //          state.putType(descriptor, mergedType);
+  //        }
+  //      });
+  //      break;
+  //    case UNKNOWN:
+  //      runWithCycleCheck(instruction, () -> {
+  //        for (VariableDescriptor descriptor : myFlowInfo.getInterestingDescriptors()) {
+  //          var initialTypesWithNullizedDescriptorType = new HashMap<VariableDescriptor, DFAType>(initialTypes);
+  //          initialTypesWithNullizedDescriptorType.putIfAbsent(descriptor, DFAType.create(null));
+  //          PsiType upperBoundByWrites = TypeDfaInstanceUtilKt.getLeastUpperBoundByAllWrites(blockFlowOwner, initialTypesWithNullizedDescriptorType, descriptor);
+  //          if (upperBoundByWrites != PsiType.NULL) {
+  //            DFAType existingType = state.getVariableType(descriptor);
+  //            if (existingType == null) existingType = DFAType.create(null);
+  //            DFAType flushedType = existingType.addFlushingType(upperBoundByWrites, myManager);
+  //            state.putType(descriptor, flushedType);
+  //          }
+  //        }
+  //        return null;
+  //      });
+  //  }
+  //}
 
   private void handleClosureDFAResult(@NotNull Instruction instruction,
                                       @NotNull GrControlFlowOwner block,
