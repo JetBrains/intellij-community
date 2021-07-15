@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -36,6 +37,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ForkJoinPool
@@ -58,7 +60,7 @@ private const val ALL_PASSED = 2
 @ApiStatus.Internal
 open class StartupManagerImpl(private val project: Project) : StartupManagerEx(), Disposable {
   companion object {
-    @TestOnly
+    @VisibleForTesting
     fun addActivityEpListener(project: Project) {
       StartupActivity.POST_STARTUP_ACTIVITY.addExtensionPointListener(object : ExtensionPointListener<StartupActivity?> {
         override fun extensionAdded(extension: StartupActivity, pluginDescriptor: PluginDescriptor) {
@@ -80,6 +82,19 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         }
       }, project)
     }
+
+    @JvmStatic
+    private fun addCompletedActivity(
+      startTime: Long,
+      runnableClass: Class<*>,
+      pluginId: PluginId,
+    ): Long = StartUpMeasurer.addCompletedActivity(
+      startTime,
+      runnableClass,
+      ActivityCategory.POST_STARTUP_ACTIVITY,
+      pluginId.idString,
+      StartUpMeasurer.MEASURE_THRESHOLD,
+    )
   }
 
   private val lock = Any()
@@ -236,7 +251,6 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     snapshot.logResponsivenessSinceCreation("Post-startup activities under progress")
     if (!project.isDisposed && !ApplicationManager.getApplication().isUnitTestMode) {
       scheduleBackgroundPostStartupActivities()
-      @Suppress("TestOnlyProblems")
       addActivityEpListener(project)
     }
   }
@@ -259,9 +273,11 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     finally {
       indicator?.popState()
     }
-    val pluginId = pluginDescriptor.pluginId.idString
-    val duration = StartUpMeasurer.addCompletedActivity(startTime, extension.javaClass, ActivityCategory.POST_STARTUP_ACTIVITY, pluginId,
-      StartUpMeasurer.MEASURE_THRESHOLD)
+    val duration = addCompletedActivity(
+      startTime,
+      extension.javaClass,
+      pluginDescriptor.pluginId,
+    )
     if (uiFreezeWarned != null && duration > EDT_WARN_THRESHOLD_IN_NANO) {
       reportUiFreeze(uiFreezeWarned)
     }
@@ -313,8 +329,6 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       indicator?.checkCanceled()
 
       val startTime = StartUpMeasurer.getCurrentTime()
-      val loader = runnable.javaClass.classLoader
-      val pluginId = if (loader is PluginClassLoader) loader.pluginId.idString else PluginManagerCore.CORE_ID.idString
       ProgressManager.checkCanceled()
       try {
         runnable.run()
@@ -326,8 +340,13 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         LOG.error(e)
       }
 
-      StartUpMeasurer.addCompletedActivity(startTime, runnable.javaClass, ActivityCategory.POST_STARTUP_ACTIVITY, pluginId,
-        StartUpMeasurer.MEASURE_THRESHOLD)
+
+      val runnableClass = runnable.javaClass
+      addCompletedActivity(
+        startTime,
+        runnableClass,
+        (runnableClass.classLoader as? PluginClassLoader)?.pluginId ?: PluginManagerCore.CORE_ID,
+      )
     }
     activity?.end()
   }
