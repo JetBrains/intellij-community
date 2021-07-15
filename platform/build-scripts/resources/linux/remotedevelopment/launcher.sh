@@ -78,20 +78,10 @@ case "$LD_LIBRARY_PATH" in
     if [ -z "$LD_LIBRARY_PATH" ]; then
       LD_LIBRARY_PATH="$IJ_ISOLATED_LINUX_LIBS_PATH"
     else
-      LD_LIBRARY_PATH="$LD_LIBRARY_PATH":"$IJ_ISOLATED_LINUX_LIBS_PATH"
+      LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$IJ_ISOLATED_LINUX_LIBS_PATH"
     fi
     ;;
 esac
-
-# Check system fonts
-FONTS_CONFIGURATION_ROOT="$IDE_HOME/remotedevelopment/selfcontained/fontconfig"
-IS_FONTCONFIG_PRESENT="$(dpkg -l fontconfig 2>/dev/null)"
-
-if [ -z "$IS_FONTCONFIG_PRESENT" ]; then
-  echo "Add fontconfig library from self-contained distribution"
-  LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$FONTS_CONFIGURATION_ROOT/libs"
-fi
-
 export LD_LIBRARY_PATH
 echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
 
@@ -99,39 +89,48 @@ echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
 # Configure fonts and fontconfig
 # ---------------------------------------------------------------------
 echo "> Setup Linux fontconfig path (FONTCONFIG_PATH)"
-
-if [ -z "$IS_FONTCONFIG_PRESENT" ]; then
-  echo "System fontconfig library is not found. Proceed with self-contained configuration"
-
-  FONTS_CONFIGURATION_SOURCE_PATH="$FONTS_CONFIGURATION_ROOT"
-  if [ ! -d "$FONTS_CONFIGURATION_SOURCE_PATH" ]; then
-    echo "ERROR! Unable to locate font configuration source directory in self-contained distribution: '$FONTS_CONFIGURATION_SOURCE_PATH'."
-    exit 1
-  fi
-
-  case "$FONTCONFIG_PATH" in
-    *"$FONTS_CONFIGURATION_SOURCE_PATH"*)
-      ;;
-    *)
-      echo "Set fonts configuration path FONTCONFIG_PATH=$FONTS_CONFIGURATION_SOURCE_PATH"
-      if [ -z "$FONTCONFIG_PATH" ]; then
-        FONTCONFIG_PATH="$FONTS_CONFIGURATION_SOURCE_PATH"
-      else
-        FONTCONFIG_PATH="$FONTCONFIG_PATH":"$FONTS_CONFIGURATION_SOURCE_PATH"
-      fi
-      ;;
-  esac
-  export FONTCONFIG_PATH
-  echo "FONTCONFIG_PATH=$FONTCONFIG_PATH"
-
-  # fontconfig look for default fonts in "$XDG_DATA_HOME/fonts" path.
-  # Set this variable to use self-contained default fonts in case no others exist.
-  echo "> Setup Linux fonts home path prefix directory (XDG_DATA_HOME)"
-  export XDG_DATA_HOME="$FONTS_CONFIGURATION_SOURCE_PATH"
-  echo "XDG_DATA_HOME=$XDG_DATA_HOME"
-else
-  echo "System fontconfig library is found. Use system configuration and skip self-contained setup"
+FONTS_CONFIGURATION_SOURCE_PATH="$IDE_HOME/remotedevelopment/selfcontained/fontconfig"
+if [ ! -d "$FONTS_CONFIGURATION_SOURCE_PATH" ]; then
+  echo "ERROR! Unable to locate font configuration source directory in self-contained distribution: '$FONTS_CONFIGURATION_SOURCE_PATH'."
+  exit 1
 fi
+
+case "$FONTCONFIG_PATH" in
+  *"$FONTS_CONFIGURATION_SOURCE_PATH"*)
+    echo "Font config path '$FONTS_CONFIGURATION_SOURCE_PATH' already exist in FONTCONFIG_PATH variable: '$FONTCONFIG_PATH'. Skip variable update."
+    ;;
+  *)
+    echo "Update FONTCONFIG_PATH variable with fonts conf path: '$FONTS_CONFIGURATION_SOURCE_PATH'"
+    if [ -z "$FONTCONFIG_PATH" ]; then
+      FONTCONFIG_PATH="$FONTS_CONFIGURATION_SOURCE_PATH"
+    else
+      FONTCONFIG_PATH="$FONTCONFIG_PATH:$FONTS_CONFIGURATION_SOURCE_PATH"
+    fi
+    ;;
+esac
+export FONTCONFIG_PATH
+echo "FONTCONFIG_PATH=$FONTCONFIG_PATH"
+
+# fontconfig checks default fonts in "$XDG_DATA_HOME/fonts" path.
+# Set this variable to use self-contained default fonts in case no others exist.
+# Note: XDG_DATA_HOME specify a single path entry that could be re-used in IDEs.
+#       Use XDG_DATA_DIRS variable to combine with existing paths.
+echo "> Setup Linux fonts home path prefix directory (XDG_DATA_DIRS)"
+case "$XDG_DATA_DIRS" in
+  *"$FONTS_CONFIGURATION_SOURCE_PATH"*)
+    echo "Font config root path '$FONTS_CONFIGURATION_SOURCE_PATH' already exist in XDG_DATA_DIRS variable: 'XDG_DATA_DIRS'. Skip variable update."
+    ;;
+  *)
+    echo "Update XDG_DATA_DIRS variable with fonts conf root path: '$FONTS_CONFIGURATION_SOURCE_PATH'"
+    if [ -z "$XDG_DATA_DIRS" ]; then
+      XDG_DATA_DIRS="$FONTS_CONFIGURATION_SOURCE_PATH"
+    else
+      XDG_DATA_DIRS="$XDG_DATA_DIRS:$FONTS_CONFIGURATION_SOURCE_PATH"
+    fi
+    ;;
+esac
+export XDG_DATA_DIRS
+echo "XDG_DATA_DIRS=$XDG_DATA_DIRS"
 
 # ---------------------------------------------------------------------
 # Set default config and system dirs

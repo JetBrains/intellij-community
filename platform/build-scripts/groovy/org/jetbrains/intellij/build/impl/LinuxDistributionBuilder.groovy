@@ -376,8 +376,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       new LinuxLibraryDownloadInfo("fontconfig", "2.10.95-7", { Path source, Path target ->
         // Copy Linux .so libraries
         Path sourceLibDirectory = source.resolve("usr/lib64")
-        Path targetFontConfigPath = Files.createDirectories(target.resolve("fontconfig"))
-        Path targetFontLibsPath = targetFontConfigPath.resolve("libs")
+        Path targetLibsPath = Files.createDirectories(target.resolve("libs"))
 
         sourceLibDirectory.eachFileRecurse { Path libEntryPath ->
           if (Files.isSymbolicLink(libEntryPath)) {
@@ -385,19 +384,23 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
             Path sourceLibPath = libEntryPath.parent.resolve(relativeLibPath)
 
             if (Files.exists(sourceLibPath)) {
-              Path targetLibPath = targetFontLibsPath.resolve(libEntryPath.fileName.toString())
+              Path targetLibPath = targetLibsPath.resolve(libEntryPath.fileName.toString())
               copyFile(sourceLibPath, targetLibPath)
             }
           }
         }
 
-        // Copy fonts.config file
+        // Copy fonts.conf file
         Path sourceConfigFile = source.resolve("etc").resolve("fonts").resolve("fonts.conf")
         if (!Files.exists(sourceConfigFile))
           buildContext.messages.error("Source fonts config file not found: '$sourceConfigFile'")
 
+        Path targetFontConfigPath = Files.createDirectories(target.resolve("fontconfig"))
+        Path targetConfigFile = targetFontConfigPath.resolve(sourceConfigFile.fileName)
+        Files.copy(sourceConfigFile, targetConfigFile)
 
-        Files.copy(sourceConfigFile, targetFontConfigPath.resolve(sourceConfigFile.fileName))
+        // Patch fonts.conf file content
+        patchSelfContainedFontconfig(targetConfigFile)
       }),
       new LinuxLibraryDownloadInfo("dejavu-lgc-sans-fonts", "2.33-6", "noarch", { Path source, Path target ->
         String fontName = "DejaVuLGCSans.ttf"
@@ -431,18 +434,29 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         buildContext.messages.error(message)
       }
 
+      ArrayList<Throwable> failedLibraryCopy = new ArrayList<>()
       for (info in downloadLibsInfo) {
-        Path downloadPath = info.downloadPath
-        if (downloadPath == null) {
-          buildContext.messages.error("Unable to get download path for a library: ${info.libraryName}")
+        try {
+          Path downloadPath = info.downloadPath
+          if (downloadPath == null) {
+            throw new IllegalStateException("Unable to get download path for a library: ${info.libraryName}")
+          }
+
+          String archiveName = downloadPath.fileName.toString()
+          String archiveNameWithoutExtension = archiveName.substring(0, archiveName.lastIndexOf('.'))
+          Path archiveContentDirPath = downloadPath.parent.resolve(archiveNameWithoutExtension)
+
+          unrpm(downloadPath, archiveContentDirPath)
+          info.getLibraryCopyAction().call(archiveContentDirPath, distDir)
         }
+        catch (Throwable t) {
+          failedLibraryCopy.add(t)
+        }
+      }
 
-        String archiveName = downloadPath.fileName.toString()
-        String archiveNameWithoutExtension = archiveName.substring(0, archiveName.lastIndexOf('.'))
-        Path archiveContentDirPath = downloadPath.parent.resolve(archiveNameWithoutExtension)
-
-        unrpm(downloadPath, archiveContentDirPath)
-        info.getLibraryCopyAction().call(archiveContentDirPath, distDir)
+      if (!failedLibraryCopy.isEmpty()) {
+        String message = "Copy libraries to distribution has failed with exception(s): ${StringUtil.join(failedLibraryCopy, { ex -> "\n* $ex".toString() }, "")}"
+        buildContext.messages.error(message)
       }
     } finally {
       println("Delete temp Linux libraries directory: '$tempDirectory'")
@@ -534,5 +548,19 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     } finally {
       xzStream.close()
     }
+  }
+
+  private static void patchSelfContainedFontconfig(Path fontconfigPath) {
+    if (Files.notExists(fontconfigPath))
+      throw new IllegalStateException("Unable to find fonts.conf file for patching: $fontconfigPath")
+
+    String searchString = """<include ignore_missing="yes">/etc/fonts/conf.d</include>"""
+
+    String fontconfigText = fontconfigPath.text
+    if (!fontconfigText.contains(searchString))
+      throw new IllegalStateException("Unable to find search string in fonts.conf file ($fontconfigPath): $searchString")
+
+    String updatedFontconfigText = fontconfigText.replace(searchString, "<!-- $searchString -->")
+    fontconfigPath.write(updatedFontconfigText)
   }
 }
