@@ -57,8 +57,8 @@ class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedE
         )
     }
 
-    override fun getTypeComputationContext(globalDotQualifiedExpression: KtQualifiedExpression): BindingContext {
-        return globalDotQualifiedExpression.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL)
+    override fun getTypeComputationContext(topmostDotQualifiedExpression: KtQualifiedExpression): BindingContext {
+        return topmostDotQualifiedExpression.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL)
     }
 
     override fun PsiElement.getType(context: BindingContext): KotlinType? {
