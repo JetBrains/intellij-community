@@ -1,14 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.inlays
 
-import com.intellij.codeInsight.hints.LinearOrderInlayRenderer
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.codeInsight.hints.MethodChainsInlayProvider
+import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 import org.intellij.lang.annotations.Language
 
-class MethodChainHintsTest : LightJavaCodeInsightFixtureTestCase() {
+class MethodChainHintsTest : InlayHintsProviderTestCase() {
   fun check(@Language("Java") text: String) {
-    myFixture.configureByText("A.java", text)
-    myFixture.testInlays({ (it.renderer as LinearOrderInlayRenderer<*>).toString() }, { it.renderer is LinearOrderInlayRenderer<*> })
+    testProvider("A.java", text, MethodChainsInlayProvider())
   }
 
   fun `test plain builder`() {
@@ -32,9 +31,9 @@ public class Chains {
   public static void main(String[] args) {
     new A()
     new A()
-      .b()<hint text="[[temp:///src/A.java:1]Chains . [temp:///src/A.java:99]B]"/>
-                .c()<hint text="[[temp:///src/A.java:1]Chains . [temp:///src/A.java:173]C]"/>
-                .a()<hint text="[[temp:///src/A.java:1]Chains . [temp:///src/A.java:25]A]"/>
+      .b()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:99]B] #>
+                .c()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:173]C] #>
+                .a()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:25]A] #>
                 .c();
   }
 }""")
@@ -60,11 +59,11 @@ public class Chains {
 
   public static void main(String[] args) {
     new A()
-      .b()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B]"/>
+      .b()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B] #>
       .c().b()
-      .a()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A]"/>
-      .c()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C]"/>
-      .b()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B]"/>
+      .a()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A] #>
+      .c()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C] #>
+      .b()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B] #>
       .c();
   }
 }
@@ -90,11 +89,11 @@ public class Chains {
 
   public static void main(String[] args) {
     A a = new A();
-    a.b().c()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C]"/>
-     .a()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A]"/>
-     .b()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B]"/>
-     .a()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A]"/>
-     .c()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C]"/>
+    a.b().c()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C] #>
+     .a()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A] #>
+     .b()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B] #>
+     .a()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A] #>
+     .c()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C] #>
      .b();
   }
 }
@@ -121,10 +120,10 @@ public class Chains {
   public static void main(String[] args) {
     A a = new A();
     a.b().c() // comment
-     .a()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A]"/>
-     .b()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B]"/>
+     .a()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A] #>
+     .b()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B] #>
      .a() // comment
-     .c()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C]"/>
+     .c()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C] #>
      .b();
   }
 }
@@ -150,15 +149,15 @@ public class Chains {
 
   public static void main(String[] args) {
     new A()
-      .b()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B]"/>
-                .c()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C]"/>
-                .a()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A]"/>
+      .b()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B] #>
+                .c()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C] #>
+                .a()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A] #>
                 .c();
 
     new A()
-      .b()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B]"/>
-                .c()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C]"/>
-                .a()<hint text="[[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A]"/>
+      .b()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B] #>
+                .c()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C] #>
+                .a()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A] #>
                 .c();
   }
 }
@@ -191,13 +190,13 @@ public class Chains {
     new A()
       .b(() -> {
         new B()
-          .a()<hint text="[[temp:///src/A.java:1]Chains . [temp:///src/A.java:77]A]"/>
-          .c()<hint text="[[temp:///src/A.java:1]Chains . [temp:///src/A.java:242]C]"/>
-          .b()<hint text="[[temp:///src/A.java:1]Chains . [temp:///src/A.java:168]B]"/>
+          .a()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:77]A] #>
+          .c()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:242]C] #>
+          .b()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:168]B] #>
           .a();
-      })<hint text="[[temp:///src/A.java:1]Chains . [temp:///src/A.java:168]B]"/>
-      .c()<hint text="[[temp:///src/A.java:1]Chains . [temp:///src/A.java:242]C]"/>
-      .a()<hint text="[[temp:///src/A.java:1]Chains . [temp:///src/A.java:77]A]"/>
+      })<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:168]B] #>
+      .c()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:242]C] #>
+      .a()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:77]A] #>
       .c();
   }
 }
