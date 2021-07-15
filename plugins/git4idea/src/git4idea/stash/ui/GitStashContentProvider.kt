@@ -76,8 +76,9 @@ internal class GitStashStartupActivity : StartupActivity.DumbAware {
   override fun runActivity(project: Project) {
     runInEdt(project) {
       val gitStashTracker = project.service<GitStashTracker>()
+      val stashTrackerIsNotEmpty = gitStashTracker.isNotEmpty()
       gitStashTracker.addListener(object : GitStashTrackerListener {
-        private var hasStashes = gitStashTracker.isNotEmpty()
+        private var hasStashes = stashTrackerIsNotEmpty
         override fun stashesUpdated() {
           if (hasStashes != gitStashTracker.isNotEmpty()) {
             hasStashes = gitStashTracker.isNotEmpty()
@@ -91,6 +92,9 @@ internal class GitStashStartupActivity : StartupActivity.DumbAware {
           project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
         }
       }, gitStashTracker)
+      if (stashTrackerIsNotEmpty) {
+        project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+      }
     }
   }
 }
