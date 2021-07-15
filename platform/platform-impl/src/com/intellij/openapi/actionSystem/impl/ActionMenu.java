@@ -7,7 +7,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
@@ -25,6 +24,7 @@ import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SingleAlarm;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +41,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public final class ActionMenu extends JBMenu {
   private final String myPlace;
@@ -242,9 +244,8 @@ public final class ActionMenu extends JBMenu {
   }
 
   private class MenuListenerImpl implements ChangeListener, MenuListener {
-    private SingleAlarm myClearSelfAlarm;
+    ScheduledFuture myDelayedClear;
     boolean isSelected = false;
-    boolean myIsHidden = false;
 
     @Override
     public void stateChanged(ChangeEvent e) {
@@ -300,34 +301,7 @@ public final class ActionMenu extends JBMenu {
         // When user selects item of system menu (under MacOs) AppKit generates such sequence: CloseParentMenu -> PerformItemAction
         // So we can destroy menu-item before item's action performed, and because of that action will not be executed.
         // Defer clearing to avoid this problem.
-        Disposable listenerHolder = Disposer.newDisposable();
-        Disposer.register(ApplicationManager.getApplication(), listenerHolder);
-        Runnable clearSelfAndHolder = () -> {
-          if (myClearSelfAlarm == null)
-            return;
-          myClearSelfAlarm.cancel(); // NOTE: cancel doesn't interrupt already running task.
-          myClearSelfAlarm = null;
-          if (myIsHidden)
-            clearSelf.run();
-
-          // schedule holder dispose (to remove key-dispatcher from IdeEventQueue)
-          ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(listenerHolder));
-        };
-
-        // 1. clear menu when user press key
-        IdeEventQueue.getInstance().addDispatcher(e -> {
-          if (e instanceof KeyEvent)
-            clearSelfAndHolder.run();
-          return false;
-        }, listenerHolder);
-
-        // 2. and schedule to clear menu by timer (when key-events doesn't come)
-        if (myClearSelfAlarm != null)
-          myClearSelfAlarm.cancel();
-        myClearSelfAlarm = new SingleAlarm(clearSelfAndHolder, 1000);
-        myClearSelfAlarm.request();
-
-        myIsHidden = true;
+        myDelayedClear = EdtScheduledExecutorService.getInstance().schedule(clearSelf, 1000, TimeUnit.MILLISECONDS);
       }
       else {
         clearSelf.run();
@@ -340,13 +314,10 @@ public final class ActionMenu extends JBMenu {
         myDisposable = Disposer.newDisposable();
       }
       Disposer.register(myDisposable, helper);
-      if (myIsHidden) {
+      if (myDelayedClear != null) {
+        myDelayedClear.cancel(false);
+        myDelayedClear = null;
         clearItems();
-      }
-      myIsHidden = false;
-      if (myClearSelfAlarm != null) {
-        myClearSelfAlarm.cancel();
-        myClearSelfAlarm = null;
       }
       if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
         fillMenu();
