@@ -1,9 +1,9 @@
 // FIR_IDENTICAL
-<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>@Suppress<!>(<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES'")!>names =<!> ["foo"])
-fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>(<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>p1<!>: <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Int<!>, <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>p2<!>: <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>String<!>): <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>String<!> {
-    return <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>p2<!> + <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>p1<!>
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Suppress<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES'")!>names =<!> ["foo"])
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>p1<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>, <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>p2<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>String<!>): <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>String<!> {
+    return <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>p2<!> + <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>p1<!>
 }
 
-fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>bar<!>() {
-    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>foo<!>(1, <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_NAMED_ARGUMENT'")!>p2 =<!> "")
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>bar<!>() {
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>foo<!>(1, <!HIGHLIGHTING("textAttributesKey='KOTLIN_NAMED_ARGUMENT'")!>p2 =<!> "")
 }

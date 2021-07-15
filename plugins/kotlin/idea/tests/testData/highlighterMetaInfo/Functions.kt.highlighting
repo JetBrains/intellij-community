@@ -1,30 +1,30 @@
 // FIR_IDENTICAL
 // WITH_RUNTIME
-fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>global<!>() {
-    fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>inner<!>() {
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>global<!>() {
+    fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>inner<!>() {
 
     }
-    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_CALL'")!>inner<!>()
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_CALL'")!>inner<!>()
 }
 
-fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Int<!>.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>ext<!>() {
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>ext<!>() {
 }
 
-<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>infix<!> fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Int<!>.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>fif<!>(<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>y<!>: <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Int<!>) {
-    this * <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>y<!>
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>infix<!> fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>fif<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>y<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>) {
+    this * <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>y<!>
 }
 
-<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>open<!> class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Container<!> {
-    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>open<!> fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>member<!>() {
-        <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>global<!>()
-        5.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_EXTENSION_FUNCTION_CALL'")!>ext<!>()
-        <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_CALL'")!>member<!>()
-        5 <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_EXTENSION_FUNCTION_CALL'")!>fif<!> 6
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>open<!> class <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Container<!> {
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>open<!> fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>member<!>() {
+        <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>global<!>()
+        5.<!HIGHLIGHTING("textAttributesKey='KOTLIN_EXTENSION_FUNCTION_CALL'")!>ext<!>()
+        <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_CALL'")!>member<!>()
+        5 <!HIGHLIGHTING("textAttributesKey='KOTLIN_EXTENSION_FUNCTION_CALL'")!>fif<!> 6
     }
 }
 
-fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>() {
-    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_KEYWORD'")!>suspend<!> {
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>() {
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>suspend<!> {
 
     }
 }

@@ -1,13 +1,13 @@
 // FIR_IDENTICAL
 package testing
 
-object <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_OBJECT'")!>O<!> {
-    fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>() = 42
+object <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>O<!> {
+    fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>() = 42
 }
 
-fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>testing<!>(): <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_OBJECT'")!>O<!> {
-    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_OBJECT'")!>O<!>.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_CALL'")!>foo<!>()
-    val <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>o<!> = <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_OBJECT'")!>O<!>
-    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>o<!>.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_CALL'")!>foo<!>()
-    return <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_OBJECT'")!>O<!>
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>testing<!>(): <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>O<!> {
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>O<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_CALL'")!>foo<!>()
+    val <!HIGHLIGHTING("textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>o<!> = <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>O<!>
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>o<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_CALL'")!>foo<!>()
+    return <!HIGHLIGHTING("textAttributesKey='KOTLIN_OBJECT'")!>O<!>
 }
