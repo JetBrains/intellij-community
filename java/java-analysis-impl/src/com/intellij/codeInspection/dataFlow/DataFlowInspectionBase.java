@@ -362,7 +362,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   private static boolean canRemoveUnreachableBranches(PsiSwitchLabelStatementBase labelStatement, PsiSwitchBlock statement) {
-    if (Objects.requireNonNull(labelStatement.getCaseValues()).getExpressionCount() != 1) return true;
+    if (Objects.requireNonNull(labelStatement.getCaseLabelElementList()).getElementCount() != 1) return true;
     List<PsiSwitchLabelStatementBase> allBranches =
       PsiTreeUtil.getChildrenOfTypeAsList(statement.getBody(), PsiSwitchLabelStatementBase.class);
     if (statement instanceof PsiSwitchStatement) {

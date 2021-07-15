@@ -29,8 +29,8 @@ class FakeJvmFieldConstantInspection : AbstractKotlinInspection() {
             override fun visitSwitchLabelStatement(statement: PsiSwitchLabelStatement) {
                 super.visitSwitchLabelStatement(statement)
 
-                statement.caseValues?.expressions?.forEach {
-                    checkExpression(it, holder)
+                statement.caseLabelElementList?.elements?.forEach { labelElement ->
+                    (labelElement as? PsiExpression)?.let { checkExpression(it, holder) }
                 }
             }
 

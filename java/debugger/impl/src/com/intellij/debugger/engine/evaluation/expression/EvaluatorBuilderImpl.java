@@ -416,10 +416,10 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     private void visitSwitchLabelStatementBase(PsiSwitchLabelStatementBase statement) {
       List<Evaluator> evaluators = new SmartList<>();
-      PsiExpressionList caseValues = statement.getCaseValues();
-      if (caseValues != null) {
-        for (PsiExpression expression : caseValues.getExpressions()) {
-          Evaluator evaluator = accept(expression);
+      PsiCaseLabelElementList labelElementList = statement.getCaseLabelElementList();
+      if (labelElementList != null) {
+        for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
+          Evaluator evaluator = accept(labelElement);
           if (evaluator != null) {
             evaluators.add(evaluator);
           }

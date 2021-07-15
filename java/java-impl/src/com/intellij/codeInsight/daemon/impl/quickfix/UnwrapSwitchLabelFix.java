@@ -44,9 +44,9 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
       if (otherLabel == labelStatement || (shouldKeepDefault && otherLabel.isDefaultCase())) continue;
       DeleteSwitchLabelFix.deleteLabel(otherLabel);
     }
-    for (PsiExpression expression : Objects.requireNonNull(labelStatement.getCaseValues()).getExpressions()) {
-      if (expression != label) {
-        new CommentTracker().deleteAndRestoreComments(expression);
+    for (PsiCaseLabelElement labelElement : Objects.requireNonNull(labelStatement.getCaseLabelElementList()).getElements()) {
+      if (labelElement != label) {
+        new CommentTracker().deleteAndRestoreComments(labelElement);
       }
     }
     tryUnwrap(labelStatement, block);

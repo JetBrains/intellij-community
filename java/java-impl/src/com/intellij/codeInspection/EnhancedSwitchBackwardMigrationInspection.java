@@ -187,8 +187,8 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
         CommentTracker ct = new CommentTracker();
         branchTrackers.add(ct);
         String generate = generateBranch(rule, ct, switchCopy);
-        PsiExpressionList values = rule.getCaseValues();
-        int caseCount = values == null ? 1 : values.getExpressionCount();
+        PsiCaseLabelElementList labelElementList = rule.getCaseLabelElementList();
+        int caseCount = labelElementList == null ? 1 : labelElementList.getElementCount();
         caseCounts.add(caseCount);
         joiner.add(generate);
         mainCommentTracker.markUnchanged(rule);
@@ -228,17 +228,17 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
         .select(PsiYieldStatement.class)
         .filter(statement -> statement.getExpression() != null && statement.findEnclosingExpression() == switchBlock)
         .forEach(statement -> handleYieldInside(statement, ct));
-      PsiExpressionList caseValues = rule.getCaseValues();
+      PsiCaseLabelElementList labelElementList = rule.getCaseLabelElementList();
       String caseExpressionsText;
-      if (caseValues == null || caseValues.isEmpty()) {
+      if (labelElementList == null || labelElementList.getElementCount() == 0) {
         if (rule.isDefaultCase()) {
           caseExpressionsText = "default:";
         } else {
           caseExpressionsText = "case:";
         }
       } else {
-        PsiExpression[] expressions = caseValues.getExpressions();
-        caseExpressionsText = StreamEx.of(expressions).map(e -> "case " + ct.text(e) + ":").joining("\n");
+        PsiCaseLabelElement[] labelElements = labelElementList.getElements();
+        caseExpressionsText = StreamEx.of(labelElements).map(e -> "case " + ct.text(e) + ":").joining("\n");
       }
       PsiStatement body = rule.getBody();
       String finalBody;

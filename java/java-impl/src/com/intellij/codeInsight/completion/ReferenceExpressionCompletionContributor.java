@@ -159,11 +159,11 @@ public final class ReferenceExpressionCompletionContributor {
     Set<PsiField> used = new LinkedHashSet<>();
     for (PsiStatement statement : body.getStatements()) {
       if (statement instanceof PsiSwitchLabelStatementBase) {
-        final PsiExpressionList values = ((PsiSwitchLabelStatementBase)statement).getCaseValues();
-        if (values != null) {
-          for (PsiExpression value : values.getExpressions()) {
-            if (value instanceof PsiReferenceExpression) {
-              final PsiElement target = ((PsiReferenceExpression)value).resolve();
+        final PsiCaseLabelElementList labelElementList = ((PsiSwitchLabelStatementBase)statement).getCaseLabelElementList();
+        if (labelElementList != null) {
+          for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
+            if (labelElement instanceof PsiReferenceExpression) {
+              final PsiElement target = ((PsiReferenceExpression)labelElement).resolve();
               if (target instanceof PsiField) {
                 used.add(CompletionUtil.getOriginalOrSelf((PsiField)target));
               }

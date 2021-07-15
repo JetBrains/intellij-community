@@ -434,14 +434,14 @@ public final class SwitchUtils {
     if (label == null) {
       return Collections.emptyList();
     }
-    final PsiExpressionList list = label.getCaseValues();
+    final PsiCaseLabelElementList list = label.getCaseLabelElementList();
     if (list == null) {
       return Collections.emptyList();
     }
     List<PsiEnumConstant> constants = new ArrayList<>();
-    for (PsiExpression value : list.getExpressions()) {
-      if (value instanceof PsiReferenceExpression) {
-        final PsiElement target = ((PsiReferenceExpression)value).resolve();
+    for (PsiCaseLabelElement labelElement : list.getElements()) {
+      if (labelElement instanceof PsiReferenceExpression) {
+        final PsiElement target = ((PsiReferenceExpression)labelElement).resolve();
         if (target instanceof PsiEnumConstant) {
           constants.add((PsiEnumConstant)target);
           continue;
