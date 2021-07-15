@@ -15357,6 +15357,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction.kt");
         }
 
+        @TestMetadata("usedEnumFunction10.kt")
+        public void testUsedEnumFunction10() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction10.kt");
+        }
+
         @TestMetadata("usedEnumFunction2.kt")
         public void testUsedEnumFunction2() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction2.kt");
@@ -15390,6 +15395,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("usedEnumFunction8.kt")
         public void testUsedEnumFunction8() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction8.kt");
+        }
+
+        @TestMetadata("usedEnumFunction9.kt")
+        public void testUsedEnumFunction9() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction9.kt");
         }
 
         @TestMetadata("withJvmNameUsedFromKotlin.kt")
