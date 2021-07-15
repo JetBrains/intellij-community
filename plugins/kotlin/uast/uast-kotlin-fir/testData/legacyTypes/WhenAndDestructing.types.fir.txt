@@ -4,8 +4,8 @@ UFile (package = ) [public final class WhenAndDestructingKt {...]
             UParameter (name = string) [@null var string: java.lang.String]
                 UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] : PsiType:Unit
-                UDeclarationsExpression [var arr: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    ULocalVariable (name = arr) [var arr: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UDeclarationsExpression [var arr: java.util.List<? extends java.lang.String> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                    ULocalVariable (name = arr) [var arr: java.util.List<? extends java.lang.String> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
                 USwitchExpression [switch (string)  {...] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = string) [string] : PsiType:String
@@ -21,8 +21,8 @@ UFile (package = ) [public final class WhenAndDestructingKt {...]
                             UExpressionList (when_entry) [{...]
                         USwitchClauseExpressionWithBody [ -> {...]
                             UExpressionList (when_entry) [{...]
-                                UDeclarationsExpression [@null var var837f2350: <ErrorType> = arr]
-                                    ULocalVariable (name = var837f2350) [@null var var837f2350: <ErrorType> = arr]
+                                UDeclarationsExpression [@null var var837f2350: java.util.List<? extends java.lang.String> = arr]
+                                    ULocalVariable (name = var837f2350) [@null var var837f2350: java.util.List<? extends java.lang.String> = arr]
                                         UAnnotation (fqName = null) [@null]
                                         USimpleNameReferenceExpression (identifier = arr) [arr] : PsiType:List<? extends String>
                                 UYieldExpression [yield return bindingContext]

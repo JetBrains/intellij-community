@@ -2,11 +2,11 @@ UFile (package = ) [public final class InKt {...]
     UClass (name = InKt) [public final class InKt {...}]
         UMethod (name = foo) [public static final fun foo() : boolean {...}]
             UBlockExpression [{...}] : PsiType:Void
-                UDeclarationsExpression [var x: <ErrorType> = 1]
-                    ULocalVariable (name = x) [var x: <ErrorType> = 1]
+                UDeclarationsExpression [var x: int = 1]
+                    ULocalVariable (name = x) [var x: int = 1]
                         ULiteralExpression (value = 1) [1] : PsiType:int
-                UDeclarationsExpression [var y: <ErrorType> = 10]
-                    ULocalVariable (name = y) [var y: <ErrorType> = 10]
+                UDeclarationsExpression [var y: int = 10]
+                    ULocalVariable (name = y) [var y: int = 10]
                         ULiteralExpression (value = 10) [10] : PsiType:int
                 UReturnExpression [return x in 0 .. 5 && y !in 4 .. 9] : PsiType:Void
                     UBinaryExpression (operator = &&) [x in 0 .. 5 && y !in 4 .. 9] : PsiType:boolean

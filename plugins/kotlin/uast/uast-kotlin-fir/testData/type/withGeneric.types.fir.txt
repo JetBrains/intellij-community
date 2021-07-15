@@ -8,8 +8,8 @@ UFile (package = ) [public final class WithGenericKt {...]
                         UTypeReferenceExpression (name = T) [T]
         UMethod (name = test2) [public static final fun test2() : T {...}]
             UBlockExpression [{...}] : PsiType:Void
-                UDeclarationsExpression [var a: <ErrorType> = null]
-                    ULocalVariable (name = a) [var a: <ErrorType> = null]
+                UDeclarationsExpression [var a: java.lang.Object = null]
+                    ULocalVariable (name = a) [var a: java.lang.Object = null]
                         ULiteralExpression (value = null) [null] : PsiType:Void
                 UReturnExpression [return a as T] : PsiType:Void
                     UBinaryExpressionWithType [a as T] : PsiType:T
@@ -42,14 +42,14 @@ UFile (package = ) [public final class WithGenericKt {...]
                         ULiteralExpression (value = null) [null] : PsiType:Void
                     UReturnExpression [return "fail: test2"] : PsiType:Void
                         ULiteralExpression (value = "fail: test2") ["fail: test2"] : PsiType:String
-                UDeclarationsExpression [var result3: <ErrorType> = "fail"]
-                    ULocalVariable (name = result3) [var result3: <ErrorType> = "fail"]
+                UDeclarationsExpression [var result3: java.lang.String = "fail"]
+                    ULocalVariable (name = result3) [var result3: java.lang.String = "fail"]
                         ULiteralExpression (value = "fail") ["fail"] : PsiType:String
                 UTryExpression [try {...] : PsiType:Object
                     UBlockExpression [{...}] : PsiType:int
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    UCatchClause (e) [catch (@null var e: <ErrorType>) {...}]
-                        UParameter (name = e) [@null var e: <ErrorType>]
+                    UCatchClause (e) [catch (@null var e: java.lang.NullPointerException) {...}]
+                        UParameter (name = e) [@null var e: java.lang.NullPointerException]
                             UAnnotation (fqName = null) [@null]
                         UBlockExpression [{...}] : PsiType:Unit
                             UBinaryExpression (operator = =) [result3 = "OK"] : PsiType:void
@@ -64,8 +64,8 @@ UFile (package = ) [public final class WithGenericKt {...]
                 UTryExpression [try {...] : PsiType:Unit
                     UBlockExpression [{...}] : PsiType:Unit
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    UCatchClause (e) [catch (@null var e: <ErrorType>) {...}]
-                        UParameter (name = e) [@null var e: <ErrorType>]
+                    UCatchClause (e) [catch (@null var e: java.lang.Exception) {...}]
+                        UParameter (name = e) [@null var e: java.lang.Exception]
                             UAnnotation (fqName = null) [@null]
                         UBlockExpression [{...}] : PsiType:Void
                             UReturnExpression [return "OK"] : PsiType:Void
