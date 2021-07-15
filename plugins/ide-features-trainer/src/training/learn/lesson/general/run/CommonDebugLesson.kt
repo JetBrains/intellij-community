@@ -335,8 +335,8 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     val position = sample.getPosition(3)
     caret(position)
 
-    highlightButtonById("RunToCursor")
     highlightLineNumberByOffset(position.startOffset)
+    highlightButtonById("RunToCursor", clearHighlights = false)
 
     actionTask("RunToCursor") {
       proposeRestore {

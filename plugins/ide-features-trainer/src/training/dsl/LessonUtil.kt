@@ -372,11 +372,13 @@ fun LessonContext.showWarningIfInplaceRefactoringsDisabled() {
   }
 }
 
-fun LessonContext.highlightButtonById(actionId: String): CompletableFuture<Boolean> {
+fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean = true): CompletableFuture<Boolean> {
   val feature: CompletableFuture<Boolean> = CompletableFuture()
   val needToFindButton = ActionManager.getInstance().getAction(actionId)
   prepareRuntimeTask {
-    LearningUiHighlightingManager.clearHighlights()
+    if (clearHighlights) {
+      LearningUiHighlightingManager.clearHighlights()
+    }
     ApplicationManager.getApplication().executeOnPooledThread {
       val result =
         LearningUiUtil.findAllShowingComponentWithTimeout(null, ActionButton::class.java, seconds01) { ui ->
