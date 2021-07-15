@@ -93,6 +93,24 @@ class SmartEnterTest : KotlinLightCodeInsightFixtureTestCase() {
             """
     )
 
+    fun testIfCondition7() = doFunTest(
+        """
+            if<caret>
+        
+            if (true && 
+                false
+            ) return
+            """,
+        """
+            if (<caret>) {
+            }
+        
+            if (true && 
+                false
+            ) return
+            """
+    )
+
     fun testIfThenOneLine1() = doFunTest(
         """
             if (true) println()<caret>
@@ -109,6 +127,20 @@ class SmartEnterTest : KotlinLightCodeInsightFixtureTestCase() {
             """,
         """
             if (true) println()
+            <caret>
+            """
+    )
+
+    fun testIfThenOneLine3() = doFunTest(
+        """
+            if (true &&
+                false
+            ) <caret>println()
+            """,
+        """
+            if (true &&
+                false
+            ) println()
             <caret>
             """
     )

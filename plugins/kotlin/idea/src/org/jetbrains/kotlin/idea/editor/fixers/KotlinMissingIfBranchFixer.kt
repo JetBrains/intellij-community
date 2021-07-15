@@ -30,7 +30,7 @@ class KotlinMissingIfBranchFixer : SmartEnterProcessorWithFixers.Fixer<KotlinSma
         val rParen = element.rightParenthesis ?: return
 
         var transformingOneLiner = false
-        if (thenBranch != null && thenBranch.startLine(document) == element.startLine(document)) {
+        if (thenBranch != null && thenBranch.startLine(document) == element.rightParenthesis?.startLine(document)) {
             if (element.condition != null) return
             transformingOneLiner = true
         }
