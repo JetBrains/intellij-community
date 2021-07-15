@@ -21,20 +21,25 @@ abstract class AbstractKotlinCompilerReferenceTest : KotlinCompilerReferenceTest
         val configurationPath = Path(testDataFilePath, "testConfig.json")
         val config: JsonObject = JsonParser.parseReader(configurationPath.reader()).asJsonObject
 
-        val usages = config["usages"]?.asJsonArray?.map { it.asString }
+        val usages = config[USAGES]?.asJsonArray?.map { it.asString }
         val mainFile = config["mainFile"]?.asString ?: usages?.first() ?: error("Main file not found")
-        val shouldBeFixed = config["shouldBeUsage"]?.asJsonArray?.map { it.asString }.orEmpty()
+        val shouldBeFixed = config[SHOULD_BE_USAGE]?.asJsonArray?.map { it.asString }.orEmpty()
+        val usagesSet = usages?.also { it.intersect(shouldBeFixed).ifNotEmpty { error("$this should be omitted in '$USAGES'") } }?.toSet()
 
         val allFiles = listOf(mainFile) + Path(testDataFilePath).listDirectoryEntries().map { it.name }.minus(mainFile)
-
         myFixture.configureByFiles(*allFiles.toTypedArray())
         rebuildProject()
 
         assertEquals(
-            usages?.toSet(),
+            usagesSet,
             getReferentFilesForElementUnderCaret()?.also {
-                it.intersect(shouldBeFixed).ifNotEmpty { error("$it should be removed from 'shouldBeFixed'") }
-            }?.plus(shouldBeFixed)
+                it.intersect(shouldBeFixed).ifNotEmpty { error("$this should be moved from '$SHOULD_BE_USAGE' to '$USAGES") }
+            }
         )
+    }
+
+    companion object {
+        private const val USAGES = "usages"
+        private const val SHOULD_BE_USAGE = "shouldBeUsage"
     }
 }
