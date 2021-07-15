@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -310,19 +311,19 @@ public class XDebuggerTreeInlayPopup<D> {
   }
 
   public static void setAutoResize(Tree tree, JComponent myToolbar, JBPopup myPopup) {
-    final boolean[] canShrink = {true};
+    Ref<Boolean> canShrink = Ref.create(true);
     ((XDebuggerTree)tree).addTreeListener(new XDebuggerTreeListener() {
       @Override
       public void childrenLoaded(@NotNull XDebuggerTreeNode node,
                                  @NotNull List<? extends XValueContainerNode<?>> children,
                                  boolean last) {
         if (last) {
-          updateDebugPopupBounds(tree, myToolbar, myPopup, canShrink[0]);
-          canShrink[0] = false;
+          updateDebugPopupBounds(tree, myToolbar, myPopup, canShrink.get());
+          canShrink.set(false);
         }
       }
     });
-    updateDebugPopupBounds(tree, myToolbar, myPopup, canShrink[0]);
+    updateDebugPopupBounds(tree, myToolbar, myPopup, canShrink.get());
   }
 
   public static void updateDebugPopupBounds(final Tree tree, JComponent toolbar, JBPopup popup, boolean canShrink) {
@@ -334,8 +335,9 @@ public class XDebuggerTreeInlayPopup<D> {
     int width = Math.max(size.width, toolbar.getPreferredSize().width) + hMargin;
     Rectangle bounds = tree.getRowBounds(tree.getRowCount() - 1);
     int height = toolbar.getHeight() + vMargin + (bounds == null ? 0 : bounds.y + bounds.height);
-    int maxWidth = ScreenUtil.getScreenRectangle(toolbar).width / 2;
-    int maxHeight = ScreenUtil.getScreenRectangle(toolbar).height / 2;
+    Rectangle screenRectangle = ScreenUtil.getScreenRectangle(toolbar);
+    int maxWidth = screenRectangle.width / 2;
+    int maxHeight = screenRectangle.height / 2;
     final Rectangle targetBounds = new Rectangle(location.x,
                                                  location.y,
                                                  Math.min(width, maxWidth),
