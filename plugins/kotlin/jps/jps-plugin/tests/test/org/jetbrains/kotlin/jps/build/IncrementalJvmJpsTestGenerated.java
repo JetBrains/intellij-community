@@ -635,6 +635,16 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
             runTest("testData/incremental/pureKotlin/packageRemoved/");
         }
 
+        @TestMetadata("parameterWithDefaultValueAdded")
+        public void testParameterWithDefaultValueAdded() throws Exception {
+            runTest("testData/incremental/pureKotlin/parameterWithDefaultValueAdded/");
+        }
+
+        @TestMetadata("parameterWithDefaultValueRemoved")
+        public void testParameterWithDefaultValueRemoved() throws Exception {
+            runTest("testData/incremental/pureKotlin/parameterWithDefaultValueRemoved/");
+        }
+
         @TestMetadata("privateConstantsChanged")
         public void testPrivateConstantsChanged() throws Exception {
             runTest("testData/incremental/pureKotlin/privateConstantsChanged/");
@@ -1196,6 +1206,11 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
             @TestMetadata("multifileClassRemoved")
             public void testMultifileClassRemoved() throws Exception {
                 runTest("testData/incremental/withJava/other/multifileClassRemoved/");
+            }
+
+            @TestMetadata("multifileDependantUsage")
+            public void testMultifileDependantUsage() throws Exception {
+                runTest("testData/incremental/withJava/other/multifileDependantUsage/");
             }
 
             @TestMetadata("multifilePackagePartMethodAdded")
