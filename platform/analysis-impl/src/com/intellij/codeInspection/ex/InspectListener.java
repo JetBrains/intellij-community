@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.ex;
 
 public interface InspectListener {
-  default void inspectionFinished(long duration, long threadId, InspectionToolWrapper<?, ?> tool, InspectionKind kind) {}
+  default void inspectionFinished(long duration, long threadId, int problemsCount, InspectionToolWrapper<?, ?> tool, InspectionKind kind) {}
 
   default void activityFinished(long duration, long threadId, ActivityKind activityKind) {}
 

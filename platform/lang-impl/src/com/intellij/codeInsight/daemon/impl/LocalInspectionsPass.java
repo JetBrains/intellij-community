@@ -287,7 +287,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             myInspectTopicPublisher,
             toolWrapper,
             InspectListener.InspectionKind.LOCAL_PRIORITY,
-            () -> runToolOnElements(toolWrapper, iManager, false, indicator, elements, session, init));
+            () -> runToolOnElements(toolWrapper, iManager, false, indicator, elements, session, init)
+          );
         }
 
         return true;
@@ -298,26 +299,26 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return init;
   }
 
-  private void runToolOnElements(@NotNull LocalInspectionToolWrapper toolWrapper,
-                                 @NotNull InspectionManager iManager,
-                                 boolean isOnTheFly,
-                                 @NotNull ProgressIndicator indicator,
-                                 @NotNull List<? extends PsiElement> elements,
-                                 @NotNull LocalInspectionToolSession session,
-                                 @NotNull List<? super InspectionContext> init) {
+  private int runToolOnElements(@NotNull LocalInspectionToolWrapper toolWrapper,
+                                @NotNull InspectionManager iManager,
+                                boolean isOnTheFly,
+                                @NotNull ProgressIndicator indicator,
+                                @NotNull List<? extends PsiElement> elements,
+                                @NotNull LocalInspectionToolSession session,
+                                @NotNull List<? super InspectionContext> init) {
     ProgressManager.checkCanceled();
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
     LocalInspectionTool tool = toolWrapper.getTool();
     boolean[] applyIncrementally = {isOnTheFly};
     ProblemsHolder holder = new ProblemsHolder(iManager, getFile(), isOnTheFly) {
-        @Override
-        public void registerProblem(@NotNull ProblemDescriptor descriptor) {
-          super.registerProblem(descriptor);
-          if (applyIncrementally[0]) {
-            addDescriptorIncrementally(descriptor, toolWrapper, indicator);
-          }
+      @Override
+      public void registerProblem(@NotNull ProblemDescriptor descriptor) {
+        super.registerProblem(descriptor);
+        if (applyIncrementally[0]) {
+          addDescriptorIncrementally(descriptor, toolWrapper, indicator);
         }
+      }
     };
 
     PsiElementVisitor visitor = InspectionEngine.createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements);
@@ -333,6 +334,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       appendDescriptors(getFile(), holder.getResults(), toolWrapper);
     }
     applyIncrementally[0] = false; // do not apply incrementally outside visible range
+    return holder.getResultCount();
   }
 
   private void visitRestElementsAndCleanup(@NotNull ProgressIndicator indicator,
@@ -353,7 +355,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             myInspectTopicPublisher,
             context.tool,
             InspectListener.InspectionKind.LOCAL,
-            () -> AstLoadingFilter.disallowTreeLoading(() -> InspectionEngine.acceptElements(elements, context.visitor)));
+            () -> {
+              AstLoadingFilter.disallowTreeLoading(() -> InspectionEngine.acceptElements(elements, context.visitor));
+              return context.holder.getResults().size() - context.problemsSize;
+            });
         }
         advanceProgress(1);
         context.tool.getTool().inspectionFinished(session, context.holder);
@@ -421,10 +426,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                 ? mySeverityRegistrar.getTextAttributesBySeverity(severity)
                                 : getColorsScheme().getAttributes(attributesKey);
     HighlightInfo.Builder b = HighlightInfo.newHighlightInfo(highlightInfoType)
-                              .range(psiElement, textRange.getStartOffset(), textRange.getEndOffset())
-                              .description(message)
-                              .severity(severity)
-                              .inspectionToolId(toolID);
+      .range(psiElement, textRange.getStartOffset(), textRange.getEndOffset())
+      .description(message)
+      .severity(severity)
+      .inspectionToolId(toolID);
     if (toolTip != null) b.escapedToolTip(toolTip);
     if (HighlightSeverity.INFORMATION.equals(severity) && attributes == null && toolTip == null && !quickFixes.isEmpty()) {
       // Hack to avoid filtering this info out in HighlightInfoFilterImpl even though its attributes are empty.
@@ -487,7 +492,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     for (ProblemDescriptor descriptor : descriptors) {
       if (descriptor == null) {
         LOG.error("null descriptor. all descriptors(" + descriptors.size() +"): " +
-                   descriptors + "; file: " + file + " (" + file.getVirtualFile() +"); tool: " + tool);
+                  descriptors + "; file: " + file + " (" + file.getVirtualFile() +"); tool: " + tool);
       }
     }
     InspectionResult result = new InspectionResult(tool, descriptors);
@@ -584,9 +589,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     HighlightInfoType type = new InspectionHighlightInfoType(level, element);
     String plainMessage = message.startsWith("<html>")
-                                ? StringUtil.unescapeXmlEntities(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", ""))
-                                  .replaceAll("&nbsp;", " ")
-                                : message;
+                          ? StringUtil.unescapeXmlEntities(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", ""))
+                            .replaceAll("&nbsp;", " ")
+                          : message;
 
     @NlsSafe String tooltip = null;
     if (descriptor.showTooltip()) {
