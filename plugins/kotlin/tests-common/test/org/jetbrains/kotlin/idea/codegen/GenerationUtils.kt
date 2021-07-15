@@ -98,7 +98,7 @@ object GenerationUtils {
             files, configuration
         ).codegenFactory(
             if (isIrBackend)
-                JvmIrCodegenFactory(configuration.get(CLIConfigurationKeys.PHASE_CONFIG) ?: PhaseConfig(jvmPhases))
+                JvmIrCodegenFactory(configuration, configuration.get(CLIConfigurationKeys.PHASE_CONFIG) ?: PhaseConfig(jvmPhases))
             else DefaultCodegenFactory
         ).isIrBackend(isIrBackend).apply(configureGenerationState).build()
         if (analysisResult.shouldGenerateCode) {
