@@ -205,9 +205,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     setProgressLimit(toolWrappers.size() * 2L);
     LocalInspectionToolSession session = new LocalInspectionToolSession(getFile(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset());
 
-    List<InspectionContext> init = visitPriorityElementsAndInit(
-      InspectionEngine.filterToolsApplicableByLanguage(toolWrappers, InspectionEngine.calcElementDialectIds(inside, outside)),
-      iManager, isOnTheFly, progress, inside, session);
+    List<LocalInspectionToolWrapper> filteredWrappers =
+      InspectionEngine.filterToolsApplicableByLanguage(toolWrappers, InspectionEngine.calcElementDialectIds(inside, outside));
+    List<InspectionContext> init = visitPriorityElementsAndInit(filteredWrappers, iManager, isOnTheFly, progress, inside, session);
     Set<PsiFile> alreadyVisitedInjected = inspectInjectedPsi(inside, isOnTheFly, progress, iManager, true, toolWrappers, Collections.emptySet());
     visitRestElementsAndCleanup(progress, outside, session, init, isOnTheFly);
     inspectInjectedPsi(outside, isOnTheFly, progress, iManager, false, toolWrappers, alreadyVisitedInjected);

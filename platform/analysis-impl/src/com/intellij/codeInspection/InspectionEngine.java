@@ -33,8 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class InspectionEngine {
   private static final Logger LOG = Logger.getInstance(InspectionEngine.class);
-  private static final Set<Class<? extends LocalInspectionTool>> RECURSIVE_VISITOR_TOOL_CLASSES =
-    ContainerUtil.newConcurrentSet();
+  private static final Set<Class<? extends LocalInspectionTool>> RECURSIVE_VISITOR_TOOL_CLASSES = ContainerUtil.newConcurrentSet();
 
   public static @NotNull PsiElementVisitor createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
                                                                           @NotNull ProblemsHolder holder,
@@ -79,7 +78,6 @@ public final class InspectionEngine {
     return result;
   }
 
-  // public for Upsource
   // returns map (toolName -> problem descriptors)
   public static @NotNull Map<String, List<ProblemDescriptor>> inspectEx(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                         @NotNull PsiFile file,
@@ -239,7 +237,7 @@ public final class InspectionEngine {
     });
   }
 
-  private static @NotNull Set<String> getDialectIdsSpecifiedForTool(String langId, boolean applyToDialects) {
+  private static @NotNull Set<String> getDialectIdsSpecifiedForTool(@NotNull String langId, boolean applyToDialects) {
     Language language = Language.findLanguageByID(langId);
     Set<String> result;
     if (language == null) {
