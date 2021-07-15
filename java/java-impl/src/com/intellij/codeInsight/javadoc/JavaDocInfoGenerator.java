@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -910,15 +910,21 @@ public class JavaDocInfoGenerator {
     return modifiers.length();
   }
 
-  private static void generateTypeAnnotations(StringBuilder buffer, PsiAnnotationOwner owner, PsiElement context, boolean leadingSpace) {
+  private static int generateTypeAnnotations(StringBuilder buffer, PsiAnnotationOwner owner, PsiElement context, boolean leadingSpace) {
+    int len = 0;
     List<AnnotationDocGenerator> generators = AnnotationDocGenerator.getAnnotationsToShow(owner, context);
     if (leadingSpace && !generators.isEmpty()) {
       buffer.append(NBSP);
+      len++;
     }
     for (AnnotationDocGenerator anno : generators) {
-      anno.generateAnnotation(buffer, AnnotationFormat.JavaDocShort);
+      StringBuilder buf = new StringBuilder();
+      anno.generateAnnotation(buf, AnnotationFormat.JavaDocShort);
+      len += StringUtil.unescapeXmlEntities(StringUtil.stripHtml(buf.toString(), true)).length() + 1;
+      buffer.append(buf);
       buffer.append(NBSP);
     }
+    return len;
   }
 
   private static void generateAnnotations(StringBuilder buffer,
@@ -1871,23 +1877,23 @@ public class JavaDocInfoGenerator {
     if (type instanceof PsiArrayType) {
       int rest = generateType(buffer, ((PsiArrayType)type).getComponentType(), context, generateLink, useShortNames);
 
-      generateTypeAnnotations(buffer, type, context, true);
+      int len = generateTypeAnnotations(buffer, type, context, true);
       if (type instanceof PsiEllipsisType) {
         buffer.append("...");
-        return rest + 3;
+        return len + rest + 3;
       }
       else {
         buffer.append("[]");
-        return rest + 2;
+        return len + rest + 2;
       }
     }
 
-    generateTypeAnnotations(buffer, type, context, false);
+    int typAnnoLength = generateTypeAnnotations(buffer, type, context, false);
 
     if (type instanceof PsiPrimitiveType) {
-      String text = StringUtil.escapeXmlEntities(type.getCanonicalText());
-      buffer.append(text);
-      return text.length();
+      String text = type.getCanonicalText();
+      buffer.append(StringUtil.escapeXmlEntities(text));
+      return typAnnoLength + text.length();
     }
 
     if (type instanceof PsiCapturedWildcardType) {
@@ -1901,10 +1907,10 @@ public class JavaDocInfoGenerator {
       if (bound != null) {
         String keyword = wt.isExtends() ? " extends " : " super ";
         buffer.append(keyword);
-        return generateType(buffer, bound, context, generateLink, useShortNames) + 1 + keyword.length();
+        return typAnnoLength + generateType(buffer, bound, context, generateLink, useShortNames) + 1 + keyword.length();
       }
       else {
-        return 1;
+        return typAnnoLength + 1;
       }
     }
 
@@ -1924,31 +1930,31 @@ public class JavaDocInfoGenerator {
         if (DumbService.isDumb(context.getProject())) {
           String text = ((PsiClassType)type).getClassName();
           buffer.append(StringUtil.escapeXmlEntities(text));
-          return text.length();
+          return typAnnoLength + text.length();
         }
         String canonicalText = type.getCanonicalText();
         String text = "<font color=red>" + StringUtil.escapeXmlEntities(canonicalText) + "</font>";
         buffer.append(text);
-        return canonicalText.length();
+        return typAnnoLength + canonicalText.length();
       }
 
       String qName = psiClass.getQualifiedName();
 
       if (qName == null || psiClass instanceof PsiTypeParameter) {
-        String text = StringUtil.escapeXmlEntities(useShortNames ? type.getPresentableText() : type.getCanonicalText());
-        buffer.append(text);
-        return text.length();
+        String typeText = useShortNames ? type.getPresentableText() : type.getCanonicalText();
+        buffer.append(StringUtil.escapeXmlEntities(typeText));
+        return typAnnoLength + typeText.length();
       }
 
       String name = useShortNames ? getClassNameWithOuterClasses(psiClass) : qName;
 
-      int length;
+      int length = typAnnoLength;
       if (generateLink) {
-        length = generateLink(buffer, name, null, context, false);
+        length += generateLink(buffer, name, null, context, false);
       }
       else {
         buffer.append(name);
-        length = buffer.length();
+        length += name.length();
       }
 
       if (psiClass.hasTypeParameters()) {
@@ -1971,15 +1977,14 @@ public class JavaDocInfoGenerator {
 
           if (i < params.length - 1) {
             subst.append(", ");
+            length += 2;
           }
         }
 
         subst.append(GT);
-        length += 1;
+        length ++;
         if (goodSubst) {
-          String text = subst.toString();
-
-          buffer.append(text);
+          buffer.append(subst.toString());
         }
       }
 
@@ -1989,9 +1994,8 @@ public class JavaDocInfoGenerator {
     if (type instanceof PsiDisjunctionType || type instanceof PsiIntersectionType) {
       if (!generateLink) {
         String canonicalText = useShortNames ? type.getPresentableText() : type.getCanonicalText();
-        String text = StringUtil.escapeXmlEntities(canonicalText);
-        buffer.append(text);
-        return canonicalText.length();
+        buffer.append(StringUtil.escapeXmlEntities(canonicalText));
+        return typAnnoLength + canonicalText.length();
       }
       else {
         String separator = type instanceof PsiDisjunctionType ? " | " : " & ";
@@ -2002,7 +2006,7 @@ public class JavaDocInfoGenerator {
         else {
           componentTypes = ((PsiDisjunctionType)type).getDisjunctions();
         }
-        int length = 0;
+        int length = typAnnoLength;
         for (PsiType psiType : componentTypes) {
           if (length > 0) {
             buffer.append(separator);
