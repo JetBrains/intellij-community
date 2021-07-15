@@ -40,7 +40,6 @@ interface RunToolbarProcess {
   val name: @Nls String
 
   val actionId: String
-  val moreActionGroupName: String
   val moreActionSubGroupName: String
 
   val showInBar: Boolean

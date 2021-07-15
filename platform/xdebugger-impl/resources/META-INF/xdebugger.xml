@@ -97,7 +97,7 @@
       <separator text="Debug"/>
       <group id="RunToolbarDebugMoreActionSubGroupName"/>
       <reference ref="XDebugger.AttachGroup"/>
-      <add-to-group group-id="RunToolbarMoreActionGroup"/>
+      <add-to-group group-id="RunToolbarMainMoreActionGroup"/>
     </group>
 
     <group id="RunToolbarDebuggerAdditionalActions">

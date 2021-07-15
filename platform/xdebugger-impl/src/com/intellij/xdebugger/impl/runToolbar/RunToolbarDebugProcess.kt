@@ -12,7 +12,6 @@ class RunToolbarDebugProcess : RunToolbarProcess {
   override val name: String = ExecutionBundle.message("run.toolbar.debug")
 
   override val actionId: String = "RunToolbarDebugProcess"
-  override val moreActionGroupName: String = "RunToolbarDebugMoreActionGroupName"
   override val moreActionSubGroupName: String = "RunToolbarDebugMoreActionSubGroupName"
 
   override val showInBar: Boolean = true
