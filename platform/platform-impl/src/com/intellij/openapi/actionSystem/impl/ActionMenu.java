@@ -243,8 +243,8 @@ public final class ActionMenu extends JBMenu {
   }
 
   private class MenuListenerImpl implements ChangeListener, MenuListener {
+    private SingleAlarm myClearSelfAlarm;
     boolean isSelected = false;
-
     boolean myIsHidden = false;
 
     @Override
@@ -303,15 +303,30 @@ public final class ActionMenu extends JBMenu {
         // Defer clearing to avoid this problem.
         Disposable listenerHolder = Disposer.newDisposable();
         Disposer.register(ApplicationManager.getApplication(), listenerHolder);
+        Runnable clearSelfAndHolder = () -> {
+          if (myClearSelfAlarm == null)
+            return;
+          myClearSelfAlarm.cancel(); // NOTE: cancel doesn't interrupt already running task.
+          myClearSelfAlarm = null;
+          if (myIsHidden)
+            clearSelf.run();
+
+          // schedule holder dispose (to remove key-dispatcher from IdeEventQueue)
+          ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(listenerHolder));
+        };
+
+        // 1. clear menu when user press key
         IdeEventQueue.getInstance().addDispatcher(e -> {
-          if (e instanceof KeyEvent) {
-            if (myIsHidden) {
-              clearSelf.run();
-            }
-            ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(listenerHolder));
-          }
+          if (e instanceof KeyEvent)
+            clearSelfAndHolder.run();
           return false;
         }, listenerHolder);
+
+        // 2. and schedule to clear menu by timer (when key-events doesn't come)
+        if (myClearSelfAlarm != null)
+          myClearSelfAlarm.cancel();
+        myClearSelfAlarm = new SingleAlarm(clearSelfAndHolder, 1000);
+        myClearSelfAlarm.request();
 
         myIsHidden = true;
       }
@@ -330,6 +345,10 @@ public final class ActionMenu extends JBMenu {
         clearItems();
       }
       myIsHidden = false;
+      if (myClearSelfAlarm != null) {
+        myClearSelfAlarm.cancel();
+        myClearSelfAlarm = null;
+      }
       if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
         fillMenu();
       }
