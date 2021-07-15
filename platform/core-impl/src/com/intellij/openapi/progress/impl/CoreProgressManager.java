@@ -4,6 +4,7 @@ package com.intellij.openapi.progress.impl;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -366,6 +367,13 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   @ApiStatus.Internal
   public static boolean shouldKeepTasksAsynchronousInHeadlessMode() {
     return SystemProperties.getBooleanProperty("intellij.progress.task.ignoreHeadless", false);
+  }
+
+  @ApiStatus.Internal
+  public static boolean shouldKeepTasksAsynchronous() {
+    Application application = ApplicationManager.getApplication();
+    boolean isHeadless = application.isUnitTestMode() || application.isHeadlessEnvironment();
+    return !isHeadless || shouldKeepTasksAsynchronousInHeadlessMode();
   }
 
   // from any: bg or current if can't
