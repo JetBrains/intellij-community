@@ -53,7 +53,6 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
             project: Project,
             provider: InlayHintsProvider<*>
         ): InlayPresentation {
-            val inlayInfo = infoDetails.inlayInfo
             val details = mergeAdjacentTextInlayInfoDetails(infoDetails.details)
             val basePresentation = when (details.size) {
                 1 -> getInlayPresentationForInlayInfoDetail(details.first(), factory, project)
@@ -102,15 +101,15 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
             project: Project
         ): InlayPresentation {
             val textPresentation = factory.smallText(details.text)
-            val navigationElement = when(details) {
-                is PsiInlayInfoDetail -> details.element
+            val navigationElementProvider: (() -> PsiElement?)? = when(details) {
+                is PsiInlayInfoDetail -> {{ details.element }}
                 is TypeInlayInfoDetail -> details.fqName?.run {
-                    project.resolveClass(this)?.navigationElement
+                    { project.resolveClass(this)?.navigationElement }
                 }
                 else -> null
             }
-            val basePresentation = navigationElement?.let {
-                factory.psiSingleReference(textPresentation, withDebugToString = true) { it }
+            val basePresentation = navigationElementProvider?.let {
+                factory.psiSingleReference(textPresentation, withDebugToString = true, it)
             } ?: textPresentation
             return basePresentation
         }
