@@ -8,7 +8,6 @@ import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetProgressIndicatorAdapter
 import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
@@ -17,14 +16,13 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.NonUrgentExecutor
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.core.KotlinCompilerIde
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.scratch.LOG
 import org.jetbrains.kotlin.idea.scratch.ScratchExpression
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
+import org.jetbrains.kotlin.idea.scratch.compile.KtScratchSourceFileProcessor.Result
 import org.jetbrains.kotlin.idea.scratch.printDebugMessage
 import org.jetbrains.kotlin.idea.util.JavaParametersBuilder
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -52,38 +50,44 @@ class KtScratchExecutionSession(
         val expressions = file.getExpressions()
         if (!executor.checkForErrors(psiFile, expressions)) return
 
-        val project = file.project
         when (val result = runReadAction { KtScratchSourceFileProcessor().process(expressions) }) {
-            is KtScratchSourceFileProcessor.Result.Error -> return executor.errorOccurs(result.message, isFatal = true)
-            is KtScratchSourceFileProcessor.Result.OK -> {
+            is Result.Error -> return executor.errorOccurs(result.message, isFatal = true)
+            is Result.OK -> {
                 LOG.printDebugMessage("After processing by KtScratchSourceFileProcessor:\n ${result.code}")
-
-                object : Task.Backgroundable(psiFile.project, KotlinJvmBundle.message("running.kotlin.scratch"), true) {
-                    override fun run(indicator: ProgressIndicator) {
-                        backgroundProcessIndicator = indicator
-
-                        val modifiedScratchSourceFile = runReadAction {
-                            KtPsiFactory(psiFile.project).createFileWithLightClassSupport("tmp.kt", result.code, psiFile)
-                        }
-
-                        try {
-                            runCommandLine(project, modifiedScratchSourceFile, expressions, psiFile, result, indicator, callback)
-                        } catch (e: Throwable) {
-                            if (e is ControlFlowException) throw e
-
-                            LOG.printDebugMessage(result.code)
-                            executor.errorOccurs(
-                                e.message ?: KotlinJvmBundle.message("couldn.t.compile.0", psiFile.name),
-                                e,
-                                isFatal = true
-                            )
-                        }
-                    }
-                }.queue()
+                executeInBackground(KotlinJvmBundle.message("running.kotlin.scratch")) { indicator ->
+                    backgroundProcessIndicator = indicator
+                    val modifiedScratchSourceFile = createFileWithLightClassSupport(result, psiFile)
+                    tryRunCommandLine(modifiedScratchSourceFile, psiFile, result, callback)
+                }
             }
         }
+    }
 
+    private fun executeInBackground(title: String, block: (indicator: ProgressIndicator) -> Unit) {
+        object : Task.Backgroundable(file.project, title, true) {
+            override fun run(indicator: ProgressIndicator) = block.invoke(indicator)
+        }.queue()
+    }
 
+    private fun createFileWithLightClassSupport(result: Result.OK, psiFile: KtFile): KtFile =
+        runReadAction { KtPsiFactory(file.project).createFileWithLightClassSupport("tmp.kt", result.code, psiFile) }
+
+    private fun tryRunCommandLine(modifiedScratchSourceFile: KtFile, psiFile: KtFile, result: Result.OK, callback: () -> Unit) {
+        assert(backgroundProcessIndicator != null)
+        try {
+            runCommandLine(
+                file.project, modifiedScratchSourceFile, file.getExpressions(), psiFile, result,
+                backgroundProcessIndicator!!, callback
+            )
+        } catch (e: Throwable) {
+            if (e is ControlFlowException) throw e
+            reportError(result, e, psiFile)
+        }
+    }
+
+    fun reportError(result: Result.OK, e: Throwable, psiFile: KtFile) {
+        LOG.printDebugMessage(result.code)
+        executor.errorOccurs(e.message ?: KotlinJvmBundle.message("couldn.t.compile.0", psiFile.name), e, isFatal = true)
     }
 
     private fun runCommandLine(
@@ -91,7 +95,7 @@ class KtScratchExecutionSession(
         modifiedScratchSourceFile: KtFile,
         expressions: List<ScratchExpression>,
         psiFile: KtFile,
-        result: KtScratchSourceFileProcessor.Result.OK,
+        result: Result.OK,
         indicator: ProgressIndicator,
         callback: () -> Unit
     ) {
