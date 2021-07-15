@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("FunctionalExpressionFlowUtil")
 
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl
@@ -29,7 +29,7 @@ enum class InvocationKind {
   IN_PLACE_ONCE,
 
   /**
-   * Indicates that functional expressions will be invoked inplace, but amount of its invocations is undefined.
+   * Indicates that functional expressions will be invoked inplace, but amount of their invocations is undefined.
    * Such functional expressions act like code blocks under some conditional statement.
    */
   IN_PLACE_UNKNOWN,

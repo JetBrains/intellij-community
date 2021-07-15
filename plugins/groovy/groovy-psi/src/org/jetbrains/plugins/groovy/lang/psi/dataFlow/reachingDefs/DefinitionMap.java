@@ -1,10 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
+import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
@@ -16,6 +18,7 @@ import java.util.function.Consumer;
  */
 public final class DefinitionMap {
   private final Int2ObjectMap<IntSet> myMap = new Int2ObjectOpenHashMap<>();
+  private FList<DefinitionMap> myPreviousClosureContext = FList.emptyList();
 
   public void registerDef(int varIndex, Instruction instruction) {
     IntSet defs = myMap.get(varIndex);
@@ -41,6 +44,7 @@ public final class DefinitionMap {
         myDefs.addAll(otherDefs);
       }
     }
+    myPreviousClosureContext = other.myPreviousClosureContext;
   }
 
   public int @Nullable [] getDefinitions(int varIndex) {
@@ -57,11 +61,22 @@ public final class DefinitionMap {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     DefinitionMap map = (DefinitionMap)o;
-    return myMap.equals(map.myMap);
+    return Objects.equals(myMap, map.myMap) && Objects.equals(myPreviousClosureContext, map.myPreviousClosureContext);
+  }
+
+  public void setClosureContext(@NotNull DefinitionMap map) {
+    myPreviousClosureContext = myPreviousClosureContext.prepend(map);
+  }
+
+  public @NotNull DefinitionMap popClosureContext() {
+    var head = myPreviousClosureContext.getHead();
+    assert head != null;
+    myPreviousClosureContext = myPreviousClosureContext.getTail();
+    return head;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myMap);
+    return Objects.hash(myMap, System.identityHashCode(myPreviousClosureContext));
   }
 }

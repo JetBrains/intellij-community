@@ -254,7 +254,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   @Override
   public void visitClosure(@NotNull GrClosableBlock closure) {
-    InstructionImpl startClosure = startNode(closure);
+    InstructionImpl startClosure = new FunctionalBlockBeginInstruction(closure);
+    addNodeAndCheckPending(startClosure);
     addFunctionalExpressionParameters(closure);
     super.visitClosure(closure);
     InstructionImpl endClosure = new FunctionalBlockEndInstruction(startClosure, closure);
