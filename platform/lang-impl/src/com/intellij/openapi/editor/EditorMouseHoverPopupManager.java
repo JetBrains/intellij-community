@@ -608,18 +608,6 @@ public class EditorMouseHoverPopupManager implements Disposable {
     private final WeakReference<PsiElement> quickDocElement;
     private final DocumentationProvider docProvider;
 
-    /**
-     * @deprecated use {@link #Info(HighlightInfo, TooltipAction, String, String, PsiElement, DocumentationProvider)}
-     */
-    @Deprecated
-    public Info(HighlightInfo highlightInfo,
-                TooltipAction tooltipAction,
-                @Nls String quickDocMessage,
-                PsiElement quickDocElement,
-                @Nullable DocumentationProvider provider) {
-      this(highlightInfo, tooltipAction, quickDocMessage, quickDocMessage, quickDocElement, provider);
-    }
-
     public Info(HighlightInfo highlightInfo,
                  TooltipAction tooltipAction,
                  @Nls String quickDocMessage,
@@ -782,14 +770,6 @@ public class EditorMouseHoverPopupManager implements Disposable {
       EditorUtil.disposeWithEditor(editor, component);
       popupBridge.performOnCancel(() -> Disposer.dispose(component));
       return component;
-    }
-
-    /**
-     * @deprecated use {@link #withQuickDocMessage(String, String)}
-     */
-    @Deprecated
-    public Info withQuickDocMessage(@Nls String quickDocMessage) {
-      return withQuickDocMessage(quickDocMessage, quickDocMessage);
     }
 
     public Info withQuickDocMessage(@Nls String quickDocMessage, @Nls String quickDocMessageDecorated) {
