@@ -24,7 +24,7 @@ internal class TestEventLogApplicationInfo(recorderId: String, private val setti
 
 internal class TestEventLogRecorderConfig(recorderId: String, logFiles: List<File>, val sendEnabled: Boolean = true)
   : EventLogInternalRecorderConfig(recorderId) {
-  private val evenLogFilesProvider = object : EventLogFilesProvider {
+  private val evenLogFilesProvider = object : EventLogFilesProvider() {
     override fun getLogFilesDir(): Path? = null
 
     override fun getLogFiles(): List<EventLogFile> = logFiles.map { EventLogFile(it) }
