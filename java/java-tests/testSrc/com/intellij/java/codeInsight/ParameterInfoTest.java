@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
@@ -108,6 +108,10 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   public void testOverloadWithVarargsSingleArg() {
     doTest2CandidatesWithPreselection();
   }
+ 
+  public void testOverloadWithOneIncompatibleVarargs() {
+    assertNotNull(doTest2CandidatesWithPreselection().getHighlightedParameter());
+  }
 
   @NeedsIndex.ForStandardLibrary
   public void testOverloadWithErrorOnTheTopLevel() {
@@ -178,7 +182,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
                 updateParameterInfoContext.isUIComponentEnabled(2));
   }
 
-  private void doTest2CandidatesWithPreselection() {
+  private MockUpdateParameterInfoContext doTest2CandidatesWithPreselection() {
     myFixture.configureByFile(getTestName(false) + ".java");
 
     MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
@@ -192,6 +196,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     ParameterInfoComponent.createContext(itemsToShow, getEditor(), handler, -1);
     MockUpdateParameterInfoContext updateParameterInfoContext = updateParameterInfo(handler, list, itemsToShow);
     assertTrue(updateParameterInfoContext.isUIComponentEnabled(0) || updateParameterInfoContext.isUIComponentEnabled(1));
+    return updateParameterInfoContext;
   }
 
   @NotNull
