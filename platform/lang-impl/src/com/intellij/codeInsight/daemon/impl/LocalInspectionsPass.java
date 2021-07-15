@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -288,9 +288,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             myInspectTopicPublisher,
             toolWrapper,
             LOCAL_PRIORITY,
-            () -> {
-              runToolOnElements(toolWrapper, iManager, false, indicator, elements, session, init);
-            });
+            () -> runToolOnElements(toolWrapper, iManager, false, indicator, elements, session, init)
+          );
         }
 
         return true;
@@ -301,7 +300,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return init;
   }
 
-  private void runToolOnElements(final @NotNull LocalInspectionToolWrapper toolWrapper,
+  private int runToolOnElements(final @NotNull LocalInspectionToolWrapper toolWrapper,
                                  final @NotNull InspectionManager iManager,
                                  final boolean isOnTheFly,
                                  final @NotNull ProgressIndicator indicator,
@@ -336,6 +335,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       appendDescriptors(getFile(), holder.getResults(), toolWrapper);
     }
     applyIncrementally[0] = false; // do not apply incrementally outside visible range
+    return holder.getResultCount();
   }
 
   private void visitRestElementsAndCleanup(final @NotNull ProgressIndicator indicator,
@@ -357,6 +357,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             LOCAL,
             () -> {
               AstLoadingFilter.disallowTreeLoading(() -> InspectionEngine.acceptElements(elements, context.visitor));
+              return context.holder.getResults().size() - context.problemsSize;
             });
         }
         advanceProgress(1);
