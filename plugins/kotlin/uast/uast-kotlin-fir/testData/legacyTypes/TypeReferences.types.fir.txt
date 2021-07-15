@@ -26,7 +26,7 @@ UFile (package = ) [public final class TypeReferencesKt {...]
                         USimpleNameReferenceExpression (identifier = arg) [arg] : PsiType:T
                 UDeclarationsExpression [var at: T = elvis {...}]
                     ULocalVariable (name = at) [var at: T = elvis {...}]
-                        UExpressionList (elvis) [elvis {...}]
+                        UExpressionList (elvis) [elvis {...}] : PsiType:T
                             UDeclarationsExpression [var var708e23eb: T = arg]
                                 ULocalVariable (name = var708e23eb) [var var708e23eb: T = arg]
                                     USimpleNameReferenceExpression (identifier = arg) [arg] : PsiType:T
