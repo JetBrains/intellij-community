@@ -299,17 +299,15 @@ final class RefCountHolder {
   }
 
   boolean analyze(@NotNull PsiFile file,
-                  TextRange dirtyScope,
+                  @NotNull TextRange dirtyScope,
                   @NotNull ProgressIndicator indicator,
                   @NotNull Runnable analyze) {
     boolean readyBefore = myReady;
-    if (readyBefore && dirtyScope != null) {
-      if (dirtyScope.equals(file.getTextRange())) {
-        clear();
-      }
-      else {
-        removeInvalidRefs();
-      }
+    if (dirtyScope.equals(file.getTextRange())) {
+      clear();
+    }
+    else {
+      removeInvalidRefs();
     }
     analyze.run();
     myReady = true;
