@@ -22,7 +22,7 @@ public class ConfigImportProgressDialog extends JDialog {
     panel.setLayout(new GridBagLayout());
     panel.add(new JLabel(IdeBundle.message("progress.text.migrating.plugins")), gridBag.nextLine().anchor(GridBagConstraints.WEST));
     panel.add(myProgressTextLabel, gridBag.nextLine().insetBottom(20));
-    myProgressBar.setPreferredSize(new Dimension(500, myProgressBar.getPreferredSize().height));
+    myProgressBar.setPreferredSize(new Dimension(JBUI.scale(500), myProgressBar.getPreferredSize().height));
     panel.add(myProgressBar, gridBag.nextLine().fillCell().insetBottom(20));
     JButton cancelButton = new JButton(IdeBundle.message("button.cancel.without.mnemonic"));
     panel.add(cancelButton, gridBag.nextLine());
