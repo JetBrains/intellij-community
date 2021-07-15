@@ -5132,9 +5132,29 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("downTo.kt")
+        public void testDownTo() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/downTo.kt");
+        }
+
+        @TestMetadata("downTo2.kt")
+        public void testDownTo2() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/downTo2.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/inspectionsLocal/emptyRange/simple.kt");
+        }
+
+        @TestMetadata("until.kt")
+        public void testUntil() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/until.kt");
+        }
+
+        @TestMetadata("until2.kt")
+        public void testUntil2() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/until2.kt");
         }
     }
 

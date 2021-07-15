@@ -8,34 +8,47 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.intentions.getArguments
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-class EmptyRangeInspection : AbstractPrimitiveRangeToInspection() {
-    override fun visitRangeToExpression(expression: KtExpression, holder: ProblemsHolder) {
-        val (left, right) = expression.getArguments() ?: return
+class EmptyRangeInspection : AbstractRangeInspection() {
+    override fun visitRangeTo(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
+        val (startValue, endValue) = expression.startAndEndValue(context) ?: return
+        if (startValue > endValue) {
+            holder.registerProblem(expression, downTo = true)
+        }
+    }
 
-        val context = expression.analyze(BodyResolveMode.PARTIAL)
-        val startValue = left?.longValueOrNull(context) ?: return
-        val endValue = right?.longValueOrNull(context) ?: return
+    override fun visitUntil(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
+        val (startValue, endValue) = expression.startAndEndValue(context) ?: return
+        when {
+            startValue > endValue -> holder.registerProblem(expression, downTo = true)
+            startValue == endValue -> holder.registerProblem(expression, downTo = false)
+        }
+    }
 
-        if (startValue <= endValue) return
+    override fun visitDownTo(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
+        val (startValue, endValue) = expression.startAndEndValue(context) ?: return
+        if (startValue < endValue) {
+            holder.registerProblem(expression, downTo = false)
+        }
+    }
 
-        holder.registerProblem(
+    private fun ProblemsHolder.registerProblem(expression: KtExpression, downTo: Boolean) {
+        val (functionName, operator) = if (downTo) "downTo" to "downTo" else "rangeTo" to ".."
+        registerProblem(
             expression,
-            KotlinBundle.message("this.range.is.empty.did.you.mean.to.use.downto"),
+            KotlinBundle.message("this.range.is.empty.did.you.mean.to.use.0", functionName),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-            ReplaceWithDownToFix()
+            ReplaceFix(operator)
         )
     }
 
-    class ReplaceWithDownToFix : LocalQuickFix {
-        override fun getName() = KotlinBundle.message("replace.with.down.to.fix.text")
+    private class ReplaceFix(private val rangeOperator: String) : LocalQuickFix {
+        override fun getName() = KotlinBundle.message("replace.with.0", rangeOperator)
 
         override fun getFamilyName() = name
 
@@ -44,8 +57,15 @@ class EmptyRangeInspection : AbstractPrimitiveRangeToInspection() {
             val (left, right) = element.getArguments() ?: return
             if (left == null || right == null) return
 
-            element.replace(KtPsiFactory(element).createExpressionByPattern("$0 downTo $1", left, right))
+            element.replace(KtPsiFactory(element).createExpressionByPattern("$0 $rangeOperator $1", left, right))
         }
+    }
+
+    private fun KtExpression.startAndEndValue(context: BindingContext): Pair<Long, Long>? {
+        val (start, end) = getArguments() ?: return null
+        val startValue = start?.longValueOrNull(context) ?: return null
+        val endValue = end?.longValueOrNull(context) ?: return null
+        return startValue to endValue
     }
 
     private fun KtExpression.longValueOrNull(context: BindingContext): Long? {

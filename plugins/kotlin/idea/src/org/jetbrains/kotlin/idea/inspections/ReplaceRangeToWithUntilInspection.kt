@@ -11,9 +11,10 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.getArguments
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.BindingContext
 
-class ReplaceRangeToWithUntilInspection : AbstractPrimitiveRangeToInspection() {
-    override fun visitRangeToExpression(expression: KtExpression, holder: ProblemsHolder) {
+class ReplaceRangeToWithUntilInspection : AbstractRangeInspection() {
+    override fun visitRangeTo(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
         if (!isApplicable(expression)) return
         holder.registerProblem(
             expression,
@@ -21,6 +22,12 @@ class ReplaceRangeToWithUntilInspection : AbstractPrimitiveRangeToInspection() {
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
             ReplaceWithUntilQuickFix()
         )
+    }
+
+    override fun visitUntil(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
+    }
+
+    override fun visitDownTo(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
     }
 
     class ReplaceWithUntilQuickFix : LocalQuickFix {
