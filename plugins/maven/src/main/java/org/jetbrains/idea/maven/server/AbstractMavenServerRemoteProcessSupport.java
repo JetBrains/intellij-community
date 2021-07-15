@@ -28,7 +28,6 @@ public abstract class AbstractMavenServerRemoteProcessSupport extends MavenRemot
   protected final MavenDistribution myDistribution;
   protected final Project myProject;
   protected final Integer myDebugPort;
-  protected final String myMultimoduleDirectory;
   @Nullable protected Consumer<ProcessEvent> onTerminate;
   private final MavenImportEventProcessor myImportEventProcessor;
   private final MavenSpyEventsBuffer myMavenSpyEventsBuffer;
@@ -37,15 +36,13 @@ public abstract class AbstractMavenServerRemoteProcessSupport extends MavenRemot
                                                  @Nullable String vmOptions,
                                                  @NotNull MavenDistribution mavenDistribution,
                                                  @NotNull Project project,
-                                                 @Nullable Integer debugPort,
-                                                 @Nullable String multimoduleDirectory) {
+                                                 @Nullable Integer debugPort) {
     super(MavenServer.class);
     myJdk = jdk;
     myOptions = vmOptions;
     myDistribution = mavenDistribution;
     myProject = project;
     myDebugPort = debugPort;
-    myMultimoduleDirectory = multimoduleDirectory;
 
     myImportEventProcessor = new MavenImportEventProcessor(project);
     AnsiEscapeDecoder myDecoder = new AnsiEscapeDecoder();
