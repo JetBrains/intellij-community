@@ -11,6 +11,7 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -189,7 +190,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   @Override
   public void cleanFileLevelHighlights(int group, @NotNull PsiFile psiFile) {
     assertMyProject(psiFile.getProject());
-    VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
+    VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
     for (FileEditor fileEditor : myFileEditorManager.getAllEditors(vFile)) {
       cleanFileLevelHighlights(fileEditor, group);
     }
@@ -224,7 +225,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                                     @NotNull HighlightInfo info,
                                     @NotNull PsiFile psiFile) {
     assertMyProject(psiFile.getProject());
-    VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
+    VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
     for (FileEditor fileEditor : myFileEditorManager.getAllEditors(vFile)) {
       if (fileEditor instanceof TextEditor) {
         FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(),
