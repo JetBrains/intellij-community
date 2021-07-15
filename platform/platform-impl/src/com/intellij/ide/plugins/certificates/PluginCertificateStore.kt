@@ -3,12 +3,14 @@ package com.intellij.ide.plugins.certificates
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.io.inputStream
 import com.intellij.util.net.ssl.ConfirmingTrustManager
 import com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager
 import java.io.File
-import java.io.FileInputStream
 import java.security.KeyStore
 import java.security.cert.X509Certificate
+import kotlin.io.path.Path
+import kotlin.io.path.exists
 
 object PluginCertificateStore {
   private val LOG = Logger.getInstance(PluginCertificateStore::class.java)
@@ -29,15 +31,11 @@ object PluginCertificateStore {
 
   private fun loadCertificates(storePath: String) : List<X509Certificate> {
     val keystore = KeyStore.getInstance(KeyStore.getDefaultType())
-    val keystoreFile = File(storePath)
-    if (keystoreFile.exists()) {
+    val keystorePath = Path(storePath)
+    if (keystorePath.exists()) {
       try {
-        keystore.load(FileInputStream(keystoreFile), DEFAULT_PASSWORD.toCharArray())
-        val certs = ArrayList<X509Certificate>()
-        for (alias in keystore.aliases()) {
-          certs.add(keystore.getCertificate(alias) as X509Certificate)
-        }
-        return certs
+        keystore.load(keystorePath.inputStream(), DEFAULT_PASSWORD.toCharArray())
+        return keystore.aliases().toList().mapNotNull { keystore.getCertificate(it) as? X509Certificate }
       } catch (e: Exception) {
         LOG.warn("Failed to load managed plugin truststore", e)
       }
