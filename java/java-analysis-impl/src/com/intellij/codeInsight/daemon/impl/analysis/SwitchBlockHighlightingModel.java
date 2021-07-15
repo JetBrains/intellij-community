@@ -163,11 +163,13 @@ public class SwitchBlockHighlightingModel {
         hasDefaultCase = true;
         continue;
       }
-      PsiExpressionList expressionList = labelStatement.getCaseValues();
-      if (expressionList == null) {
+      PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
+      if (labelElementList == null) {
         continue;
       }
-      for (PsiExpression expr : expressionList.getExpressions()) {
+      for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
+        PsiExpression expr = ObjectUtils.tryCast(labelElement, PsiExpression.class);
+        if (expr == null) continue;
         HighlightInfo result = HighlightUtil.checkAssignability(mySelectorType, expr.getType(), expr, expr);
         if (result != null) {
           results.add(result);

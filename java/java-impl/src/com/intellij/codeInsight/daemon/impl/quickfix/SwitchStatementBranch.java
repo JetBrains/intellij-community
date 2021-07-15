@@ -99,11 +99,13 @@ class SwitchStatementBranch {
       setAlwaysExecuted(defaultAlwaysExecuted);
     }
     else {
-      PsiExpressionList values = label.getCaseValues();
-      if (values != null) {
-        for (PsiExpression value : values.getExpressions()) {
-          final String valueText = getCaseValueText(value, commentTracker);
-          addCaseValue(valueText);
+      PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
+      if (labelElementList != null) {
+        for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
+          if (labelElement instanceof PsiExpression) {
+            final String valueText = getCaseValueText((PsiExpression)labelElement, commentTracker);
+            addCaseValue(valueText);
+          }
         }
       }
     }

@@ -29,8 +29,8 @@ public class DeleteSwitchLabelFix implements LocalQuickFix {
   public DeleteSwitchLabelFix(@NotNull PsiExpression label) {
     myName = label.getText();
     PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(PsiImplUtil.getSwitchLabel(label));
-    PsiExpressionList values = labelStatement.getCaseValues();
-    boolean multiple = values != null && values.getExpressionCount() > 1;
+    PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
+    boolean multiple = labelElementList != null && labelElementList.getElementCount() > 1;
     myBranch = !multiple && shouldRemoveBranch(labelStatement);
   }
 
@@ -66,8 +66,8 @@ public class DeleteSwitchLabelFix implements LocalQuickFix {
     if (expression == null) return;
     PsiSwitchLabelStatementBase label = PsiImplUtil.getSwitchLabel(expression);
     if (label == null) return;
-    PsiExpressionList values = label.getCaseValues();
-    if (values != null && values.getExpressionCount() == 1) {
+    PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
+    if (labelElementList != null && labelElementList.getElementCount() == 1) {
       deleteLabel(label);
     } else {
       new CommentTracker().deleteAndRestoreComments(expression);
