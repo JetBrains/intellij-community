@@ -184,11 +184,10 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
   }
 
   private @NotNull Set<Instruction> getJoinInstructions() {
-    List<Instruction> list = Arrays.stream(myInstructions)
+    Set<Instruction> joinInstructions = Arrays.stream(myInstructions)
       .filter(i -> !i.isLinear())
-      .flatMap(inst -> Arrays.stream(inst.getSuccessorIndexes()).mapToObj(i->myInstructions[i]))
-      .collect(Collectors.toList());
-    Set<Instruction> joinInstructions = new HashSet<>(list);
+      .flatMap(inst -> Arrays.stream(inst.getSuccessorIndexes()).mapToObj(i -> myInstructions[i]))
+      .collect(Collectors.toSet());
     for (int index = 0; index < myInstructions.length; index++) {
       Instruction instruction = myInstructions[index];
       if (instruction instanceof FinishElementInstruction && !((FinishElementInstruction)instruction).getVarsToFlush().isEmpty()) {
