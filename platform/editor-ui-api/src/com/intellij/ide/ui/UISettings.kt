@@ -467,20 +467,26 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     val shadowInstance: UISettings
       get() = instanceOrNull ?: UISettings(NotRoamableUiSettings())
 
-    fun getPreferredFractionalMetricsValue(): Any {
-      if (java.lang.Boolean.getBoolean("ide.disable.fractionalMetrics")) {
-        return RenderingHints.VALUE_FRACTIONALMETRICS_OFF
+    private fun calcFractionalMetricsHint(registryKey: String, defaultValue: Boolean): Any {
+      val registryValue = Registry.get(registryKey)
+      val hint: Boolean
+      if (registryValue.isMultiValue) {
+        val option = registryValue.selectedOption
+        if (option.equals("Enabled")) hint = true
+        else if (option.equals("Disabled")) hint = false
+        else hint = defaultValue
       }
+      else {
+        hint = if (registryValue.isBoolean && registryValue.asBoolean()) true else defaultValue
+      }
+      return if (hint) RenderingHints.VALUE_FRACTIONALMETRICS_ON else RenderingHints.VALUE_FRACTIONALMETRICS_OFF
+    }
 
+    fun getPreferredFractionalMetricsValue(): Any {
       val enableByDefault = SystemInfo.isMacOSCatalina || (FontSubpixelResolution.ENABLED
                                                            && AntialiasingType.getKeyForCurrentScope(false) ==
                                                            RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
-      return if (SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", enableByDefault)) {
-        RenderingHints.VALUE_FRACTIONALMETRICS_ON
-      }
-      else {
-        RenderingHints.VALUE_FRACTIONALMETRICS_OFF
-      }
+      return calcFractionalMetricsHint("ide.text.fractional.metrics", enableByDefault)
     }
 
     @JvmStatic
@@ -488,11 +494,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       get() {
         val enableByDefault = FontSubpixelResolution.ENABLED
                               && AntialiasingType.getKeyForCurrentScope(true) == RenderingHints.VALUE_TEXT_ANTIALIAS_ON
-        return if (!Registry.`is`("editor.text.disable.fractional.metrics", false)
-                   && (Registry.`is`("editor.text.fractional.metrics", false) || enableByDefault))
-          RenderingHints.VALUE_FRACTIONALMETRICS_ON
-        else
-          RenderingHints.VALUE_FRACTIONALMETRICS_OFF
+        return calcFractionalMetricsHint("editor.text.fractional.metrics", enableByDefault)
       }
 
     @JvmStatic
