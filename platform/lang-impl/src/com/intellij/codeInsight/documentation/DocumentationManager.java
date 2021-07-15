@@ -1350,11 +1350,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     component.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
   }
 
-  @RequiresBackgroundThread
-  private static PsiElement getElement(@Nullable PsiElement context, @NotNull DocumentationComponent component) {
-    return context != null ? context : component.getElement();
-  }
-
   protected ActionCallback cancelAndFetchDocInfoByLink(@NotNull DocumentationComponent component, @NotNull DocumentationCollector provider) {
     return cancelAndFetchDocInfo(component, provider);
   }
