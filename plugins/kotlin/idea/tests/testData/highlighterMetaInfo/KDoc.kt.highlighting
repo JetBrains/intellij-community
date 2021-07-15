@@ -1,11 +1,11 @@
 // FIR_IDENTICAL
 /**
- * @param <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KDOC_LINK'")!>x<!> foo and <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KDOC_LINK'")!>[baz]<!>
- * @param <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KDOC_LINK'")!>y<!> bar
+ * @param <!HIGHLIGHTING("textAttributesKey='KDOC_LINK'")!>x<!> foo and <!HIGHLIGHTING("textAttributesKey='KDOC_LINK'")!>[baz]<!>
+ * @param <!HIGHLIGHTING("textAttributesKey='KDOC_LINK'")!>y<!> bar
  * @return notALink here
  */
-fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>f<!>(<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>x<!>: <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Int<!>, <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>y<!>: <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Int<!>): <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Int<!> {
-return <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>x<!> + <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>y<!>
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>f<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>x<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>, <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>y<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>): <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!> {
+return <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>x<!> + <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>y<!>
 }
 
-fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>baz<!>() {}
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>baz<!>() {}
