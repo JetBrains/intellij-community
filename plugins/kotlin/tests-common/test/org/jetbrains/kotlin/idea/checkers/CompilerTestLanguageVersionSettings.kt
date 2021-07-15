@@ -11,7 +11,6 @@ import java.util.regex.Pattern
 const val LANGUAGE_DIRECTIVE = "LANGUAGE"
 const val API_VERSION_DIRECTIVE = "API_VERSION"
 
-const val EXPERIMENTAL_DIRECTIVE = "EXPERIMENTAL"
 const val USE_EXPERIMENTAL_DIRECTIVE = "USE_EXPERIMENTAL"
 const val IGNORE_DATA_FLOW_IN_ASSERT_DIRECTIVE = "IGNORE_DATA_FLOW_IN_ASSERT"
 const val JVM_DEFAULT_MODE = "JVM_DEFAULT_MODE"
@@ -55,7 +54,6 @@ fun parseLanguageVersionSettings(directives: Directives): CompilerTestLanguageVe
     val languageFeaturesString = directives[LANGUAGE_DIRECTIVE]
 
     val analysisFlags = listOfNotNull(
-        analysisFlag(AnalysisFlags.experimental, directives[EXPERIMENTAL_DIRECTIVE]?.split(' ')),
         analysisFlag(AnalysisFlags.useExperimental, directives[USE_EXPERIMENTAL_DIRECTIVE]?.split(' ')),
         analysisFlag(JvmAnalysisFlags.jvmDefaultMode, directives[JVM_DEFAULT_MODE]?.let { JvmDefaultMode.fromStringOrNull(it) }),
         analysisFlag(AnalysisFlags.ignoreDataFlowInAssert, if (IGNORE_DATA_FLOW_IN_ASSERT_DIRECTIVE in directives) true else null),
