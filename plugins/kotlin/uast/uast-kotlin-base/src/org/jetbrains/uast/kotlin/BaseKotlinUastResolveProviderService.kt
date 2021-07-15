@@ -56,8 +56,6 @@ interface BaseKotlinUastResolveProviderService {
 
     fun getCommonSupertype(left: KtExpression, right: KtExpression, uExpression: UExpression): PsiType?
 
-    fun getExpressionType(uExpression: UExpression): PsiType?
-
     fun getType(ktExpression: KtExpression, parent: UElement): PsiType?
 
     fun getType(ktDeclaration: KtDeclaration, parent: UElement): PsiType?

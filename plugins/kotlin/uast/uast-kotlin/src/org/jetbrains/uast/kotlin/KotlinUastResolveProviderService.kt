@@ -147,12 +147,6 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             .toPsiType(uExpression, ktElement, boxed = false)
     }
 
-    override fun getExpressionType(uExpression: UExpression): PsiType? {
-        val ktElement = uExpression.sourcePsi as? KtExpression ?: return null
-        val ktType = ktElement.analyze()[BindingContext.EXPRESSION_TYPE_INFO, ktElement]?.type ?: return null
-        return ktType.toPsiType(uExpression, ktElement, boxed = false)
-    }
-
     override fun getType(ktExpression: KtExpression, parent: UElement): PsiType? {
         val ktType = ktExpression.analyze()[BindingContext.EXPRESSION_TYPE_INFO, ktExpression]?.type ?: return null
         return ktType.toPsiType(parent, ktExpression, boxed = false)

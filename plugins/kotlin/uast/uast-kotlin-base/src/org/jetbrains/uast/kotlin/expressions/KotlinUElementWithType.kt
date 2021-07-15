@@ -3,12 +3,14 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiType
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.uast.UExpression
 
 interface KotlinUElementWithType : UExpression {
     val baseResolveProviderService: BaseKotlinUastResolveProviderService
 
     override fun getExpressionType(): PsiType? {
-        return baseResolveProviderService.getExpressionType(this)
+        val ktElement = sourcePsi as? KtExpression ?: return null
+        return baseResolveProviderService.getType(ktElement, this)
     }
 }
