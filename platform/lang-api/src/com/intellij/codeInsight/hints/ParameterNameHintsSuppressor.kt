@@ -9,10 +9,10 @@ internal val PARAMETER_HINTS_SUPPRESSORS_EP = ExtensionPointName.create<Paramete
 
 @ApiStatus.Experimental
 interface ParameterNameHintsSuppressor {
-  fun shouldBeSuppressed(file: PsiFile, inlayInfo: InlayInfo): Boolean
+  fun isSuppressedFor(file: PsiFile, inlayInfo: InlayInfo): Boolean
 
   companion object All {
-    fun shouldBeSuppressed(file: PsiFile, inlayInfo: InlayInfo): Boolean =
-      PARAMETER_HINTS_SUPPRESSORS_EP.extensions().anyMatch { it.shouldBeSuppressed(file, inlayInfo) }
+    fun isSuppressedFor(file: PsiFile, inlayInfo: InlayInfo): Boolean =
+      PARAMETER_HINTS_SUPPRESSORS_EP.extensions().anyMatch { it.isSuppressedFor(file, inlayInfo) }
   }
 }
