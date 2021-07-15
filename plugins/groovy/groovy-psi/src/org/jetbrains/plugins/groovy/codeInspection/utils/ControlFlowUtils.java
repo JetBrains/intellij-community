@@ -844,6 +844,17 @@ public final class ControlFlowUtils {
     return ContainerUtil.find(controlFlow, instruction -> instruction.getElement() == place);
   }
 
+  public static @Nullable GrControlFlowOwner getTopmostOwner(PsiElement place) {
+    var owner = findControlFlowOwner(place);
+    if (place == owner || (owner == null && place instanceof GrControlFlowOwner)) {
+      return (GrControlFlowOwner)place;
+    } else if (owner == null) {
+      return null;
+    } else {
+      return getTopmostOwner(owner);
+    }
+  }
+
   @NotNull
   public static List<BitSet> inferWriteAccessMap(final Instruction[] flow, final GrVariable var) {
 

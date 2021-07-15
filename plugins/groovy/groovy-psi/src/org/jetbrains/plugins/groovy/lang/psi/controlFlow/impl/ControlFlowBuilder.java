@@ -31,7 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -148,7 +147,26 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   public static @NotNull Instruction @NotNull [] buildControlFlow(@NotNull GroovyPsiElement scope, @NotNull GrControlFlowPolicy policy) {
-    return new ControlFlowBuilder(policy).doBuildControlFlow(scope);
+    return new ControlFlowBuilder(policy).doBuildLargeControlFlow(scope);
+  }
+
+  private Instruction[] doBuildLargeControlFlow(GroovyPsiElement scope) {
+    var topOwner = ControlFlowUtils.getTopmostOwner(scope);
+    if (topOwner == null) {
+      return Instruction.EMPTY_ARRAY;
+    }
+
+    myFinallyCount = 0;
+    myInstructionNumber = 0;
+
+    myScope = scope;
+
+    startNode(null);
+    topOwner.accept(this);
+
+    InstructionImpl end = startNode(null);
+    checkPending(end);
+    return myInstructions.toArray(Instruction.EMPTY_ARRAY);
   }
 
   private Instruction[] doBuildControlFlow(GroovyPsiElement scope) {
@@ -230,22 +248,17 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitLambdaExpression(@NotNull GrLambdaExpression expression) {
     GrLambdaBody body = expression.getBody();
     if (body == null) return;
-    ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(body.getControlFlow(), false);
-    addReadFromNestedControlFlow(expression, reads);
+    addFunctionalExpressionParameters(expression);
+    super.visitLambdaBody(body);
   }
 
   @Override
   public void visitClosure(@NotNull GrClosableBlock closure) {
-    //do not go inside closures except gstring injections
-    if (closure.getParent() instanceof GrStringInjection) {
-      addFunctionalExpressionParameters(closure);
-
-      super.visitClosure(closure);
-      return;
-    }
-
-    ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(closure.getControlFlow(), false);
-    addReadFromNestedControlFlow(closure, reads);
+    InstructionImpl startClosure = startNode(closure);
+    addFunctionalExpressionParameters(closure);
+    super.visitClosure(closure);
+    InstructionImpl endClosure = new FunctionalBlockEndInstruction(startClosure, closure);
+    addNode(endClosure);
   }
 
   private void addReadFromNestedControlFlow(@NotNull PsiElement anchor, ReadWriteVariableInstruction @NotNull [] reads) {
