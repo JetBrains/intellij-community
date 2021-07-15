@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.settings;
 
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
+import com.intellij.ui.jcef.JBCefOsrHandlerBrowser;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +39,7 @@ public final class MarkdownCssSettings {
     this(false,
          "",
          false, "",
-         Objects.requireNonNull(AppEditorFontOptions.getInstance().getState()).FONT_SIZE, //note: may be get from default.css
+         JBCefOsrHandlerBrowser.normalizeScaledSize(Objects.requireNonNull(AppEditorFontOptions.getInstance().getState()).FONT_SIZE),//note: may be get from default.css
          Objects.requireNonNull(AppEditorFontOptions.getInstance().getState()).FONT_FAMILY); //note: may be get from default.css
   }
 
