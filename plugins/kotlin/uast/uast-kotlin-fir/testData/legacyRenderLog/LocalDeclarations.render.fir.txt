@@ -6,10 +6,10 @@ public final class LocalDeclarationsKt {
         var bar: <ErrorType> = fun () {
                 return [!] UnknownKotlinExpression (CALL_EXPRESSION)
         }
-        var baz: <ErrorType> = fun () {
+        var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
         }
-        var someLocalFun: <ErrorType> = fun (@null var text: <ErrorType>) {
+        var someLocalFun: <ErrorType> = fun (@null var text: java.lang.String) {
                 return 42
         }
         return [!] UnknownKotlinExpression (CALL_EXPRESSION) == [!] UnknownKotlinExpression (CALL_EXPRESSION)

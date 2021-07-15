@@ -1,6 +1,0 @@
-public final class AssertionKt {
-    public static final fun foo() : java.lang.String {
-        var s: <ErrorType> = "Not Null"
-        return s!!
-    }
-}

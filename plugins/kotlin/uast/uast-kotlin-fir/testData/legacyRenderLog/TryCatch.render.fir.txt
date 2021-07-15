@@ -4,7 +4,7 @@ public final class TryCatch {
         try {
             [!] UnknownKotlinExpression (CALL_EXPRESSION)
         }
-        catch (@null var e: <ErrorType>) {
+        catch (@null var e: java.lang.Throwable) {
             [!] UnknownKotlinExpression (CALL_EXPRESSION)
         }
         finally {
@@ -25,7 +25,7 @@ public final class TryCatchAnnotations {
         try {
             [!] UnknownKotlinExpression (CALL_EXPRESSION)
         }
-        catch (@null @not-implemented-annotation var e: <ErrorType>) {
+        catch (@null @not-implemented-annotation var e: java.lang.Throwable) {
             [!] UnknownKotlinExpression (CALL_EXPRESSION)
         }
         finally {

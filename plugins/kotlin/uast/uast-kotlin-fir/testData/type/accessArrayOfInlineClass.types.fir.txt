@@ -11,8 +11,8 @@ UFile (package = ) [public final class AccessArrayOfInlineClassKt {...]
                         USimpleNameReferenceExpression (identifier = xs) [xs] : PsiType:Z[]
                         ULiteralExpression (value = 0) [0] : PsiType:int
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UDeclarationsExpression [var t: <ErrorType> = xs[0]]
-                    ULocalVariable (name = t) [var t: <ErrorType> = xs[0]]
+                UDeclarationsExpression [var t: Z = xs[0]]
+                    ULocalVariable (name = t) [var t: Z = xs[0]]
                         UArrayAccessExpression [xs[0]] : PsiType:Z
                             USimpleNameReferenceExpression (identifier = xs) [xs] : PsiType:Z[]
                             ULiteralExpression (value = 0) [0] : PsiType:int

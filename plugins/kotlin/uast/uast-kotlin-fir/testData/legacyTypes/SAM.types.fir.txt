@@ -30,8 +30,8 @@ UFile (package = ) [import java.lang.Thread...]
                     USimpleNameReferenceExpression (identifier = foo) [foo] : PsiType:Runnable
                     ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
                         UBlockExpression [{...}] : PsiType:Runnable
-                UDeclarationsExpression [var a: <ErrorType> = { ...} as java.lang.Runnable]
-                    ULocalVariable (name = a) [var a: <ErrorType> = { ...} as java.lang.Runnable]
+                UDeclarationsExpression [var a: java.lang.Runnable = { ...} as java.lang.Runnable]
+                    ULocalVariable (name = a) [var a: java.lang.Runnable = { ...} as java.lang.Runnable]
                         UBinaryExpressionWithType [{ ...} as java.lang.Runnable] : PsiType:Runnable
                             ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
                                 UBlockExpression [{...}] : PsiType:Void
@@ -49,13 +49,13 @@ UFile (package = ) [import java.lang.Thread...]
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
         UMethod (name = test1) [public static final fun test1() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
-                UDeclarationsExpression [var thread1: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    ULocalVariable (name = thread1) [var thread1: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UDeclarationsExpression [var thread1: java.lang.Thread = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                    ULocalVariable (name = thread1) [var thread1: java.lang.Thread = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
         UMethod (name = test2) [public static final fun test2() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
-                UDeclarationsExpression [var thread2: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    ULocalVariable (name = thread2) [var thread2: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UDeclarationsExpression [var thread2: java.lang.Thread = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                    ULocalVariable (name = thread2) [var thread2: java.lang.Thread = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
         UMethod (name = test3) [public static final fun test3() : void {...}]
             UBlockExpression [{...}] : PsiType:String

@@ -5,8 +5,8 @@ UFile (package = ) [public final class NonTrivialIdentifiersKt {...]
                 UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Undetermined
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [var p: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                    ULocalVariable (name = p) [var p: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UDeclarationsExpression [var p: A = [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    ULocalVariable (name = p) [var p: A = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
     UClass (name = A) [public final class A {...}]

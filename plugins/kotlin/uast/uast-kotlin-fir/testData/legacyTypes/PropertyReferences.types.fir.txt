@@ -2,11 +2,11 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
     UClass (name = PropertyReferencesKt) [public final class PropertyReferencesKt {...}]
         UMethod (name = properties) [public static final fun properties() : void {...}]
             UBlockExpression [{...}] : PsiType:int
-                UDeclarationsExpression [var a: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    ULocalVariable (name = a) [var a: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UDeclarationsExpression [var a: A = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                    ULocalVariable (name = a) [var a: A = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UDeclarationsExpression [var x: <ErrorType> = -a.mutableProp]
-                    ULocalVariable (name = x) [var x: <ErrorType> = -a.mutableProp]
+                UDeclarationsExpression [var x: int = -a.mutableProp]
+                    ULocalVariable (name = x) [var x: int = -a.mutableProp]
                         UPrefixExpression (operator = -) [-a.mutableProp] : PsiType:int
                             UQualifiedReferenceExpression [a.mutableProp] : PsiType:int
                                 USimpleNameReferenceExpression (identifier = a) [a] : PsiType:A
@@ -33,8 +33,8 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
             UParameter (name = $this$ext) [@null var $this$ext: A]
                 UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] : PsiType:int
-                UDeclarationsExpression [var x: <ErrorType> = -mutableProp]
-                    ULocalVariable (name = x) [var x: <ErrorType> = -mutableProp]
+                UDeclarationsExpression [var x: int = -mutableProp]
+                    ULocalVariable (name = x) [var x: int = -mutableProp]
                         UPrefixExpression (operator = -) [-mutableProp] : PsiType:int
                             USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
                 UBinaryExpression (operator = =) [mutableProp = 1] : PsiType:void
@@ -68,8 +68,8 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
             UParameter (name = x) [@null var x: int]
                 UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] : PsiType:Void
-                UDeclarationsExpression [var result: <ErrorType> = privateProp]
-                    ULocalVariable (name = result) [var result: <ErrorType> = privateProp]
+                UDeclarationsExpression [var result: int = privateProp]
+                    ULocalVariable (name = result) [var result: int = privateProp]
                         USimpleNameReferenceExpression (identifier = privateProp) [privateProp] : PsiType:int
                 UBinaryExpression (operator = =) [privateProp = x] : PsiType:void
                     USimpleNameReferenceExpression (identifier = privateProp) [privateProp] : PsiType:int

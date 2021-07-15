@@ -13,8 +13,8 @@ UFile (package = ) [import java.util.stream.Stream...]
                 UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Undetermined
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [var baz: <ErrorType> = fun () {...}] = Undetermined
-                    ULocalVariable (name = baz) [var baz: <ErrorType> = fun () {...}]
+                UDeclarationsExpression [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}] = Undetermined
+                    ULocalVariable (name = baz) [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}]
                         ULambdaExpression [fun () {...}] = Undetermined
                             UBlockExpression [{...}] = Undetermined
                                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined

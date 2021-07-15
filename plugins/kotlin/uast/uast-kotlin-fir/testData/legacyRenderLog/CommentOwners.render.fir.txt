@@ -19,7 +19,7 @@ public final class CommentOwnersKt {
         if (true) {
         }else {
         }
-        var localValueDefinition: <ErrorType> = 42
+        var localValueDefinition: int = 42
     }
 }
 

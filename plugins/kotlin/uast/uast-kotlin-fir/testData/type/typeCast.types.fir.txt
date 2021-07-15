@@ -22,8 +22,8 @@ UFile (package = ) [import java.lang.Runnable...]
                             UTypeReferenceExpression (name = java.lang.Runnable) [java.lang.Runnable]
         UMethod (name = box) [public static final fun box() : java.lang.String {...}]
             UBlockExpression [{...}] : PsiType:Void
-                UDeclarationsExpression [var x: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION) as java.lang.Object]
-                    ULocalVariable (name = x) [var x: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION) as java.lang.Object]
+                UDeclarationsExpression [var x: java.lang.Object = [!] UnknownKotlinExpression (CALL_EXPRESSION) as java.lang.Object]
+                    ULocalVariable (name = x) [var x: java.lang.Object = [!] UnknownKotlinExpression (CALL_EXPRESSION) as java.lang.Object]
                         UBinaryExpressionWithType [[!] UnknownKotlinExpression (CALL_EXPRESSION) as java.lang.Object] : PsiType:Object
                             [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
                             UTypeReferenceExpression (name = java.lang.Object) [java.lang.Object]
@@ -35,8 +35,8 @@ UFile (package = ) [import java.lang.Runnable...]
                         UPolyadicExpression (operator = +) ["Fail: " + x] : PsiType:String
                             ULiteralExpression (value = "Fail: ") ["Fail: "] : PsiType:String
                             USimpleNameReferenceExpression (identifier = x) [x] : PsiType:Object
-                UDeclarationsExpression [var y: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION) as java.lang.Object]
-                    ULocalVariable (name = y) [var y: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION) as java.lang.Object]
+                UDeclarationsExpression [var y: java.lang.Object = [!] UnknownKotlinExpression (CALL_EXPRESSION) as java.lang.Object]
+                    ULocalVariable (name = y) [var y: java.lang.Object = [!] UnknownKotlinExpression (CALL_EXPRESSION) as java.lang.Object]
                         UBinaryExpressionWithType [[!] UnknownKotlinExpression (CALL_EXPRESSION) as java.lang.Object] : PsiType:Object
                             [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
                             UTypeReferenceExpression (name = java.lang.Object) [java.lang.Object]
@@ -48,8 +48,8 @@ UFile (package = ) [import java.lang.Runnable...]
                         UPolyadicExpression (operator = +) ["Fail: " + y] : PsiType:String
                             ULiteralExpression (value = "Fail: ") ["Fail: "] : PsiType:String
                             USimpleNameReferenceExpression (identifier = y) [y] : PsiType:Object
-                UDeclarationsExpression [var r: <ErrorType> = anonymous object : Runnable {...    }]
-                    ULocalVariable (name = r) [var r: <ErrorType> = anonymous object : Runnable {...    }]
+                UDeclarationsExpression [var r: java.lang.Object = anonymous object : Runnable {...    }]
+                    ULocalVariable (name = r) [var r: java.lang.Object = anonymous object : Runnable {...    }]
                         UObjectLiteralExpression [anonymous object : Runnable {...    }] : PsiType:Runnable
                             UClass (name = null) [final class null : java.lang.Runnable {...}]
                                 UMethod (name = run) [public fun run() : void {...}]

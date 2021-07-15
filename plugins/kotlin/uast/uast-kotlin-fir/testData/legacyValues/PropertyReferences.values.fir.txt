@@ -2,11 +2,11 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
     UClass (name = PropertyReferencesKt) [public final class PropertyReferencesKt {...}]
         UMethod (name = properties) [public static final fun properties() : void {...}]
             UBlockExpression [{...}] = external mutableProp()
-                UDeclarationsExpression [var a: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                    ULocalVariable (name = a) [var a: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UDeclarationsExpression [var a: A = [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    ULocalVariable (name = a) [var a: A = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [var x: <ErrorType> = -a.mutableProp] = Undetermined
-                    ULocalVariable (name = x) [var x: <ErrorType> = -a.mutableProp]
+                UDeclarationsExpression [var x: int = -a.mutableProp] = Undetermined
+                    ULocalVariable (name = x) [var x: int = -a.mutableProp]
                         UPrefixExpression (operator = -) [-a.mutableProp] = Undetermined
                             UQualifiedReferenceExpression [a.mutableProp] = external mutableProp()
                                 USimpleNameReferenceExpression (identifier = a) [a] = (var a = Undetermined)
@@ -33,8 +33,8 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
             UParameter (name = $this$ext) [@null var $this$ext: A]
                 UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = external mutableProp()
-                UDeclarationsExpression [var x: <ErrorType> = -mutableProp] = Undetermined
-                    ULocalVariable (name = x) [var x: <ErrorType> = -mutableProp]
+                UDeclarationsExpression [var x: int = -mutableProp] = Undetermined
+                    ULocalVariable (name = x) [var x: int = -mutableProp]
                         UPrefixExpression (operator = -) [-mutableProp] = Undetermined
                             USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] = external mutableProp()
                 UBinaryExpression (operator = =) [mutableProp = 1] = Undetermined
@@ -68,8 +68,8 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
             UParameter (name = x) [@null var x: int]
                 UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Nothing
-                UDeclarationsExpression [var result: <ErrorType> = privateProp] = Undetermined
-                    ULocalVariable (name = result) [var result: <ErrorType> = privateProp]
+                UDeclarationsExpression [var result: int = privateProp] = Undetermined
+                    ULocalVariable (name = result) [var result: int = privateProp]
                         USimpleNameReferenceExpression (identifier = privateProp) [privateProp] = external privateProp()
                 UBinaryExpression (operator = =) [privateProp = x] = Undetermined
                     USimpleNameReferenceExpression (identifier = privateProp) [privateProp] = external privateProp()
