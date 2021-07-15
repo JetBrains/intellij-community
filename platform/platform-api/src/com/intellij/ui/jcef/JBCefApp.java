@@ -18,6 +18,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.ui.scale.DerivedScaleType;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
@@ -179,7 +182,7 @@ public final class JBCefApp {
     String extraArgsProp = System.getProperty("ide.browser.jcef.extra.args", "");
     if (!extraArgsProp.isEmpty()) {
       String[] extraArgs = extraArgsProp.split(" ");
-      if (extraArgs != null && extraArgs.length > 0) {
+      if (extraArgs.length > 0) {
         LOG.debug("add extra CEF args: [" + Arrays.toString(extraArgs) + "]");
         args = ArrayUtil.mergeArrays(args, extraArgs);
       }
@@ -250,6 +253,9 @@ public final class JBCefApp {
       JCefAppConfig config = null;
       if (isSupported()) {
         try {
+          if (!JreHiDpiUtil.isJreHiDPIEnabled()) {
+            System.setProperty("jcef.forceDeviceScaleFactor", String.valueOf(getForceDeviceScaleFactor()));
+          }
           config = JCefAppConfig.getInstance();
         }
         catch (Exception e) {
@@ -435,5 +441,12 @@ public final class JBCefApp {
       getInstance().myCefApp.registerSchemeHandlerFactory(
         JBCefFileSchemeHandlerFactory.FILE_SCHEME_NAME, "", new JBCefFileSchemeHandlerFactory());
     }
+  }
+
+  /**
+   * Used to force JCEF scale in IDE-managed HiDPI mode.
+   */
+  public static double getForceDeviceScaleFactor() {
+    return JreHiDpiUtil.isJreHiDPIEnabled() ? -1 : ScaleContext.create().getScale(DerivedScaleType.PIX_SCALE);
   }
 }

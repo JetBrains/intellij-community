@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.JBColor.namedColor
 import com.intellij.ui.components.ScrollBarPainter
+import com.intellij.ui.jcef.JBCefOsrHandlerBrowser
 import com.intellij.util.ui.UIUtil
 import java.awt.Color
 
@@ -34,7 +35,7 @@ internal object PreviewLAFThemeStyles {
 
       val markdownFenceBackground = JBColor(Color(212, 222, 231, 255 / 4), Color(212, 222, 231, 25))
 
-      val fontSize = EditorUtil.getEditorFont().size + 1
+      val fontSize = JBCefOsrHandlerBrowser.normalizeScaledSize(EditorUtil.getEditorFont().size + 1)
 
       // For some reason background-color for ::-webkit-scrollbar-thumb
       // doesn't work with [0..255] alpha values. Fortunately it works fine with [0..1] values.

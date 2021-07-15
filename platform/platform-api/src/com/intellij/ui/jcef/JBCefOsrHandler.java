@@ -2,12 +2,12 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Function;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.RetinaImage;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.cef.JCefAppConfig;
 import org.cef.browser.CefBrowser;
 import org.cef.callback.CefDragData;
 import org.cef.handler.CefRenderHandler;
@@ -43,7 +43,7 @@ class JBCefOsrHandler implements CefRenderHandler {
   private final @NotNull JComponent myComponent;
   private final @NotNull Function<JComponent, Rectangle> myScreenBoundsProvider;
   private final @NotNull AtomicReference<Point> myLocationOnScreenRef = new AtomicReference<>(new Point());
-  private volatile double myScale = 1.0;
+  private final @NotNull JBCefOsrComponent.MyScale myScale = new JBCefOsrComponent.MyScale();
 
   private final @NotNull Object myImageLock = new Object();
 
@@ -69,7 +69,8 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   @Override
   public Rectangle getViewRect(CefBrowser browser) {
-    return new Rectangle(0, 0, myComponent.getWidth(), myComponent.getHeight());
+    double scale = myScale.getIdeBiased();
+    return new Rectangle(0, 0, CEIL.round(myComponent.getWidth() / scale), CEIL.round(myComponent.getHeight() / scale));
   }
 
   @Override
@@ -89,7 +90,7 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   @Override
   public double getDeviceScaleFactor(CefBrowser browser) {
-    return myScale = JBUIScale.sysScale(myComponent);
+    return JCefAppConfig.getDeviceScaleFactor(myComponent);
   }
 
   @Override
@@ -171,8 +172,8 @@ class JBCefOsrHandler implements CefRenderHandler {
     return new Rectangle(minX, minY, maxX - minX, maxY - minY);
   }
 
-  public void updateScale(double scale) {
-    myScale = scale;
+  public void updateScale(JBCefOsrComponent.MyScale scale) {
+    myScale.update(scale);
   }
 
   private void updateLocation() {
@@ -184,7 +185,7 @@ class JBCefOsrHandler implements CefRenderHandler {
     synchronized (myImageLock) {
       Dimension size = getDevImageSize();
       if (size.width != width || size.height != height) {
-        myImage = (JBHiDPIScaledImage)RetinaImage.createFrom(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB), myScale, null);
+        myImage = (JBHiDPIScaledImage)RetinaImage.createFrom(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB), myScale.getJreBiased(), null);
       }
     }
   }
@@ -198,11 +199,13 @@ class JBCefOsrHandler implements CefRenderHandler {
   }
 
   private @NotNull Rectangle scaleDown(@NotNull Rectangle rect) {
-    return new Rectangle(FLOOR.round(rect.x / myScale), FLOOR.round(rect.y / myScale),
-                         CEIL.round(rect.width / myScale), CEIL.round(rect.height / myScale));
+    double scale = myScale.getJreBiased();
+    return new Rectangle(FLOOR.round(rect.x / scale), FLOOR.round(rect.y / scale),
+                         CEIL.round(rect.width / scale), CEIL.round(rect.height / scale));
   }
 
   private @NotNull Point scaleUp(@NotNull Point pt) {
-    return new Point(ROUND.round(pt.x * myScale), ROUND.round(pt.y * myScale));
+    double scale = myScale.getJreBiased();
+    return new Point(ROUND.round(pt.x * scale), ROUND.round(pt.y * scale));
   }
 }
