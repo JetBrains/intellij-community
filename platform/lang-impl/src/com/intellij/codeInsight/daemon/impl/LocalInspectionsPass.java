@@ -310,16 +310,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
     LocalInspectionTool tool = toolWrapper.getTool();
-    boolean[] applyIncrementally = {isOnTheFly};
-    ProblemsHolder holder = new ProblemsHolder(iManager, getFile(), isOnTheFly) {
-      @Override
-      public void registerProblem(@NotNull ProblemDescriptor descriptor) {
-        super.registerProblem(descriptor);
-        if (applyIncrementally[0]) {
-          addDescriptorIncrementally(descriptor, toolWrapper, indicator);
-        }
-      }
-    };
+    InspectionProblemsHolder holder = new InspectionProblemsHolder(iManager, isOnTheFly, toolWrapper, indicator);
 
     PsiElementVisitor visitor = InspectionEngine.createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements);
     // if inspection returned empty visitor then it should be skipped
@@ -333,7 +324,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (holder.hasResults()) {
       appendDescriptors(getFile(), holder.getResults(), toolWrapper);
     }
-    applyIncrementally[0] = false; // do not apply incrementally outside visible range
+    holder.applyIncrementally = false; // do not apply incrementally outside visible range
     return holder.getResultCount();
   }
 
@@ -854,7 +845,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private static final class InspectionContext {
     private InspectionContext(@NotNull LocalInspectionToolWrapper tool,
-                              @NotNull ProblemsHolder holder,
+                              @NotNull InspectionProblemsHolder holder,
                               int problemsSize, // need this to diff between found problems in visible part and the rest
                               @NotNull PsiElementVisitor visitor) {
       this.tool = tool;
@@ -863,10 +854,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       this.visitor = visitor;
     }
 
-    private final @NotNull LocalInspectionToolWrapper tool;
-    private final @NotNull ProblemsHolder holder;
-    private final int problemsSize;
-    private final @NotNull PsiElementVisitor visitor;
+    final @NotNull LocalInspectionToolWrapper tool;
+    final @NotNull InspectionProblemsHolder holder;
+    final int problemsSize;
+    final @NotNull PsiElementVisitor visitor;
   }
 
   public static class InspectionHighlightInfoType extends HighlightInfoType.HighlightInfoTypeImpl {
@@ -877,5 +868,28 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private static @Nls @NotNull String getPresentableNameText() {
     return DaemonBundle.message("pass.inspection");
+  }
+
+  private class InspectionProblemsHolder extends ProblemsHolder {
+    private @NotNull final LocalInspectionToolWrapper myToolWrapper;
+    private @NotNull final ProgressIndicator myIndicator;
+    private volatile boolean applyIncrementally = true;
+
+    InspectionProblemsHolder(@NotNull InspectionManager iManager,
+                             boolean isOnTheFly,
+                             @NotNull LocalInspectionToolWrapper toolWrapper,
+                             @NotNull ProgressIndicator indicator) {
+      super(iManager, LocalInspectionsPass.this.getFile(), isOnTheFly);
+      myToolWrapper = toolWrapper;
+      myIndicator = indicator;
+    }
+
+    @Override
+    public void registerProblem(@NotNull ProblemDescriptor descriptor) {
+      super.registerProblem(descriptor);
+      if (applyIncrementally) {
+        addDescriptorIncrementally(descriptor, myToolWrapper, myIndicator);
+      }
+    }
   }
 }
