@@ -340,7 +340,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         return;
       }
       Component focusOwner = fm.getFocusOwner();
-      DockContainer container = myDockManager.getContainerFor(focusOwner);
+      DockContainer container = myDockManager.getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
       if (container instanceof DockableEditorTabbedContainer) {
         result.setResult(((DockableEditorTabbedContainer)container).getSplitters());
       }
@@ -369,10 +369,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       focusOwner = fm.getLastFocusedFor(fm.getLastFocusedIdeWindow());
     }
 
-    DockContainer container = myDockManager.getContainerFor(focusOwner);
+    DockContainer container = myDockManager.getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
     if (container == null) {
       focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-      container = myDockManager.getContainerFor(focusOwner);
+      container = myDockManager.getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
     }
 
     if (container instanceof DockableEditorTabbedContainer) {
@@ -2108,7 +2108,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   public EditorsSplitters getSplittersFor(Component c) {
     EditorsSplitters splitters = null;
-    DockContainer dockContainer = myDockManager.getContainerFor(c);
+    DockContainer dockContainer = myDockManager.getContainerFor(c, DockableEditorTabbedContainer.class::isInstance);
     if (dockContainer instanceof DockableEditorTabbedContainer) {
       splitters = ((DockableEditorTabbedContainer)dockContainer).getSplitters();
     }
