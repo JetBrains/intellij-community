@@ -59,6 +59,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
   protected val afterFixText: String by lazy { sample.text.replaceFirst("[0]", "[1]") }
 
+  protected var sessionPaused: Boolean = false
   protected var mayBeStopped: Boolean = false
   private var debugSession: XDebugSession? by WeakReferenceDelegator()
 
@@ -161,6 +162,9 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
               }
             }, lessonDisposable)
             debugSession.addSessionListener(object : XDebugSessionListener {
+              override fun sessionPaused() {
+                sessionPaused = true
+              }
               override fun sessionStopped() {
                 val activeToolWindow = LearningUiManager.activeToolWindow
                 if (activeToolWindow != null && !mayBeStopped && LessonManager.instance.currentLesson == this@CommonDebugLesson) {
