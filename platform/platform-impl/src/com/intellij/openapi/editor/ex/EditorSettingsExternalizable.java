@@ -5,10 +5,7 @@ import com.intellij.ide.ui.UINumericRange;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.actions.CaretStopOptions;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.util.Disposer;
@@ -29,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-@State(name = "EditorSettings", storages = @Storage("editor.xml"))
+@State(name = "EditorSettings", storages = @Storage("editor.xml"), category = ComponentCategory.CODE)
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
   @NonNls
   public static final String PROP_VIRTUAL_SPACE = "VirtualSpace";

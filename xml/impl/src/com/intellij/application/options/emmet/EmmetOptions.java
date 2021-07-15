@@ -4,6 +4,7 @@ package com.intellij.application.options.emmet;
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -17,7 +18,8 @@ import java.util.Set;
 
 @State(
   name = "EmmetOptions",
-  storages = @Storage("emmet.xml")
+  storages = @Storage("emmet.xml"),
+  category = ComponentCategory.CODE
 )
 public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
   private boolean myEmmetEnabled = true;

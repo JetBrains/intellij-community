@@ -6,6 +6,7 @@ import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -31,7 +32,7 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@State(name = "CodeInsightSettings", storages = @Storage("editor.xml"))
+@State(name = "CodeInsightSettings", storages = @Storage("editor.xml"), category = ComponentCategory.CODE)
 public class CodeInsightSettings implements PersistentStateComponent<Element>, Cloneable {
   private static final Logger LOG = Logger.getInstance(CodeInsightSettings.class);
   private final List<PropertyChangeListener> myListeners = new CopyOnWriteArrayList<>();

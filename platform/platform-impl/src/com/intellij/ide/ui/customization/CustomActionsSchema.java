@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -43,7 +44,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-@State(name = "com.intellij.ide.ui.customization.CustomActionsSchema", storages = @Storage("customization.xml"))
+@State(name = "com.intellij.ide.ui.customization.CustomActionsSchema", storages = @Storage("customization.xml"), category = ComponentCategory.UI)
 public final class CustomActionsSchema implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(CustomActionsSchema.class);
 

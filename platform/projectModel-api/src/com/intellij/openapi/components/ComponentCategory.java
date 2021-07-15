@@ -5,6 +5,7 @@ public enum ComponentCategory {
   UI,
   KEYMAP,
   CODE,
+  TOOLS,
   SYSTEM,
   PLUGINS,
   OTHER
