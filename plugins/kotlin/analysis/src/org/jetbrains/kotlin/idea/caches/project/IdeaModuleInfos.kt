@@ -382,7 +382,7 @@ data class SdkInfo(override val project: Project, val sdk: Sdk) : IdeaModuleInfo
         }
 }
 
-object NotUnderContentRootModuleInfo : IdeaModuleInfo {
+object NotUnderContentRootModuleInfo : IdeaModuleInfo, NonSourceModuleInfoBase {
     override val moduleOrigin: ModuleOrigin
         get() = ModuleOrigin.OTHER
 
