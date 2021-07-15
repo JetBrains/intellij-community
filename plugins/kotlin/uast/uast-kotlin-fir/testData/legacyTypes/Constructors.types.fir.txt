@@ -93,8 +93,8 @@ UFile (package = ) [public final class A {...]
                 UBinaryExpression (operator = =) [a = s] : PsiType:void
                     USimpleNameReferenceExpression (identifier = a) [a] : PsiType:String
                     USimpleNameReferenceExpression (identifier = s) [s] : PsiType:String
-                UDeclarationsExpression [var local: <ErrorType> = s]
-                    ULocalVariable (name = local) [var local: <ErrorType> = s]
+                UDeclarationsExpression [var local: java.lang.String = s]
+                    ULocalVariable (name = local) [var local: java.lang.String = s]
                         USimpleNameReferenceExpression (identifier = s) [s] : PsiType:String
                 UQualifiedReferenceExpression [local.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:String
                     USimpleNameReferenceExpression (identifier = local) [local] : PsiType:String

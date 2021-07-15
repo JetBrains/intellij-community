@@ -2,8 +2,8 @@ UFile (package = ) [public final class IfStatementKt {...]
     UClass (name = IfStatementKt) [public final class IfStatementKt {...}]
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
-                UDeclarationsExpression [var x: <ErrorType> = if ("abc" != "def") 1 else 0]
-                    ULocalVariable (name = x) [var x: <ErrorType> = if ("abc" != "def") 1 else 0]
+                UDeclarationsExpression [var x: int = if ("abc" != "def") 1 else 0]
+                    ULocalVariable (name = x) [var x: int = if ("abc" != "def") 1 else 0]
                         UIfExpression [if ("abc" != "def") 1 else 0] : PsiType:int
                             UBinaryExpression (operator = !=) ["abc" != "def"] : PsiType:boolean
                                 ULiteralExpression (value = "abc") ["abc"] : PsiType:String

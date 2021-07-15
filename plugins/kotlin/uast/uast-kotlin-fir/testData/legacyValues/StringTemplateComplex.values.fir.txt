@@ -54,11 +54,11 @@ UFile (package = ) [public final class StringTemplateComplexKt {...]
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] = Undetermined
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [var template1: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                    ULocalVariable (name = template1) [var template1: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UDeclarationsExpression [var template1: java.lang.String = [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    ULocalVariable (name = template1) [var template1: java.lang.String = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [var template2: <ErrorType> = "." + [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                    ULocalVariable (name = template2) [var template2: <ErrorType> = "." + [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UDeclarationsExpression [var template2: java.lang.String = "." + [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    ULocalVariable (name = template2) [var template2: java.lang.String = "." + [!] UnknownKotlinExpression (CALL_EXPRESSION)]
                         UPolyadicExpression (operator = +) ["." + [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                             ULiteralExpression (value = ".") ["."] = "."
                             [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined

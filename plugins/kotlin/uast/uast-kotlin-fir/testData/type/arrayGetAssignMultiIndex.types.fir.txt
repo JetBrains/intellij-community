@@ -33,8 +33,8 @@ UFile (package = ) [public final class ArrayGetAssignMultiIndexKt {...]
                     USimpleNameReferenceExpression (identifier = elem) [elem] : PsiType:String
         UMethod (name = box) [public static final fun box() : java.lang.String {...}]
             UBlockExpression [{...}] : PsiType:Void
-                UDeclarationsExpression [var s: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    ULocalVariable (name = s) [var s: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UDeclarationsExpression [var s: java.lang.String[] = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                    ULocalVariable (name = s) [var s: java.lang.String[] = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
                 UBinaryExpression (operator = =) [s[1, --1] = "O"] : PsiType:Unit
                     UArrayAccessExpression [s[1, --1]] : PsiType:Unit

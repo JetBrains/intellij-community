@@ -1,11 +1,11 @@
 public final class AnnotatedExpressionsKt {
     public static final fun foo() : void {
         [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
-        @not-implemented-annotation var a: <ErrorType> = 1
-        @not-implemented-annotation var b: <ErrorType> = 2
+        @not-implemented-annotation var a: int = 1
+        @not-implemented-annotation var b: int = 2
         [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
         [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
-        var c: <ErrorType> = elvis {
+        var c: int = elvis {
             var varae507364: int = [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
             if (varae507364 != null) varae507364 else b
         }

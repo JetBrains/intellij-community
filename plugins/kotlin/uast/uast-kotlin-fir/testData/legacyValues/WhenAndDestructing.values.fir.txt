@@ -4,8 +4,8 @@ UFile (package = ) [public final class WhenAndDestructingKt {...]
             UParameter (name = string) [@null var string: java.lang.String]
                 UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Nothing
-                UDeclarationsExpression [var arr: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                    ULocalVariable (name = arr) [var arr: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UDeclarationsExpression [var arr: java.util.List<? extends java.lang.String> = [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    ULocalVariable (name = arr) [var arr: java.util.List<? extends java.lang.String> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                 USwitchExpression [switch (string)  {...] = Nothing
                     USimpleNameReferenceExpression (identifier = string) [string] = Undetermined
@@ -21,8 +21,8 @@ UFile (package = ) [public final class WhenAndDestructingKt {...]
                             UExpressionList (when_entry) [{...] = Undetermined
                         USwitchClauseExpressionWithBody [ -> {...] = Undetermined
                             UExpressionList (when_entry) [{...] = Undetermined
-                                UDeclarationsExpression [@null var var837f2350: <ErrorType> = arr] = Undetermined
-                                    ULocalVariable (name = var837f2350) [@null var var837f2350: <ErrorType> = arr]
+                                UDeclarationsExpression [@null var var837f2350: java.util.List<? extends java.lang.String> = arr] = Undetermined
+                                    ULocalVariable (name = var837f2350) [@null var var837f2350: java.util.List<? extends java.lang.String> = arr]
                                         UAnnotation (fqName = null) [@null]
                                         USimpleNameReferenceExpression (identifier = arr) [arr] = (var arr = Undetermined)
                                 UYieldExpression [yield return bindingContext] = UYieldResult(Nothing)

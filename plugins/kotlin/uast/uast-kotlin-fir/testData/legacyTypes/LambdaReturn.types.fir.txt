@@ -2,27 +2,27 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
     UClass (name = LambdaReturnKt) [public final class LambdaReturnKt {...}]
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
-                UDeclarationsExpression [var lam1: <ErrorType> = { @org.jetbrains.annotations.NotNull var a: <ErrorType> ->...}]
-                    ULocalVariable (name = lam1) [var lam1: <ErrorType> = { @org.jetbrains.annotations.NotNull var a: <ErrorType> ->...}]
-                        ULambdaExpression [{ @org.jetbrains.annotations.NotNull var a: <ErrorType> ->...}] : PsiType:Function1<? super Integer, ? extends Integer>
-                            UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: <ErrorType>]
+                UDeclarationsExpression [var lam1: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer> = { @org.jetbrains.annotations.NotNull var a: int ->...}]
+                    ULocalVariable (name = lam1) [var lam1: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer> = { @org.jetbrains.annotations.NotNull var a: int ->...}]
+                        ULambdaExpression [{ @org.jetbrains.annotations.NotNull var a: int ->...}] : PsiType:Function1<? super Integer, ? extends Integer>
+                            UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                             UBlockExpression [{...}] : PsiType:int
-                                UDeclarationsExpression [var b: <ErrorType> = 1]
-                                    ULocalVariable (name = b) [var b: <ErrorType> = 1]
+                                UDeclarationsExpression [var b: int = 1]
+                                    ULocalVariable (name = b) [var b: int = 1]
                                         ULiteralExpression (value = 1) [1] : PsiType:int
                                 UReturnExpression [return a + b]
                                     UBinaryExpression (operator = +) [a + b] : PsiType:int
                                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
                                         USimpleNameReferenceExpression (identifier = b) [b] : PsiType:int
-                UDeclarationsExpression [var lam2: <ErrorType> = { @org.jetbrains.annotations.NotNull var a: <ErrorType> ->...}]
-                    ULocalVariable (name = lam2) [var lam2: <ErrorType> = { @org.jetbrains.annotations.NotNull var a: <ErrorType> ->...}]
-                        ULambdaExpression [{ @org.jetbrains.annotations.NotNull var a: <ErrorType> ->...}] : PsiType:Function1<? super Integer, ? extends Integer>
-                            UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: <ErrorType>]
+                UDeclarationsExpression [var lam2: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer> = { @org.jetbrains.annotations.NotNull var a: int ->...}]
+                    ULocalVariable (name = lam2) [var lam2: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer> = { @org.jetbrains.annotations.NotNull var a: int ->...}]
+                        ULambdaExpression [{ @org.jetbrains.annotations.NotNull var a: int ->...}] : PsiType:Function1<? super Integer, ? extends Integer>
+                            UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                             UBlockExpression [{...}] : PsiType:int
-                                UDeclarationsExpression [var c: <ErrorType> = 1]
-                                    ULocalVariable (name = c) [var c: <ErrorType> = 1]
+                                UDeclarationsExpression [var c: int = 1]
+                                    ULocalVariable (name = c) [var c: int = 1]
                                         ULiteralExpression (value = 1) [1] : PsiType:int
                                 UReturnExpression [return if (a > 0) a + c else a - c]
                                     UIfExpression [if (a > 0) a + c else a - c] : PsiType:int
@@ -35,24 +35,24 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                         UBinaryExpression (operator = -) [a - c] : PsiType:int
                                             USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
                                             USimpleNameReferenceExpression (identifier = c) [c] : PsiType:int
-                UDeclarationsExpression [var lam3: <ErrorType> = lbd@ { @org.jetbrains.annotations.NotNull var a: <ErrorType> ->...}]
-                    ULocalVariable (name = lam3) [var lam3: <ErrorType> = lbd@ { @org.jetbrains.annotations.NotNull var a: <ErrorType> ->...}]
-                        ULabeledExpression (label = lbd) [lbd@ { @org.jetbrains.annotations.NotNull var a: <ErrorType> ->...}]
-                            ULambdaExpression [{ @org.jetbrains.annotations.NotNull var a: <ErrorType> ->...}] : PsiType:Function1<? super Integer, ? extends Integer>
-                                UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: <ErrorType>]
+                UDeclarationsExpression [var lam3: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer> = lbd@ { @org.jetbrains.annotations.NotNull var a: int ->...}]
+                    ULocalVariable (name = lam3) [var lam3: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer> = lbd@ { @org.jetbrains.annotations.NotNull var a: int ->...}]
+                        ULabeledExpression (label = lbd) [lbd@ { @org.jetbrains.annotations.NotNull var a: int ->...}]
+                            ULambdaExpression [{ @org.jetbrains.annotations.NotNull var a: int ->...}] : PsiType:Function1<? super Integer, ? extends Integer>
+                                UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                                     UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                                 UBlockExpression [{...}] : PsiType:Void
-                                    UDeclarationsExpression [var d: <ErrorType> = 1]
-                                        ULocalVariable (name = d) [var d: <ErrorType> = 1]
+                                    UDeclarationsExpression [var d: int = 1]
+                                        ULocalVariable (name = d) [var d: int = 1]
                                             ULiteralExpression (value = 1) [1] : PsiType:int
                                     UReturnExpression [return a + d] : PsiType:Void
                                         UBinaryExpression (operator = +) [a + d] : PsiType:int
                                             USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
                                             USimpleNameReferenceExpression (identifier = d) [d] : PsiType:int
-                UDeclarationsExpression [var lam4: <ErrorType> = fun (@org.jetbrains.annotations.NotNull var a: <ErrorType>) {...}]
-                    ULocalVariable (name = lam4) [var lam4: <ErrorType> = fun (@org.jetbrains.annotations.NotNull var a: <ErrorType>) {...}]
-                        ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: <ErrorType>) {...}]
-                            UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: <ErrorType>]
+                UDeclarationsExpression [var lam4: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.String> = fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
+                    ULocalVariable (name = lam4) [var lam4: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.String> = fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
+                        ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
+                            UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                             UBlockExpression [{...}] : PsiType:Void
                                 UIfExpression [if (a < 5) return "5"] : PsiType:Unit
@@ -69,10 +69,10 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                         ULiteralExpression (value = "1") ["1"] : PsiType:String
                                     UReturnExpression [return "2"] : PsiType:Void
                                         ULiteralExpression (value = "2") ["2"] : PsiType:String
-                UDeclarationsExpression [var lam5: <ErrorType> = fun (@org.jetbrains.annotations.NotNull var a: <ErrorType>) {...}]
-                    ULocalVariable (name = lam5) [var lam5: <ErrorType> = fun (@org.jetbrains.annotations.NotNull var a: <ErrorType>) {...}]
-                        ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: <ErrorType>) {...}]
-                            UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: <ErrorType>]
+                UDeclarationsExpression [var lam5: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.String> = fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
+                    ULocalVariable (name = lam5) [var lam5: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.String> = fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
+                        ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: int) {...}]
+                            UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                             UBlockExpression [{...}]
                                 UReturnExpression [return "a" + a]
@@ -80,16 +80,16 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                         ULiteralExpression (value = "a") ["a"] : PsiType:String
                                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UDeclarationsExpression [var x: <ErrorType> = { ...}]
-                    ULocalVariable (name = x) [var x: <ErrorType> = { ...}]
+                UDeclarationsExpression [var x: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
+                    ULocalVariable (name = x) [var x: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                         ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
                             UBlockExpression [{...}] : PsiType:Unit
-                                UDeclarationsExpression [@org.jetbrains.annotations.NotNull var vardbcd0724: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                                    ULocalVariable (name = vardbcd0724) [@org.jetbrains.annotations.NotNull var vardbcd0724: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                                UDeclarationsExpression [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                                    ULocalVariable (name = vardbcd0724) [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UDeclarationsExpression [var y: <ErrorType> = { ...}]
-                    ULocalVariable (name = y) [var y: <ErrorType> = { ...}]
+                UDeclarationsExpression [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
+                    ULocalVariable (name = y) [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                         ULambdaExpression [{ ...}] : PsiType:Function0<? extends List<? extends Integer>>
                             UBlockExpression [{...}] : PsiType:Unit
                                 UReturnExpression [return [!] UnknownKotlinExpression (CALL_EXPRESSION)]

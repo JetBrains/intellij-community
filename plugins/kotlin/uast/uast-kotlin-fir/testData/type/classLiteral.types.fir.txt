@@ -6,11 +6,11 @@ UFile (package = ) [public final class ClassLiteralKt {...]
         UMethod (name = getStringClass) [public static final fun getStringClass() : kotlin.reflect.KClass<java.lang.String> = UastEmptyExpression]
         UMethod (name = box) [public static final fun box() : java.lang.String {...}]
             UBlockExpression [{...}] : PsiType:Void
-                UDeclarationsExpression [var x: <ErrorType> = ""]
-                    ULocalVariable (name = x) [var x: <ErrorType> = ""]
+                UDeclarationsExpression [var x: java.lang.CharSequence = ""]
+                    ULocalVariable (name = x) [var x: java.lang.CharSequence = ""]
                         ULiteralExpression (value = "") [""] : PsiType:String
-                UDeclarationsExpression [var xClass: <ErrorType> = java.lang.CharSequence]
-                    ULocalVariable (name = xClass) [var xClass: <ErrorType> = java.lang.CharSequence]
+                UDeclarationsExpression [var xClass: kotlin.reflect.KClass<? extends java.lang.CharSequence> = java.lang.CharSequence]
+                    ULocalVariable (name = xClass) [var xClass: kotlin.reflect.KClass<? extends java.lang.CharSequence> = java.lang.CharSequence]
                         UClassLiteralExpression [java.lang.CharSequence] : PsiType:KClass<? extends CharSequence>
                 UReturnExpression [return if (xClass == stringClass) "OK" else xClass] : PsiType:Void
                     UIfExpression [if (xClass == stringClass) "OK" else xClass] : PsiType:String

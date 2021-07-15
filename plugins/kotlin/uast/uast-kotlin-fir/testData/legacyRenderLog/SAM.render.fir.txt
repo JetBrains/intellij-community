@@ -18,7 +18,7 @@ public final class SAMKt {
         foo = {
 
         }
-        var a: <ErrorType> = {
+        var a: java.lang.Runnable = {
 
         } as java.lang.Runnable
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
@@ -31,10 +31,10 @@ public final class SAMKt {
         return [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
     public static final fun test1() : void {
-        var thread1: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        var thread1: java.lang.Thread = [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
     public static final fun test2() : void {
-        var thread2: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        var thread2: java.lang.Thread = [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
     public static final fun test3() : void {
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
