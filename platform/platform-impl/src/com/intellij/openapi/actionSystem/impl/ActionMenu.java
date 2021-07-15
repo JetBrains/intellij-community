@@ -44,7 +44,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public final class ActionMenu extends JBMenu {
-  private static final boolean KEEP_MENU_HIERARCHY = SystemInfo.isMacSystemMenu && Registry.is("keep.menu.hierarchy", false);
   private final String myPlace;
   private DataContext myContext;
   private final ActionRef<ActionGroup> myGroup;
@@ -291,10 +290,6 @@ public final class ActionMenu extends JBMenu {
     }
 
     private void onMenuHidden() {
-      if (KEEP_MENU_HIERARCHY) {
-        return;
-      }
-
       Runnable clearSelf = () -> {
         clearItems();
         addStubItem();
@@ -331,7 +326,7 @@ public final class ActionMenu extends JBMenu {
         myDisposable = Disposer.newDisposable();
       }
       Disposer.register(myDisposable, helper);
-      if (KEEP_MENU_HIERARCHY || myIsHidden) {
+      if (myIsHidden) {
         clearItems();
       }
       myIsHidden = false;
