@@ -93,11 +93,11 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
             break
         }
 
-        val psiFiles = myFixture.configureByFiles(*sourceFilePaths.toTypedArray())
-        val pathToFiles = mapOf(*(sourceFilePaths zip psiFiles).toTypedArray())
-
         val fileText = FileUtil.loadFile(mainFile, true)
         withCustomCompilerOptions(fileText, project, module) {
+            val psiFiles = myFixture.configureByFiles(*sourceFilePaths.toTypedArray())
+            val pathToFiles = mapOf(*(sourceFilePaths zip psiFiles).toTypedArray())
+
             ConfigLibraryUtil.configureLibrariesByDirective(module, fileText)
             configureCodeStyleAndRun(project, { FormatSettingsUtil.createConfigurator(fileText, it).configureSettings() }) {
                 configureRegistryAndRun(fileText) {
