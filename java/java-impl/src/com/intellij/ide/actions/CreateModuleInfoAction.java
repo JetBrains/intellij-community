@@ -52,9 +52,8 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase impleme
     }
   }
 
-  @Nullable
   @Override
-  protected PsiDirectory getTargetDirectory(DataContext ctx, IdeView view) {
+  protected @Nullable PsiDirectory getTargetDirectory(DataContext ctx, IdeView view) {
     PsiDirectory[] directories = view.getDirectories();
     if (directories.length == 1) {
       PsiDirectory psiDir = directories[0];
