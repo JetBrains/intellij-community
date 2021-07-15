@@ -1,21 +1,21 @@
 public final class TypeReferencesKt {
     public static final fun foo(@null parameter: int) : java.lang.String {
-        var varWithType: <ErrorType> = "Not Null"
-        var varWithoutType: <ErrorType> = "lorem ipsum"
-        var result: <ErrorType> = varWithType + varWithoutType
+        var varWithType: java.lang.String = "Not Null"
+        var varWithoutType: java.lang.String = "lorem ipsum"
+        var result: java.lang.String = varWithType + varWithoutType
         return result
     }
     public static final fun parameterizedFoo(@null arg: T) : void {
-        var a: <ErrorType> = arg
-        var at: <ErrorType> = elvis {
+        var a: T = arg
+        var at: T = elvis {
             var var708e23eb: T = arg
             if (var708e23eb != null) var708e23eb else return
         }
-        var tl: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
-        var tsl: <ErrorType> = tl.[!] UnknownKotlinExpression (CALL_EXPRESSION)
-        var lls: <ErrorType>
-        var llsAliased: <ErrorType>
-        var llt: <ErrorType>
+        var tl: java.util.List<? extends T> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        var tsl: java.util.List<? extends java.lang.String> = tl.[!] UnknownKotlinExpression (CALL_EXPRESSION)
+        var lls: java.util.List<? extends java.util.List<? extends java.lang.String>>
+        var llsAliased: java.util.List
+        var llt: java.util.List<? extends java.util.List<? extends T>>
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
 }

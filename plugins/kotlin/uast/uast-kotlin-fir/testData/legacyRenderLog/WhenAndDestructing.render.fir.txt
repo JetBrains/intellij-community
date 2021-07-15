@@ -1,6 +1,6 @@
 public final class WhenAndDestructingKt {
     public static final fun getElementsAdditionalResolve(@null string: java.lang.String) : java.lang.String {
-        var arr: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        var arr: java.util.List<? extends java.lang.String> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
         switch (string)  {
             "aaaa" -> {
                 yield return "bindingContext"
@@ -10,7 +10,7 @@ public final class WhenAndDestructingKt {
             }
 
              -> {
-                @null var var837f2350: <ErrorType> = arr
+                @null var var837f2350: java.util.List<? extends java.lang.String> = arr
                 yield return bindingContext
             }
 

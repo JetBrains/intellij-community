@@ -6,8 +6,8 @@ UFile (package = ) [public final class TryCatch {...]
                 UTryExpression [try {...}] = Undetermined
                     UBlockExpression [{...}] = Undetermined
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                    UCatchClause (e) [catch (@null var e: <ErrorType>) {...}]
-                        UParameter (name = e) [@null var e: <ErrorType>]
+                    UCatchClause (e) [catch (@null var e: java.lang.Throwable) {...}]
+                        UParameter (name = e) [@null var e: java.lang.Throwable]
                             UAnnotation (fqName = null) [@null]
                         UBlockExpression [{...}] = Undetermined
                             [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
@@ -26,8 +26,8 @@ UFile (package = ) [public final class TryCatch {...]
                 UTryExpression [try {...}] = Undetermined
                     UBlockExpression [{...}] = Undetermined
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                    UCatchClause (e) [catch (@null @not-implemented-annotation var e: <ErrorType>) {...}]
-                        UParameter (name = e) [@null @not-implemented-annotation var e: <ErrorType>]
+                    UCatchClause (e) [catch (@null @not-implemented-annotation var e: java.lang.Throwable) {...}]
+                        UParameter (name = e) [@null @not-implemented-annotation var e: java.lang.Throwable]
                             UAnnotation (fqName = null) [@null]
                             UAnnotation (fqName = not-implemented-annotation) [@not-implemented-annotation]
                         UBlockExpression [{...}] = Undetermined

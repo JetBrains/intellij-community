@@ -1,7 +1,7 @@
 public final class NonTrivialIdentifiersKt {
     public static final fun main(@null a: A) : void {
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
-        var p: <ErrorType> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        var p: A = [!] UnknownKotlinExpression (CALL_EXPRESSION)
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
 }
