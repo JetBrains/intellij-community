@@ -146,8 +146,9 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun getFunctionType(ktFunction: KtFunction, parent: UElement): PsiType? {
-        // TODO("Not yet implemented")
-        return null
+        analyseForUast(ktFunction) {
+            return ktFunction.getPsiType(TypeMappingMode.DEFAULT_UAST)
+        }
     }
 
     override fun getFunctionalInterfaceType(uLambdaExpression: KotlinULambdaExpression): PsiType? {
