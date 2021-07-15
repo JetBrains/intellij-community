@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.framework
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 
@@ -15,4 +16,19 @@ fun isExternalLibrary(library: Library): Boolean = ExternalSystemApiUtil.isExter
         ExternalSystemApiUtil.isExternalSystemLibrary(library, KOBALT_SYSTEM_ID) ||
         ExternalSystemApiUtil.isExternalSystemLibrary(library, MAVEN_SYSTEM_ID)
 
+@Deprecated(
+    "Moved to the org.jetbrains.kotlin.idea.configuration package.",
+    level = DeprecationLevel.ERROR,
+    replaceWith = ReplaceWith("org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID")
+)
+val GRADLE_SYSTEM_ID: ProjectSystemId
+    get() = org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 
+@Deprecated(
+    "Moved to the org.jetbrains.kotlin.idea.configuration package.",
+    level = DeprecationLevel.ERROR,
+    replaceWith = ReplaceWith("org.jetbrains.kotlin.idea.configuration.isGradleModule()")
+)
+fun Module.isGradleModule(): Boolean {
+    return ExternalSystemApiUtil.isExternalSystemAwareModule(GRADLE_SYSTEM_ID, this)
+}
