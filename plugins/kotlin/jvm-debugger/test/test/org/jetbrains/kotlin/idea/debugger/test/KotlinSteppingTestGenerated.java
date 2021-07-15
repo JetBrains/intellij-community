@@ -1261,6 +1261,26 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/custom/smartStepIntoInterfaceImpl.kt");
         }
 
+        @TestMetadata("smartStepIntoLambdasOnManyLines.kt")
+        public void testSmartStepIntoLambdasOnManyLines() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoLambdasOnManyLines.kt");
+        }
+
+        @TestMetadata("smartStepIntoLambdasOnOneLine.kt")
+        public void testSmartStepIntoLambdasOnOneLine() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoLambdasOnOneLine.kt");
+        }
+
+        @TestMetadata("smartStepIntoSamLambdaFromJavaFunInterface.kt")
+        public void testSmartStepIntoSamLambdaFromJavaFunInterface() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoSamLambdaFromJavaFunInterface.kt");
+        }
+
+        @TestMetadata("smartStepIntoSamLambdaFromKotlinFunInterface.kt")
+        public void testSmartStepIntoSamLambdaFromKotlinFunInterface() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoSamLambdaFromKotlinFunInterface.kt");
+        }
+
         @TestMetadata("smartStepIntoStoredLambda.kt")
         public void testSmartStepIntoStoredLambda() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoStoredLambda.kt");

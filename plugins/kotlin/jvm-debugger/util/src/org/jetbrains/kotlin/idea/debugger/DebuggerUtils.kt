@@ -21,6 +21,8 @@ object DebuggerUtils {
     @get:TestOnly
     var forceRanking = false
 
+    private val IR_BACKEND_LAMBDA_REGEX = ".+\\\$lambda-\\d+".toRegex()
+
     fun findSourceFileForClassIncludeLibrarySources(
         project: Project,
         scope: GlobalSearchScope,
@@ -86,4 +88,6 @@ object DebuggerUtils {
         val extension = FileUtilRt.getExtension(fileName).toLowerCase()
         return extension in KotlinFileTypeFactoryUtils.KOTLIN_EXTENSIONS
     }
+
+    fun String.isGeneratedLambdaName() = matches(IR_BACKEND_LAMBDA_REGEX)
 }
