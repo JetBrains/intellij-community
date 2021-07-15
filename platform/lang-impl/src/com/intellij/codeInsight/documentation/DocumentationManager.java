@@ -1294,7 +1294,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
     else if (url.startsWith(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL)) {
       ActionCallback callback = createActionCallback();
-      callback.doWhenDone(() -> component.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)));
+      callback.doWhenProcessed(() -> component.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)));
       ReadAction.nonBlocking(
         () -> getTarget(psiElement, url)
       ).finishOnUiThread(ModalityState.defaultModalityState(), target -> {
