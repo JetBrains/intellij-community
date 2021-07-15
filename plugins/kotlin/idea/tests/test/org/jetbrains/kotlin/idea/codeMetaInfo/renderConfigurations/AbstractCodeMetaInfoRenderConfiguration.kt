@@ -42,13 +42,28 @@ open class LineMarkerConfiguration(var renderDescription: Boolean = true) : Abst
 open class HighlightingConfiguration(
     val descriptionRenderingOption: DescriptionRenderingOption = DescriptionRenderingOption.ALWAYS,
     val renderTextAttributesKey: Boolean = true,
-    val renderSeverity: Boolean = true,
+    val renderSeverityOption: SeverityRenderingOption = SeverityRenderingOption.ALWAYS,
     val severityLevel: HighlightSeverity = HighlightSeverity.INFORMATION,
     val checkNoError: Boolean = false,
 ) : AbstractCodeMetaInfoRenderConfiguration() {
 
     enum class DescriptionRenderingOption {
         ALWAYS, NEVER, IF_NOT_NULL
+    }
+
+    /**
+     * Allows to customize rendering of highlightings' severities if some severities are not interesting
+     * or considered "default". Use predefined values for convenience.
+     */
+    fun interface SeverityRenderingOption {
+        fun shouldRender(severity: HighlightSeverity): Boolean
+
+        companion object {
+            val ALWAYS = SeverityRenderingOption { true }
+            val NEVER = SeverityRenderingOption { false }
+
+            val ONLY_NON_INFO = SeverityRenderingOption { it != HighlightSeverity.INFORMATION }
+        }
     }
 
     override fun asString(codeMetaInfo: CodeMetaInfo): String {
@@ -62,7 +77,8 @@ open class HighlightingConfiguration(
         if (!renderParams) return ""
 
         val params = mutableListOf<String>()
-        if (renderSeverity)
+
+        if (renderSeverityOption.shouldRender(highlightingCodeMetaInfo.highlightingInfo.severity)) {
             params.add("severity='${highlightingCodeMetaInfo.highlightingInfo.severity}'")
         }
 

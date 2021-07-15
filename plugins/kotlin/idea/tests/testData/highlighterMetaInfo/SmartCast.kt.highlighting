@@ -1,12 +1,12 @@
-class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>My<!>(val <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!>: <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Int<!>?)
+class <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>My<!>(val <!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>?)
 
-fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>My<!>?.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>(): <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Int<!> {
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>My<!>?.<!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>(): <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!> {
     if (this == null) return 42
-    if (<!HIGHLIGHTING("severity='INFORMATION'; descr='Extension implicit receiver smart cast to My'; textAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!> == null) {
-        if (<!HIGHLIGHTING("severity='INFORMATION'; descr='Always null'; textAttributesKey='KOTLIN_SMART_CONSTANT'"), HIGHLIGHTING("severity='INFORMATION'; descr='Extension implicit receiver smart cast to My'; textAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!> != null) {
-            return <!HIGHLIGHTING("severity='INFORMATION'; descr='Extension implicit receiver smart cast to My'; textAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("severity='INFORMATION'; descr='Smart cast to kotlin.Nothing'; textAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!>
+    if (<!HIGHLIGHTING("descr='Extension implicit receiver smart cast to My'; textAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!> == null) {
+        if (<!HIGHLIGHTING("descr='Always null'; textAttributesKey='KOTLIN_SMART_CONSTANT'"), HIGHLIGHTING("descr='Extension implicit receiver smart cast to My'; textAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!> != null) {
+            return <!HIGHLIGHTING("descr='Extension implicit receiver smart cast to My'; textAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("descr='Smart cast to kotlin.Nothing'; textAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!>
         }
         return 13
     }
-    return <!HIGHLIGHTING("severity='INFORMATION'; descr='Extension implicit receiver smart cast to My'; textAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("severity='INFORMATION'; descr='Smart cast to kotlin.Int'; textAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!>
+    return <!HIGHLIGHTING("descr='Extension implicit receiver smart cast to My'; textAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("descr='Smart cast to kotlin.Int'; textAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!>
 }
