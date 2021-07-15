@@ -103,6 +103,7 @@
     <group id="RunToolbarDebuggerAdditionalActions">
       <action id="RunToolbarResumeAction" class="com.intellij.xdebugger.impl.runToolbar.RunToolbarResumeAction" icon="AllIcons.Actions.Resume"/>
       <action id="RunToolbarPauseAction" class="com.intellij.xdebugger.impl.runToolbar.RunToolbarPauseAction" icon="AllIcons.Actions.Pause"/>
+      <action id="RunToolbarHotSwapAction" class="com.intellij.debugger.actions.RunToolbarHotSwapAction" icon="com.intellij.icons.AllIcons.Actions.BuildAutoReloadChanges"/>
       <add-to-group group-id="RunToolbarAdditionalProcessActions"/>
     </group>
 
