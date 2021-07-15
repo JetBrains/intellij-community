@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.JBColor
+import com.intellij.ui.components.htmlComponent
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -45,7 +46,7 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
           e.presentation.putClientProperty(PROP_ACTIVE_ENVIRONMENT, environment)
           it.configuration?.let {
             val shortenNameIfNeeded = Executor.shortenNameIfNeeded(it.name)
-            e.presentation.text = shortenNameIfNeeded
+            e.presentation.setText(shortenNameIfNeeded, false)
             e.presentation.icon = RunManagerEx.getInstanceEx(project).getConfigurationIcon(it, true)
           } ?: run {
             e.presentation.text = ""
@@ -69,7 +70,13 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
       override fun showPopup() {
         presentation.getClientProperty(PROP_ACTIVE_ENVIRONMENT)?.let { environment ->
           ToolWindowManager.getInstance(environment.project).getToolWindow(
-            environment.contentToReuse?.contentToolWindowId ?: environment.executor.id)?.show()
+            environment.contentToReuse?.contentToolWindowId ?: environment.executor.id)?.let {
+            val contentManager = it.contentManager
+            contentManager.contents.firstOrNull { it.executionId == environment.executionId }?.let { content ->
+              contentManager.setSelectedContent(content)
+            }
+            it.show()
+          }
         }
       }
 
@@ -97,8 +104,8 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
           icon = null
         }
 
-       // setting.isEnabled = presentation.isEnabled
-        // pane.isEnabled = presentation.isEnabled
+        isEnabled = true
+
         toolTipText = presentation.description
         process.text = it.name
         putClientProperty("JButton.backgroundColor", it.pillColor)
@@ -130,7 +137,7 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
         add(setting, "ay center, pushx, wmin 10")
         add(process, "ay center, pushx")
 
-        setting.font = UIUtil.getToolbarFont()
+       // setting.font = UIUtil.getToolbarFont()
         process.font = UIUtil.getToolbarFont()
 
         setting.border = JBUI.Borders.empty()
