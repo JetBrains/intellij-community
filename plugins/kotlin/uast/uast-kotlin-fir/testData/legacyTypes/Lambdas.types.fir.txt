@@ -5,22 +5,22 @@ UFile (package = ) [import java.util.stream.Stream...]
             UBlockExpression [{...}] : PsiType:NonExistentClass
                 UQualifiedReferenceExpression [Stream.[!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:NonExistentClass
                     UQualifiedReferenceExpression [Stream.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:Stream<String>
-                        USimpleNameReferenceExpression (identifier = Stream) [Stream] : PsiType:Unit
+                        USimpleNameReferenceExpression (identifier = Stream) [Stream] : PsiType:void
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-        UMethod (name = doSelectItem) [public static final fun doSelectItem(@null selectItemFunction: kotlin.jvm.functions.Function0<? extends kotlin.Unit>) : void {...}]
-            UParameter (name = selectItemFunction) [@null var selectItemFunction: kotlin.jvm.functions.Function0<? extends kotlin.Unit>]
-                UAnnotation (fqName = null) [@null]
-            UBlockExpression [{...}] : PsiType:NonExistentClass
+        UMethod (name = doSelectItem) [public static final fun doSelectItem(@org.jetbrains.annotations.NotNull selectItemFunction: kotlin.jvm.functions.Function0<? extends kotlin.Unit>) : void {...}]
+            UParameter (name = selectItemFunction) [@org.jetbrains.annotations.NotNull var selectItemFunction: kotlin.jvm.functions.Function0<? extends kotlin.Unit>]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UBlockExpression [{...}] : PsiType:Unit
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UDeclarationsExpression [var baz: <ErrorType> = fun () {...}]
-                    ULocalVariable (name = baz) [var baz: <ErrorType> = fun () {...}]
+                UDeclarationsExpression [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}]
+                    ULocalVariable (name = baz) [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}]
                         ULambdaExpression [fun () {...}]
                             UBlockExpression [{...}] : PsiType:NonExistentClass
                                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
         UMethod (name = lambdaInPlaceCall) [public static final fun lambdaInPlaceCall() : void {...}]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
                 UWhileExpression [while ([!] UnknownKotlinExpression (CALL_EXPRESSION)) {...}]
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    UBlockExpression [{...}] : PsiType:Unit
+                    UBlockExpression [{...}] : PsiType:void
