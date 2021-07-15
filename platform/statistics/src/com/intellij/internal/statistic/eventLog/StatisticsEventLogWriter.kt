@@ -62,7 +62,8 @@ class StatisticsEventLogFileWriter(private val recorderId: String,
   }
 
   override fun getLogFilesProvider(): EventLogFilesProvider {
-    return DefaultEventLogFilesProvider(getEventLogDir()) { fileAppender?.activeLogName }
+    val maxFilesToSend = EventLogConfiguration.getInstance().getOrCreate(recorderId).maxFilesToSend
+    return DefaultEventLogFilesProvider(getEventLogDir(), maxFilesToSend) { fileAppender?.activeLogName }
   }
 
   override fun cleanup() {
