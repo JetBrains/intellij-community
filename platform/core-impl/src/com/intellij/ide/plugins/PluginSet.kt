@@ -3,9 +3,11 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.lang.Java11Shim
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.*
 
 // if otherwise not specified, `module` in terms of v2 plugin model
 @ApiStatus.Internal
@@ -24,7 +26,7 @@ class PluginSet internal constructor(
       for (descriptor in plugins) {
         addWithV1Modules(enabledPluginAndModuleV1Map, descriptor)
         for (item in descriptor.content.modules) {
-          enabledModuleV2Ids.put(item.name, item)
+          enabledModuleV2Ids[item.name] = item
         }
       }
       return PluginSet(
@@ -56,9 +58,9 @@ class PluginSet internal constructor(
     }
 
     fun addWithV1Modules(result: MutableMap<PluginId, IdeaPluginDescriptorImpl>, descriptor: IdeaPluginDescriptorImpl) {
-      result.put(descriptor.id, descriptor)
+      result[descriptor.id] = descriptor
       for (module in descriptor.modules) {
-        result.put(module, descriptor)
+        result[module] = descriptor
       }
     }
 
@@ -88,7 +90,7 @@ class PluginSet internal constructor(
             continue@m
           }
         }
-        enabledModuleV2Ids.put(item.name, item)
+        enabledModuleV2Ids[item.name] = item
       }
     }
   }
@@ -98,9 +100,9 @@ class PluginSet internal constructor(
 
   fun isPluginEnabled(id: PluginId) = enabledPluginAndV1ModuleMap.containsKey(id)
 
-  fun findEnabledPlugin(id: PluginId): IdeaPluginDescriptorImpl? = enabledPluginAndV1ModuleMap.get(id)
+  fun findEnabledPlugin(id: PluginId): IdeaPluginDescriptorImpl? = enabledPluginAndV1ModuleMap[id]
 
-  fun findEnabledModule(id: String): IdeaPluginDescriptorImpl? = enabledModuleMap.get(id)?.requireDescriptor()
+  fun findEnabledModule(id: String): IdeaPluginDescriptorImpl? = enabledModuleMap[id]?.requireDescriptor()
 
   fun isModuleEnabled(id: String) = enabledModuleMap.containsKey(id)
 
@@ -108,17 +110,46 @@ class PluginSet internal constructor(
     // in tests or on install plugin is not in all plugins
     // linear search is ok here - not a hot method
     PluginManagerCore.getLogger().assertTrue(!enabledPlugins.contains(descriptor))
-    return createPluginSet(allPlugins = if (allPlugins.contains(descriptor)) allPlugins else allPlugins.plus(descriptor),
-                           enabledPlugins = enabledPlugins.plus(descriptor))
+
+    return createPluginSet(
+      allPlugins = if (descriptor in allPlugins) allPlugins else sortTopologically(allPlugins + descriptor),
+      enabledPlugins = sortTopologically(enabledPlugins + descriptor),
+    )
   }
 
-  fun updateEnabledPlugins(): PluginSet {
-    return createPluginSet(allPlugins = allPlugins, enabledPlugins = getOnlyEnabledPlugins(allPlugins))
+  fun sortTopologically(
+    descriptors: List<IdeaPluginDescriptorImpl>,
+    withOptional: Boolean = true,
+  ): List<IdeaPluginDescriptorImpl> {
+    val graph = CachingSemiGraph.createPluginIdGraph(descriptors, pluginSet = this, withOptional)
+
+    val comparator = DFSTBuilder(graph).comparator()
+    // there is circular reference between core and implementation-detail plugin, as not all such plugins extracted from core,
+    // so, ensure that core plugin is always first (otherwise not possible to register actions - parent group not defined)
+    // don't use sortWith here - avoid loading kotlin stdlib
+    val sortedRequired = descriptors.toTypedArray()
+    Arrays.sort(sortedRequired, Comparator { o1, o2 ->
+      when (PluginManagerCore.CORE_ID) {
+        o1.id -> -1
+        o2.id -> 1
+        else -> comparator.compare(o1.id, o2.id)
+      }
+    })
+    @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "UNCHECKED_CAST")
+    return Java11Shim.INSTANCE.listOf(sortedRequired)
   }
+
+  fun updateEnabledPlugins(): PluginSet = updateEnabledPlugins(allPlugins)
 
   fun removePluginAndUpdateEnabledPlugins(descriptor: IdeaPluginDescriptorImpl): PluginSet {
     // not just remove from enabledPlugins - maybe another plugins in list also disabled as result of plugin unloading
-    val allPlugins = allPlugins.minus(descriptor)
-    return createPluginSet(allPlugins = allPlugins, enabledPlugins = getOnlyEnabledPlugins(allPlugins))
+    return updateEnabledPlugins(allPlugins - descriptor)
+  }
+
+  private fun updateEnabledPlugins(allPlugins: List<IdeaPluginDescriptorImpl>): PluginSet {
+    return createPluginSet(
+      allPlugins,
+      enabledPlugins = getOnlyEnabledPlugins(allPlugins),
+    )
   }
 }
