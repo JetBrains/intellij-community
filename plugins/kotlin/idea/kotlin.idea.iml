@@ -84,5 +84,6 @@
     <orderEntry type="library" name="intellij-markdown" level="project" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
     <orderEntry type="module" module-name="intellij.grazie" />
+    <orderEntry type="library" name="Velocity" level="project" />
   </component>
 </module>

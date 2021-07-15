@@ -80,5 +80,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" name="Velocity" level="project" />
   </component>
 </module>

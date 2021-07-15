@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.handler;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -12,7 +13,6 @@ import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiElementUtil;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -200,7 +200,7 @@ public class DelegateHandler {
     for (int parameterIndex = 0; parameterIndex < psiParameters.length; parameterIndex++) {
       final PsiParameter psiParameter = psiParameters[parameterIndex];
       final PsiType psiParameterType = psiSubstitutor.substitute(psiParameter.getType());
-      final String generatedParameterName = StringUtils.defaultIfEmpty(psiParameter.getName(), "p" + parameterIndex);
+      final String generatedParameterName = StringUtil.defaultIfEmpty(psiParameter.getName(), "p" + parameterIndex);
       methodBuilder.withParameter(generatedParameterName, psiParameterType);
     }
 
@@ -217,7 +217,7 @@ public class DelegateHandler {
 
     for (int parameterIndex = 0; parameterIndex < psiParameters.length; parameterIndex++) {
       final PsiParameter psiParameter = psiParameters[parameterIndex];
-      final String generatedParameterName = StringUtils.defaultIfEmpty(psiParameter.getName(), "p" + parameterIndex);
+      final String generatedParameterName = StringUtil.defaultIfEmpty(psiParameter.getName(), "p" + parameterIndex);
       paramString.append(generatedParameterName).append(',');
     }
 
