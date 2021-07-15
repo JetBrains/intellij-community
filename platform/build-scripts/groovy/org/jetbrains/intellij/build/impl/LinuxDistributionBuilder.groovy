@@ -376,14 +376,16 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       new LinuxLibraryDownloadInfo("fontconfig", "2.10.95-7", { Path source, Path target ->
         // Copy Linux .so libraries
         Path sourceLibDirectory = source.resolve("usr/lib64")
-        Path targetLibsPath = Files.createDirectories(target.resolve("libs"))
+        Path targetFontConfigPath = Files.createDirectories(target.resolve("fontconfig"))
+        Path targetFontLibsPath = targetFontConfigPath.resolve("libs")
+
         sourceLibDirectory.eachFileRecurse { Path libEntryPath ->
           if (Files.isSymbolicLink(libEntryPath)) {
             Path relativeLibPath = Files.readSymbolicLink(libEntryPath)
             Path sourceLibPath = libEntryPath.parent.resolve(relativeLibPath)
 
             if (Files.exists(sourceLibPath)) {
-              Path targetLibPath = targetLibsPath.resolve(libEntryPath.fileName.toString())
+              Path targetLibPath = targetFontLibsPath.resolve(libEntryPath.fileName.toString())
               copyFile(sourceLibPath, targetLibPath)
             }
           }
@@ -394,8 +396,8 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         if (!Files.exists(sourceConfigFile))
           buildContext.messages.error("Source fonts config file not found: '$sourceConfigFile'")
 
-        Path targetConfigDirectory = Files.createDirectories(target.resolve("fontconfig"))
-        Files.copy(sourceConfigFile, targetConfigDirectory.resolve(sourceConfigFile.fileName))
+
+        Files.copy(sourceConfigFile, targetFontConfigPath.resolve(sourceConfigFile.fileName))
       }),
       new LinuxLibraryDownloadInfo("dejavu-lgc-sans-fonts", "2.33-6", "noarch", { Path source, Path target ->
         String fontName = "DejaVuLGCSans.ttf"

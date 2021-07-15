@@ -28,8 +28,6 @@ usage()
   echo "  $0 run /pat/to/project"
   echo "  $0 status /pat/to/project"
   echo "  $0 cwmHost /path/to/project"
-  echo "  $0 cwmHostNoLobby /path/to/project"
-  echo "  $0 cwmHostStatus /path/to/project"
 }
 
 # most portable solution... To enable remote hosts on macs we probably want it in future
@@ -84,6 +82,16 @@ case "$LD_LIBRARY_PATH" in
     fi
     ;;
 esac
+
+# Check system fonts
+FONTS_CONFIGURATION_ROOT="$IDE_HOME/remotedevelopment/selfcontained/fontconfig"
+IS_FONTCONFIG_PRESENT="$(dpkg -l fontconfig 2>/dev/null)"
+
+if [ -z "$IS_FONTCONFIG_PRESENT" ]; then
+  echo "Add fontconfig library from self-contained distribution"
+  LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$FONTS_CONFIGURATION_ROOT/libs"
+fi
+
 export LD_LIBRARY_PATH
 echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
 
@@ -91,33 +99,39 @@ echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
 # Configure fonts and fontconfig
 # ---------------------------------------------------------------------
 echo "> Setup Linux fontconfig path (FONTCONFIG_PATH)"
-FONTS_CONFIGURATION_ROOT="$IDE_HOME/remotedevelopment/selfcontained/fontconfig"
-FONTS_CONFIGURATION_SOURCE_PATH="$FONTS_CONFIGURATION_ROOT"
-if [ ! -d "$FONTS_CONFIGURATION_SOURCE_PATH" ]; then
-  echo "ERROR! Unable to locate font configuration source directory in self-contained distribution: '$FONTS_CONFIGURATION_SOURCE_PATH'."
-  exit 1
+
+if [ -z "$IS_FONTCONFIG_PRESENT" ]; then
+  echo "System fontconfig library is not found. Proceed with self-contained configuration"
+
+  FONTS_CONFIGURATION_SOURCE_PATH="$FONTS_CONFIGURATION_ROOT"
+  if [ ! -d "$FONTS_CONFIGURATION_SOURCE_PATH" ]; then
+    echo "ERROR! Unable to locate font configuration source directory in self-contained distribution: '$FONTS_CONFIGURATION_SOURCE_PATH'."
+    exit 1
+  fi
+
+  case "$FONTCONFIG_PATH" in
+    *"$FONTS_CONFIGURATION_SOURCE_PATH"*)
+      ;;
+    *)
+      echo "Set fonts configuration path FONTCONFIG_PATH=$FONTS_CONFIGURATION_SOURCE_PATH"
+      if [ -z "$FONTCONFIG_PATH" ]; then
+        FONTCONFIG_PATH="$FONTS_CONFIGURATION_SOURCE_PATH"
+      else
+        FONTCONFIG_PATH="$FONTCONFIG_PATH":"$FONTS_CONFIGURATION_SOURCE_PATH"
+      fi
+      ;;
+  esac
+  export FONTCONFIG_PATH
+  echo "FONTCONFIG_PATH=$FONTCONFIG_PATH"
+
+  # fontconfig look for default fonts in "$XDG_DATA_HOME/fonts" path.
+  # Set this variable to use self-contained default fonts in case no others exist.
+  echo "> Setup Linux fonts home path prefix directory (XDG_DATA_HOME)"
+  export XDG_DATA_HOME="$FONTS_CONFIGURATION_SOURCE_PATH"
+  echo "XDG_DATA_HOME=$XDG_DATA_HOME"
+else
+  echo "System fontconfig library is found. Use system configuration and skip self-contained setup"
 fi
-
-case "$FONTCONFIG_PATH" in
-  *"$FONTS_CONFIGURATION_SOURCE_PATH"*)
-    ;;
-  *)
-    echo "Set fonts configuration path FONTCONFIG_PATH=$FONTS_CONFIGURATION_SOURCE_PATH"
-    if [ -z "$FONTCONFIG_PATH" ]; then
-      FONTCONFIG_PATH="$FONTS_CONFIGURATION_SOURCE_PATH"
-    else
-      FONTCONFIG_PATH="$FONTCONFIG_PATH":"$FONTS_CONFIGURATION_SOURCE_PATH"
-    fi
-    ;;
-esac
-export FONTCONFIG_PATH
-echo "FONTCONFIG_PATH=$FONTCONFIG_PATH"
-
-# fontconfig look for default fonts in "$XDG_DATA_HOME/fonts" path.
-# Set this variable to use self-contained default fonts in case no others exist.
-echo "> Setup Linux fonts home path prefix directory (XDG_DATA_HOME)"
-export XDG_DATA_HOME="$FONTS_CONFIGURATION_SOURCE_PATH"
-echo "XDG_DATA_HOME=$XDG_DATA_HOME"
 
 # ---------------------------------------------------------------------
 # Set default config and system dirs
@@ -182,10 +196,8 @@ fi
 export IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$REMOTE_DEV_PROPERTIES"
 
 # Prevent config import dialog
-
 mkdir -p "$IJ_HOST_CONFIG_DIR" || (echo "Failed to create $IJ_HOST_CONFIG_DIR"; exit 1)
 mkdir -p "$IJ_HOST_SYSTEM_DIR" || (echo "Failed to create $IJ_HOST_SYSTEM_DIR"; exit 1)
-
 
 # ---------------------------------------------------------------------
 # Process command line arguments
