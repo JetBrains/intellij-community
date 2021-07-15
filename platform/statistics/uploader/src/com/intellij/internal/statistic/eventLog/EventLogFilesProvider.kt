@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.StatisticsStringUtil
@@ -13,18 +13,32 @@ interface EventLogRecorderConfig {
   fun getLogFilesProvider(): EventLogFilesProvider
 }
 
-interface EventLogFilesProvider {
-  fun getLogFilesDir(): Path?
+abstract class EventLogFilesProvider {
+  abstract fun getLogFilesDir(): Path?
 
-  fun getLogFiles(): List<EventLogFile>
+  abstract fun getLogFiles(): List<EventLogFile>
+
+  fun getFilesToSend(maxFilesToSend: Int, activeFile: String?): List<File> {
+    val files = getLogFilesDir()?.toFile()?.listFiles { f: File -> activeFile == null || !StatisticsStringUtil.equals(f.name, activeFile) }
+    if (files == null) return emptyList()
+    val filteredFiles = if (maxFilesToSend == -1) {
+      files.toList()
+    }
+    else {
+      files.take(maxFilesToSend)
+    }
+    return filteredFiles
+  }
+
 }
 
-class DefaultEventLogFilesProvider(private val dir: Path, private val activeFileProvider: () -> String?): EventLogFilesProvider {
+class DefaultEventLogFilesProvider(private val dir: Path,
+                                   private val maxFilesToSend: Int,
+                                   private val activeFileProvider: () -> String?) : EventLogFilesProvider() {
   override fun getLogFilesDir(): Path = dir
 
   override fun getLogFiles(): List<EventLogFile> {
     val activeFile = activeFileProvider()
-    val files = File(dir.toUri()).listFiles { f: File -> activeFile == null || !StatisticsStringUtil.equals(f.name, activeFile) }
-    return files?.map { EventLogFile(it) }?.toList() ?: emptyList()
+    return getFilesToSend(maxFilesToSend, activeFile).map { EventLogFile(it) }.toList()
   }
 }

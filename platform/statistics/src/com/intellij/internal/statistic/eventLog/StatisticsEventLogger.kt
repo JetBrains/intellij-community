@@ -92,7 +92,7 @@ internal class EmptyStatisticsEventLogger : StatisticsEventLogger {
     CompletableFuture.completedFuture(null)
 }
 
-object EmptyEventLogFilesProvider: EventLogFilesProvider {
+object EmptyEventLogFilesProvider: EventLogFilesProvider() {
   override fun getLogFilesDir(): Path? = null
 
   override fun getLogFiles(): List<EventLogFile> = emptyList()

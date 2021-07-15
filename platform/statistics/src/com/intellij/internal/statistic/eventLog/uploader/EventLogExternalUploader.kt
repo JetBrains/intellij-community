@@ -68,10 +68,9 @@ object EventLogExternalUploader {
 
     EventLogSystemLogger.logCreatingExternalSendCommand(recorderId)
     val config = EventLogConfiguration.getOrCreate(recorderId)
-    val device = DeviceConfiguration(config.deviceId, config.bucket)
     val application = EventLogInternalApplicationInfo(recorderId, isTest)
     try {
-      val command = prepareUploadCommand(device, recorder, application)
+      val command = prepareUploadCommand(config, recorder, application)
       EventLogSystemLogger.logFinishedCreatingExternalSendCommand(recorderId, null)
       Runtime.getRuntime().exec(command)
       LOG.info("Started external process for uploading event log")
@@ -82,10 +81,10 @@ object EventLogExternalUploader {
     }
   }
 
-  private fun prepareUploadCommand(device: DeviceConfiguration,
+  private fun prepareUploadCommand(config: EventLogRecorderConfiguration,
                                    recorder: EventLogRecorderConfig,
                                    applicationInfo: EventLogApplicationInfo): Array<out String> {
-    val logFiles = logsToSend(recorder)
+    val logFiles = recorder.getLogFilesProvider().getFilesToSend(config.maxFilesToSend, null).map { it.absolutePath }
     if (logFiles.isEmpty()) {
       throw EventLogUploadException("No available logs to send", NO_LOGS)
     }
@@ -113,8 +112,8 @@ object EventLogExternalUploader {
     addArgument(args, RECORDER_OPTION, recorder.getRecorderId())
 
     addArgument(args, LOGS_OPTION, logFiles.joinToString(separator = File.pathSeparator))
-    addArgument(args, DEVICE_OPTION, device.deviceId)
-    addArgument(args, BUCKET_OPTION, device.bucket.toString())
+    addArgument(args, DEVICE_OPTION, config.deviceId)
+    addArgument(args, BUCKET_OPTION, config.bucket.toString())
     addArgument(args, URL_OPTION, applicationInfo.templateUrl)
     addArgument(args, PRODUCT_OPTION, applicationInfo.productCode)
     addArgument(args, PRODUCT_VERSION_OPTION, applicationInfo.productVersion)
@@ -137,14 +136,6 @@ object EventLogExternalUploader {
   private fun addArgument(args: ArrayList<String>, name: String, value: String) {
     args += name
     args += value
-  }
-
-  private fun logsToSend(recorder: EventLogRecorderConfig): List<String> {
-    val dir = recorder.getLogFilesProvider().getLogFilesDir()
-    if (dir != null && Files.exists(dir)) {
-      return dir.toFile().listFiles()?.take(5)?.map { it.absolutePath } ?: emptyList()
-    }
-    return emptyList()
   }
 
   private fun joinAsClasspath(libCopies: List<String>, uploaderCopy: Path): String {
