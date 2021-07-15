@@ -15,12 +15,14 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
@@ -71,24 +73,42 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
   private void handleFunctionalExpression(@NotNull TypeDfaState state, @NotNull FunctionalBlockEndInstruction instruction) {
     GrFunctionalExpression block = instruction.getElement();
-    InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
-    switch (kind) {
-      case IN_PLACE_ONCE:
-        break;
-      case IN_PLACE_UNKNOWN:
-        TypeDfaState previousClosureState = state.getTopClosureState();
-        assert previousClosureState != null : "Encountered end of closure without closure start";
-        for (var newDescriptor : state.getVarTypes().keySet()) {
-          if (!previousClosureState.containsVariable(newDescriptor)) {
-            state.removeBinding(newDescriptor);
-          }
-        }
-        state.joinState(previousClosureState, myManager);
-        state.popClosureState();
-        break;
-      case UNKNOWN:
-        break;
+    ClosureFrame currentClosureFrame = state.getTopClosureFrame();
+    assert currentClosureFrame != null : "Encountered end of closure without closure start";
+    for (var newDescriptor : state.getVarTypes().keySet()) {
+      if (!currentClosureFrame.getStartState().containsVariable(newDescriptor)) {
+        state.removeBinding(newDescriptor);
+      }
     }
+    if (!currentClosureFrame.getStartState().contentsEqual(state)) {
+      // actually, condition above is not correct: suppose the code below
+      // def x = 1; unknownFunction { x = ""; x = 1 }; x<caret>
+      // It is incorrect to say that x has type Integer after the call.
+      // However, I find the scenario where it may affect the user extremely unlikely,
+      // so I'll leave this condition just to gain more performance.
+      InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
+      switch (kind) {
+        case IN_PLACE_ONCE:
+          break;
+        case IN_PLACE_UNKNOWN:
+          state.joinState(currentClosureFrame.getStartState(), myManager);
+          break;
+        case UNKNOWN:
+          var reassignments = currentClosureFrame.getReassignments();
+          for (var newBinding : reassignments.entrySet()) {
+            VariableDescriptor descriptor = newBinding.getKey();
+            List<DFAType> assignments = newBinding.getValue();
+            PsiType upperBoundByWrites =
+              TypesUtil.getLeastUpperBound(assignments.stream().map(dfaType -> dfaType.getResultType(myManager)).toArray(PsiType[]::new), myManager);
+            DFAType existingType = state.getVariableType(descriptor);
+            if (existingType == null) existingType = DFAType.create(null);
+            DFAType flushedType = existingType.addFlushingType(upperBoundByWrites, myManager);
+            state.putType(descriptor, flushedType);
+          }
+          break;
+      }
+    }
+    state.popClosureState();
   }
 
   private void handleMixin(@NotNull final TypeDfaState state, @NotNull final MixinTypeInstruction instruction) {
