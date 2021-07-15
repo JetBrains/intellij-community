@@ -40,6 +40,7 @@ import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
+import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -405,7 +406,19 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     pathsToTransfer.addAll(sdkRoots.second);
     pathsToTransfer.addAll(userAddedRoots.second);
 
-    if (!pathsToTransfer.equals(PyTransferredSdkRootsKt.getPathsToTransfer(sdk))) {
+    /*
+    Don't run actions related to transferred roots on editable sdks since they can share data with original ones.
+
+    PyTransferredSdkRootsKt#transferRoots and PyTransferredSdkRootsKt#removeTransferredRoots skip sdks
+    that are not equal to module one (editable as well).
+
+    That's why roots changes were not applied but paths to transfer were successfully set.
+
+    When current method was executed for original sdk,
+    roots changes were not applied since there were no changes in paths to transfer (they were shared with editable copy).
+     */
+    if (PyConfigurableInterpreterList.getInstance(project).getModel().getProjectSdks().containsKey(sdk) &&
+        !pathsToTransfer.equals(PyTransferredSdkRootsKt.getPathsToTransfer(sdk))) {
       if (project != null) {
         PyTransferredSdkRootsKt.removeTransferredRootsFromModulesWithSdk(project, sdk);
       }

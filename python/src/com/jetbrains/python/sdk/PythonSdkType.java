@@ -71,6 +71,10 @@ public final class PythonSdkType extends SdkType {
   @ApiStatus.Internal
   public static final Key<List<String>> MOCK_SYS_PATH_KEY = Key.create("PY_MOCK_SYS_PATH_KEY");
 
+  @NotNull
+  @ApiStatus.Internal
+  public static final Key<String> MOCK_PY_VERSION_KEY = Key.create("PY_MOCK_PY_VERSION_KEY");
+
   private static final Logger LOG = Logger.getInstance(PythonSdkType.class);
 
   private static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
@@ -479,6 +483,13 @@ public final class PythonSdkType extends SdkType {
       return versionString;
     }
     else {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        final var version = sdk.getUserData(MOCK_PY_VERSION_KEY);
+        if (version != null) {
+          return version;
+        }
+      }
+
       String homePath = sdk.getHomePath();
       return homePath == null ? null : getVersionString(homePath);
     }

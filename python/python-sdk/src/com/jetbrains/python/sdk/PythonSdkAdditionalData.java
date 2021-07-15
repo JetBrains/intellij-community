@@ -61,21 +61,21 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   }
 
   public void setAddedPathsFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
-    myAddedPaths.killAll();
+    myAddedPaths.clear();
     for (VirtualFile file : addedPaths) {
       myAddedPaths.add(file);
     }
   }
 
   public void setExcludedPathsFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
-    myExcludedPaths.killAll();
+    myExcludedPaths.clear();
     for (VirtualFile file : addedPaths) {
       myExcludedPaths.add(file);
     }
   }
 
   public void setPathsToTransferFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
-    myPathsToTransfer.killAll();
+    myPathsToTransfer.clear();
     for (VirtualFile file : addedPaths) {
       myPathsToTransfer.add(file);
     }
