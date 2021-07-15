@@ -39,6 +39,7 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
   private JComponent anchor;
 
   private JCheckBox showDialogWithAdvancedSettingsCheckBox;
+  private JCheckBox useMavenConfigCheckBox;
   private boolean isShowAdvancedSettingsCheckBox = false;
 
   public MavenGeneralPanel() {
@@ -96,6 +97,7 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     data.setThreads(threadsEditor.getText());
 
     data.setShowDialogWithAdvancedSettings(showDialogWithAdvancedSettingsCheckBox.isSelected());
+    data.setUseMavenConfig(useMavenConfigCheckBox.isSelected());
 
     data.endUpdate();
   }
@@ -117,6 +119,7 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     ComboBoxUtil.select(pluginUpdatePolicyComboModel, data.getPluginUpdatePolicy());
 
     showDialogWithAdvancedSettingsCheckBox.setSelected(data.isShowDialogWithAdvancedSettings());
+    useMavenConfigCheckBox.setSelected(data.isUseMavenConfig());
   }
 
   @Nls
@@ -154,5 +157,6 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     watcher.registerComponent("checksumPolicy", checksumPolicyCombo);
     watcher.registerComponent("failPolicy", failPolicyCombo);
     watcher.registerComponent("showDialogWithAdvancedSettings", showDialogWithAdvancedSettingsCheckBox);
+    watcher.registerComponent("showDialogWithAdvancedSettings", useMavenConfigCheckBox);
   }
 }

@@ -27,6 +27,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.config.MavenConfig;
 import org.jetbrains.idea.maven.execution.MavenRCSettingsWatcher;
 import org.jetbrains.idea.maven.execution.MavenSettingsObservable;
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration;
@@ -43,6 +44,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -110,22 +112,20 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
 
   @NotNull
   private File doResolveDefaultLocalRepository() {
-    return MavenWslUtil.resolveWslAware(myProject,
-                                        () -> MavenUtil.resolveLocalRepository("",
-                                                                               FileUtil.toSystemIndependentName(
-                                                                                 mavenHomeField.getText().trim()),
-                                                                               settingsFileComponent.getComponent().getText()),
-                                        wsl -> MavenWslUtil.resolveLocalRepository(wsl, "",
-                                                                                   FileUtil.toSystemIndependentName(
-                                                                                     mavenHomeField.getText().trim()),
-                                                                                   settingsFileComponent.getComponent().getText()));
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+    List<MavenProject> projects = projectsManager != null ? projectsManager.getRootProjects() : Collections.emptyList();
+    MavenConfig config = projects.isEmpty() ? null : projectsManager.getGeneralSettings().getMavenConfig(projects);
+    return MavenWslUtil.getLocalRepo(myProject, "",
+                                     FileUtil.toSystemIndependentName(mavenHomeField.getText().trim()),
+                                     settingsFileComponent.getComponent().getText(), config);
   }
 
   @NotNull
   private File doResolveDefaultUserSettingsFile() {
-    return MavenWslUtil.resolveWslAware(myProject,
-                                        () -> MavenUtil.resolveUserSettingsFile(""),
-                                        wsl -> MavenWslUtil.resolveUserSettingsFile(wsl, ""));
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
+    MavenConfig config = projectsManager != null
+                         ? projectsManager.getGeneralSettings().getMavenConfig(projectsManager.getRootProjects()) : null;
+    return MavenWslUtil.getUserSettings(myProject, "", config);
   }
 
   private void createUIComponents() {
