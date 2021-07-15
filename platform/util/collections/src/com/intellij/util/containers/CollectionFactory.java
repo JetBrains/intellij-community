@@ -371,20 +371,12 @@ public final class CollectionFactory {
   }
 
   public static <K,V> @NotNull Map<K,V> createCustomHashingStrategyMap(@NotNull HashingStrategy<? super K> strategy) {
-    return new Object2ObjectOpenCustomHashMap<>(new Hash.Strategy<K>() {
-      @Override
-      public int hashCode(@Nullable K o) {
-        return strategy.hashCode(o);
-      }
-
-      @Override
-      public boolean equals(@Nullable K a, @Nullable K b) {
-        return strategy.equals(a, b);
-      }
-    });
+    return new Object2ObjectOpenCustomHashMap<>(adaptStrategy(strategy));
   }
-  public static <K,V> @NotNull Map<K,V> createCustomHashingStrategyMap(int expected, @NotNull HashingStrategy<? super K> strategy) {
-    return new Object2ObjectOpenCustomHashMap<>(expected, new Hash.Strategy<K>() {
+
+  @NotNull
+  private static <K> Hash.Strategy<K> adaptStrategy(@NotNull HashingStrategy<? super K> strategy) {
+    return new FastUtilHashingStrategies.SerializableHashStrategy<K>() {
       @Override
       public int hashCode(@Nullable K o) {
         return strategy.hashCode(o);
@@ -394,32 +386,16 @@ public final class CollectionFactory {
       public boolean equals(@Nullable K a, @Nullable K b) {
         return strategy.equals(a, b);
       }
-    });
+    };
+  }
+
+  public static <K,V> @NotNull Map<K,V> createCustomHashingStrategyMap(int expected, @NotNull HashingStrategy<? super K> strategy) {
+    return new Object2ObjectOpenCustomHashMap<>(expected, adaptStrategy(strategy));
   }
   public static <K> @NotNull Set<K> createCustomHashingStrategySet(@NotNull HashingStrategy<? super K> strategy) {
-    return new ObjectOpenCustomHashSet<>(new Hash.Strategy<K>() {
-      @Override
-      public int hashCode(@Nullable K o) {
-        return strategy.hashCode(o);
-      }
-
-      @Override
-      public boolean equals(@Nullable K a, @Nullable K b) {
-        return strategy.equals(a, b);
-      }
-    });
+    return new ObjectOpenCustomHashSet<>(adaptStrategy(strategy));
   }
   public static <K> @NotNull Set<K> createLinkedCustomHashingStrategySet(@NotNull HashingStrategy<? super K> strategy) {
-    return new ObjectLinkedOpenCustomHashSet<>(new Hash.Strategy<K>() {
-      @Override
-      public int hashCode(@Nullable K o) {
-        return strategy.hashCode(o);
-      }
-
-      @Override
-      public boolean equals(@Nullable K a, @Nullable K b) {
-        return strategy.equals(a, b);
-      }
-    });
+    return new ObjectLinkedOpenCustomHashSet<>(adaptStrategy(strategy));
   }
 }
