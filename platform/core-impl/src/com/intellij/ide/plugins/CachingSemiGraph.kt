@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.Graph
 import com.intellij.util.lang.Java11Shim
 import org.jetbrains.annotations.ApiStatus
@@ -11,18 +10,16 @@ import java.util.function.Supplier
 import java.util.stream.Stream
 
 @ApiStatus.Internal
-class CachingSemiGraph<Node>(private val nodes: Collection<Node>,
-                             private val pluginToDirectDependencies: Map<Node, List<Node>>) : Graph<Node> {
+class CachingSemiGraph<Node> private constructor(
+  private val nodes: Collection<Node>,
+  private val pluginToDirectDependencies: Map<Node, List<Node>>,
+) : Graph<Node> {
   private val outs = IdentityHashMap<Node, MutableList<Node>>()
 
   init {
-    buildOuts()
-  }
-
-  private fun buildOuts() {
     val edges = Collections.newSetFromMap<Map.Entry<Node, Node>>(HashMap())
     for (node in nodes) {
-      for (inNode in (pluginToDirectDependencies.get(node) ?: continue)) {
+      for (inNode in (pluginToDirectDependencies[node] ?: continue)) {
         if (edges.add(AbstractMap.SimpleImmutableEntry(inNode, node))) {
           // not a duplicate edge
           outs.computeIfAbsent(inNode) { ArrayList() }.add(node)
@@ -31,63 +28,49 @@ class CachingSemiGraph<Node>(private val nodes: Collection<Node>,
     }
   }
 
-  override fun getOut(n: Node): Iterator<Node> = outs.get(n)?.iterator() ?: Collections.emptyIterator()
+  override fun getOut(n: Node): Iterator<Node> = outs[n]?.iterator() ?: Collections.emptyIterator()
 
   override fun getNodes() = nodes
 
   override fun getIn(node: Node): Iterator<Node> {
-    return pluginToDirectDependencies.get(node)?.iterator() ?: Collections.emptyIterator()
+    return pluginToDirectDependencies[node]?.iterator() ?: Collections.emptyIterator()
   }
 
   fun getInStream(node: Node): Stream<Node> {
-    return pluginToDirectDependencies.get(node)?.stream() ?: Stream.empty()
-  }
-}
-
-fun getTopologicallySorted(descriptors: Collection<IdeaPluginDescriptorImpl>,
-                           pluginSet: PluginSet,
-                           withOptional: Boolean): List<IdeaPluginDescriptorImpl> {
-  val graph = createPluginIdGraph(descriptors = descriptors, pluginSet = pluginSet, withOptional = withOptional)
-  val requiredOnlyGraph = DFSTBuilder(graph)
-  val comparator = requiredOnlyGraph.comparator()
-  // there is circular reference between core and implementation-detail plugin, as not all such plugins extracted from core,
-  // so, ensure that core plugin is always first (otherwise not possible to register actions - parent group not defined)
-  // don't use sortWith here - avoid loading kotlin stdlib
-  val sortedRequired = descriptors.toTypedArray()
-  Arrays.sort(sortedRequired, Comparator { o1, o2 ->
-    when (PluginManagerCore.CORE_ID) {
-      o1.id -> -1
-      o2.id -> 1
-      else -> comparator.compare(o1.id, o2.id)
-    }
-  })
-  @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "UNCHECKED_CAST")
-  return Java11Shim.INSTANCE.listOf(sortedRequired)
-}
-
-@ApiStatus.Internal
-fun createPluginIdGraph(descriptors: Collection<IdeaPluginDescriptorImpl>,
-                        pluginSet: PluginSet,
-                        withOptional: Boolean): CachingSemiGraph<PluginId> {
-  val hasAllModules = pluginSet.isPluginEnabled(PluginManagerCore.ALL_MODULES_MARKER)
-  val javaDep = Supplier {
-    pluginSet.findEnabledPlugin(PluginManagerCore.JAVA_MODULE_ID)
+    return pluginToDirectDependencies[node]?.stream() ?: Stream.empty()
   }
 
-  val uniqueCheck = Collections.newSetFromMap<PluginId>(IdentityHashMap())
-  val pluginToDirectDependencies = IdentityHashMap<PluginId, List<PluginId>>(descriptors.size)
-  val list = ArrayList<PluginId>(32)
-  val ids = arrayOfNulls<PluginId>(descriptors.size)
-  var index = 0
-  for (descriptor in descriptors) {
-    ids[index++] = descriptor.id
-    collectDirectDependencies(descriptor, pluginSet, withOptional, hasAllModules, javaDep, uniqueCheck, list)
-    if (!list.isEmpty()) {
-      pluginToDirectDependencies.put(descriptor.id, Java11Shim.INSTANCE.copyOf(list))
-      list.clear()
+  companion object {
+
+    @ApiStatus.Internal
+    fun createPluginIdGraph(
+      descriptors: Collection<IdeaPluginDescriptorImpl>,
+      pluginSet: PluginSet,
+      withOptional: Boolean,
+    ): CachingSemiGraph<PluginId> {
+      val hasAllModules = pluginSet.isPluginEnabled(PluginManagerCore.ALL_MODULES_MARKER)
+      val javaDep = Supplier {
+        pluginSet.findEnabledPlugin(PluginManagerCore.JAVA_MODULE_ID)
+      }
+
+      val uniqueCheck = Collections.newSetFromMap<PluginId>(IdentityHashMap())
+      val pluginToDirectDependencies = IdentityHashMap<PluginId, List<PluginId>>(descriptors.size)
+      val list = ArrayList<PluginId>(32)
+      val ids = TreeSet<PluginId>()
+      for (descriptor in descriptors) {
+        ids += descriptor.id
+        collectDirectDependencies(descriptor, pluginSet, withOptional, hasAllModules, javaDep, uniqueCheck, list)
+        if (!list.isEmpty()) {
+          pluginToDirectDependencies[descriptor.id] = Java11Shim.INSTANCE.copyOf(list)
+          list.clear()
+        }
+      }
+      return CachingSemiGraph(
+        Java11Shim.INSTANCE.copyOf(ids),
+        pluginToDirectDependencies,
+      )
     }
   }
-  return CachingSemiGraph(Java11Shim.INSTANCE.listOf<PluginId>(ids), pluginToDirectDependencies)
 }
 
 private fun collectDirectDependencies(rootDescriptor: IdeaPluginDescriptorImpl,

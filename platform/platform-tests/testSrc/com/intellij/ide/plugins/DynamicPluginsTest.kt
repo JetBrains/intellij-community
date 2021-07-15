@@ -660,7 +660,11 @@ private class MyModuleConfigurationEditorProvider : ModuleConfigurationEditorPro
 }
 
 private inline fun runAndCheckThatNoNewPlugins(block: () -> Unit) {
-  val beforeList = PluginManagerCore.getLoadedPlugins()
+  val expectedPluginIds = lexicographicallySortedPluginIds()
   block()
-  assertThat(PluginManagerCore.getLoadedPlugins()).isEqualTo(beforeList)
+  assertThat(lexicographicallySortedPluginIds()).isEqualTo(expectedPluginIds)
 }
+
+private fun lexicographicallySortedPluginIds() =
+  PluginManagerCore.getLoadedPlugins()
+    .toSortedSet(compareBy { it.pluginId })
