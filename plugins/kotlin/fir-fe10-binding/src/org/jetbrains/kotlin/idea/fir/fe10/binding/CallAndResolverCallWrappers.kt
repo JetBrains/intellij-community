@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
-@SymbolInternals
+@OptIn(SymbolInternals::class)
 private fun FirExpression?.toExpressionReceiverValue(context: FE10BindingContext): ReceiverValue? {
     if (this == null) return null
 
@@ -52,7 +52,7 @@ internal class FirSimpleWrapperCall(
 ) : Call {
     override fun getCallOperationNode(): ASTNode = ktCall.node
 
-    @SymbolInternals
+    @OptIn(SymbolInternals::class)
     override fun getExplicitReceiver(): Receiver? = firCall.withFir { it.explicitReceiver.toExpressionReceiverValue(context) }
 
     override fun getDispatchReceiver(): ReceiverValue? = null
@@ -78,7 +78,7 @@ internal class FirWrapperResolvedCall(val firSimpleWrapperCall: FirSimpleWrapper
     private val firCall get() = firSimpleWrapperCall.firCall
     private val context get() = firSimpleWrapperCall.context
 
-    @SymbolInternals
+    @OptIn(SymbolInternals::class)
     private val ktFunctionSymbol: KtFunctionLikeSymbol = firCall.withFir {
         when (val calleeReference = it.calleeReference) {
             is FirResolvedNamedReference -> context.ktAnalysisSessionFacade.buildSymbol(calleeReference.resolvedSymbol.fir) as KtFunctionLikeSymbol
@@ -100,7 +100,7 @@ internal class FirWrapperResolvedCall(val firSimpleWrapperCall: FirSimpleWrapper
         typeArguments
     }
 
-    @SymbolInternals
+    @OptIn(SymbolInternals::class)
     private val arguments: Map<ValueParameterDescriptor, ResolvedValueArgument> by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val firArguments = firCall.withFir { it.argumentMapping } ?: context.implementationPostponed()
 
@@ -142,21 +142,21 @@ internal class FirWrapperResolvedCall(val firSimpleWrapperCall: FirSimpleWrapper
 
     override fun getCall(): Call = firSimpleWrapperCall
 
-    @SymbolInternals
+    @OptIn(SymbolInternals::class)
     override fun getCandidateDescriptor(): CallableDescriptor {
         return ktFunctionSymbol.toDeclarationDescriptor(context)
     }
 
     override fun getResultingDescriptor(): CallableDescriptor = context.incorrectImplementation { candidateDescriptor }
 
-    @SymbolInternals
+    @OptIn(SymbolInternals::class)
     override fun getExtensionReceiver(): ReceiverValue? {
         if (firCall.getFir().extensionReceiver === FirNoReceiverExpression) return null
 
         return firCall.getFir().extensionReceiver.toExpressionReceiverValue(context)
     }
 
-    @SymbolInternals
+    @OptIn(SymbolInternals::class)
     override fun getDispatchReceiver(): ReceiverValue? {
         if (firCall.getFir().dispatchReceiver === FirNoReceiverExpression) return null
 
@@ -169,12 +169,12 @@ internal class FirWrapperResolvedCall(val firSimpleWrapperCall: FirSimpleWrapper
         return ExplicitReceiverKind.DISPATCH_RECEIVER
     }
 
-    @SymbolInternals
+    @OptIn(SymbolInternals::class)
     override fun getValueArguments(): Map<ValueParameterDescriptor, ResolvedValueArgument> = arguments
 
     override fun getValueArgumentsByIndex(): List<ResolvedValueArgument> = valueArguments.values.toList()
 
-    @SymbolInternals
+    @OptIn(SymbolInternals::class)
     override fun getArgumentMapping(valueArgument: ValueArgument): ArgumentMapping {
         val firArguments = firCall.withFir { it.argumentMapping } ?: context.implementationPostponed()
         val argumentExpression = valueArgument.getArgumentExpression() ?: context.implementationPostponed()
