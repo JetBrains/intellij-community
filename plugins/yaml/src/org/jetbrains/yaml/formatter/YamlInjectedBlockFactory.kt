@@ -3,10 +3,12 @@
 package org.jetbrains.yaml.formatter
 
 import com.intellij.formatting.*
+import com.intellij.injected.editor.DocumentWindow
 import com.intellij.lang.ASTNode
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.codeStyle.CodeStyleSettings
@@ -14,6 +16,7 @@ import com.intellij.psi.formatter.common.DefaultInjectedLanguageBlockBuilder
 import com.intellij.psi.templateLanguages.OuterLanguageElement
 import com.intellij.util.SmartList
 import com.intellij.util.castSafelyTo
+import com.intellij.util.text.TextRangeUtil
 import com.intellij.util.text.escLBr
 import org.jetbrains.yaml.YAMLFileType
 import org.jetbrains.yaml.YAMLLanguage
@@ -70,6 +73,12 @@ private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings, val 
   private fun injectedToHost(textRange: TextRange): TextRange =
     InjectedLanguageManager.getInstance(injectedFile.project).injectedToHost(injectedFile, textRange)
 
+  private fun hostToInjected(textRange: TextRange): TextRange? {
+    val documentWindow = PsiDocumentManager.getInstance(injectedFile.project).getCachedDocument(injectedFile) as? DocumentWindow
+                         ?: return null
+    return TextRange(documentWindow.hostToInjected(textRange.startOffset), documentWindow.hostToInjected(textRange.endOffset))
+  }
+
 
   override fun createInjectedBlock(node: ASTNode,
                                    originalBlock: Block,
@@ -106,13 +115,29 @@ private class YamlInjectedLanguageBlockBuilder(settings: CodeStyleSettings, val 
         for (block in original.subBlocks) {
           myRange.intersection(block.textRange)?.let { blockRange ->
             val blockRangeInHost = injectedToHost(blockRange)
+
+            fun createInnerWrapper(blockRangeInHost: TextRange, blockRange: TextRange, outerNodes: Collection<Block>) =
+              YamlInjectedLanguageBlockWrapper(block,
+                                               blockRangeInHost,
+                                               blockRange,
+                                               outerNodes,
+                                               replaceAbsoluteIndent(block),
+                                               block.castSafelyTo<BlockEx>()?.language ?: injectionLanguage)
+            
             result.addAll(outerBlocksQueue.popWhile { it.textRange.endOffset <= blockRangeInHost.startOffset })
-            result.add(YamlInjectedLanguageBlockWrapper(block,
-                                                        blockRangeInHost,
-                                                        blockRange,
-                                                        outerBlocksQueue.popWhile { blockRangeInHost.contains(it.textRange) },
-                                                        replaceAbsoluteIndent(block),
-                                                        block.castSafelyTo<BlockEx>()?.language ?: injectionLanguage))
+            if (block.subBlocks.isNotEmpty()) {
+              result.add(createInnerWrapper(
+                blockRangeInHost,
+                blockRange,
+                outerBlocksQueue.popWhile { blockRangeInHost.contains(it.textRange) }))
+            }
+            else {
+              val outer = outerBlocksQueue.popWhile { blockRangeInHost.contains(it.textRange) }
+              val remainingInjectedRanges = TextRangeUtil.excludeRanges(blockRangeInHost, outer.map { it.textRange })
+              val splitInjectedLeaves =
+                remainingInjectedRanges.map { part -> createInnerWrapper(part, hostToInjected(part) ?: blockRange, emptyList()) }
+              result.addAll((splitInjectedLeaves + outer).sortedBy { it.textRange.startOffset })
+            }
           }
         }
         result.addAll(outerBlocksQueue)
