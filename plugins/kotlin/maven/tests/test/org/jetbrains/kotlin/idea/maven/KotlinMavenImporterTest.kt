@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.CompilerModuleExtension
@@ -14,6 +15,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -2532,6 +2534,8 @@ class KotlinMavenImporterTest : KotlinMavenImportingTestCase() {
 
         try {
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
+            MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getImportingSettings().jdkForImporter =
+                ExternalSystemJdkUtil.USE_INTERNAL_JAVA;
 
             val jdkHomePath = mockJdk.homePath
             importProject(
