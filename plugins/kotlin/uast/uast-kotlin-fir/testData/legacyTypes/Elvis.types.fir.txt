@@ -13,10 +13,10 @@ UFile (package = ) [public final class ElvisKt {...]
         UMethod (name = baz) [public static final fun baz() : java.lang.String {...}]
             UBlockExpression [{...}] : PsiType:Void
                 UReturnExpression [return elvis {...}] : PsiType:Void
-                    UExpressionList (elvis) [elvis {...}]
+                    UExpressionList (elvis) [elvis {...}] : PsiType:String
                         UDeclarationsExpression [var var243c51a0: java.lang.String = elvis {...}]
                             ULocalVariable (name = var243c51a0) [var var243c51a0: java.lang.String = elvis {...}]
-                                UExpressionList (elvis) [elvis {...}]
+                                UExpressionList (elvis) [elvis {...}] : PsiType:String
                                     UDeclarationsExpression [var varc4aef569: java.lang.String = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
                                         ULocalVariable (name = varc4aef569) [var varc4aef569: java.lang.String = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
                                             [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
