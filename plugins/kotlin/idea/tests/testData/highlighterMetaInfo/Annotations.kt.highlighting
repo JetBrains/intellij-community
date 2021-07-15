@@ -1,16 +1,16 @@
-<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>@Target<!>(<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ENUM'")!>AnnotationTarget<!>.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ENUM_ENTRY'")!>CLASS<!>, <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ENUM'")!>AnnotationTarget<!>.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ENUM_ENTRY'")!>EXPRESSION<!>)
-<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>@Retention<!>(<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ENUM'")!>AnnotationRetention<!>.<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ENUM_ENTRY'")!>SOURCE<!>)
-<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>annotation<!> class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>Ann<!>
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Target<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM'")!>AnnotationTarget<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM_ENTRY'")!>CLASS<!>, <!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM'")!>AnnotationTarget<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM_ENTRY'")!>EXPRESSION<!>)
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Retention<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM'")!>AnnotationRetention<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM_ENTRY'")!>SOURCE<!>)
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>annotation<!> class <!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>Ann<!>
 
-<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> class <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>A<!>
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> class <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>A<!>
 
-fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>bar<!>(<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'")!>block<!>: () -> <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_CLASS'")!>Int<!>) = <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PARAMETER'"), HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION'")!>block<!>()
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>bar<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>block<!>: () -> <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>) = <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'"), HIGHLIGHTING("textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION'")!>block<!>()
 
-<!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>private<!>
-fun <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>() {
-    1 + <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> 2
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>private<!>
+fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>() {
+    1 + <!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> 2
 
-    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> 3 + 4
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> 3 + 4
 
-    <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>bar<!> <!HIGHLIGHTING("severity='INFORMATION'; textAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> { 1 }
+    <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>bar<!> <!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> { 1 }
 }
