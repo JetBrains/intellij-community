@@ -23,6 +23,20 @@ internal enum class WalOpCode(internal val code: Int) {
   APPEND(2)
 }
 
+internal class PersistentEnumeratorWal<Data> @Throws(IOException::class) @JvmOverloads constructor(dataDescriptor: KeyDescriptor<Data>,
+                                                                                                   useCompression: Boolean,
+                                                                                                   file: Path,
+                                                                                                   walIoExecutor: ExecutorService,
+                                                                                                   compact: Boolean = false) : Closeable {
+  private val underlying = PersistentMapWal(dataDescriptor, integerExternalizer, useCompression, file, walIoExecutor, compact)
+
+  fun enumerate(data: Data, id: Int) = underlying.put(data, id)
+
+  fun flush() = underlying.flush()
+
+  override fun close() = underlying.close()
+}
+
 internal class PersistentMapWal<K, V> @Throws(IOException::class) @JvmOverloads constructor(private val keyDescriptor: KeyDescriptor<K>,
                                                                                             private val valueExternalizer: DataExternalizer<V>,
                                                                                             private val useCompression: Boolean,
@@ -131,6 +145,9 @@ internal class PersistentMapWal<K, V> @Throws(IOException::class) @JvmOverloads 
   }
 }
 
+private val integerExternalizer: EnumeratorIntegerDescriptor
+  get() = EnumeratorIntegerDescriptor.INSTANCE
+
 sealed class WalEvent<K, V> {
   data class PutEvent<K, V>(override val key: K, val value: V): WalEvent<K, V>()
   data class RemoveEvent<K, V>(override val key: K): WalEvent<K, V>()
@@ -155,6 +172,45 @@ sealed class WalEvent<K, V> {
   }
 
   abstract val key: K
+}
+
+@Throws(IOException::class)
+fun <Data> restoreMemoryEnumeratorFromWal(walFile: Path,
+                                          dataDescriptor: KeyDescriptor<Data>): List<Data> {
+  return restoreFromWal(walFile, dataDescriptor, integerExternalizer, object : Accumulator<Data, Int, List<Data>> {
+    val result = arrayListOf<Data>()
+
+    override fun get(key: Data): Int = error("get not supported")
+
+    override fun remove(key: Data) = error("remove not supported")
+
+    override fun put(key: Data, value: Int) {
+      assert(result.size == value)
+      result.add(key)
+    }
+
+    override fun result(): List<Data> = result
+  }).toList()
+}
+
+@Throws(IOException::class)
+fun <Data> restorePersistentEnumeratorFromWal(walFile: Path,
+                                              outputMapFile: Path,
+                                              dataDescriptor: KeyDescriptor<Data>): PersistentEnumerator<Data> {
+  if (Files.exists(outputMapFile)) {
+    throw FileAlreadyExistsException(outputMapFile.toString())
+  }
+  return restoreFromWal(walFile, dataDescriptor, integerExternalizer, object : Accumulator<Data, Int, PersistentEnumerator<Data>> {
+    val result = PersistentEnumerator(outputMapFile, dataDescriptor, 1024)
+
+    override fun get(key: Data): Int = error("get not supported")
+
+    override fun remove(key: Data) = error("remove not supported")
+
+    override fun put(key: Data, value: Int) = assert(result.enumerate(key) == value)
+
+    override fun result(): PersistentEnumerator<Data> = result
+  })
 }
 
 @Throws(IOException::class)
