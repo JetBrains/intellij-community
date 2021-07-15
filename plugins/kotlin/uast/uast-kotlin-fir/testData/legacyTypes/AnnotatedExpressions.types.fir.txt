@@ -15,7 +15,7 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                 [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) [[!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)]
                 UDeclarationsExpression [var c: int = elvis {...}]
                     ULocalVariable (name = c) [var c: int = elvis {...}]
-                        UExpressionList (elvis) [elvis {...}]
+                        UExpressionList (elvis) [elvis {...}] : PsiType:int
                             UDeclarationsExpression [var varae507364: int = [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)]
                                 ULocalVariable (name = varae507364) [var varae507364: int = [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)]
                                     [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) [[!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)]

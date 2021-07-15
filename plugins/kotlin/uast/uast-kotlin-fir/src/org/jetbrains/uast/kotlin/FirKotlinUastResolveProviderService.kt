@@ -127,8 +127,10 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun getCommonSupertype(left: KtExpression, right: KtExpression, uExpression: UExpression): PsiType? {
-        // TODO("Not yet implemented")
-        return null
+        val ktElement = uExpression.sourcePsi as? KtExpression ?: return null
+        analyseForUast(ktElement) {
+            return commonSuperType(listOf(left, right), ktElement, TypeMappingMode.DEFAULT_UAST)
+        }
     }
 
     override fun getExpressionType(uExpression: UExpression): PsiType? {
