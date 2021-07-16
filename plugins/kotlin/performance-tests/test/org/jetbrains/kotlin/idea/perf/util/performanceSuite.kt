@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -25,7 +26,6 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.usages.Usage
 import com.intellij.util.ArrayUtilRt
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.toArray
 import com.intellij.util.indexing.UnindexedFilesUpdater
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -254,14 +254,21 @@ class PerformanceSuite {
     abstract class AbstractProjectScope(val app: ApplicationScope) : AutoCloseable {
         abstract val project: Project
         val openFiles = mutableListOf<VirtualFile>()
+        private var compilerTester: CompilerTester? = null
 
-        fun profile(profile: ProjectProfile) {
-            when (profile) {
-                EmptyProfile -> project.disableAllInspections()
-                DefaultProfile -> project.initDefaultProfile()
-                FullProfile -> project.enableAllInspections()
-                is CustomProfile -> project.enableInspections(*profile.inspectionNames.toArray(emptyArray()))
-            }
+        fun profile(profile: ProjectProfile): Unit = when (profile) {
+            EmptyProfile -> project.disableAllInspections()
+            DefaultProfile -> project.initDefaultProfile()
+            FullProfile -> project.enableAllInspections()
+            is CustomProfile -> project.enableInspections(*profile.inspectionNames.toArray(emptyArray()))
+        }
+
+        fun withCompiler() {
+            compilerTester = CompilerTester(project, ModuleManager.getInstance(project).modules.toList(), null)
+        }
+
+        fun rebuildProject() {
+            compilerTester?.rebuild() ?: error("compiler isn't ready for compilation")
         }
 
         fun highlight(fixture: Fixture) = highlight(fixture.psiFile)
@@ -385,14 +392,10 @@ class PerformanceSuite {
         fun <T> measure(vararg name: String, fixture: Fixture, f: MeasurementScope<T>.() -> Unit): List<T?> =
             measure("${name.joinToString("-")} ${fixture.fileName}", f = f)
 
-        override fun close() {
-            RunAll(
-                ThrowableRunnable {
-                    project.let { prj ->
-                        app.application.closeProject(prj)
-                    }
-                }).run()
-        }
+        override fun close(): Unit = RunAll(
+            { compilerTester?.tearDown() },
+            { project.let { prj -> app.application.closeProject(prj) } }
+        ).run()
     }
 
     class ProjectWithDescriptorScope(app: ApplicationScope) : AbstractProjectScope(app) {
