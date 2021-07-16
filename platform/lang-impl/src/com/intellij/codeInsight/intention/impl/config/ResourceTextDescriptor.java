@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.DynamicBundle;
@@ -42,27 +42,20 @@ final class ResourceTextDescriptor implements TextDescriptor {
   @NotNull
   @Override
   public String getText() throws IOException {
-    if (!myResourcePath.endsWith(BeforeAfterActionMetaData.DESCRIPTION_FILE_NAME)) return loadDefaultText(); //NON-NLS
-
-    InputStream languageStream = getLanguageStream();
-    if (languageStream == null) return loadDefaultText(); //NON-NLS
-
-    try {
-      return ResourceUtil.loadText(languageStream); //NON-NLS
+    InputStream languageStream = !myResourcePath.endsWith(BeforeAfterActionMetaData.DESCRIPTION_FILE_NAME) ? null : getLanguageStream();
+    if (languageStream != null) {
+      try {
+        return ResourceUtil.loadText(languageStream); //NON-NLS
+      }
+      catch (IOException e) {
+        LOG.error("Cannot find localized resource: " + myResourcePath, e);
+      }
     }
-    catch (IOException e) {
-      LOG.error("Cannot find localized resource: " + myResourcePath, e);
-      return loadDefaultText(); //NON-NLS
-    }
-  }
-
-  @NotNull
-  private String loadDefaultText() throws IOException {
     InputStream stream = myLoader.getResourceAsStream(myResourcePath);
     if (stream == null) {
-      throw new IOException("Resource not found: " + myResourcePath);
+      throw new IOException("Resource not found: " + myResourcePath + "; loader: " + myLoader);
     }
-    return ResourceUtil.loadText(stream);
+    return ResourceUtil.loadText(stream); //NON-NLS
   }
 
   @Nullable
