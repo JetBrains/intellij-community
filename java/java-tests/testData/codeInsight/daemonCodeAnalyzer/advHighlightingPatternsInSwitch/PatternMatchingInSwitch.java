@@ -280,6 +280,29 @@ class Main {
       case null, <error descr="Illegal fall-through to a pattern">Integer i && i != null</error> -> "s";
       default -> "null";
     };
+    switch (o) {
+      case null: case <error descr="Illegal fall-through to a pattern">Integer i && i != null</error>:
+        break;
+      case default:
+        break;
+    }
+    str = switch (o) {
+      case null: case <error descr="Illegal fall-through to a pattern">Object i && i != null</error>: yield "sfds";
+    };
+    str = switch (o) {
+      case null, <error descr="Illegal fall-through to a pattern">Object i && i != null</error> -> "sfds";
+      case default -> "fsd";
+    };
+    switch (o) {
+      case null: case Integer i:
+        break;
+      case default:
+        break;
+    }
+    str = switch (o) {
+      case null: case Integer i: yield "s";
+      case default: yield "d";
+    };
 
     // A switch label may not have more than one pattern case label element.
     switch (o) {
@@ -290,7 +313,14 @@ class Main {
       case Integer i, <error descr="Illegal fall-through to a pattern">Long l && l != null</error> -> "s";
       default -> "null";
     };
-    // todo A switch label may not have both a pattern case label element and a default case label element.
+    switch (o) {
+      case Integer i: case <error descr="Illegal fall-through to a pattern">Long l</error>: System.out.println("s");
+      default: System.out.println("null");
+    }
+    str = switch (o) {
+      case Integer i: case <error descr="Illegal fall-through to a pattern">Long l</error>: yield "s";
+      default: yield "res";
+    };
     // A switch label may not have both a pattern case label element and a default case label element.
     switch (o) {
       case Integer i, <error descr="Illegal fall-through from a pattern">default</error>: System.out.println("s");
@@ -303,6 +333,20 @@ class Main {
     }
     str = switch (o) {
       case default, <error descr="Illegal fall-through to a pattern">Integer i</error> -> "s";
+    };
+    switch (o) {
+      case Integer i: case <error descr="Illegal fall-through from a pattern">default</error>: System.out.println("s");
+    }
+    str = switch (o) {
+      case Integer i: case <error descr="Illegal fall-through from a pattern">default</error>: yield "s";
+    };
+    switch (ii) {
+      case Integer i && i > 1:
+      <error descr="Illegal fall-through from a pattern">default</error>: System.out.println("null");
+    }
+    str = switch (ii) {
+      case Integer i && i > 1:
+      <error descr="Illegal fall-through from a pattern">default</error>: yield "null";
     };
 
     // If a switch label has a constant case label element then if the switch label also has other case element labels
@@ -327,6 +371,12 @@ class Main {
       case Integer i1 && i1 > 5, <error descr="Illegal fall-through from a pattern">1</error> -> "s1";
       default -> "null";
     };
+    switch (ii) {
+      case 1, 2: case null, <error descr="Illegal fall-through to a pattern">Integer i1 && i1 > 5</error>:
+        System.out.println("s1");
+        break;
+      default: System.out.println("null");
+    }
     // more complex case
     switch (ii) {
       case 1, null, <error descr="Illegal fall-through to a pattern">Integer i1 && i1 > 5</error>, <error descr="Illegal fall-through from a pattern">default</error>:
@@ -335,6 +385,12 @@ class Main {
     }
     str = switch (ii) {
       case 1, null, <error descr="Illegal fall-through to a pattern">Integer i1 && i1 > 5</error>, <error descr="Illegal fall-through from a pattern">default</error> -> "s1";
+    };
+    str = switch (ii) {
+      case 1, 2, <error descr="Illegal fall-through to a pattern">Integer i1 && i1 > 5</error>: case <error descr="Illegal fall-through from a pattern">null</error>:
+        System.out.println("s1");
+        yield "s1";
+      default: yield "def";
     };
 
     /**

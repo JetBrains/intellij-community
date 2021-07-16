@@ -370,16 +370,20 @@ public class SwitchBlockHighlightingModel {
       PsiCodeBlock body = myBlock.getBody();
       if (body == null) return Collections.emptyList();
       var elementsToCheckDuplicates = new MultiMap<Object, PsiElement>();
-      var elementsToCheckFallThroughLegality = new MultiMap<PsiSwitchLabelStatementBase, PsiCaseLabelElement>(new LinkedHashMap<>());
+      List<List<PsiSwitchLabelStatementBase>> elementsToCheckFallThroughLegality = new SmartList<>();
       List<PsiCaseLabelElement> elementsToCheckDominance = new ArrayList<>();
       List<PsiCaseLabelElement> elementsToCheckCompleteness = new ArrayList<>();
-      List<HighlightInfo> results = new ArrayList<>();
+      List<HighlightInfo> results = new SmartList<>();
+      int switchBlockGroupCounter = 0;
       for (PsiStatement st : body.getStatements()) {
         if (!(st instanceof PsiSwitchLabelStatementBase)) continue;
         PsiSwitchLabelStatementBase labelStatement = (PsiSwitchLabelStatementBase)st;
+        fillElementsToCheckFallThroughLegality(elementsToCheckFallThroughLegality, labelStatement, switchBlockGroupCounter);
+        if (!(PsiTreeUtil.skipWhitespacesAndCommentsForward(labelStatement) instanceof PsiSwitchLabelStatement)) {
+          switchBlockGroupCounter++;
+        }
         if (labelStatement.isDefaultCase()) {
           elementsToCheckDuplicates.putValue(myDefaultValue, ObjectUtils.notNull(labelStatement.getFirstChild(), labelStatement));
-          elementsToCheckFallThroughLegality.put(labelStatement, Collections.emptyList());
           continue;
         }
         PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
@@ -391,7 +395,6 @@ public class SwitchBlockHighlightingModel {
             continue;
           }
           fillElementsToCheckDuplicates(elementsToCheckDuplicates, labelElement);
-          fillElementsToCheckFallThroughLegality(elementsToCheckFallThroughLegality, labelStatement, labelElement);
           fillElementsToCheckDominance(elementsToCheckDominance, labelElement);
           elementsToCheckCompleteness.add(labelElement);
         }
@@ -475,17 +478,18 @@ public class SwitchBlockHighlightingModel {
       }
     }
 
-    private static void fillElementsToCheckFallThroughLegality(@NotNull MultiMap<PsiSwitchLabelStatementBase, PsiCaseLabelElement> elements,
-                                                               @NotNull PsiSwitchLabelStatementBase switchLabel,
-                                                               @NotNull PsiCaseLabelElement labelElement) {
-      if (labelElement instanceof PsiPattern || labelElement instanceof PsiDefaultCaseLabelElement) {
-        elements.putValue(switchLabel, labelElement);
+    private static void fillElementsToCheckFallThroughLegality(@NotNull List<List<PsiSwitchLabelStatementBase>> elements,
+                                                               @NotNull PsiSwitchLabelStatementBase labelStatement,
+                                                               int switchBlockGroupCounter) {
+      List<PsiSwitchLabelStatementBase> switchLabels;
+      if (switchBlockGroupCounter < elements.size()) {
+        switchLabels = elements.get(switchBlockGroupCounter);
       }
-      else if (labelElement instanceof PsiExpression) {
-        if (isNullType(labelElement) || isConstantLabelElement(labelElement)) {
-          elements.putValue(switchLabel, labelElement);
-        }
+      else {
+        switchLabels = new SmartList<>();
+        elements.add(switchLabels);
       }
+      switchLabels.add(labelStatement);
     }
 
     private static void fillElementsToCheckDominance(@NotNull List<PsiCaseLabelElement> elements,
@@ -504,75 +508,86 @@ public class SwitchBlockHighlightingModel {
      * 14.11.1 Switch Blocks
      * <ul>
      * To ensure safe initialization of pattern variables fall through rules in common provide the restrictions
-     *  of using different type of case label elements:
+     *  of using different type of case label switchLabel:
      * <li>patterns with patterns</li>
      * <li>patterns with constants</li>
      * <li>patterns with default</li>
      * </ul>
      */
-    private static void checkFallThroughFromToPattern(@NotNull MultiMap<PsiSwitchLabelStatementBase, PsiCaseLabelElement> elements,
+    private static void checkFallThroughFromToPattern(@NotNull List<List<PsiSwitchLabelStatementBase>> switchBlockGroup,
                                                       @NotNull List<HighlightInfo> results) {
-      if (elements.isEmpty()) return;
-      Set<PsiCaseLabelElement> alreadyFallThroughElements = new HashSet<>();
-      for (var entry : elements.entrySet()) {
-        Collection<PsiCaseLabelElement> labelElements = entry.getValue();
-        if (labelElements.size() <= 1) continue;
+      if (switchBlockGroup.isEmpty()) return;
+      Set<PsiElement> alreadyFallThroughElements = new HashSet<>();
+      for (var switchLabel : switchBlockGroup) {
         boolean existPattern = false, existsTypeTestPattern = false, existsConst = false, existsNull = false, existsDefault = false;
-        for (PsiCaseLabelElement currentElement : labelElements) {
-          if (currentElement instanceof PsiPattern) {
-            if (currentElement instanceof PsiTypeTestPattern) {
-              existsTypeTestPattern = true;
-            }
-            if (existPattern || existsConst || (existsNull && !existsTypeTestPattern) || existsDefault) {
-              alreadyFallThroughElements.add(currentElement);
-              results.add(createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.to")));
-            }
-            existPattern = true;
-          }
-          else if (isNullType(currentElement)) {
-            if (existPattern && !existsTypeTestPattern) {
-              alreadyFallThroughElements.add(currentElement);
-              results.add(createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.from")));
-            }
-            existsNull = true;
-          }
-          else if (isConstantLabelElement(currentElement)) {
+        for (PsiSwitchLabelStatementBase switchLabelElement : switchLabel) {
+          if (switchLabelElement.isDefaultCase()) {
             if (existPattern) {
-              alreadyFallThroughElements.add(currentElement);
-              results.add(createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.from")));
-            }
-            existsConst = true;
-          }
-          else if (currentElement instanceof PsiDefaultCaseLabelElement) {
-            if (existPattern) {
-              alreadyFallThroughElements.add(currentElement);
-              results.add(createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.from")));
+              PsiElement defaultKeyword = switchLabelElement.getFirstChild();
+              alreadyFallThroughElements.add(defaultKeyword);
+              results.add(createError(defaultKeyword, JavaErrorBundle.message("switch.illegal.fall.through.from")));
             }
             existsDefault = true;
+            continue;
+          }
+          PsiCaseLabelElementList labelElementList = switchLabelElement.getCaseLabelElementList();
+          if (labelElementList == null) continue;
+          for (PsiCaseLabelElement currentElement : labelElementList.getElements()) {
+            if (currentElement instanceof PsiPattern) {
+              if (currentElement instanceof PsiTypeTestPattern) {
+                existsTypeTestPattern = true;
+              }
+              if (existPattern || existsConst || (existsNull && !existsTypeTestPattern) || existsDefault) {
+                alreadyFallThroughElements.add(currentElement);
+                results.add(createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.to")));
+              }
+              existPattern = true;
+            }
+            else if (isNullType(currentElement)) {
+              if (existPattern && !existsTypeTestPattern) {
+                alreadyFallThroughElements.add(currentElement);
+                results.add(createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.from")));
+              }
+              existsNull = true;
+            }
+            else if (isConstantLabelElement(currentElement)) {
+              if (existPattern) {
+                alreadyFallThroughElements.add(currentElement);
+                results.add(createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.from")));
+              }
+              existsConst = true;
+            }
+            else if (currentElement instanceof PsiDefaultCaseLabelElement) {
+              if (existPattern) {
+                alreadyFallThroughElements.add(currentElement);
+                results.add(createError(currentElement, JavaErrorBundle.message("switch.illegal.fall.through.from")));
+              }
+              existsDefault = true;
+            }
           }
         }
       }
-      checkFallThroughInSwitchLabels(elements, results, alreadyFallThroughElements);
+      checkFallThroughInSwitchLabels(switchBlockGroup, results, alreadyFallThroughElements);
     }
 
-    private static void checkFallThroughInSwitchLabels(@NotNull MultiMap<PsiSwitchLabelStatementBase, PsiCaseLabelElement> elements,
+    private static void checkFallThroughInSwitchLabels(@NotNull List<List<PsiSwitchLabelStatementBase>> switchBlockGroup,
                                                        @NotNull List<HighlightInfo> results,
-                                                       @NotNull Set<PsiCaseLabelElement> alreadyFallThroughElements) {
-      var elementsIterator = elements.entrySet().iterator();
-      // skip first switch label
-      elementsIterator.next();
-      while (elementsIterator.hasNext()) {
-        var entry = elementsIterator.next();
-        PsiSwitchLabelStatementBase switchLabel = entry.getKey();
-        // we need only old-style switch statements
-        if (!(switchLabel instanceof PsiSwitchLabelStatement)) return;
-        var patternElements = ContainerUtil.filter(entry.getValue(), labelElement -> labelElement instanceof PsiPattern);
-        if (patternElements.isEmpty()) continue;
-        PsiStatement lastStatement = PsiTreeUtil.getPrevSiblingOfType(switchLabel, PsiStatement.class);
-        if (lastStatement == null) continue;
-        if (ControlFlowUtils.statementMayCompleteNormally(lastStatement)) {
-          patternElements.stream().filter(patternElement -> !alreadyFallThroughElements.contains(patternElement))
-            .forEach(patternElement -> results.add(createError(patternElement, JavaErrorBundle.message("switch.illegal.fall.through.to"))));
+                                                       @NotNull Set<PsiElement> alreadyFallThroughElements) {
+      for (int i = 1; i < switchBlockGroup.size(); i++) {
+        List<PsiSwitchLabelStatementBase> switchLabels = switchBlockGroup.get(i);
+        for (PsiSwitchLabelStatementBase switchLabel : switchLabels) {
+          if (!(switchLabel instanceof PsiSwitchLabelStatement)) return;
+          PsiCaseLabelElementList labelElementList = switchLabel.getCaseLabelElementList();
+          if (labelElementList == null) continue;
+          var patternElements = ContainerUtil.filter(labelElementList.getElements(), labelElement -> labelElement instanceof PsiPattern);
+          if (patternElements.isEmpty()) continue;
+          PsiSwitchLabelStatementBase firstSwitchLabelInGroup = switchLabels.get(0);
+          PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(firstSwitchLabelInGroup, PsiStatement.class);
+          if (prevStatement == null) continue;
+          if (ControlFlowUtils.statementMayCompleteNormally(prevStatement)) {
+            patternElements.stream().filter(patternElement -> !alreadyFallThroughElements.contains(patternElement))
+              .forEach(patternElement -> results.add(createError(patternElement, JavaErrorBundle.message("switch.illegal.fall.through.to"))));
+          }
         }
       }
     }
