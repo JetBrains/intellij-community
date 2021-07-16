@@ -6,8 +6,7 @@ import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.HotSwapUI
 import com.intellij.debugger.ui.HotSwapUIImpl
-import com.intellij.execution.runToolbar.RTBarAction
-import com.intellij.execution.runToolbar.environment
+import com.intellij.execution.runToolbar.*
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.util.registry.Registry
@@ -47,6 +46,11 @@ class RunToolbarHotSwapAction : AnAction(), RTBarAction {
     }
 
     val session = getSession(e)
-    e.presentation.isEnabledAndVisible = session != null && HotSwapUIImpl.canHotSwap(session) && Registry.`is`("ide.new.navbar.hotswap", false)
+    e.presentation.isEnabledAndVisible =
+      (if(e.isItRunToolbarMainSlot()) RunToolbarSlotManager.getInstance(project).getState().isSingleProcess() || e.isOpened() else false)
+      && session != null
+      && HotSwapUIImpl.canHotSwap(session)
+      && Registry.`is`("ide.new.navbar.hotswap", false)
+
   }
 }
