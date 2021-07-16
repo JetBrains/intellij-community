@@ -102,6 +102,9 @@ public class MavenServerCMDState extends CommandLineState {
           xmsProperty = param;
           continue;
         }
+        if (param.startsWith("-javaagent")) {
+          continue;
+        }
         params.getVMParametersList().add(param);
       }
     }
