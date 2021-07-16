@@ -254,7 +254,7 @@ class ProjectBuilder {
             srcDir.resolve("$name.kt").toFile().writeText(source.toString())
         }
         //
-        return targetDirectory.toAbsolutePath().toFile().absolutePath
+        return targetDirectory.toRealPath().toString()
     }
 
     fun openProjectOperation(): OpenProjectOperation {
