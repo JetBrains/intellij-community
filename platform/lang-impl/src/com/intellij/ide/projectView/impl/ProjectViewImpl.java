@@ -483,8 +483,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final Map<String, AbstractProjectViewPane> myId2Pane = new LinkedHashMap<>();
   private final Collection<AbstractProjectViewPane> myUninitializedPanes = new HashSet<>();
 
-  private static final DataKey<ProjectViewImpl> DATA_KEY = DataKey.create("com.intellij.ide.projectView.impl.ProjectViewImpl");
-
   private DefaultActionGroup myActionGroup;
   private @Nullable String mySavedPaneId = null;
   private @Nullable String mySavedPaneSubId;
@@ -1325,9 +1323,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
         return modules.size() == 1 ? modules.iterator().next() : null;
       }
-      if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {
-        return null;
-      }
       if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
         return myCopyPasteDelegator.getCutProvider();
       }
@@ -1363,9 +1358,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
       if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return HelpID.PROJECT_VIEWS;
-      }
-      if (DATA_KEY.is(dataId)) {
-        return ProjectViewImpl.this;
       }
       if (PlatformDataKeys.PROJECT_CONTEXT.is(dataId)) {
         Object selected = getSelectedNodeElement();
