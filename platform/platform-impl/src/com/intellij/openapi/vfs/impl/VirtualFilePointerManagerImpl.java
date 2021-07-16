@@ -51,6 +51,7 @@ import java.util.concurrent.ConcurrentMap;
 public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements Disposable, BulkFileListener {
   private static final Logger LOG = Logger.getInstance(VirtualFilePointerManagerImpl.class);
   private static final boolean IS_UNDER_UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
+  private static final boolean IS_INTERNAL = ApplicationManager.getApplication().isInternal();
   private static final Key<Boolean> DISABLE_VFS_CONSISTENCY_CHECK_IN_TEST = Key.create("DISABLE_VFS_CONSISTENCY_CHECK_IN_TEST");
 
   static boolean shouldCheckConsistency() {
@@ -187,6 +188,9 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
         path = url.substring(protocolEnd + URLUtil.SCHEME_SEPARATOR.length());
       }
       if (fileSystem == null) {
+        if (IS_UNDER_UNIT_TEST || IS_INTERNAL) {
+          throw new IllegalArgumentException("Unknown filesystem: '" + protocol + "' in url: '" + url+"'");
+        }
         // will always be null
         return new LightFilePointer(url);
       }
@@ -341,13 +345,20 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
                                                           @Nullable VirtualFilePointerListener listener,
                                                           @NotNull NewVirtualFileSystem fs) {
     VirtualFileSystem fsFromFile = file == null ? VirtualFileManager.getInstance().getFileSystem(VirtualFileManager.extractProtocol(url)) : file.getFileSystem();
-    assert fs == fsFromFile : "fs=" + fs + "; file.fs=" + fsFromFile+"; url="+url+"; file="+file;
+    assert fs == fsFromFile : "fs=" + fs + "; file.fs=" + fsFromFile+"; url='"+url+"'; file="+file;
 
     FilePartNodeRoot root = getRoot(fs);
     NodeToUpdate toUpdate = file == null ?
         root.findOrCreateByPath(fs instanceof ArchiveFileSystem && !path.contains(JarFileSystem.JAR_SEPARATOR) ? path + JarFileSystem.JAR_SEPARATOR : path, fs)
         : root.findOrCreateByFile(file);
     FilePartNode node = toUpdate.node;
+    if (fs != node.myFS && url != null) {
+      if (IS_UNDER_UNIT_TEST || IS_INTERNAL) {
+        throw new IllegalArgumentException("Invalid url: '" + url + "'. "+
+                                           "Its protocol '"+VirtualFileManager.extractProtocol(url)+"' is from "+fsFromFile+
+                                           " but the path part points to "+node.myFS);
+      }
+    }
     assert fs == node.myFS : "fs=" + fs + "; node.myFS=" + node.myFS+"; url="+url+"; file="+file;
 
     VirtualFilePointerImpl pointer = node.getPointer(listener);
