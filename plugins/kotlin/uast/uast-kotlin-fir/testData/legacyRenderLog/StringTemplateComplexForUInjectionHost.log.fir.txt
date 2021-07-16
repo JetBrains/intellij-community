@@ -46,7 +46,7 @@ UFile (package = )
         UMethod (name = getEmpty)
         UMethod (name = simpleForTemplate)
             UParameter (name = i)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                 ULiteralExpression (value = 0)
             UBlockExpression
                 UReturnExpression

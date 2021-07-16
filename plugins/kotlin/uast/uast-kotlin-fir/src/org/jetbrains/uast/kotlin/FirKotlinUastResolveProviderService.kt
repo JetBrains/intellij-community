@@ -158,10 +158,16 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun nullability(psiElement: PsiElement): TypeNullability? {
         if (psiElement is KtTypeReference) {
-            // TODO: KtTypeReference to KtType, and then nullability
+            analyseForUast(psiElement) {
+                psiElement.getKtType()?.nullability()?.let { return it }
+            }
         }
         if (psiElement is KtCallableDeclaration) {
-            // TODO typeReference to KtType, and then nullability
+            psiElement.typeReference?.let { typeReference ->
+                analyseForUast(typeReference) {
+                    typeReference.getKtType()?.nullability()?.let { return it }
+                }
+            }
         }
         if (psiElement is KtProperty) {
             psiElement.initializer?.let { propertyInitializer ->
@@ -177,7 +183,11 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             }
         }
         psiElement.getParentOfType<KtProperty>(false)?.let { property ->
-            // TODO: try typeReference first
+            property.typeReference?.let { typeReference ->
+                analyseForUast(typeReference) {
+                    typeReference.getKtType()?.nullability()
+                }
+            } ?:
             property.initializer?.let { propertyInitializer ->
                 analyseForUast(propertyInitializer) {
                     propertyInitializer.getKtType().nullability()

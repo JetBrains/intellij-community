@@ -31,7 +31,7 @@ UFile (package = )
                         USimpleNameReferenceExpression (identifier = mutableProp)
         UMethod (name = ext)
             UParameter (name = $this$ext)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = x)
@@ -52,10 +52,10 @@ UFile (package = )
             UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             ULiteralExpression (value = 0)
         UField (name = mutableProp)
-            UAnnotation (fqName = null)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
         UMethod (name = A)
             UParameter (name = init)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UBlockExpression
                     UBinaryExpression (operator = =)
@@ -66,7 +66,7 @@ UFile (package = )
             UParameter (name = value)
         UMethod (name = add)
             UParameter (name = x)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = result)

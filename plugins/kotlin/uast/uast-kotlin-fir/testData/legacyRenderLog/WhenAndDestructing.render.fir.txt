@@ -1,5 +1,5 @@
 public final class WhenAndDestructingKt {
-    public static final fun getElementsAdditionalResolve(@null string: java.lang.String) : java.lang.String {
+    public static final fun getElementsAdditionalResolve(@org.jetbrains.annotations.NotNull string: java.lang.String) : java.lang.String {
         var arr: java.util.List<? extends java.lang.String> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
         switch (string)  {
             "aaaa" -> {

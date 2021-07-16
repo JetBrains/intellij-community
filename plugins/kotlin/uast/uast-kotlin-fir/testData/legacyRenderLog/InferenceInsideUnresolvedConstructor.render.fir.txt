@@ -2,7 +2,7 @@ public final class InferenceInsideUnresolvedConstructorKt {
     public static final fun getBar() : java.lang.Object {
         return [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
-    public static final fun id(@null x: T) : T {
+    public static final fun id(@org.jetbrains.annotations.NotNull x: T) : T {
         return x
     }
 }

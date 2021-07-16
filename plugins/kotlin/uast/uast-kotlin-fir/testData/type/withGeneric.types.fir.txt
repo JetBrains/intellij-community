@@ -21,9 +21,9 @@ UFile (package = ) [public final class WithGenericKt {...]
                     UBinaryExpressionWithType [null as T] : PsiType:T
                         ULiteralExpression (value = null) [null] : PsiType:Void
                         UTypeReferenceExpression (name = T) [T]
-        UMethod (name = castToString) [public static final fun castToString(@null t: T) : void {...}]
-            UParameter (name = t) [@null var t: T]
-                UAnnotation (fqName = null) [@null]
+        UMethod (name = castToString) [public static final fun castToString(@org.jetbrains.annotations.NotNull t: T) : void {...}]
+            UParameter (name = t) [@org.jetbrains.annotations.NotNull var t: T]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:String
                 UBinaryExpressionWithType [t as java.lang.String] : PsiType:String
                     USimpleNameReferenceExpression (identifier = t) [t] : PsiType:T
@@ -48,9 +48,9 @@ UFile (package = ) [public final class WithGenericKt {...]
                 UTryExpression [try {...] : PsiType:Object
                     UBlockExpression [{...}] : PsiType:int
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    UCatchClause (e) [catch (@null var e: java.lang.NullPointerException) {...}]
-                        UParameter (name = e) [@null var e: java.lang.NullPointerException]
-                            UAnnotation (fqName = null) [@null]
+                    UCatchClause (e) [catch (@org.jetbrains.annotations.NotNull var e: java.lang.NullPointerException) {...}]
+                        UParameter (name = e) [@org.jetbrains.annotations.NotNull var e: java.lang.NullPointerException]
+                            UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                         UBlockExpression [{...}] : PsiType:Unit
                             UBinaryExpression (operator = =) [result3 = "OK"] : PsiType:void
                                 USimpleNameReferenceExpression (identifier = result3) [result3] : PsiType:String
@@ -64,9 +64,9 @@ UFile (package = ) [public final class WithGenericKt {...]
                 UTryExpression [try {...] : PsiType:Unit
                     UBlockExpression [{...}] : PsiType:Unit
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    UCatchClause (e) [catch (@null var e: java.lang.Exception) {...}]
-                        UParameter (name = e) [@null var e: java.lang.Exception]
-                            UAnnotation (fqName = null) [@null]
+                    UCatchClause (e) [catch (@org.jetbrains.annotations.NotNull var e: java.lang.Exception) {...}]
+                        UParameter (name = e) [@org.jetbrains.annotations.NotNull var e: java.lang.Exception]
+                            UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                         UBlockExpression [{...}] : PsiType:Void
                             UReturnExpression [return "OK"] : PsiType:Void
                                 ULiteralExpression (value = "OK") ["OK"] : PsiType:String

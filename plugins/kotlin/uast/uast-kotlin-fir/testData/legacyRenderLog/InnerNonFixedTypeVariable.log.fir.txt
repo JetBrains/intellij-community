@@ -2,7 +2,7 @@ UFile (package = )
     UClass (name = InnerNonFixedTypeVariableKt)
         UMethod (name = test)
             UParameter (name = list)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UQualifiedReferenceExpression
                     UQualifiedReferenceExpression

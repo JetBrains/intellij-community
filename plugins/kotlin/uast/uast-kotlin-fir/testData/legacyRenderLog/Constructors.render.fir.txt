@@ -1,28 +1,28 @@
 public final class A {
-    @null private final var str: java.lang.String
-    public fun A(@null str: java.lang.String) = UastEmptyExpression
-    public fun A(@null i: int) {
+    @org.jetbrains.annotations.NotNull private final var str: java.lang.String
+    public fun A(@org.jetbrains.annotations.NotNull str: java.lang.String) = UastEmptyExpression
+    public fun A(@org.jetbrains.annotations.NotNull i: int) {
         UastEmptyExpression
     }
     public final fun getStr() : java.lang.String = UastEmptyExpression
 }
 
 public final class AWithInit {
-    @null private final var str: java.lang.String
-    public fun AWithInit(@null str: java.lang.String) {
+    @org.jetbrains.annotations.NotNull private final var str: java.lang.String
+    public fun AWithInit(@org.jetbrains.annotations.NotNull str: java.lang.String) {
         {
             [!] UnknownKotlinExpression (CALL_EXPRESSION)
         }
     }
-    public fun AWithInit(@null i: int) {
+    public fun AWithInit(@org.jetbrains.annotations.NotNull i: int) {
         UastEmptyExpression
     }
     public final fun getStr() : java.lang.String = UastEmptyExpression
 }
 
 public final class AWith2Init {
-    @null private final var str: java.lang.String
-    public fun AWith2Init(@null str: java.lang.String) {
+    @org.jetbrains.annotations.NotNull private final var str: java.lang.String
+    public fun AWith2Init(@org.jetbrains.annotations.NotNull str: java.lang.String) {
         {
             [!] UnknownKotlinExpression (CALL_EXPRESSION)
         }
@@ -30,7 +30,7 @@ public final class AWith2Init {
             [!] UnknownKotlinExpression (CALL_EXPRESSION)
         }
     }
-    public fun AWith2Init(@null i: int) {
+    public fun AWith2Init(@org.jetbrains.annotations.NotNull i: int) {
         UastEmptyExpression
     }
     public final fun getStr() : java.lang.String = UastEmptyExpression
@@ -41,12 +41,12 @@ public final class AOnlyInit {
 }
 
 public final class AWithSecondary {
-    @null private var a: java.lang.String
-    public fun AWithSecondary(@null i: int) {
+    @org.jetbrains.annotations.NotNull private var a: java.lang.String
+    public fun AWithSecondary(@org.jetbrains.annotations.NotNull i: int) {
         UastEmptyExpression
         a = i.[!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
-    public fun AWithSecondary(@null s: java.lang.String) {
+    public fun AWithSecondary(@org.jetbrains.annotations.NotNull s: java.lang.String) {
         UastEmptyExpression
         a = s
     }
@@ -55,15 +55,15 @@ public final class AWithSecondary {
 }
 
 public final class AWithSecondaryInit {
-    @null private var a: java.lang.String
-    public fun AWithSecondaryInit(@null i: int) {
+    @org.jetbrains.annotations.NotNull private var a: java.lang.String
+    public fun AWithSecondaryInit(@org.jetbrains.annotations.NotNull i: int) {
         UastEmptyExpression
         {
             [!] UnknownKotlinExpression (CALL_EXPRESSION)
         }
         a = i.[!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
-    public fun AWithSecondaryInit(@null s: java.lang.String) {
+    public fun AWithSecondaryInit(@org.jetbrains.annotations.NotNull s: java.lang.String) {
         UastEmptyExpression
         a = s
         var local: java.lang.String = s
@@ -74,8 +74,8 @@ public final class AWithSecondaryInit {
 }
 
 public final class AWithFieldInit {
-    @null private final var a: java.lang.String
-    public fun AWithFieldInit(@null i: int) {
+    @org.jetbrains.annotations.NotNull private final var a: java.lang.String
+    public fun AWithFieldInit(@org.jetbrains.annotations.NotNull i: int) {
         {
             a = i.[!] UnknownKotlinExpression (CALL_EXPRESSION)
         }

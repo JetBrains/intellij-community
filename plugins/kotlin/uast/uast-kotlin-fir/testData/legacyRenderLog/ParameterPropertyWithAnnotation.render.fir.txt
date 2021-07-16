@@ -14,15 +14,15 @@ public abstract annotation MyAnnotation5 {
 }
 
 public final class Test1 {
-    @null private var bar: int
-    public fun Test1(@null bar: int) = UastEmptyExpression
+    @org.jetbrains.annotations.NotNull private var bar: int
+    public fun Test1(@org.jetbrains.annotations.NotNull bar: int) = UastEmptyExpression
     public final fun getBar() : int = UastEmptyExpression
     public final fun setBar(value: int) : void = UastEmptyExpression
 }
 
 public final class Test2 {
-    @null @not-implemented-annotation private var bar: int
-    public fun Test2(@null @not-implemented-annotation bar: int) = UastEmptyExpression
+    @org.jetbrains.annotations.NotNull @not-implemented-annotation private var bar: int
+    public fun Test2(@org.jetbrains.annotations.NotNull @not-implemented-annotation bar: int) = UastEmptyExpression
     public final fun getBar() : int = UastEmptyExpression
     public final fun setBar(@MyAnnotation3 value: int) : void = UastEmptyExpression
 }

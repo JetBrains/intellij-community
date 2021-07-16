@@ -27,7 +27,7 @@ public final class SAMKt {
         }
     }
     public static final fun getBaz() : java.lang.Runnable = UastEmptyExpression
-    public static final fun runRunnable(@null r: java.lang.Runnable) : error.NonExistentClass {
+    public static final fun runRunnable(@org.jetbrains.annotations.NotNull r: java.lang.Runnable) : error.NonExistentClass {
         return [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
     public static final fun test1() : void {
@@ -40,10 +40,10 @@ public final class SAMKt {
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
-    public static final fun ambiguousSamAcceptor(@null s: java.util.function.Supplier<java.lang.String>) : java.lang.String {
+    public static final fun ambiguousSamAcceptor(@org.jetbrains.annotations.NotNull s: java.util.function.Supplier<java.lang.String>) : java.lang.String {
         return [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
-    public static final fun ambiguousSamAcceptor(@null s: java.util.concurrent.Callable<java.lang.String>) : java.lang.String {
+    public static final fun ambiguousSamAcceptor(@org.jetbrains.annotations.NotNull s: java.util.concurrent.Callable<java.lang.String>) : java.lang.String {
         return [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
 }

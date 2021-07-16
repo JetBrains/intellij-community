@@ -1,8 +1,8 @@
 UFile (package = ) [public final class DestructuringDeclarationKt {...]
     UClass (name = DestructuringDeclarationKt) [public final class DestructuringDeclarationKt {...}]
-        UMethod (name = foo) [public static final fun foo(@null data: java.lang.Object) : void {...}]
-            UParameter (name = data) [@null var data: java.lang.Object]
-                UAnnotation (fqName = null) [@null]
+        UMethod (name = foo) [public static final fun foo(@org.jetbrains.annotations.NotNull data: java.lang.Object) : void {...}]
+            UParameter (name = data) [@org.jetbrains.annotations.NotNull var data: java.lang.Object]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Undetermined
                 UDeclarationsExpression [@null var var268d41a5: kotlin.Pair<? extends java.lang.String,? extends java.lang.Integer> = "foo" <other> 1] = Undetermined
                     ULocalVariable (name = var268d41a5) [@null var var268d41a5: kotlin.Pair<? extends java.lang.String,? extends java.lang.Integer> = "foo" <other> 1]

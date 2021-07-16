@@ -51,16 +51,16 @@ UFile (package = ) [public final class ResolveKt {...]
                     USimpleNameReferenceExpression (identifier = intRange) [intRange] = (var intRange = Undetermined)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-        UMethod (name = barT) [public static final fun barT(@null t: T) : void {...}]
-            UParameter (name = t) [@null var t: T]
-                UAnnotation (fqName = null) [@null]
+        UMethod (name = barT) [public static final fun barT(@org.jetbrains.annotations.NotNull t: T) : void {...}]
+            UParameter (name = t) [@org.jetbrains.annotations.NotNull var t: T]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Undetermined
                 UQualifiedReferenceExpression [t.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                     USimpleNameReferenceExpression (identifier = t) [t] = Undetermined
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-        UMethod (name = barTL) [public static final fun barTL(@null listT: T) : void {...}]
-            UParameter (name = listT) [@null var listT: T]
-                UAnnotation (fqName = null) [@null]
+        UMethod (name = barTL) [public static final fun barTL(@org.jetbrains.annotations.NotNull listT: T) : void {...}]
+            UParameter (name = listT) [@org.jetbrains.annotations.NotNull var listT: T]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Undetermined
                 UQualifiedReferenceExpression [listT.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                     USimpleNameReferenceExpression (identifier = listT) [listT] = Undetermined
