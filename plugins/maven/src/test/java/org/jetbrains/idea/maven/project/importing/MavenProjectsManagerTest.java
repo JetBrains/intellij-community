@@ -41,7 +41,6 @@ import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.junit.Test;
 
@@ -572,18 +571,19 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                     "  <sourceDirectory>${prop}</sourceDirectory>" +
                     "</build>");
 
-    createProfilesXmlOldStyle("<profile>" +
-                              "  <id>one</id>" +
-                              "  <activation>" +
-                              "    <activeByDefault>true</activeByDefault>" +
-                              "  </activation>" +
-                              "  <properties>" +
-                              "    <prop>value1</prop>" +
-                              "  </properties>" +
-                              "</profile>");
+    updateSettingsXml("<profiles>" +
+                      "  <profile>" +
+                      "    <id>one</id>" +
+                      "    <activation>" +
+                      "      <activeByDefault>true</activeByDefault>" +
+                      "    </activation>" +
+                      "    <properties>" +
+                      "      <prop>value1</prop>" +
+                      "    </properties>" +
+                      "  </profile>" +
+                      "</profiles>");
 
-    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_2);
-    importProjectWithErrors(); // structure warning, new style of profiles.xml expected
+    importProject();
 
     List<MavenProject> roots = myProjectsTree.getRootProjects();
 
@@ -593,36 +593,40 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value1")));
     assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value1")));
 
-    createProfilesXmlOldStyle("<profile>" +
-                              "  <id>one</id>" +
-                              "  <activation>" +
-                              "    <activeByDefault>true</activeByDefault>" +
-                              "  </activation>" +
-                              "  <properties>" +
-                              "    <prop>value2</prop>" +
-                              "  </properties>" +
-                              "</profile>");
-    scheduleProjectImportAndWait();
+    updateSettingsXml("<profiles>" +
+                      "  <profile>" +
+                      "    <id>one</id>" +
+                      "    <activation>" +
+                      "      <activeByDefault>true</activeByDefault>" +
+                      "    </activation>" +
+                      "    <properties>" +
+                      "      <prop>value2</prop>" +
+                      "    </properties>" +
+                      "  </profile>" +
+                      "</profiles>");
+    importProject();
 
     assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value2")));
     assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
 
-    deleteProfilesXml();
-    scheduleProjectImportAndWait();
+    updateSettingsXml("<profiles/>");
+    importProject();
 
     assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/${prop}")));
     assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/${prop}")));
 
-    createProfilesXmlOldStyle("<profile>" +
-                              "  <id>one</id>" +
-                              "  <activation>" +
-                              "    <activeByDefault>true</activeByDefault>" +
-                              "  </activation>" +
-                              "  <properties>" +
-                              "    <prop>value2</prop>" +
-                              "  </properties>" +
-                              "</profile>");
-    scheduleProjectImportAndWait();
+    updateSettingsXml("<profiles>" +
+                      "  <profile>" +
+                      "    <id>one</id>" +
+                      "    <activation>" +
+                      "      <activeByDefault>true</activeByDefault>" +
+                      "    </activation>" +
+                      "    <properties>" +
+                      "      <prop>value2</prop>" +
+                      "    </properties>" +
+                      "  </profile>" +
+                      "</profiles>");
+    importProject();
 
     assertUnorderedPathsAreEqual(parentNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/value2")));
     assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));

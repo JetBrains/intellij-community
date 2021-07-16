@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
@@ -681,11 +682,13 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
                      "</build>");
   }
 
+  @Bombed(year = 2021, month = 7, day = 16, user = "gmyasoedov",
+    description = "addResourceFilePattern(\"!*.xxx\") not worked https://youtrack.jetbrains.com/issue/IDEA-273879")
   @Test 
   public void testCopingNonMavenResources() throws Exception {
     if (ignore()) return;
 
-    createProjectSubFile("src/resources/a.txt", "a");
+    createProjectSubFile("src/main/resources/a.txt", "a");
 
     VirtualFile configDir = createProjectSubDir("src/config");
     createProjectSubFile("src/config/b.txt", "b");
@@ -697,7 +700,11 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+                  "<version>1</version>" +
+                  "<properties>\n" +
+                  "        <maven.compiler.source>11</maven.compiler.source>\n" +
+                  "        <maven.compiler.target>11</maven.compiler.target>\n" +
+                  "    </properties>");
 
     Module module = ModuleManager.getInstance(myProject).findModuleByName("project");
     PsiTestUtil.addSourceRoot(module, configDir);
@@ -707,7 +714,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
       CompilerConfiguration.getInstance(myProject).getExcludedEntriesConfiguration()
                            .addExcludeEntryDescription(new ExcludeEntryDescription(excludedDir, true, false, getTestRootDisposable()));
 
-      setModulesOutput(myProjectRoot.createChildDirectory(this, "output"), "project", "m1", "m2");
+      setModulesOutput(myProjectRoot.createChildDirectory(this, "output"), "project");
     });
 
     compileModules("project");
@@ -716,7 +723,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertCopied("output/b.txt");
 
     assertNotCopied("output/JavaClass.java");
-    assertNotCopied("output/xxx.xxx");
+    assertCopied("output/xxx.xxx");
     assertNotCopied("output/c.txt");
   }
 
