@@ -36,7 +36,8 @@ final class RefCountHolder {
   private final MultiMap<PsiElement, PsiReference> myLocalRefsMap = MultiMap.createConcurrentSet();
 
   private final Set<PsiAnchor> myDclsUsedMap = ConcurrentCollectionFactory.createConcurrentSet(HashingStrategy.canonical());
-  private final Map<PsiImportStatementBase, PsiReference> myImportStatements = ConcurrentCollectionFactory.createConcurrentMap();
+  // reference -> import statement the reference has come from
+  private final Map<PsiReference, PsiImportStatementBase> myImportStatements = ConcurrentCollectionFactory.createConcurrentMap();
   // There are two possible states of RefCountHolder:
   // - ready: RefCountHolder is finished updating, can be queried;
   // - not_ready: RefCountHolder is empty or being updated now, info can be inconsistent
@@ -144,11 +145,11 @@ final class RefCountHolder {
   }
 
   private void registerImportStatement(@NotNull PsiReference ref, @NotNull PsiImportStatementBase importStatement) {
-    myImportStatements.put(importStatement, ref);
+    myImportStatements.put(ref, importStatement);
   }
 
   boolean isRedundant(@NotNull PsiImportStatementBase importStatement) {
-    return !myImportStatements.containsKey(importStatement);
+    return !myImportStatements.containsValue(importStatement);
   }
 
   private void registerLocalRef(@NotNull PsiReference ref, PsiElement refElement) {
@@ -175,7 +176,7 @@ final class RefCountHolder {
     for (Pair<PsiElement, PsiReference> pair : toRemove) {
       myLocalRefsMap.remove(pair.first, pair.second);
     }
-    myImportStatements.entrySet().removeIf(e -> !e.getValue().getElement().isValid());
+    myImportStatements.entrySet().removeIf(e -> !e.getValue().isValid() || !e.getKey().getElement().isValid());
     removeInvalidFrom(myDclsUsedMap);
   }
 
