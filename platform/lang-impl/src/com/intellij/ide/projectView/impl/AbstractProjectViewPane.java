@@ -332,11 +332,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
    * @return array of user objects from selected paths in the tree
    */
   @RequiresEdt
-  public final @NotNull Object @NotNull [] getSelectedUserObjects() {
+  public final @Nullable Object @NotNull [] getSelectedUserObjects() {
     TreePath[] paths = getSelectionPaths();
     return paths == null
            ? ArrayUtil.EMPTY_OBJECT_ARRAY
-           : ArrayUtil.toObjectArray(ContainerUtil.mapNotNull(paths, TreeUtil::getLastUserObject));
+           : ArrayUtil.toObjectArray(ContainerUtil.map(paths, TreeUtil::getLastUserObject));
   }
 
   @NotNull
@@ -450,7 +450,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @RequiresReadLock(generateAssertion = false)
   @RequiresBackgroundThread(generateAssertion = false)
-  private @Nullable Object getDataFromSelection(@NotNull Object @NotNull [] selectedUserObjects, @NotNull String dataId) {
+  private @Nullable Object getDataFromSelection(@Nullable Object @NotNull [] selectedUserObjects, @NotNull String dataId) {
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       final PsiElement[] elements = getPsiElements(selectedUserObjects);
       return elements.length == 1 ? elements[0] : null;
@@ -464,7 +464,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @RequiresReadLock(generateAssertion = false)
   @RequiresBackgroundThread(generateAssertion = false)
-  private @NotNull PsiElement @NotNull [] getPsiElements(@NotNull Object @NotNull [] selectedUserObjects) {
+  private @NotNull PsiElement @NotNull [] getPsiElements(@Nullable Object @NotNull [] selectedUserObjects) {
     List<PsiElement> result = new ArrayList<>();
     for (Object userObject : selectedUserObjects) {
       ContainerUtil.addAllNotNull(result, getElementsFromNode(userObject));
