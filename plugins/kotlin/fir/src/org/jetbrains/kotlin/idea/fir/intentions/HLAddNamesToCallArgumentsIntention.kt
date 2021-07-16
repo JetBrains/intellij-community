@@ -2,27 +2,20 @@
 package org.jetbrains.kotlin.idea.fir.intentions
 
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
-import org.jetbrains.kotlin.idea.api.applicator.applicator
 import org.jetbrains.kotlin.idea.fir.api.AbstractHLIntention
 import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicabilityRange
 import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicatorInputProvider
 import org.jetbrains.kotlin.idea.fir.api.applicator.applicabilityRanges
 import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
+import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators
 import org.jetbrains.kotlin.idea.frontend.api.calls.KtCallWithArguments
 import org.jetbrains.kotlin.idea.frontend.api.calls.getSingleCandidateSymbolOrNull
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.textRangeIn
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators.MultipleArgumentsInput as Input
 
 class HLAddNamesToCallArgumentsIntention :
-    AbstractHLIntention<KtCallElement, HLAddNamesToCallArgumentsIntention.Input>(KtCallElement::class, applicator) {
-    class Input(val argumentNames: Map<KtValueArgument, Name>) : HLApplicatorInput
-
+    AbstractHLIntention<KtCallElement, Input>(KtCallElement::class, AddArgumentNamesApplicators.multipleArgumentsApplicator) {
     override val applicabilityRange: HLApplicabilityRange<KtCallElement> = applicabilityRanges { element ->
         // Note: Applicability range matches FE 1.0 (see AddNamesToCallArgumentsIntention).
         val calleeExpression = element.calleeExpression ?: return@applicabilityRanges emptyList()
@@ -48,21 +41,5 @@ class HLAddNamesToCallArgumentsIntention :
         Input(arguments.associateWith {
             HLAddNameToArgumentIntention.getArgumentNameIfCanBeUsedForCalls(it, resolvedCall) ?: return@inputProvider null
         })
-    }
-
-    companion object {
-        val applicator = applicator<KtCallElement, Input> {
-            familyAndActionName(KotlinBundle.lazyMessage("add.names.to.call.arguments"))
-
-            isApplicableByPsi { element ->
-                element.valueArguments.any { !it.isNamed() && it !is LambdaArgument }
-            }
-
-            applyTo { element, input, project, editor ->
-                for ((argument, name) in input.argumentNames) {
-                    HLAddNameToArgumentIntention.applicator.applyTo(argument, HLAddNameToArgumentIntention.Input(name), project, editor)
-                }
-            }
-        }
     }
 }
