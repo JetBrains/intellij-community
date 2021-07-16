@@ -1707,6 +1707,21 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/addNamesToCallArguments/ambiguousCall.kt");
         }
 
+        @TestMetadata("annotationCall.kt")
+        public void testAnnotationCall() throws Exception {
+            runTest("testData/intentions/addNamesToCallArguments/annotationCall.kt");
+        }
+
+        @TestMetadata("delegatedConstructor.kt")
+        public void testDelegatedConstructor() throws Exception {
+            runTest("testData/intentions/addNamesToCallArguments/delegatedConstructor.kt");
+        }
+
+        @TestMetadata("extraArguments.kt")
+        public void testExtraArguments() throws Exception {
+            runTest("testData/intentions/addNamesToCallArguments/extraArguments.kt");
+        }
+
         @TestMetadata("genericCall.kt")
         public void testGenericCall() throws Exception {
             runTest("testData/intentions/addNamesToCallArguments/genericCall.kt");
