@@ -58,8 +58,11 @@ final class ResourceTextDescriptor implements TextDescriptor {
 
   @NotNull
   private String loadDefaultText() throws IOException {
-    return ResourceUtil.loadText(Objects.requireNonNull(myLoader.getResourceAsStream(myResourcePath),
-                                                        "Resource not found: " + myResourcePath));
+    InputStream stream = myLoader.getResourceAsStream(myResourcePath);
+    if (stream == null) {
+      throw new IOException("Resource not found: " + myResourcePath);
+    }
+    return ResourceUtil.loadText(stream);
   }
 
   @Nullable
