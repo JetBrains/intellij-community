@@ -58,6 +58,8 @@
         implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider$ShowDiff"/>
     <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
         implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider$ShowStandaloneDiff"/>
+    <diff.actions.ShowStandaloneDiffAction.ExtensionProvider
+        implementation="com.intellij.vcs.log.ui.actions.ShowStandaloneDiffFromLogActionProvider"/>
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider
         implementation="com.intellij.vcs.log.ui.actions.history.ShowDiffAfterWithLocalFromFileHistoryActionProvider"/>
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider
