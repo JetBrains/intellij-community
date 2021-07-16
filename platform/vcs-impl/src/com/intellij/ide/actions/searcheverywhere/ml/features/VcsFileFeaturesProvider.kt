@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileSystemItem
 
 internal class VcsFileFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
   companion object {
@@ -21,8 +22,12 @@ internal class VcsFileFeaturesProvider : SearchEverywhereElementFeaturesProvider
   }
 
   private fun getFileFeatures(element: PsiElement): Map<String, Any> {
-    val virtualFile = element.containingFile.virtualFile
-    val project = element.containingFile.project
+    val virtualFile = (element as PsiFileSystemItem).virtualFile
+    val project = element.project
+
+    if (virtualFile.isDirectory) {
+      return emptyMap()
+    }
 
     return hashMapOf(
       IS_CHANGED_DATA_KEY to isChanged(virtualFile, project),
