@@ -58,24 +58,6 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   private final AtomicInteger myScheduledVfsEventsWorkers = new AtomicInteger();
   private final FileBasedIndexImpl myManager = (FileBasedIndexImpl)FileBasedIndex.getInstance();
 
-  private final AtomicInteger myUpdatingFiles = new AtomicInteger();
-
-  @Override
-  protected void buildIndicesForFileRecursively(@NotNull VirtualFile file, boolean contentChange) {
-    IndexingFlag.cleanProcessedFlagRecursively(file);
-    if (!contentChange) {
-      myUpdatingFiles.incrementAndGet();
-    }
-
-    super.buildIndicesForFileRecursively(file, contentChange);
-
-    if (!contentChange) {
-      if (myUpdatingFiles.decrementAndGet() == 0) {
-        myManager.incrementFilesModCount();
-      }
-    }
-  }
-
   @Override
   protected void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
     if (myManager.belongsToIndexableFiles(file)) {
@@ -88,10 +70,6 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
         }
       });
     }
-  }
-
-  public boolean isUpdateInProgress() {
-    return myUpdatingFiles.get() > 0;
   }
 
   public void scheduleForUpdate(@NotNull VirtualFile file) {

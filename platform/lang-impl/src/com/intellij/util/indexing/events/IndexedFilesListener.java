@@ -15,6 +15,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexingDataKeys;
+import com.intellij.util.indexing.IndexingFlag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +56,7 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
   }
 
   protected void buildIndicesForFileRecursively(@NotNull final VirtualFile file, final boolean contentChange) {
+    IndexingFlag.cleanProcessedFlagRecursively(file);
     if (file.isDirectory()) {
       final ContentIterator iterator = fileOrDir -> {
         myEventMerger.recordFileEvent(fileOrDir, contentChange);

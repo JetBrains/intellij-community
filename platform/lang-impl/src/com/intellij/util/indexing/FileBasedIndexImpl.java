@@ -147,7 +147,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     ScheduledFuture<?> flushingFuture = myFlushingFuture;
     LOG.assertTrue(flushingFuture == null || flushingFuture.isCancelled() || flushingFuture.isDone());
     LOG.assertTrue(myUpToDateIndicesForUnsavedOrTransactedDocuments.isEmpty());
-    LOG.assertTrue(!getChangedFilesCollector().isUpdateInProgress());
     LOG.assertTrue(myTransactionMap.isEmpty());
 
     myRegisteredIndexes = null;
@@ -890,7 +889,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @Override
   @Nullable
   public IdFilter projectIndexableFiles(@Nullable Project project) {
-    if (project == null || project.isDefault() || getChangedFilesCollector().isUpdateInProgress()) return null;
+    if (project == null || project.isDefault()) return null;
     return myIndexableFilesFilterHolder.getProjectIndexableFiles(project);
   }
 
