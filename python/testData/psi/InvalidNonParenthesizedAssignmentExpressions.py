@@ -14,10 +14,8 @@ def foo(answer: (p := 42) = 5):  # Valid, but probably never useful
 (lambda: x := 1)  # INVALID
 lambda: (x := 1)  # Valid, but unlikely to be useful
 
-result_set = {a := 1}  # INVALID
-result_set = {(a := 1)}
-
 result_dict = {a := 1 : b := 2}  # INVALID
+result_dict = {a := 1 : (b := 2)}  # INVALID
 result_dict = {(a := 1) : (b := 2)}
 
 assert a := 1  # INVALID

@@ -23,6 +23,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.jetbrains.python.PyPsiBundle.message;
@@ -342,8 +343,13 @@ public class ExpressionParsing extends Parsing {
       return;
     }
 
+    parseDictOrSetTail(expr, false);
+  }
+
+  private void parseDictOrSetTail(@NotNull SyntaxTreeBuilder.Marker expr, boolean isDict) {
     final SyntaxTreeBuilder.Marker firstExprMarker = myBuilder.mark();
-    if (!parseSingleExpression(false)) {
+
+    if (isDict && !parseSingleExpression(false) || !isDict && !parseNamedTestExpression(false, false)) {
       myBuilder.error(message("PARSE.expected.expression"));
       firstExprMarker.drop();
       expr.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
@@ -351,6 +357,11 @@ public class ExpressionParsing extends Parsing {
     }
 
     if (matchToken(PyTokenTypes.COLON)) {
+      if (!isDict) {
+        firstExprMarker.rollbackTo();
+        parseDictOrSetTail(expr, true);
+        return;
+      }
       parseDictLiteralTail(expr, firstExprMarker);
     }
     else if (atToken(PyTokenTypes.COMMA) || atToken(PyTokenTypes.RBRACE)) {
@@ -424,7 +435,7 @@ public class ExpressionParsing extends Parsing {
   private void parseSetLiteralTail(SyntaxTreeBuilder.Marker startMarker) {
     while (myBuilder.getTokenType() != PyTokenTypes.RBRACE) {
       checkMatches(PyTokenTypes.COMMA, message("PARSE.expected.comma"));
-      if (!parseSingleExpression(false)) {
+      if (!parseNamedTestExpression(false, false)) {
         break;
       }
     }
