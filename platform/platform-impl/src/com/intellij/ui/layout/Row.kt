@@ -43,7 +43,7 @@ interface RowBuilder : BaseBuilder {
   }
 
   fun row(@Nls label: String?, separated: Boolean = false, init: Row.() -> Unit): Row {
-    return createChildRow(label?.let { Label(it) }, isSeparated = separated).apply(init)
+    return row(label?.let { Label(it) }, separated = separated, init)
   }
 
   fun titledRow(@NlsContexts.BorderTitle title: String, init: Row.() -> Unit): Row

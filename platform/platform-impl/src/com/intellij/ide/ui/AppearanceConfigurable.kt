@@ -103,8 +103,8 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       blockRow {
         fullRow {
           label(message("combobox.look.and.feel"))
-          val theme = comboBox(lafManager.lafComboBoxModel, lafProperty, lafManager.lookAndFeelCellRenderer)
-          theme.component.accessibleContext.accessibleName = message("combobox.look.and.feel")
+          val theme = comboBox(lafManager.lafComboBoxModel, lafProperty, lafManager.lookAndFeelCellRenderer).
+            accessibleName(message("combobox.look.and.feel"))
 
           val syncCheckBox = checkBox(message("preferred.theme.autodetect.selector"),
                                       syncThemeProperty).withLargeLeftGap().
@@ -125,7 +125,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             )
             .shouldUpdateLaF()
             .enableIf(overrideLaF.selected)
-            .component.accessibleContext.accessibleName = cdOverrideLaFFont.name
+            .accessibleName(cdOverrideLaFFont.name)
           component(Label(message("label.font.size")))
           .withLargeLeftGap()
             .enableIf(overrideLaF.selected)
@@ -134,7 +134,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                            settings.fontSize)
             .shouldUpdateLaF()
             .enableIf(overrideLaF.selected)
-            .component.accessibleContext.accessibleName = message("label.font.size")
+            .accessibleName(message("label.font.size"))
         }
       }
       titledRow(message("title.accessibility")) {
@@ -182,7 +182,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                              { it, value -> it.selectedItem = value ?: supportedValues.first() },
                              modelBinding)
                 .onApply(onApply)
-                .component.accessibleContext.accessibleName = UIBundle.message("color.blindness.checkbox.text")
+                .accessibleName(UIBundle.message("color.blindness.checkbox.text"))
             }
 
             component(ActionLink(UIBundle.message("color.blindness.link.to.help"))
@@ -278,10 +278,10 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 arrayOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
               else
                 AntialiasingType.values()
-            val comboboxIde = comboBox(DefaultComboBoxModel(ideAAOptions), settings::ideAAType, renderer = AAListCellRenderer(false))
-            .shouldUpdateLaF()
-              comboboxIde.component.accessibleContext.accessibleName = message("label.text.antialiasing.scope.ide")
-            comboboxIde.onApply {
+            comboBox(DefaultComboBoxModel(ideAAOptions), settings::ideAAType, renderer = AAListCellRenderer(false))
+              .shouldUpdateLaF()
+              .accessibleName(message("label.text.antialiasing.scope.ide"))
+              .onApply {
                 for (w in Window.getWindows()) {
                   for (c in UIUtil.uiTraverser(w).filter(JComponent::class.java)) {
                     GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAAHintForSwingComponent())
@@ -298,7 +298,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 AntialiasingType.values()
             comboBox(DefaultComboBoxModel(editorAAOptions), settings::editorAAType, renderer = AAListCellRenderer(true))
               .shouldUpdateLaF()
-              .component.accessibleContext.accessibleName = message("label.text.antialiasing.scope.editor")
+              .accessibleName(message("label.text.antialiasing.scope.editor"))
           }
         )
       }
@@ -350,11 +350,11 @@ fun Cell.fontSizeComboBox(getter: () -> Int, setter: (Int) -> Unit, defaultValue
   val model = DefaultComboBoxModel(UIUtil.getStandardFontSizes())
   val modelBinding: PropertyBinding<String?> = PropertyBinding({ getter().toString() }, { setter(getIntValue(it, defaultValue)) })
   return component(ComboBox(model))
+    .accessibleName(message("presentation.mode.fon.size"))
     .applyToComponent {
       isEditable = true
       renderer = SimpleListCellRenderer.create("") { it.toString() }
       selectedItem = modelBinding.get()
-      accessibleContext.accessibleName = message("presentation.mode.fon.size")
     }
     .withBinding(
       { component -> component.editor.item as String? },

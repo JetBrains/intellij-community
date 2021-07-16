@@ -125,6 +125,13 @@ interface CellBuilder<out T : JComponent> {
    */
   fun applyIfEnabled(): CellBuilder<T>
 
+  @ApiStatus.Experimental
+  fun accessibleName(accessibleName: String): CellBuilder<T> {
+    component.accessibleContext.accessibleName
+
+    return this
+  }
+
   fun <V> withBinding(
     componentGet: (T) -> V,
     componentSet: (T, V) -> Unit,
