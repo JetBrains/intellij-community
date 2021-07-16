@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,10 +25,6 @@ public final class NanoXmlUtil {
 
   private static MyXMLReader createReader(@NotNull PsiFile psiFile) {
     return new MyXMLReader(new CharSequenceReader(psiFile.getViewProvider().getContents()));
-  }
-
-  public static void parseFile(@NotNull PsiFile psiFile, @NotNull IXMLBuilder builder) {
-    parse(createReader(psiFile), builder);
   }
 
   public static void parse(@NotNull InputStream is, @NotNull IXMLBuilder builder) {

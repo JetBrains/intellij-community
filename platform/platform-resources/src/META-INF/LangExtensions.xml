@@ -452,6 +452,9 @@
 
     <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.ErrorStripeUpdateManager"/>
 
+    <applicationService serviceInterface="com.intellij.framework.detection.FileContentPattern$ParseXml"
+                        serviceImplementation="com.intellij.util.xml.NanoXmlParserImpl"/>
+
     <!-- Extension resources -->
     <applicationService serviceImplementation="com.intellij.ide.extensionResources.ResourceVersions"/>
     <obsoleteStorage file="extensionsRootType.xml">

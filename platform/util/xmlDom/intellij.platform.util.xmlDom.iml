@@ -11,5 +11,6 @@
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="library" name="NanoXML" level="project" />
   </component>
 </module>

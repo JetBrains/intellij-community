@@ -10,7 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.core" exported="" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
-    <orderEntry type="library" name="NanoXML" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
