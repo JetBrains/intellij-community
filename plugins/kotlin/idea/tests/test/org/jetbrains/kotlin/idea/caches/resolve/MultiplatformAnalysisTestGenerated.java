@@ -43,6 +43,16 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
         runTest("testData/multiplatform/constructorsOfExpect/");
     }
 
+    @TestMetadata("commonSealedWithPlatformInheritor")
+    public void testCommonSealedWithPlatformInheritor() throws Exception {
+        runTest("testData/multiplatform/commonSealedWithPlatformInheritor/");
+    }
+
+    @TestMetadata("constructorsOfExpect")
+    public void testConstructorsOfExpect() throws Exception {
+        runTest("testData/multiplatform/constructorsOfExpect/");
+    }
+
     @TestMetadata("correctOverloadResolutionAmbiguity")
     public void testCorrectOverloadResolutionAmbiguity() throws Exception {
         runTest("testData/multiplatform/correctOverloadResolutionAmbiguity/");
