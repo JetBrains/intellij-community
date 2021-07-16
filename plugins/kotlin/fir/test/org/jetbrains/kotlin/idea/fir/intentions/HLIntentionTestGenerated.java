@@ -265,6 +265,29 @@ public abstract class HLIntentionTestGenerated extends AbstractHLIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/intentions/addNamesToFollowingArguments")
+    public static class AddNamesToFollowingArguments extends AbstractHLIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("first.kt")
+        public void testFirst() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToFollowingArguments/first.kt");
+        }
+
+        @TestMetadata("last.kt")
+        public void testLast() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToFollowingArguments/last.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToFollowingArguments/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/intentions/addPropertyAccessors")
     public abstract static class AddPropertyAccessors extends AbstractHLIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
