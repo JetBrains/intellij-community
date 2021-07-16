@@ -53,7 +53,7 @@ UFile (package = ) [public final class A {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UastEmptyExpression [UastEmptyExpression]
-                UBinaryExpression (operator = =) [a = i.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:void
+                UBinaryExpression (operator = =) [a = i.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = a) [a] : PsiType:String
                     UQualifiedReferenceExpression [i.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:String
                         USimpleNameReferenceExpression (identifier = i) [i] : PsiType:int
@@ -63,7 +63,7 @@ UFile (package = ) [public final class A {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UastEmptyExpression [UastEmptyExpression]
-                UBinaryExpression (operator = =) [a = s] : PsiType:void
+                UBinaryExpression (operator = =) [a = s] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = a) [a] : PsiType:String
                     USimpleNameReferenceExpression (identifier = s) [s] : PsiType:String
         UMethod (name = getA) [public final fun getA() : java.lang.String = UastEmptyExpression]
@@ -80,7 +80,7 @@ UFile (package = ) [public final class A {...]
                 UastEmptyExpression [UastEmptyExpression]
                 UBlockExpression [{...}] : PsiType:Unit
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UBinaryExpression (operator = =) [a = i.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:void
+                UBinaryExpression (operator = =) [a = i.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = a) [a] : PsiType:String
                     UQualifiedReferenceExpression [i.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:String
                         USimpleNameReferenceExpression (identifier = i) [i] : PsiType:int
@@ -90,7 +90,7 @@ UFile (package = ) [public final class A {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UastEmptyExpression [UastEmptyExpression]
-                UBinaryExpression (operator = =) [a = s] : PsiType:void
+                UBinaryExpression (operator = =) [a = s] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = a) [a] : PsiType:String
                     USimpleNameReferenceExpression (identifier = s) [s] : PsiType:String
                 UDeclarationsExpression [var local: java.lang.String = s]
@@ -111,7 +111,7 @@ UFile (package = ) [public final class A {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UBlockExpression [{...}] : PsiType:Unit
-                    UBinaryExpression (operator = =) [a = i.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:void
+                    UBinaryExpression (operator = =) [a = i.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:Unit
                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:String
                         UQualifiedReferenceExpression [i.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:String
                             USimpleNameReferenceExpression (identifier = i) [i] : PsiType:int

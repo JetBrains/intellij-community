@@ -27,8 +27,8 @@ UFile (package = ) [public final class ResolveKt {...]
                                 USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Unit
                                 USimpleNameReferenceExpression (identifier = util) [util] : PsiType:Unit
                             [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UBinaryExpression (operator = =) [date.time = 1000] : PsiType:void
-                    UQualifiedReferenceExpression [date.time] : PsiType:void
+                UBinaryExpression (operator = =) [date.time = 1000] : PsiType:Unit
+                    UQualifiedReferenceExpression [date.time] : PsiType:Unit
                         USimpleNameReferenceExpression (identifier = date) [date] : PsiType:Date
                         USimpleNameReferenceExpression (identifier = time) [time] : PsiType:long
                     ULiteralExpression (value = 1000) [1000] : PsiType:long
