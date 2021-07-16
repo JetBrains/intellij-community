@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -834,13 +834,26 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
   public static boolean canBeExtractedWithoutExplicitType(PsiExpression expr) {
     if (PsiUtil.isLanguageLevel10OrHigher(expr)) {
-      PsiType type = expr.getType();
-      return type != null &&
-             !PsiType.NULL.equals(type) &&
-             PsiTypesUtil.isDenotableType(type, expr) &&
-             (expr instanceof PsiNewExpression || type.equals(((PsiExpression)expr.copy()).getType()));
+      PsiType type = getNormalizedType(expr);
+      if (type != null && !PsiType.NULL.equals(type) && PsiTypesUtil.isDenotableType(type, expr)) {
+        PsiExpression copy =
+          (PsiExpression)(type instanceof PsiDisjunctionType ? expr.copy() : LambdaUtil.copyWithExpectedType(expr, type));
+        if (type.equals(getNormalizedType(copy))) {
+          return true;
+        }
+      }
     }
     return false;
+  }
+
+  @Nullable
+  private static PsiType getNormalizedType(PsiExpression expr) {
+    PsiType type = expr.getType();
+    PsiClass refClass = PsiUtil.resolveClassInType(type);
+    if (refClass instanceof PsiAnonymousClass) {
+      return ((PsiAnonymousClass)refClass).getBaseClassType();
+    }
+    return type;
   }
 
   @Nullable
