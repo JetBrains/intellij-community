@@ -1239,12 +1239,12 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                           ". ID \"" + actionId + "\" cannot be registered for the same action");
         return;
       }
+      action.registerCustomShortcutSet(new ProxyShortcutSet(actionId), null);
       idToIndex.put(actionId, myRegisteredActionsCount++);
       actionToId.put(action, actionId);
       if (pluginId != null) {
         pluginToId.putValue(pluginId, actionId);
       }
-      action.registerCustomShortcutSet(new ProxyShortcutSet(actionId), null);
       notifyCustomActionsSchema(actionId);
       updateHandlers(action);
     }
