@@ -13,11 +13,10 @@ import org.intellij.plugins.markdown.google.authorization.GoogleAuthorizationMan
 class GoogleDocsImportPasteProvider : PasteProvider {
 
   override fun performPaste(dataContext: DataContext) {
-    val copiedLink = ClipboardUtil.getTextInClipboard()?.takeWhile { it != '#' }
-    if (copiedLink == null) return
+    val copiedLink = ClipboardUtil.getTextInClipboard() ?: return
 
-    if (GoogleDocsImportUtils.isLinkToDocumentCorrect(copiedLink.toString())) {
-      val docsId = GoogleDocsImportUtils.extractDocsId(copiedLink.toString())
+    if (GoogleDocsImportUtils.isLinkToDocumentCorrect(copiedLink)) {
+      val docsId = GoogleDocsImportUtils.extractDocsId(copiedLink)
       val project = CommonDataKeys.PROJECT.getData(dataContext)!!
 
       val credential = GoogleAuthorizationManager(project).getCredentials() ?: return
