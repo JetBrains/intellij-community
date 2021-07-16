@@ -4,6 +4,7 @@ package com.intellij.notification;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
@@ -78,6 +79,7 @@ public interface Notifications {
     private static void doNotify(Notification notification, @Nullable Project project) {
       if (project != null && !project.isDisposed() && !project.isDefault()) {
         project.getMessageBus().syncPublisher(TOPIC).notify(notification);
+        Disposer.register(project, () -> notification.expire());
       }
       else {
         Application app = ApplicationManager.getApplication();
