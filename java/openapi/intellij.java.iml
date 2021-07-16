@@ -18,7 +18,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide" exported="" />
     <orderEntry type="module" module-name="intellij.platform.lang" exported="" />
     <orderEntry type="module" module-name="intellij.platform.vcs" exported="" />
-    <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="intellij.xml.dom" />
     <orderEntry type="module" module-name="intellij.java.resources.en" exported="" />
     <orderEntry type="module" module-name="intellij.java.psi" exported="" />
