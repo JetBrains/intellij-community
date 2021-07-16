@@ -74,7 +74,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
@@ -320,7 +320,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Private field 'text' is assigned but never accessed", infos.get(0).getDescription());
 
     ctrlW();
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> EditorModificationUtil.deleteSelectedText(getEditor()));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> EditorModificationUtilEx.deleteSelectedText(getEditor()));
     type("  text");
 
     List<HighlightInfo> errors = doHighlighting(HighlightSeverity.WARNING);
@@ -453,14 +453,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Field can be converted to a local variable", infos.get(0).getDescription());
 
     ctrlW();
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> EditorModificationUtil.deleteSelectedText(getEditor()));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> EditorModificationUtilEx.deleteSelectedText(getEditor()));
     type("xxxx");
 
     infos = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(infos);
 
     ctrlW();
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> EditorModificationUtil.deleteSelectedText(getEditor()));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> EditorModificationUtilEx.deleteSelectedText(getEditor()));
     type("0");
 
     infos = doHighlighting(HighlightSeverity.WARNING);
@@ -1165,7 +1165,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       catch (Exception e) {
         LOG.error(e);
       }
-    }, "cc", this);
+    }, "Cc", this);
     List<HighlightInfo> errs = highlightErrors();
     assertEmpty(errs);
     CommandProcessor.getInstance().executeCommand(getProject(), () -> {
@@ -1177,7 +1177,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         getEditor().getCaretModel().moveToOffset(i);
         delete(getEditor());
       }
-    }, "my", this);
+    }, "My", this);
 
     errs = highlightErrors();
     assertEquals(2, errs.size());
@@ -1280,12 +1280,10 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
 
   public void testApplyErrorInTheMiddle() {
-    StringBuilder text = new StringBuilder("class <caret>X { ");
-    for (int i = 0; i < 100; i++) {
-      text.append("\n    {\n" + "//    String x = \"<zzzzzzzzzz/>\";\n" + "    }");
-    }
-    text.append("\n}");
-    configureByText(JavaFileType.INSTANCE, text.toString());
+    String text = "class <caret>X { " + ("\n    {\n" +
+                      "//    String x = \"<zzzzzzzzzz/>\";\n" + "    }").repeat(100) +
+                  "\n}";
+    configureByText(JavaFileType.INSTANCE, text);
 
     ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
@@ -1752,12 +1750,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         }
 
         runHeavyProcessing = true;
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        ApplicationManager.getApplication().executeOnPooledThread(() ->
           HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Processing, "my own heavy op", ()-> {
             while (runHeavyProcessing) {
             }
-          });
-        });
+          })
+        );
         while (!HeavyProcessLatch.INSTANCE.isRunning()) {
           UIUtil.dispatchAllInvocationEvents();
         }
@@ -1809,11 +1807,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         }
 
         runHeavyProcessing = true;
-        Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() ->
           HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Syncing, "my own vfs refresh", () -> {
             while (runHeavyProcessing);
-          });
-        });
+          })
+        );
         while (!HeavyProcessLatch.INSTANCE.isRunning()) {
           UIUtil.dispatchAllInvocationEvents();
         }
@@ -2240,8 +2238,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     useAnnotatorsIn(Collections.singletonMap(language, annotators), runnable);
   }
 
-  public static void useAnnotatorsIn(@NotNull Map<com.intellij.lang.Language, MyRecordingAnnotator @NotNull []> annotatorsByLanguage,
-                                     @NotNull Runnable runnable) {
+  private static void useAnnotatorsIn(@NotNull Map<com.intellij.lang.Language, MyRecordingAnnotator @NotNull []> annotatorsByLanguage,
+                                      @NotNull Runnable runnable) {
     MyRecordingAnnotator.clearAll();
     for (Map.Entry<com.intellij.lang.Language, MyRecordingAnnotator[]> entry : annotatorsByLanguage.entrySet()) {
       com.intellij.lang.Language language = entry.getKey();
@@ -2465,7 +2463,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
       @Override
       public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        DaemonProgressIndicator indicator = (DaemonProgressIndicator)ProgressManager.getGlobalProgressIndicator();
+        DaemonProgressIndicator indicator = (DaemonProgressIndicator)ProgressIndicatorProvider.getGlobalProgressIndicator();
         Throwable alreadyCalled = isAvailableCalled.put(indicator, new Throwable());
         if (alreadyCalled != null) {
           throw new IllegalStateException(" .isAvailable() already called in:\n---------------\n"+ExceptionUtil.getThrowableText(alreadyCalled)+"\n-----------");

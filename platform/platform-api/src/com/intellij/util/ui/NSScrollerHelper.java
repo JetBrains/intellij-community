@@ -16,8 +16,6 @@ import java.util.EventListener;
 import java.util.Iterator;
 import java.util.List;
 
-import static com.intellij.ui.mac.foundation.Foundation.invoke;
-
 final class NSScrollerHelper {
   private static final Callback APPEARANCE_CALLBACK = new Callback() {
     @SuppressWarnings("UnusedDeclaration")
@@ -32,11 +30,11 @@ final class NSScrollerHelper {
     }
   };
 
-  public enum ClickBehavior {NextPage, JumpToSpot}
+  enum ClickBehavior {NextPage, JumpToSpot}
 
-  public enum Style {Legacy, Overlay}
+  enum Style {Legacy, Overlay}
 
-  private static ClickBehavior ourClickBehavior = null;
+  private static ClickBehavior ourClickBehavior;
   private static final List<Reference<ScrollbarStyleListener>> ourStyleListeners = new ArrayList<>();
 
   static {
@@ -66,25 +64,25 @@ final class NSScrollerHelper {
 
       Foundation.registerObjcClassPair(delegateClass);
     }
-    ID delegate = invoke("NSScrollerChangesObserver", "new");
+    ID delegate = Foundation.invoke("NSScrollerChangesObserver", "new");
 
     try {
       ID center;
-      center = invoke("NSNotificationCenter", "defaultCenter");
-      invoke(center, "addObserver:selector:name:object:",
+      center = Foundation.invoke("NSNotificationCenter", "defaultCenter");
+      Foundation.invoke(center, "addObserver:selector:name:object:",
              delegate,
              Foundation.createSelector("handleScrollerStyleChanged:"),
              Foundation.nsString("NSPreferredScrollerStyleDidChangeNotification"),
              ID.NIL
       );
 
-      center = invoke("NSDistributedNotificationCenter", "defaultCenter");
-      invoke(center, "addObserver:selector:name:object:",
-             delegate,
-             Foundation.createSelector("handleBehaviorChanged:"),
-             Foundation.nsString("AppleNoRedisplayAppearancePreferenceChanged"),
-             ID.NIL,
-             2 // NSNotificationSuspensionBehaviorCoalesce
+      center = Foundation.invoke("NSDistributedNotificationCenter", "defaultCenter");
+      Foundation.invoke(center, "addObserver:selector:name:object:",
+                        delegate,
+                        Foundation.createSelector("handleBehaviorChanged:"),
+                        Foundation.nsString("AppleNoRedisplayAppearancePreferenceChanged"),
+                        ID.NIL,
+                        2 // NSNotificationSuspensionBehaviorCoalesce
       );
     }
     finally {
@@ -93,7 +91,7 @@ final class NSScrollerHelper {
   }
 
   @Nullable
-  public static ClickBehavior getClickBehavior() {
+  static ClickBehavior getClickBehavior() {
     if (!SystemInfoRt.isMac) return null;
     return ourClickBehavior;
   }
@@ -103,9 +101,9 @@ final class NSScrollerHelper {
 
     Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
     try {
-      ID defaults = invoke("NSUserDefaults", "standardUserDefaults");
-      invoke(defaults, "synchronize");
-      ourClickBehavior = invoke(defaults, "boolForKey:", Foundation.nsString("AppleScrollerPagingBehavior")).booleanValue()
+      ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
+      Foundation.invoke(defaults, "synchronize");
+      ourClickBehavior = Foundation.invoke(defaults, "boolForKey:", Foundation.nsString("AppleScrollerPagingBehavior")).booleanValue()
                          ? ClickBehavior.JumpToSpot : ClickBehavior.NextPage;
     }
     finally {
@@ -114,7 +112,7 @@ final class NSScrollerHelper {
   }
 
   @Nullable
-  public static Style getScrollerStyle() {
+  static Style getScrollerStyle() {
     if (!isOverlayScrollbarSupported()) return null;
 
     Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
@@ -131,11 +129,11 @@ final class NSScrollerHelper {
     return Style.Legacy;
   }
 
-  public static void addScrollbarStyleListener(@NotNull ScrollbarStyleListener listener) {
+  static void addScrollbarStyleListener(@NotNull ScrollbarStyleListener listener) {
     processReferences(listener, null, null);
   }
 
-  public static void removeScrollbarStyleListener(@NotNull ScrollbarStyleListener listener) {
+  static void removeScrollbarStyleListener(@NotNull ScrollbarStyleListener listener) {
     processReferences(null, listener, null);
   }
 
@@ -166,7 +164,7 @@ final class NSScrollerHelper {
     }
   }
 
-  public interface ScrollbarStyleListener extends EventListener {
+  interface ScrollbarStyleListener extends EventListener {
     void styleChanged();
   }
 }
