@@ -17,7 +17,6 @@
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
-    <orderEntry type="library" name="lz4-java" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
