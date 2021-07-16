@@ -28,7 +28,7 @@ UFile (package = )
         UMethod (name = getTasks)
         UMethod (name = register)
             UParameter (name = runnable)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UQualifiedReferenceExpression
                     USimpleNameReferenceExpression (identifier = tasks)

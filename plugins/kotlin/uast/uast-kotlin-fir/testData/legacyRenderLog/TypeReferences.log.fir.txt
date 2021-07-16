@@ -2,7 +2,7 @@ UFile (package = )
     UClass (name = TypeReferencesKt)
         UMethod (name = foo)
             UParameter (name = parameter)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = varWithType)
@@ -19,7 +19,7 @@ UFile (package = )
                     USimpleNameReferenceExpression (identifier = result)
         UMethod (name = parameterizedFoo)
             UParameter (name = arg)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.Nullable)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = a)

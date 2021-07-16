@@ -25,9 +25,9 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                                     ULiteralExpression (value = null) [null]
                                 USimpleNameReferenceExpression (identifier = varae507364) [varae507364]
                                 USimpleNameReferenceExpression (identifier = b) [b] : PsiType:int
-        UMethod (name = annotatedSwitch) [public static final fun annotatedSwitch(@null str: java.lang.String) : java.lang.Integer {...}]
-            UParameter (name = str) [@null var str: java.lang.String]
-                UAnnotation (fqName = null) [@null]
+        UMethod (name = annotatedSwitch) [public static final fun annotatedSwitch(@org.jetbrains.annotations.NotNull str: java.lang.String) : java.lang.Integer {...}]
+            UParameter (name = str) [@org.jetbrains.annotations.NotNull var str: java.lang.String]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UReturnExpression [return switch  {...]
                     USwitchExpression [switch  {...] : PsiType:Integer

@@ -15,11 +15,11 @@ UFile (package = )
         UMethod (name = getP)
         UMethod (name = bar)
             UParameter (name = other)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = baz)
             UParameter (name = other)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)

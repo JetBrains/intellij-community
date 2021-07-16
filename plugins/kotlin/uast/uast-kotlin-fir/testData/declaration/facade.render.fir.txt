@@ -4,7 +4,7 @@ public final class Utils {
     public static final fun foo() : int {
         return 42
     }
-    public static final fun buzz(@null $this$buzz: java.lang.String) : java.lang.String {
+    public static final fun buzz(@org.jetbrains.annotations.NotNull $this$buzz: java.lang.String) : java.lang.String {
         return this + "... zzz..."
     }
 }

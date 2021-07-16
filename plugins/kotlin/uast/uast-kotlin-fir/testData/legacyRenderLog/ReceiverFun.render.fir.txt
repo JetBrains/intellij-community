@@ -1,8 +1,8 @@
 public final class ReceiverFunKt {
-    public static final fun foo(@not-implemented-annotation @null $this$foo: java.lang.String) : int {
+    public static final fun foo(@not-implemented-annotation @org.jetbrains.annotations.NotNull $this$foo: java.lang.String) : int {
         return this.length
     }
-    public static final fun getRx(@not-implemented-annotation @null $this$rx: java.lang.String) : kotlin.text.Regex {
+    public static final fun getRx(@not-implemented-annotation @org.jetbrains.annotations.NotNull $this$rx: java.lang.String) : kotlin.text.Regex {
         return [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
 }

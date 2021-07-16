@@ -1,37 +1,37 @@
 UFile (package = )
     UClass (name = A)
         UField (name = str)
-            UAnnotation (fqName = null)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
         UMethod (name = A)
             UParameter (name = str)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
         UMethod (name = A)
             UParameter (name = i)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UastEmptyExpression
         UMethod (name = getStr)
     UClass (name = AWithInit)
         UField (name = str)
-            UAnnotation (fqName = null)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
         UMethod (name = AWithInit)
             UParameter (name = str)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UBlockExpression
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = AWithInit)
             UParameter (name = i)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UastEmptyExpression
         UMethod (name = getStr)
     UClass (name = AWith2Init)
         UField (name = str)
-            UAnnotation (fqName = null)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
         UMethod (name = AWith2Init)
             UParameter (name = str)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UBlockExpression
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
@@ -39,7 +39,7 @@ UFile (package = )
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = AWith2Init)
             UParameter (name = i)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UastEmptyExpression
         UMethod (name = getStr)
@@ -47,10 +47,10 @@ UFile (package = )
         UMethod (name = AOnlyInit)
     UClass (name = AWithSecondary)
         UField (name = a)
-            UAnnotation (fqName = null)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
         UMethod (name = AWithSecondary)
             UParameter (name = i)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UastEmptyExpression
                 UBinaryExpression (operator = =)
@@ -60,7 +60,7 @@ UFile (package = )
                         [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = AWithSecondary)
             UParameter (name = s)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UastEmptyExpression
                 UBinaryExpression (operator = =)
@@ -72,10 +72,10 @@ UFile (package = )
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull)
     UClass (name = AWithSecondaryInit)
         UField (name = a)
-            UAnnotation (fqName = null)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
         UMethod (name = AWithSecondaryInit)
             UParameter (name = i)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UastEmptyExpression
                 UBlockExpression
@@ -87,7 +87,7 @@ UFile (package = )
                         [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = AWithSecondaryInit)
             UParameter (name = s)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UastEmptyExpression
                 UBinaryExpression (operator = =)
@@ -105,10 +105,10 @@ UFile (package = )
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull)
     UClass (name = AWithFieldInit)
         UField (name = a)
-            UAnnotation (fqName = null)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
         UMethod (name = AWithFieldInit)
             UParameter (name = i)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UBlockExpression
                     UBinaryExpression (operator = =)

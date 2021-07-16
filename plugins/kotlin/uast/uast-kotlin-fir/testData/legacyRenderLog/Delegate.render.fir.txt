@@ -1,8 +1,8 @@
 public final class MyColor {
-    @null private final var x: int
-    @null private final var y: int
-    @null private final var z: int
-    public fun MyColor(@null x: int, @null y: int, @null z: int) = UastEmptyExpression
+    @org.jetbrains.annotations.NotNull private final var x: int
+    @org.jetbrains.annotations.NotNull private final var y: int
+    @org.jetbrains.annotations.NotNull private final var z: int
+    public fun MyColor(@org.jetbrains.annotations.NotNull x: int, @org.jetbrains.annotations.NotNull y: int, @org.jetbrains.annotations.NotNull z: int) = UastEmptyExpression
     public final fun getX() : int = UastEmptyExpression
     public final fun getY() : int = UastEmptyExpression
     public final fun getZ() : int = UastEmptyExpression

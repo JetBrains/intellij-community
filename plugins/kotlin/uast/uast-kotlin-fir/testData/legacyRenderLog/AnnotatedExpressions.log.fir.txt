@@ -27,7 +27,7 @@ UFile (package = )
                                 USimpleNameReferenceExpression (identifier = b)
         UMethod (name = annotatedSwitch)
             UParameter (name = str)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UReturnExpression
                     USwitchExpression
