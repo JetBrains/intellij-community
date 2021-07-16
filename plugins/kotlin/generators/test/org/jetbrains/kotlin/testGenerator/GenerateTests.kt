@@ -1125,6 +1125,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("intentions/addNameToArgument", pattern = pattern)
             model("intentions/addNamesToCallArguments", pattern = pattern)
+            model("intentions/addNamesToFollowingArguments", pattern = pattern)
             model("intentions/addPropertyAccessors", pattern = pattern)
             model("intentions/specifyTypeExplicitly", pattern = pattern)
             model("intentions/importAllMembers", pattern = pattern)
