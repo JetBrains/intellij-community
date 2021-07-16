@@ -18,7 +18,15 @@ internal fun getNodeElement(userObject: Any?): Any? {
   }
 }
 
-internal fun moduleContexts(project: Project, element: Any?): Collection<Module>? {
+internal fun moduleContexts(project: Project, elements: Array<Any?>): List<Module> {
+  val result = ArrayList<Module>()
+  for (selectedValue in elements) {
+    result += moduleContexts(project, selectedValue) ?: continue
+  }
+  return result
+}
+
+private fun moduleContexts(project: Project, element: Any?): Collection<Module>? {
   if (element is ModuleGroup) {
     return element.modulesInGroup(project, true)
   }

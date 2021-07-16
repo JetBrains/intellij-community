@@ -1442,14 +1442,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     private Module @Nullable [] getSelectedModules() {
       final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
       if (viewPane == null) return null;
-      final Object[] elements = viewPane.getSelectedElements();
-      ArrayList<Module> result = new ArrayList<>();
-      for (Object element : elements) {
-        Collection<Module> modules = moduleContexts(myProject, element);
-        if (modules != null) {
-          result.addAll(modules);
-        }
-      }
+      List<Module> result = moduleContexts(myProject, viewPane.getSelectedElements());
       return result.isEmpty() ? null : result.toArray(Module.EMPTY_ARRAY);
     }
 
