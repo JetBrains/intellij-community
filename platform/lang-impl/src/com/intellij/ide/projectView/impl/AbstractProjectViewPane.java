@@ -80,6 +80,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
+import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.getNodeElement;
+import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.moduleContext;
+
 public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject {
   private static final Logger LOG = Logger.getInstance(AbstractProjectViewPane.class);
   public static final ProjectExtensionPointName<AbstractProjectViewPane> EP
@@ -459,6 +462,14 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       PsiElement[] elements = getPsiElements(selectedUserObjects);
       return elements.length > 0 ? elements : null;
     }
+    if (PlatformDataKeys.PROJECT_CONTEXT.is(dataId)) {
+      Object selected = getSingleNodeElement(selectedUserObjects);
+      return selected instanceof Project ? selected : null;
+    }
+    if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
+      Object selected = getSingleNodeElement(selectedUserObjects);
+      return moduleContext(myProject, selected);
+    }
     return null;
   }
 
@@ -470,6 +481,13 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       ContainerUtil.addAllNotNull(result, getElementsFromNode(userObject));
     }
     return PsiUtilCore.toPsiElementArray(result);
+  }
+
+  private static @Nullable Object getSingleNodeElement(@Nullable Object @NotNull [] selectedUserObjects) {
+    if (selectedUserObjects.length != 1) {
+      return null;
+    }
+    return getNodeElement(selectedUserObjects[0]);
   }
 
   private @Nullable PsiElement getFirstElementFromNode(@Nullable Object node) {
