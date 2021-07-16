@@ -147,8 +147,6 @@ final class CrossPlatformDistributionBuilder {
           exclude(name: "bin/restarter*")
           exclude(name: "bin/printenv*")
           exclude(name: "bin/*.sh")
-          exclude(name: "bin/*.py")
-          exclude(name: "bin/*.jnilib")
           exclude(name: "bin/idea.properties")
           exclude(name: "bin/*.vmoptions")
 
@@ -214,9 +212,9 @@ final class CrossPlatformDistributionBuilder {
 
     if (!violations.isEmpty()) {
       buildContext.messages.error(
-              "Files are at the same path in linux and mac distribution, " +
-                      "but have a different content in each. Please place them at different paths. " +
-                      "Files:\n" + violations.join("\n")
+        "Files are at the same path in linux and mac distribution, " +
+        "but have a different content in each. Please place them at different paths. " +
+        "Files:\n" + violations.join("\n")
       )
     }
 
