@@ -101,7 +101,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     }
 
     long allStartTime = System.currentTimeMillis();
-    Activity activity = StartUpMeasurer.startActivity("project data importing total", ActivityCategory.GRADLE_IMPORT);
+    Activity activity = StartUpMeasurer.startActivity("project data processing", ActivityCategory.GRADLE_IMPORT);
     try {
       // keep order of services execution
       final Set<Key<?>> allKeys = new TreeSet<>(grouped.keySet());

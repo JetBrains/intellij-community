@@ -320,7 +320,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                             boolean isBuildSrcProject,
                                             boolean useCustomSerialization) {
     final long startDataConversionTime = System.currentTimeMillis();
-    Activity activity = StartUpMeasurer.startActivity("project data processing", ActivityCategory.GRADLE_IMPORT);
+    Activity activity = StartUpMeasurer.startActivity("project data converting", ActivityCategory.GRADLE_IMPORT);
     extractExternalProjectModels(allModels, resolverCtx, useCustomSerialization);
 
     String projectName = allModels.getMainBuild().getName();
