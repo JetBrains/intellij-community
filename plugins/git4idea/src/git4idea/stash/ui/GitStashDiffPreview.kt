@@ -33,7 +33,7 @@ class GitStashDiffPreview(project: Project, private val tree: ChangesTree, isInE
       myContentPanel.border = IdeBorderFactory.createBorder(SideBorder.TOP)
     }
     tree.addSelectionListener(Runnable {
-      updatePreviewLater(tree.isModelUpdateInProgress)
+      updatePreviewLater(false)
     }, this)
 
     Disposer.register(parentDisposable, this)
