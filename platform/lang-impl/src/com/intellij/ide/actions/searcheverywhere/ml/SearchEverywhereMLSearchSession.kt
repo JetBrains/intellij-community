@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFileSystemItem
 import com.intellij.util.containers.ContainerUtil
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -31,11 +32,13 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
       val startTime = System.currentTimeMillis()
       val searchReason = if (prevState == null) SearchRestartReason.SEARCH_STARTED else reason
       val nextSearchIndex = (prevState?.searchIndex ?: 0) + 1
-      SearchEverywhereMlSearchState(sessionStartTime, startTime, nextSearchIndex, searchReason, tabId, keysTyped, backspacesTyped, queryLength)
+      SearchEverywhereMlSearchState(sessionStartTime, startTime, nextSearchIndex, searchReason, tabId, keysTyped, backspacesTyped,
+                                    queryLength)
     }
 
     if (prevState != null && isMLSupportedTab(tabId)) {
-      logger.onSearchRestarted(project, sessionId, prevState.searchIndex, itemIdProvider, cachedContextInfo, prevState, previousElementsProvider)
+      logger.onSearchRestarted(project, sessionId, prevState.searchIndex, itemIdProvider, cachedContextInfo, prevState,
+                               previousElementsProvider)
     }
   }
 
@@ -98,7 +101,7 @@ class SearchEverywhereMlItemIdProvider {
   fun getId(element: Any): Int {
     val key = when (element) {
       is GotoActionModel.MatchedValue -> if (element.value is GotoActionModel.ActionWrapper) element.value.action else element.value
-      is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> element.item.containingFile
+      is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> (element.item as PsiFileSystemItem).virtualFile
       else -> throw IllegalArgumentException("Illegal argument type ${element.javaClass.name}")
     }
     return itemToId.computeIfAbsent(key) { idCounter.getAndIncrement() }
