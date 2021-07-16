@@ -9,6 +9,6 @@ UFile (package = ) [public final class TestPropertyInitializer {...]
             UParameter (name = p) [@org.jetbrains.annotations.NotNull var p: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:Unit
-                UBinaryExpression (operator = =) [field = p] : PsiType:void
+                UBinaryExpression (operator = =) [field = p] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = field) [field] : PsiType:String
                     USimpleNameReferenceExpression (identifier = p) [p] : PsiType:String

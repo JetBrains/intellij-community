@@ -17,7 +17,7 @@ UFile (package = ) [public final class PropertyWithAnnotationKt {...]
             UParameter (name = value) [@org.jetbrains.annotations.NotNull var value: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:Unit
-                UBinaryExpression (operator = =) [field = value] : PsiType:void
+                UBinaryExpression (operator = =) [field = value] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = field) [field] : PsiType:int
                     USimpleNameReferenceExpression (identifier = value) [value] : PsiType:int
     UClass (name = TestAnnotation) [public abstract annotation TestAnnotation {...}]

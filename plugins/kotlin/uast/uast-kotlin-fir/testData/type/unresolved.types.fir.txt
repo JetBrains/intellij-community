@@ -7,7 +7,7 @@ UFile (package = ) [public final class UnresolvedKt {...]
                 UQualifiedReferenceExpression [x?.prop] : PsiType:NonExistentClass
                     USimpleNameReferenceExpression (identifier = x) [x] : PsiType:NonExistentClass
                     USimpleNameReferenceExpression (identifier = prop) [prop] : PsiType:NonExistentClass
-    UClass (name = A) [public final class A : error.NonExistentClass {...}]
+    UClass (name = A) [public final class A : <ErrorType> {...}]
         UField (name = prop) [@null private final var prop: error.NonExistentClass]
             UAnnotation (fqName = null) [@null]
         UMethod (name = A) [public fun A(@null prop: error.NonExistentClass) {...}]
