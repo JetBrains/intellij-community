@@ -19,7 +19,7 @@
     <orderEntry type="module" module-name="intellij.java.resources.en" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
-    <orderEntry type="library" exported="" name="ASM" level="project" />
+    <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.java" />

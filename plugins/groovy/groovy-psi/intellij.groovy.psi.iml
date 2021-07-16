@@ -28,5 +28,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="library" name="ASM" level="project" />
   </component>
 </module>

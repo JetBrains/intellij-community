@@ -42,6 +42,7 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" name="ASM" level="project" />
   </component>
   <component name="copyright">
     <Base>
