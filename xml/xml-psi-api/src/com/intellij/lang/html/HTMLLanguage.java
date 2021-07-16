@@ -4,6 +4,7 @@ package com.intellij.lang.html;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class HTMLLanguage extends XMLLanguage {
 
@@ -13,7 +14,7 @@ public class HTMLLanguage extends XMLLanguage {
     super(XMLLanguage.INSTANCE, "HTML", "text/html", "text/htmlh");
   }
 
-  protected HTMLLanguage(Language baseLanguage, @NonNls String name, @NonNls String... mime) {
+  protected HTMLLanguage(@NotNull Language baseLanguage, @NonNls @NotNull String name, @NonNls @NotNull String @NotNull ... mime) {
     super(baseLanguage, name, mime);
   }
 }
