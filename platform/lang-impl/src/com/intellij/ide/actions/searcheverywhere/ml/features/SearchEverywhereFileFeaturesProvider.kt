@@ -33,9 +33,8 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
   }
 
   private fun getPsiElementFeatures(element: PsiElement, currentTime: Long): Map<String, Any> {
-    val psiFile = element.containingFile
-    val virtualFile = psiFile.virtualFile
-    val project = psiFile.project
+    val virtualFile = (element as PsiFileSystemItem).virtualFile
+    val project = element.project
 
     return hashMapOf(
       IS_FAVORITE_DATA_KEY to isFavorite(virtualFile, project),
