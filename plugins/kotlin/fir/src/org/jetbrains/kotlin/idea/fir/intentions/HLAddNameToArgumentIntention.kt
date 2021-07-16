@@ -51,26 +51,7 @@ class HLAddNameToArgumentIntention :
             return@inputProvider null
         }
 
-        val valueParameterSymbol = resolvedCall.argumentMapping[element] ?: return@inputProvider null
-        if (valueParameterSymbol.isVararg) {
-            if (element.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm) &&
-                !element.isSpread) {
-                return@inputProvider null
-            }
-
-            // We can only add the parameter name for an argument for a vararg parameter if it's the ONLY argument for the parameter. E.g.,
-            //
-            //   fun foo(vararg i: Int) {}
-            //
-            //   foo(1, 2) // Can NOT add `i = ` to either argument
-            //   foo(1)    // Can change to `i = 1`
-            val varargArgumentCount = resolvedCall.argumentMapping.values.count { it == valueParameterSymbol }
-            if (varargArgumentCount != 1) {
-                return@inputProvider null
-            }
-        }
-
-        Input(valueParameterSymbol.name)
+        getArgumentNameIfCanBeUsedForCalls(element, resolvedCall)?.let { name -> Input(name) }
     }
 
     override fun skipProcessingFurtherElementsAfter(element: PsiElement) = element is KtValueArgumentList ||
@@ -100,6 +81,29 @@ class HLAddNameToArgumentIntention :
                 val newArgument = KtPsiFactory(element).createArgument(expression, name, element.getSpreadElement() != null)
                 element.replace(newArgument)
             }
+        }
+
+        fun getArgumentNameIfCanBeUsedForCalls(argument: KtValueArgument, resolvedCall: KtCallWithArguments): Name? {
+            val valueParameterSymbol = resolvedCall.argumentMapping[argument] ?: return null
+            if (valueParameterSymbol.isVararg) {
+                if (argument.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm) &&
+                    !argument.isSpread) {
+                    return null
+                }
+
+                // We can only add the parameter name for an argument for a vararg parameter if it's the ONLY argument for the parameter. E.g.,
+                //
+                //   fun foo(vararg i: Int) {}
+                //
+                //   foo(1, 2) // Can NOT add `i = ` to either argument
+                //   foo(1)    // Can change to `i = 1`
+                val varargArgumentCount = resolvedCall.argumentMapping.values.count { it == valueParameterSymbol }
+                if (varargArgumentCount != 1) {
+                    return null
+                }
+            }
+
+            return valueParameterSymbol.name
         }
     }
 }

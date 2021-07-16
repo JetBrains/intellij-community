@@ -44,5 +44,10 @@
       <className>org.jetbrains.kotlin.idea.fir.intentions.HLAddNameToArgumentIntention</className>
       <category>Kotlin</category>
     </intentionAction>
+
+    <intentionAction>
+      <className>org.jetbrains.kotlin.idea.fir.intentions.HLAddNamesToCallArgumentsIntention</className>
+      <category>Kotlin</category>
+    </intentionAction>
   </extensions>
 </idea-plugin>
