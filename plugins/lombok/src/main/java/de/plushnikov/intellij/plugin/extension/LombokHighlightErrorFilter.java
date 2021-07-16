@@ -4,12 +4,18 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptorUtil;
+import com.intellij.codeInspection.QuickFix;
+import com.intellij.java.JavaBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.handler.FieldNameConstantsHandler;
@@ -25,7 +31,8 @@ import java.util.regex.Pattern;
 
 
 public class LombokHighlightErrorFilter implements HighlightInfoFilter {
-  private static final Pattern LOMBOK_ANY_ANNOTATION_REQUIRED = Pattern.compile("Incompatible types\\. Found: '__*', required: 'lombok.*AnyAnnotation\\[\\]'");
+  @SuppressWarnings("UnresolvedPropertyKey") private static final Pattern LOMBOK_ANY_ANNOTATION_REQUIRED =
+    Pattern.compile(JavaErrorBundle.message("incompatible.types").replace("'{1}'", "__*").replace("'{0}'", "lombok.*AnyAnnotation\\[\\]"));
 
   private final Map<HighlightSeverity, Map<TextAttributesKey, List<LombokHighlightFilter>>> registeredFilters;
   private final Map<HighlightSeverity, Map<TextAttributesKey, List<LombokHighlightFixHook>>> registeredHooks;
@@ -68,7 +75,7 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
       .getOrDefault(highlightInfo.getSeverity(), Collections.emptyMap())
       .getOrDefault(highlightInfo.type.getAttributesKey(), Collections.emptyList())
       .stream()
-      .filter(filter -> filter.descriptionCheck(highlightInfo.getDescription()))
+      .filter(filter -> filter.descriptionCheck(highlightInfo.getDescription(), highlightedElement))
       .allMatch(filter -> filter.accept(highlightedElement));
 
     // check if highlight was filtered
@@ -140,11 +147,9 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
 
     //see com.intellij.java.lomboktest.LombokHighlightingTest.testGetterLazyVariableNotInitialized
     VARIABLE_MIGHT_NOT_BEEN_INITIALIZED(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES) {
-      private final Pattern pattern = Pattern.compile("Variable '.+' might not have been initialized");
-
       @Override
-      public boolean descriptionCheck(@Nullable String description) {
-        return description != null && pattern.matcher(description).matches();
+      public boolean descriptionCheck(@Nullable String description, PsiElement highlightedElement) {
+        return JavaErrorBundle.message("variable.not.initialized", highlightedElement.getText()).equals(description);
       }
 
       @Override
@@ -156,7 +161,7 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
     //see com.intellij.java.lomboktest.LombokHighlightingTest.testFieldNameConstantsExample
     CONSTANT_EXPRESSION_REQUIRED(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES) {
       @Override
-      public boolean descriptionCheck(@Nullable String description) {
+      public boolean descriptionCheck(@Nullable String description, PsiElement highlightedElement) {
         return JavaErrorBundle.message("constant.expression.required").equals(description);
       }
 
@@ -169,10 +174,14 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
     // WARNINGS HANDLERS
     //see com.intellij.java.lomboktest.LombokHighlightingTest.testBuilderWithDefaultRedundantInitializer
     VARIABLE_INITIALIZER_IS_REDUNDANT(HighlightSeverity.WARNING, CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES) {
-      private final Pattern pattern = Pattern.compile("Variable '.+' initializer '.+' is redundant");
+      @SuppressWarnings("UnresolvedPropertyKey")
+      private final Pattern pattern = Pattern.compile(
+        JavaBundle.message("inspection.unused.assignment.problem.descriptor2")
+          .replace("{0}", "(.+)")
+          .replace("{1}", "(.+)"));
 
       @Override
-      public boolean descriptionCheck(@Nullable String description) {
+      public boolean descriptionCheck(@Nullable String description, PsiElement highlightedElement) {
         return description != null && pattern.matcher(description).matches();
       }
 
@@ -185,11 +194,20 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
     // field should have lazy getter and should be initialized in constructors
     //see com.intellij.java.lomboktest.LombokHighlightingTest.testGetterLazyInvocationProduceNPE
     METHOD_INVOCATION_WILL_PRODUCE_NPE(HighlightSeverity.WARNING, CodeInsightColors.WARNINGS_ATTRIBUTES) {
-      private final Pattern pattern = Pattern.compile("Method invocation '.*' will produce 'NullPointerException'");
+      private final CommonProblemDescriptor descriptor = new CommonProblemDescriptor() {
+          @Override
+          public @NotNull String getDescriptionTemplate() {
+            return JavaAnalysisBundle.message("dataflow.message.npe.method.invocation.sure");
+          }
 
+          @Override
+          public QuickFix @Nullable [] getFixes() {
+            return null;
+          }
+        };
       @Override
-      public boolean descriptionCheck(@Nullable String description) {
-        return description != null && pattern.matcher(description).matches();
+      public boolean descriptionCheck(@Nullable String description, PsiElement highlightedElement) {
+        return ProblemDescriptorUtil.renderDescriptionMessage(descriptor, highlightedElement).equals(description);
       }
 
       @Override
@@ -206,11 +224,21 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
     //see de.plushnikov.intellij.plugin.inspection.DataFlowInspectionTest.testDefaultBuilderFinalValueInspectionIsAlwaysThat
     //see de.plushnikov.intellij.plugin.inspection.PointlessBooleanExpressionInspectionTest.testPointlessBooleanExpressionBuilderDefault
     CONSTANT_CONDITIONS_DEFAULT_BUILDER_CAN_BE_SIMPLIFIED(HighlightSeverity.WARNING, CodeInsightColors.WARNINGS_ATTRIBUTES) {
-      private final Pattern patternCanBeSimplified = Pattern.compile("'.+' can be simplified to '.+'");
-      private final Pattern patternIsAlways = Pattern.compile("Condition '.+' is always '(true|false)'");
+      @SuppressWarnings("UnresolvedPropertyKey")
+      private final Pattern patternCanBeSimplified =
+        preparePattern(InspectionGadgetsBundle.message("simplifiable.conditional.expression.problem.descriptor"), "''{0}''");
+
+      @SuppressWarnings("UnresolvedPropertyKey")
+      private final Pattern patternIsAlways =
+        preparePattern(JavaAnalysisBundle.message("dataflow.message.constant.condition"), "<code>{0, choice, 0#false|1#true}</code>");
+
+      @NotNull
+      private Pattern preparePattern(String message, String s) {
+        return Pattern.compile(ProblemDescriptorUtil.removeLocReference(message).replace("<code>#ref</code>", "'(.+)'").replace(s, "'(.+)'"));
+      }
 
       @Override
-      public boolean descriptionCheck(@Nullable String description) {
+      public boolean descriptionCheck(@Nullable String description, PsiElement highlightedElement) {
         return description != null
           && (patternCanBeSimplified.matcher(description).matches() || patternIsAlways.matcher(description).matches());
       }
@@ -240,10 +268,11 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
     }
 
     /**
-     * @param description of the current highlighted element
+     * @param description            of the current highlighted element
+     * @param highlightedElement     the current highlighted element
      * @return true if the filter can handle current type of the highlight info with that kind of the description
      */
-    abstract public boolean descriptionCheck(@Nullable String description);
+    abstract public boolean descriptionCheck(@Nullable String description, PsiElement highlightedElement);
 
     /**
      * @param highlightedElement the deepest element (it's the leaf element in PSI tree where the highlight was occurred)
