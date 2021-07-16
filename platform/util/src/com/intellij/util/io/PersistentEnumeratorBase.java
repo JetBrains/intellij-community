@@ -44,12 +44,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author max
  * @author jeka
  */
-public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>, Forceable, Closeable {
+public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>, Forceable, Closeable, SelfDiagnosing {
   protected static final Logger LOG = Logger.getInstance(PersistentEnumeratorBase.class);
   protected static final int NULL_ID = DataEnumeratorEx.NULL_ID;
 
   protected static final boolean USE_RW_LOCK = SystemProperties.getBooleanProperty("idea.persistent.data.use.read.write.lock", false);
-  private static final boolean DO_EXPENSIVE_CHECKS = SystemProperties.getBooleanProperty("idea.persistent.enumerator.do.expensive.checks", false);
   private static final int META_DATA_OFFSET = 4;
   static final int DATA_START = META_DATA_OFFSET + 16;
 
@@ -179,39 +178,12 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
                                                                           PagedFileStorage.MB,
                                                                           false,
                                                                           dataDescriptor);
-        if (DO_EXPENSIVE_CHECKS) {
-          doExpensiveSanityCheck();
-        }
       }
       catch (Throwable e) {
         LOG.info(e);
         myStorage.close();
         throw new CorruptedException(file);
       }
-    }
-  }
-
-  private void doExpensiveSanityCheck() {
-    try {
-      List<Data> storedData = new ArrayList<>();
-      iterateData(data -> {
-        storedData.add(data);
-        return true;
-      });
-
-      for (int i = 0; i < storedData.size(); i++) {
-        Data data = storedData.get(i);
-        int id = i + 1;
-        if (tryEnumerate(data) != id) {
-          throw new IOException(myFile + " is corrupted");
-        }
-        if (myDataDescriptor.isEqual(valueOf(id), data)) {
-          throw new IOException(myFile + " is corrupted");
-        }
-      }
-    }
-    catch (Throwable e) {
-      LOG.error(e);
     }
   }
 
