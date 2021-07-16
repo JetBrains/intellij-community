@@ -14,7 +14,6 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -263,9 +262,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     }
     else if (VcsLogInternalDataKeys.VCS_LOG_VISIBLE_ROOTS.is(dataId)) {
       return VcsLogUtil.getAllVisibleRoots(myLogData.getRoots(), myFilterUi.getFilters());
-    }
-    else if (ChangesBrowserBase.DATA_KEY.is(dataId)) {
-      return myChangesBrowser;
     }
     else if (QuickActionProvider.KEY.is(dataId)) {
       return new QuickActionProvider() {
