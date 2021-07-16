@@ -1,17 +1,17 @@
 public abstract interface Pizza {
     public abstract fun getSize() : int = UastEmptyExpression
     public abstract fun getName() : java.lang.String = UastEmptyExpression
-    public abstract fun contains(@null ingredient: Pizza.Ingredient) : boolean = UastEmptyExpression
+    public abstract fun contains(@org.jetbrains.annotations.NotNull ingredient: Pizza.Ingredient) : boolean = UastEmptyExpression
 }
 
 public final class Margherita : Pizza {
-    @null private final var size: int = 42
-    public fun Margherita(@null size: int) = UastEmptyExpression
+    @org.jetbrains.annotations.NotNull private final var size: int = 42
+    public fun Margherita(@org.jetbrains.annotations.NotNull size: int) = UastEmptyExpression
     public fun getSize() : int = UastEmptyExpression
     public fun getName() : java.lang.String {
         return java.lang.[!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
-    public fun contains(@null ingredient: Pizza.Ingredient) : boolean {
+    public fun contains(@org.jetbrains.annotations.NotNull ingredient: Pizza.Ingredient) : boolean {
         return false
     }
 }

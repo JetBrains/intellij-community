@@ -53,14 +53,14 @@ UFile (package = )
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = barT)
             UParameter (name = t)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UQualifiedReferenceExpression
                     USimpleNameReferenceExpression (identifier = t)
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = barTL)
             UParameter (name = listT)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UQualifiedReferenceExpression
                     USimpleNameReferenceExpression (identifier = listT)

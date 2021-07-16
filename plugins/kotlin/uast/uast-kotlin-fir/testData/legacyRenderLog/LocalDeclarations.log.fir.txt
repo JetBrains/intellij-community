@@ -20,7 +20,7 @@ UFile (package = )
                     UVariable (name = someLocalFun)
                         ULambdaExpression
                             UParameter (name = text)
-                                UAnnotation (fqName = null)
+                                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                             UBlockExpression
                                 UReturnExpression
                                     ULiteralExpression (value = 42)

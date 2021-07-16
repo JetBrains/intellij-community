@@ -2,7 +2,7 @@ UFile (package = )
     UClass (name = DestructuringDeclarationKt)
         UMethod (name = foo)
             UParameter (name = data)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = var268d41a5)

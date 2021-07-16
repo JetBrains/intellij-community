@@ -1,10 +1,10 @@
 public abstract interface Callback {
-    public abstract fun onError(@null throwable: java.lang.Throwable) : void = UastEmptyExpression
+    public abstract fun onError(@org.jetbrains.annotations.NotNull throwable: java.lang.Throwable) : void = UastEmptyExpression
 }
 
 public final class Model {
     public fun Model() = UastEmptyExpression
-    public final fun crashMe(@null clazz: java.lang.Class<T>, @null factory: kotlin.jvm.functions.Function0<? extends T>) : void {
+    public final fun crashMe(@org.jetbrains.annotations.NotNull clazz: java.lang.Class<T>, @org.jetbrains.annotations.NotNull factory: kotlin.jvm.functions.Function0<? extends T>) : void {
         throw [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
 }

@@ -43,7 +43,7 @@ UFile (package = )
         UMethod (name = getBaz)
         UMethod (name = runRunnable)
             UParameter (name = r)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UReturnExpression
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
@@ -63,13 +63,13 @@ UFile (package = )
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = ambiguousSamAcceptor)
             UParameter (name = s)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UReturnExpression
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = ambiguousSamAcceptor)
             UParameter (name = s)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UReturnExpression
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)

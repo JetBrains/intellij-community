@@ -10,19 +10,19 @@ UFile (package = )
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = funPlainCall)
             UParameter (name = a)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UReturnExpression
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = funNamedArgumentsCall)
             UParameter (name = a)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UReturnExpression
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = func)
             UParameter (name = a)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
@@ -43,7 +43,7 @@ UFile (package = )
             ULiteralExpression (value = 42)
         UMethod (name = TopLevelClass)
             UParameter (name = t)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UastEmptyExpression
         UMethod (name = getClassLevelProperty)

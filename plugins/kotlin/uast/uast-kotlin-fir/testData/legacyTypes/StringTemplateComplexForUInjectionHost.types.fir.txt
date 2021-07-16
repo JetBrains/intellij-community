@@ -44,9 +44,9 @@ UFile (package = ) [public final class StringTemplateComplexForUInjectionHostKt 
         UMethod (name = getLiteralInLiteral) [public static final fun getLiteralInLiteral() : java.lang.String = UastEmptyExpression]
         UMethod (name = getLiteralInLiteral2) [public static final fun getLiteralInLiteral2() : java.lang.String = UastEmptyExpression]
         UMethod (name = getEmpty) [public static final fun getEmpty() : java.lang.String = UastEmptyExpression]
-        UMethod (name = simpleForTemplate) [public static final fun simpleForTemplate(@null i: int) : java.lang.String {...}]
-            UParameter (name = i) [@null var i: int = 0]
-                UAnnotation (fqName = null) [@null]
+        UMethod (name = simpleForTemplate) [public static final fun simpleForTemplate(@org.jetbrains.annotations.NotNull i: int) : java.lang.String {...}]
+            UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int = 0]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                 ULiteralExpression (value = 0) [0] : PsiType:int
             UBlockExpression [{...}]
                 UReturnExpression [return i]

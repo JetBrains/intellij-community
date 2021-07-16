@@ -6,7 +6,7 @@ UFile (package = )
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = id)
             UParameter (name = x)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UReturnExpression
                     USimpleNameReferenceExpression (identifier = x)

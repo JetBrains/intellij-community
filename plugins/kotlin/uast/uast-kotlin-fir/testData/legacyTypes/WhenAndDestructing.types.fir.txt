@@ -1,8 +1,8 @@
 UFile (package = ) [public final class WhenAndDestructingKt {...]
     UClass (name = WhenAndDestructingKt) [public final class WhenAndDestructingKt {...}]
-        UMethod (name = getElementsAdditionalResolve) [public static final fun getElementsAdditionalResolve(@null string: java.lang.String) : java.lang.String {...}]
-            UParameter (name = string) [@null var string: java.lang.String]
-                UAnnotation (fqName = null) [@null]
+        UMethod (name = getElementsAdditionalResolve) [public static final fun getElementsAdditionalResolve(@org.jetbrains.annotations.NotNull string: java.lang.String) : java.lang.String {...}]
+            UParameter (name = string) [@org.jetbrains.annotations.NotNull var string: java.lang.String]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:Unit
                 UDeclarationsExpression [var arr: java.util.List<? extends java.lang.String> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
                     ULocalVariable (name = arr) [var arr: java.util.List<? extends java.lang.String> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]

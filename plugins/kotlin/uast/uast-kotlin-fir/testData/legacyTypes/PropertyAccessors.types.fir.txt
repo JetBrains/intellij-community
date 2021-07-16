@@ -7,12 +7,12 @@ UFile (package = ) [public final class PropertyTest {...]
                     UQualifiedReferenceExpression [this.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:String
                         UThisExpression (label = null) [this] : PsiType:PropertyTest
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-        UMethod (name = setStringRepresentation) [public final fun setStringRepresentation(@null value: java.lang.String) : void {...}]
-            UParameter (name = value) [@null var value: java.lang.String]
-                UAnnotation (fqName = null) [@null]
+        UMethod (name = setStringRepresentation) [public final fun setStringRepresentation(@org.jetbrains.annotations.NotNull value: java.lang.String) : void {...}]
+            UParameter (name = value) [@org.jetbrains.annotations.NotNull var value: java.lang.String]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:Unit
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-        UMethod (name = setDataFromString) [public final fun setDataFromString(@null data: java.lang.String) : void {...}]
-            UParameter (name = data) [@null var data: java.lang.String]
-                UAnnotation (fqName = null) [@null]
+        UMethod (name = setDataFromString) [public final fun setDataFromString(@org.jetbrains.annotations.NotNull data: java.lang.String) : void {...}]
+            UParameter (name = data) [@org.jetbrains.annotations.NotNull var data: java.lang.String]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:Unit
