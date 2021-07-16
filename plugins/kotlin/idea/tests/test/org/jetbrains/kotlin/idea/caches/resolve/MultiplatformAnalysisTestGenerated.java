@@ -38,6 +38,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
         runTest("testData/multiplatform/callableReferences/");
     }
 
+    @TestMetadata("chainedTypeAliasRefinement")
+    public void testChainedTypeAliasRefinement() throws Exception {
+        runTest("testData/multiplatform/chainedTypeAliasRefinement/");
+    }
+
     @TestMetadata("commonSealedWithPlatformInheritor")
     public void testCommonSealedWithPlatformInheritor() throws Exception {
         runTest("testData/multiplatform/commonSealedWithPlatformInheritor/");
