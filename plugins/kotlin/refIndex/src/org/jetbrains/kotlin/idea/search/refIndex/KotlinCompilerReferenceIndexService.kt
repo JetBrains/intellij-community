@@ -7,6 +7,7 @@ import com.intellij.compiler.backwardRefs.DirtyScopeHolder
 import com.intellij.compiler.server.BuildManager
 import com.intellij.compiler.server.BuildManagerListener
 import com.intellij.compiler.server.CustomBuilderMessageHandler
+import com.intellij.compiler.server.PortableCachesLoadListener
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.jvm.JvmModifier
@@ -156,6 +157,12 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
                         }
                     }
                 }
+            }
+        })
+
+        connection.subscribe(PortableCachesLoadListener.TOPIC, object : PortableCachesLoadListener {
+            override fun loadingStarted() {
+                withWriteLock { closeStorage() }
             }
         })
     }

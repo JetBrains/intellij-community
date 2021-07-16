@@ -7,6 +7,7 @@ import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestIn
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInfo;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.compiler.server.PortableCachesLoadListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -134,9 +135,16 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
           markAsOutdated();
         }
       });
+
+      project.getMessageBus().connect(this).subscribe(PortableCachesLoadListener.TOPIC, new PortableCachesLoadListener() {
+        @Override
+        public void loadingStarted() {
+          closeReaderIfNeeded(IndexCloseReason.SHUTDOWN);
+        }
+      });
     }
 
-    Disposer.register(this, () -> closeReaderIfNeeded(IndexCloseReason.PROJECT_CLOSED));
+    Disposer.register(this, () -> closeReaderIfNeeded(IndexCloseReason.SHUTDOWN));
   }
 
   @Nullable
@@ -650,7 +658,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   protected enum IndexCloseReason {
     AN_EXCEPTION,
     COMPILATION_STARTED,
-    PROJECT_CLOSED
+    SHUTDOWN
   }
 
   protected enum IndexOpenReason {
