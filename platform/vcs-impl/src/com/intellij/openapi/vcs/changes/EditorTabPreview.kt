@@ -46,12 +46,8 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
 
   var escapeHandler: Runnable? = null
 
-  fun openWithDoubleClick(tree: ChangesTree) {
-    installDoubleClickHandler(tree)
-    installEnterKeyHandler(tree)
-    installSelectionChangedHandler(tree) { updatePreview(false) }
-  }
-
+  fun openWithDoubleClick(tree: ChangesTree) = installListeners(tree, false)
+  
   fun installListeners(tree: ChangesTree, isOpenEditorDiffPreviewWithSingleClick: Boolean) {
     installDoubleClickHandler(tree)
     installEnterKeyHandler(tree)
@@ -59,11 +55,11 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
       //do not open file aggressively on start up, do it later
       DumbService.getInstance(project).smartInvokeLater {
         if (isDisposed(updatePreviewQueue)) return@smartInvokeLater
-        installSelectionHandler(tree, isOpenEditorDiffPreviewWithSingleClick)
+        installSelectionHandler(tree, true)
       }
     }
     else {
-      installSelectionHandler(tree, isOpenEditorDiffPreviewWithSingleClick)
+      installSelectionHandler(tree, false)
     }
   }
 
