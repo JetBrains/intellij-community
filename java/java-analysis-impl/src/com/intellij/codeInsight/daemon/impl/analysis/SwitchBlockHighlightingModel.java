@@ -610,7 +610,14 @@ public class SwitchBlockHighlightingModel {
         if (alreadyDominatedLabels.containsKey(currPattern)) continue;
         for (int j = i + 1; j < switchLabels.size(); j++) {
           PsiCaseLabelElement next = switchLabels.get(j);
-          // todo dominating pattern over const expr, although there is a contradiction with spec
+          if (isConstantLabelElement(next)) {
+            PsiExpression constExpr = ObjectUtils.tryCast(next, PsiExpression.class);
+            assert constExpr != null;
+            if (JavaPsiPatternUtil.dominates(currPattern, constExpr.getType())) {
+              alreadyDominatedLabels.put(next, currPattern);
+            }
+            continue;
+          }
           if (isNullType(next) && JavaPsiPatternUtil.isTotalForType(currPattern, mySelectorType)) {
             alreadyDominatedLabels.put(next, currPattern);
             continue;
