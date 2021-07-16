@@ -2,6 +2,7 @@ package com.intellij.jps.cache.loader;
 
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.compiler.server.PortableCachesLoadListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jps.cache.JpsCacheBundle;
 import com.intellij.jps.cache.client.JpsServerClient;
@@ -85,6 +86,8 @@ public class JpsOutputLoaderManager implements Disposable {
       public void run(@NotNull ProgressIndicator indicator) {
         Pair<String, Integer> commitInfo = getNearestCommit(isForceUpdate, verbose);
         if (commitInfo != null) {
+          assert myProject != null;
+          myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingStarted();
           // Drop JPS metadata to force plugin for downloading all compilation outputs
           if (isForceUpdate) {
             myMetadataLoader.dropCurrentProjectMetadata();
@@ -171,6 +174,7 @@ public class JpsOutputLoaderManager implements Disposable {
     Map<String, Map<String, BuildTargetState>> commitSourcesState = myMetadataLoader.loadMetadataForCommit(commitId);
     if (commitSourcesState == null) {
       LOG.warn("Couldn't load metadata for commit: " + commitId);
+      myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(false);
       return;
     }
 
@@ -195,6 +199,7 @@ public class JpsOutputLoaderManager implements Disposable {
           LOG.warn("Unexpected exception rollback all progress", e);
           onFail();
           getLoaders(myProject).forEach(loader -> loader.rollback());
+          myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(false);
           indicator.setText(JpsCacheBundle.message("progress.text.rolling.back.downloaded.caches"));
         }
       }).handle((result, ex) -> handleExceptions(result, ex, indicator)).get();
@@ -202,6 +207,7 @@ public class JpsOutputLoaderManager implements Disposable {
     catch (InterruptedException | ExecutionException e) {
       LOG.warn("Couldn't fetch jps compilation caches", e);
       onFail();
+      myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(false);
     }
   }
 
@@ -291,6 +297,7 @@ public class JpsOutputLoaderManager implements Disposable {
   private void saveStateAndNotify(LoaderStatus loaderStatus, String commitId, long startTime) {
     if (loaderStatus == LoaderStatus.FAILED) {
       onFail();
+      myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(false);
       return;
     }
 
@@ -302,6 +309,7 @@ public class JpsOutputLoaderManager implements Disposable {
         .createNotification(JpsCacheBundle.message("notification.title.compiler.caches.loader"), JpsCacheBundle.message("notification.content.update.compiler.caches.completed.successfully.in.s", endTime), NotificationType.INFORMATION)
         .notify(myProject);
     });
+    myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(true);
     LOG.info("Loading finished");
   }
 
@@ -316,6 +324,7 @@ public class JpsOutputLoaderManager implements Disposable {
         onFail();
       }
       getLoaders(myProject).forEach(loader -> loader.rollback());
+      myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(false);
       indicator.setText(JpsCacheBundle.message("progress.text.rolling.back.downloaded.caches"));
     }
     return result;
