@@ -102,9 +102,9 @@ class LessonManager {
     LearningUiManager.activeToolWindow?.scrollToTheStart()
   }
 
-  fun addMessage(@Language("HTML") text: String, isInformer: Boolean = false, visualNumber: Int? = null) {
+  fun addMessage(@Language("HTML") text: String, isInformer: Boolean = false, visualNumber: Int? = null, useInternalParagraphStyle: Boolean = false) {
     val state = if (isInformer) LessonMessagePane.MessageState.INFORMER else LessonMessagePane.MessageState.NORMAL
-    learnPanel?.addMessage(text, LessonMessagePane.MessageProperties(state, visualNumber))
+    learnPanel?.addMessage(text, LessonMessagePane.MessageProperties(state, visualNumber, useInternalParagraphStyle))
   }
 
   fun addInactiveMessage(message: String, visualNumber: Int?) {
