@@ -817,7 +817,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       }
     }
     else {
-      final boolean cantChangeFinalModifier = hasWriteAccess || inFinalContext;
+      final boolean cantChangeFinalModifier = hasWriteAccess || 
+                                              inFinalContext && choice.isAll() || 
+                                              chosenAnchor instanceof PsiSwitchLabelStatementBase;
       Pass<PsiElement> callback = new Pass<>() {
         @Override
         public void pass(final PsiElement container) {
