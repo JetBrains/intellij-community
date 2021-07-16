@@ -691,6 +691,13 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
   }
 
+  @Override
+  public void visitPyMatchStatement(@NotNull PyMatchStatement matchStatement) {
+    registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON310), 
+                                   PyPsiBundle.message("INSP.compatibility.feature.support.match.statements"), 
+                                   matchStatement.getFirstChild());
+  }
+
   private void checkBitwiseOrUnionSyntax(@NotNull PyBinaryExpression node) {
     if (node.getOperator() != PyTokenTypes.OR) return;
 

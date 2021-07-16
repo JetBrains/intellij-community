@@ -508,6 +508,11 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON310, false, true);
   }
 
+  // PY-49774
+  public void testMatchStatementBefore310() {
+    doTest(LanguageLevel.PYTHON39, true, true);
+  }
+  
   // PY-44974
   public void testBitwiseOrUnionInOlderVersionsError() {
     doTest(LanguageLevel.PYTHON39, false, false);

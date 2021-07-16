@@ -888,7 +888,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-48012
   public void testUnresolvedKeywordPattern() {
-    doTest();
+    runWithLanguageLevel(LanguageLevel.PYTHON310, this::doTest);
   }
 
   @NotNull
