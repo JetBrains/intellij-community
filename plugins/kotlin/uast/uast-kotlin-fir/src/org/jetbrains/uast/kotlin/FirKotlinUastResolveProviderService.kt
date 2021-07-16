@@ -116,38 +116,40 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun resolveToType(ktTypeReference: KtTypeReference, source: UElement): PsiType? {
         analyseForUast(ktTypeReference) {
-            return ktTypeReference.getPsiType(TypeMappingMode.DEFAULT_UAST)
+            val ktType = ktTypeReference.getKtType()
+            if (ktType is KtClassErrorType) return null
+            return ktType.asPsiType(ktTypeReference, TypeMappingMode.DEFAULT_UAST)
         }
     }
 
     override fun getDoubleColonReceiverType(ktDoubleColonExpression: KtDoubleColonExpression, source: UElement): PsiType? {
         analyseForUast(ktDoubleColonExpression) {
-            return ktDoubleColonExpression.getReceiverPsiType(TypeMappingMode.DEFAULT_UAST)
+            return ktDoubleColonExpression.getReceiverKtType()?.asPsiType(ktDoubleColonExpression, TypeMappingMode.DEFAULT_UAST)
         }
     }
 
     override fun getCommonSupertype(left: KtExpression, right: KtExpression, uExpression: UExpression): PsiType? {
         val ktElement = uExpression.sourcePsi as? KtExpression ?: return null
         analyseForUast(ktElement) {
-            return commonSuperType(listOf(left, right), ktElement, TypeMappingMode.DEFAULT_UAST)
+            return commonSuperType(listOf(left.getKtType(), right.getKtType()))?.asPsiType(ktElement, TypeMappingMode.DEFAULT_UAST)
         }
     }
 
     override fun getType(ktExpression: KtExpression, parent: UElement): PsiType? {
         analyseForUast(ktExpression) {
-            return ktExpression.getPsiType(TypeMappingMode.DEFAULT_UAST)
+            return ktExpression.getKtType().asPsiType(ktExpression, TypeMappingMode.DEFAULT_UAST)
         }
     }
 
     override fun getType(ktDeclaration: KtDeclaration, parent: UElement): PsiType? {
         analyseForUast(ktDeclaration) {
-            return ktDeclaration.getPsiType(TypeMappingMode.DEFAULT_UAST)
+            return ktDeclaration.getReturnKtType().asPsiType(ktDeclaration, TypeMappingMode.DEFAULT_UAST)
         }
     }
 
     override fun getFunctionType(ktFunction: KtFunction, parent: UElement): PsiType? {
         analyseForUast(ktFunction) {
-            return ktFunction.getPsiType(TypeMappingMode.DEFAULT_UAST)
+            return ktFunction.getFunctionalType().asPsiType(ktFunction, TypeMappingMode.DEFAULT_UAST)
         }
     }
 

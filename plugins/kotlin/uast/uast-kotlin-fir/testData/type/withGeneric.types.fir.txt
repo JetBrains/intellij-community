@@ -52,7 +52,7 @@ UFile (package = ) [public final class WithGenericKt {...]
                         UParameter (name = e) [@org.jetbrains.annotations.NotNull var e: java.lang.NullPointerException]
                             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                         UBlockExpression [{...}] : PsiType:Unit
-                            UBinaryExpression (operator = =) [result3 = "OK"] : PsiType:void
+                            UBinaryExpression (operator = =) [result3 = "OK"] : PsiType:Unit
                                 USimpleNameReferenceExpression (identifier = result3) [result3] : PsiType:String
                                 ULiteralExpression (value = "OK") ["OK"] : PsiType:String
                 UIfExpression [if (result3 != "OK") return "fail: test3"] : PsiType:Unit
