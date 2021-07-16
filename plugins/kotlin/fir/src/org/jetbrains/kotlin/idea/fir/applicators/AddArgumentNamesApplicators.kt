@@ -5,12 +5,11 @@ import com.intellij.psi.PsiComment
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
 import org.jetbrains.kotlin.idea.api.applicator.applicator
+import org.jetbrains.kotlin.idea.intentions.AddNameToArgumentIntention
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtLambdaArgument
-import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespace
 
 object AddArgumentNamesApplicators {
     class SingleArgumentInput(val name: Name) : HLApplicatorInput
@@ -29,16 +28,7 @@ object AddArgumentNamesApplicators {
         }
 
         applyTo { element, input ->
-            val expression = element.getArgumentExpression() ?: return@applyTo
-            val name = input.name
-
-            val prevSibling = element.getPrevSiblingIgnoringWhitespace()
-            if (prevSibling is PsiComment && """/\*\s*$name\s*=\s*\*/""".toRegex().matches(prevSibling.text)) {
-                prevSibling.delete()
-            }
-
-            val newArgument = KtPsiFactory(element).createArgument(expression, name, element.getSpreadElement() != null)
-            element.replace(newArgument)
+            AddNameToArgumentIntention.apply(element, input.name)
         }
     }
 

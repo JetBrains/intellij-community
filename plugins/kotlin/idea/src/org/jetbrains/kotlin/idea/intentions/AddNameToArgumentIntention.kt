@@ -52,9 +52,13 @@ class AddNameToArgumentIntention : SelfTargetingIntention<KtValueArgument>(
     }
 
     companion object {
-        fun apply(element: KtValueArgument, givenResolvedCall: ResolvedCall<*>? = null): Boolean {
-            val name = detectNameToAdd(element, shouldBeLastUnnamed = false, givenResolvedCall = givenResolvedCall) ?: return false
-            val argumentExpression = element.getArgumentExpression() ?: return false
+        fun apply(element: KtValueArgument, givenResolvedCall: ResolvedCall<*>? = null) {
+            val name = detectNameToAdd(element, shouldBeLastUnnamed = false, givenResolvedCall = givenResolvedCall) ?: return
+            apply(element, name)
+        }
+
+        fun apply(element: KtValueArgument, name: Name) {
+            val argumentExpression = element.getArgumentExpression() ?: return
 
             val prevSibling = element.getPrevSiblingIgnoringWhitespace()
             if (prevSibling is PsiComment && """/\*\s*$name\s*=\s*\*/""".toRegex().matches(prevSibling.text)) {
@@ -63,7 +67,6 @@ class AddNameToArgumentIntention : SelfTargetingIntention<KtValueArgument>(
 
             val newArgument = KtPsiFactory(element).createArgument(argumentExpression, name, element.getSpreadElement() != null)
             element.replace(newArgument)
-            return true
         }
 
         fun detectNameToAdd(argument: KtValueArgument, shouldBeLastUnnamed: Boolean, givenResolvedCall: ResolvedCall<*>? = null): Name? {
