@@ -22,7 +22,7 @@ class GitStashEditorDiffPreview(diffProcessor: GitStashDiffPreview, tree: Change
       closePreview()
       ChangesViewContentManager.getToolWindowFor(project, GitStashContentProvider.TAB_NAME)?.activate(null)
     }
-    openWithDoubleClick(tree)
+    installListeners(tree, false)
     tree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY, PropertyChangeListener {
       if (isPreviewOpen()) {
         FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(previewFile)

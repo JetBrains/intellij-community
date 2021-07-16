@@ -23,7 +23,7 @@ class GitStageEditorDiffPreview(diffProcessor: GitStageDiffPreview, private val 
       closePreview()
       activateMainUi()
     }
-    openWithDoubleClick(tree)
+    installListeners(tree, false)
     installNextDiffActionOn(targetComponent)
     UIUtil.putClientProperty(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
   }

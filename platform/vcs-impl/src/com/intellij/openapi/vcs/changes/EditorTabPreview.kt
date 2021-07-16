@@ -46,8 +46,6 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
 
   var escapeHandler: Runnable? = null
 
-  fun openWithDoubleClick(tree: ChangesTree) = installListeners(tree, false)
-  
   fun installListeners(tree: ChangesTree, isOpenEditorDiffPreviewWithSingleClick: Boolean) {
     installDoubleClickHandler(tree)
     installEnterKeyHandler(tree)
