@@ -242,14 +242,6 @@ fun KtElement?.isSizeOrLength(): Boolean {
     }
 }
 
-private val COUNT_FUNCTIONS = listOf(FqName("kotlin.collections.count"), FqName("kotlin.text.count"))
-
-fun KtExpression.isCountCall(): Boolean {
-    val callExpression = this as? KtCallExpression
-        ?: (this as? KtQualifiedExpression)?.callExpression
-        ?: return false
-    return callExpression.isCalling(COUNT_FUNCTIONS)
-}
 
 fun KtDotQualifiedExpression.getLeftMostReceiverExpression(): KtExpression =
     (receiverExpression as? KtDotQualifiedExpression)?.getLeftMostReceiverExpression() ?: receiverExpression

@@ -21,7 +21,7 @@ abstract class ReplaceSizeCheckIntention(textGetter: () -> String) : SelfTargeti
 
     override fun isApplicableTo(element: KtBinaryExpression): Boolean {
         val targetExpression = getTargetExpression(element) ?: return false
-        return targetExpression.isSizeOrLength() || targetExpression.isCountCall()
+        return targetExpression.isSizeOrLength()
     }
 
     abstract fun getTargetExpression(element: KtBinaryExpression): KtExpression?
