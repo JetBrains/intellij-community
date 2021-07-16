@@ -3,30 +3,24 @@ package org.jetbrains.kotlin.idea.fir.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
-import org.jetbrains.kotlin.idea.api.applicator.applicator
 import org.jetbrains.kotlin.idea.fir.api.AbstractHLIntention
 import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicabilityRange
 import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicatorInputProvider
 import org.jetbrains.kotlin.idea.fir.api.applicator.applicabilityRanges
 import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
+import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators
 import org.jetbrains.kotlin.idea.frontend.api.calls.KtCallWithArguments
-import org.jetbrains.kotlin.idea.frontend.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.idea.frontend.api.calls.getSingleCandidateSymbolOrNull
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespace
+import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators.SingleArgumentInput as Input
 
 class HLAddNameToArgumentIntention :
-    AbstractHLIntention<KtValueArgument, HLAddNameToArgumentIntention.Input>(KtValueArgument::class, applicator), LowPriorityAction {
-    class Input(val name: Name) : HLApplicatorInput
-
+    AbstractHLIntention<KtValueArgument, Input>(KtValueArgument::class, AddArgumentNamesApplicators.singleArgumentApplicator),
+    LowPriorityAction {
     override val applicabilityRange: HLApplicabilityRange<KtValueArgument> = applicabilityRanges { element ->
         val expression = element.getArgumentExpression() ?: return@applicabilityRanges emptyList()
         if (expression is KtLambdaExpression) {
@@ -58,31 +52,6 @@ class HLAddNameToArgumentIntention :
             element is KtContainerNode || super.skipProcessingFurtherElementsAfter(element)
 
     companion object {
-        val applicator = applicator<KtValueArgument, Input> {
-            familyName(KotlinBundle.lazyMessage("add.name.to.argument"))
-
-            actionName { _, input -> KotlinBundle.message("add.0.to.argument", input.name)  }
-
-            isApplicableByPsi { element ->
-                // Not applicable when lambda is trailing lambda after argument list (e.g., `run {  }`).
-                // Note: Intention IS applicable when lambda is inside an argument list (e.g., `run({  })`).
-                !element.isNamed() && element !is KtLambdaArgument
-            }
-
-            applyTo { element, input ->
-                val expression = element.getArgumentExpression() ?: return@applyTo
-                val name = input.name
-
-                val prevSibling = element.getPrevSiblingIgnoringWhitespace()
-                if (prevSibling is PsiComment && """/\*\s*$name\s*=\s*\*/""".toRegex().matches(prevSibling.text)) {
-                    prevSibling.delete()
-                }
-
-                val newArgument = KtPsiFactory(element).createArgument(expression, name, element.getSpreadElement() != null)
-                element.replace(newArgument)
-            }
-        }
-
         fun getArgumentNameIfCanBeUsedForCalls(argument: KtValueArgument, resolvedCall: KtCallWithArguments): Name? {
             val valueParameterSymbol = resolvedCall.argumentMapping[argument] ?: return null
             if (valueParameterSymbol.isVararg) {
