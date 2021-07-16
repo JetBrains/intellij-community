@@ -31,8 +31,8 @@ import java.util.regex.Pattern;
 
 
 public class LombokHighlightErrorFilter implements HighlightInfoFilter {
-  @SuppressWarnings("UnresolvedPropertyKey") private static final Pattern LOMBOK_ANY_ANNOTATION_REQUIRED =
-    Pattern.compile(JavaErrorBundle.message("incompatible.types").replace("'{1}'", "__*").replace("'{0}'", "lombok.*AnyAnnotation\\[\\]"));
+  private static final Pattern LOMBOK_ANY_ANNOTATION_REQUIRED =
+    Pattern.compile(JavaErrorBundle.message("incompatible.types", "lombok.*AnyAnnotation\\[\\]", "__*"));
 
   private final Map<HighlightSeverity, Map<TextAttributesKey, List<LombokHighlightFilter>>> registeredFilters;
   private final Map<HighlightSeverity, Map<TextAttributesKey, List<LombokHighlightFixHook>>> registeredHooks;
@@ -108,11 +108,17 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
   private enum LombokHighlightFixHook {
 
     UNHANDLED_EXCEPTION(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES) {
-      private final Pattern pattern = Pattern.compile("Unhandled exceptions?: .+");
+      private final Pattern pattern = preparePattern(1);
+      private final Pattern pattern2 = preparePattern(2);
+
+      @NotNull
+      private Pattern preparePattern(int count) {
+        return Pattern.compile(JavaErrorBundle.message("unhandled.exceptions", ".*", count));
+      }
 
       @Override
       public boolean descriptionCheck(@Nullable String description) {
-        return description != null && pattern.matcher(description).matches();
+        return description != null && (pattern.matcher(description).matches() || pattern2.matcher(description).matches());
       }
 
       @Override
@@ -174,11 +180,8 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
     // WARNINGS HANDLERS
     //see com.intellij.java.lomboktest.LombokHighlightingTest.testBuilderWithDefaultRedundantInitializer
     VARIABLE_INITIALIZER_IS_REDUNDANT(HighlightSeverity.WARNING, CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES) {
-      @SuppressWarnings("UnresolvedPropertyKey")
       private final Pattern pattern = Pattern.compile(
-        JavaBundle.message("inspection.unused.assignment.problem.descriptor2")
-          .replace("{0}", "(.+)")
-          .replace("{1}", "(.+)"));
+        JavaBundle.message("inspection.unused.assignment.problem.descriptor2", "(.+)", "(.+)"));
 
       @Override
       public boolean descriptionCheck(@Nullable String description, PsiElement highlightedElement) {
