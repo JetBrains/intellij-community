@@ -96,6 +96,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import static com.intellij.application.options.OptionId.PROJECT_VIEW_SHOW_VISIBILITY_ICONS;
+import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.*;
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.SLOW_DATA_PROVIDERS;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static com.intellij.ui.treeStructure.Tree.MOUSE_PRESSED_NON_FOCUSED;
@@ -1281,14 +1282,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (currentProjectViewPane == null) { // can happen if not initialized yet
         return null;
       }
-      NodeDescriptor<?> descriptor = TreeUtil.getLastUserObject(NodeDescriptor.class, currentProjectViewPane.getSelectedPath());
-      if (descriptor == null) {
-        return null;
-      }
-
-      return descriptor instanceof AbstractTreeNode
-             ? ((AbstractTreeNode<?>)descriptor).getValue()
-             : descriptor.getElement();
+      return getNodeElement(TreeUtil.getLastUserObject(currentProjectViewPane.getSelectedPath()));
     }
 
     @Override
@@ -1356,18 +1350,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
       if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
         Object selected = getSelectedNodeElement();
-        if (selected instanceof Module) {
-          return !((Module)selected).isDisposed() ? selected : null;
-        }
-        else if (selected instanceof PsiDirectory) {
-          return moduleBySingleContentRoot(((PsiDirectory)selected).getVirtualFile());
-        }
-        else if (selected instanceof VirtualFile) {
-          return moduleBySingleContentRoot((VirtualFile)selected);
-        }
-        else {
-          return null;
-        }
+        return moduleContext(myProject, selected);
       }
 
       if (LangDataKeys.MODULE_CONTEXT_ARRAY.is(dataId)) {
@@ -1462,26 +1445,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       final Object[] elements = viewPane.getSelectedElements();
       ArrayList<Module> result = new ArrayList<>();
       for (Object element : elements) {
-        if (element instanceof Module) {
-          final Module module = (Module)element;
-          if (!module.isDisposed()) {
-            result.add(module);
-          }
-        }
-        else if (element instanceof ModuleGroup) {
-          Collection<Module> modules = ((ModuleGroup)element).modulesInGroup(myProject, true);
+        Collection<Module> modules = moduleContexts(myProject, element);
+        if (modules != null) {
           result.addAll(modules);
         }
-        else if (element instanceof PsiDirectory) {
-          Module module = moduleBySingleContentRoot(((PsiDirectory)element).getVirtualFile());
-          if (module != null) result.add(module);
-        }
-        else if (element instanceof VirtualFile) {
-          Module module = moduleBySingleContentRoot((VirtualFile)element);
-          if (module != null) result.add(module);
-        }
       }
-
       return result.isEmpty() ? null : result.toArray(Module.EMPTY_ARRAY);
     }
 
@@ -1499,24 +1467,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
       return result;
     }
-  }
-
-  /** Project view has the same node for module and its single content root
-   *   => MODULE_CONTEXT data key should return the module when its content root is selected
-   *  When there are multiple content roots, they have different nodes under the module node
-   *   => MODULE_CONTEXT should be only available for the module node
-   *      otherwise VirtualFileArrayRule will return all module's content roots when just one of them is selected
-   */
-  @Nullable
-  private Module moduleBySingleContentRoot(@NotNull VirtualFile file) {
-    if (ProjectRootsUtil.isModuleContentRoot(file, myProject)) {
-      Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(file);
-      if (module != null && !module.isDisposed() && ModuleRootManager.getInstance(module).getContentRoots().length == 1) {
-        return module;
-      }
-    }
-
-    return null;
   }
 
   @Nullable
