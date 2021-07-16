@@ -445,7 +445,7 @@ class PerformanceSuite {
 
                 Fixture.enableAnnotatorsAndLoadDefinitions(project)
 
-                app.application?.setDataProvider(TestDataProvider(project))
+                app.application.setDataProvider(TestDataProvider(project))
 
                 return project
             }
