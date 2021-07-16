@@ -21,10 +21,6 @@ result_dict = {(a := 1) : (b := 2)}
 assert a := 1  # INVALID
 assert (a := 1)
 
-l = [1, 2]
-l[a := 0]  # INVALID
-l[(a := 0)]
-
 with f := open('file.txt'):  # INVALID
     pass
 
