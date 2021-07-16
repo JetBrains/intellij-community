@@ -2,6 +2,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
@@ -161,6 +162,25 @@ public final class JavaPsiPatternUtil {
       return overWhomType != null && isTotalForType(who, overWhomType);
     }
     return false;
+  }
+
+  /**
+   * 14.11.1 Switch Blocks
+   */
+  @Contract(value = "_,null -> false", pure = true)
+  public static boolean dominates(@NotNull PsiPattern who, @Nullable PsiType overWhom) {
+    if (overWhom == null) return false;
+    PsiType whoType = TypeConversionUtil.erasure(getPatternType(who));
+    if (whoType == null) return false;
+    PsiType overWhomType = null;
+    if (overWhom instanceof PsiPrimitiveType) {
+      overWhomType = ((PsiPrimitiveType)overWhom).getBoxedType(who);
+    }
+    // not sure about immediate type such as enums
+    else if (overWhom instanceof PsiClassReferenceType) {
+      overWhomType = overWhom;
+    }
+    return overWhomType != null && TypeConversionUtil.areTypesConvertible(overWhomType, whoType);
   }
 
   private static void collectPatternVariableCandidates(@NotNull PsiExpression scope, @NotNull PsiExpression expression,

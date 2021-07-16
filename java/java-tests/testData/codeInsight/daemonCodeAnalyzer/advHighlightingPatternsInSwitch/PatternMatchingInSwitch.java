@@ -448,7 +448,7 @@ class Main {
     };
   }
 
-  void dominance(Object o, Integer ii) {
+  void dominance(Object o, Integer ii, String s) {
     // A switch label that has a pattern case label element p dominates another switch label that has a pattern case label element q if p dominates q
     switch (o) {
       case List n:
@@ -635,6 +635,21 @@ class Main {
       case ((Integer i && false)) -> "int";
       case null -> "int";
       default -> "def";
+    };
+
+    // A switch label that has a pattern case label element p dominates another switch label that has a constant case label element c
+    // if either of the following is true:
+    //the type of c is a primitive type and its wrapper class is a subtype of the erasure of the type of p.
+    //the type of c is a reference type and is a subtype of the erasure of the type of p.
+    switch (ii) {
+      case Integer i:
+        break;
+      case <error descr="Label is dominated by a preceding case label 'Integer i'">1</error>: case <error descr="Label is dominated by a preceding case label 'Integer i'">2</error>:
+        break;
+    }
+    str = switch (s) {
+      case String sss -> "s";
+      case <error descr="Label is dominated by a preceding case label 'String sss'">"1"</error>, <error descr="Label is dominated by a preceding case label 'String sss'">"2"</error> -> "1";
     };
   }
 
