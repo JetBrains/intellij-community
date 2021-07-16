@@ -13,45 +13,45 @@ UFile (package = )
         UMethod (name = getAnon)
         UMethod (name = cons)
             UParameter (name = a)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
     UClass (name = A)
         UField (name = str)
-            UAnnotation (fqName = null)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
         UMethod (name = A)
             UParameter (name = str)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
         UMethod (name = A)
             UParameter (name = i)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UastEmptyExpression
         UMethod (name = getStr)
         UMethod (name = foo)
             UParameter (name = a)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
     UClass (name = B)
         UMethod (name = B)
             UParameter (name = param)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UastEmptyExpression
     UClass (name = C)
         UMethod (name = C)
             UParameter (name = p)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UastEmptyExpression
         UMethod (name = C)
             UParameter (name = i)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UastEmptyExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = foo)
             UParameter (name = a)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UQualifiedReferenceExpression
                     USuperExpression (label = null)

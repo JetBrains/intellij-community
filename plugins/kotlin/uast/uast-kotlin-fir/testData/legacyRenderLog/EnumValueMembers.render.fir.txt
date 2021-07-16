@@ -1,7 +1,7 @@
 public final enum Style {
-    @null private final var value: java.lang.String
+    @org.jetbrains.annotations.NotNull private final var value: java.lang.String
     @null public static final var SHEET: Style
-    private fun Style(@null value: java.lang.String) = UastEmptyExpression
+    private fun Style(@org.jetbrains.annotations.NotNull value: java.lang.String) = UastEmptyExpression
     public final fun getValue() : java.lang.String = UastEmptyExpression
     public abstract fun getExitAnimation() : java.lang.String = UastEmptyExpression
 }

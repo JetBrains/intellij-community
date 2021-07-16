@@ -10,7 +10,7 @@ public final class AnnotatedExpressionsKt {
             if (varae507364 != null) varae507364 else b
         }
     }
-    public static final fun annotatedSwitch(@null str: java.lang.String) : java.lang.Integer {
+    public static final fun annotatedSwitch(@org.jetbrains.annotations.NotNull str: java.lang.String) : java.lang.Integer {
         return switch  {
             [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) -> {
                 yield null

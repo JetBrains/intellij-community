@@ -8,9 +8,9 @@ UFile (package = ) [import java.util.stream.Stream...]
                         USimpleNameReferenceExpression (identifier = Stream) [Stream] = external Stream()
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                     [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-        UMethod (name = doSelectItem) [public static final fun doSelectItem(@null selectItemFunction: kotlin.jvm.functions.Function0<? extends kotlin.Unit>) : void {...}]
-            UParameter (name = selectItemFunction) [@null var selectItemFunction: kotlin.jvm.functions.Function0<? extends kotlin.Unit>]
-                UAnnotation (fqName = null) [@null]
+        UMethod (name = doSelectItem) [public static final fun doSelectItem(@org.jetbrains.annotations.NotNull selectItemFunction: kotlin.jvm.functions.Function0<? extends kotlin.Unit>) : void {...}]
+            UParameter (name = selectItemFunction) [@org.jetbrains.annotations.NotNull var selectItemFunction: kotlin.jvm.functions.Function0<? extends kotlin.Unit>]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Undetermined
                 [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
                 UDeclarationsExpression [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}] = Undetermined

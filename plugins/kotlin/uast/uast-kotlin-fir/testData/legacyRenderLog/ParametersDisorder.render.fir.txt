@@ -1,9 +1,9 @@
 public final class ParametersDisorderKt {
-    public static final fun global(@null a: int, @null b: float) : void {
+    public static final fun global(@org.jetbrains.annotations.NotNull a: int, @org.jetbrains.annotations.NotNull b: float) : void {
     }
-    public static final fun withDefault(@null c: int, @null d: java.lang.String) : void {
+    public static final fun withDefault(@org.jetbrains.annotations.NotNull c: int, @org.jetbrains.annotations.NotNull d: java.lang.String) : void {
     }
-    public static final fun withReceiver(@null $this$withReceiver: java.lang.String, @null a: int, @null b: float) : void {
+    public static final fun withReceiver(@org.jetbrains.annotations.NotNull $this$withReceiver: java.lang.String, @org.jetbrains.annotations.NotNull a: int, @org.jetbrains.annotations.NotNull b: float) : void {
     }
     public static final fun call() : void {
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
@@ -24,10 +24,10 @@ public final class ParametersDisorderKt {
 
 public final class A {
     public fun A() = UastEmptyExpression
-    public final fun with2Receivers(@null $this$with2Receivers: java.lang.String, @null a: int, @null b: float) : void {
+    public final fun with2Receivers(@org.jetbrains.annotations.NotNull $this$with2Receivers: java.lang.String, @org.jetbrains.annotations.NotNull a: int, @org.jetbrains.annotations.NotNull b: float) : void {
     }
 }
 
 public class Parent {
-    public fun Parent(@null a: java.lang.String, @null b: int) = UastEmptyExpression
+    public fun Parent(@org.jetbrains.annotations.NotNull a: java.lang.String, @org.jetbrains.annotations.NotNull b: int) = UastEmptyExpression
 }

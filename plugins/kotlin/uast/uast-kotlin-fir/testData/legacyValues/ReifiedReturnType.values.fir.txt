@@ -1,12 +1,12 @@
 UFile (package = ) [public final class ReifiedReturnTypeKt {...]
     UClass (name = ReifiedReturnTypeKt) [public final class ReifiedReturnTypeKt {...}]
-        UMethod (name = copyWhenGreater) [public static final fun copyWhenGreater(@null list: java.util.List<? extends T>, @null threshold: T, @null threshold2: B) : B {...}]
-            UParameter (name = list) [@null var list: java.util.List<? extends T>]
-                UAnnotation (fqName = null) [@null]
-            UParameter (name = threshold) [@null var threshold: T]
-                UAnnotation (fqName = null) [@null]
-            UParameter (name = threshold2) [@null var threshold2: B]
-                UAnnotation (fqName = null) [@null]
+        UMethod (name = copyWhenGreater) [public static final fun copyWhenGreater(@org.jetbrains.annotations.NotNull list: java.util.List<? extends T>, @org.jetbrains.annotations.NotNull threshold: T, @org.jetbrains.annotations.NotNull threshold2: B) : B {...}]
+            UParameter (name = list) [@org.jetbrains.annotations.NotNull var list: java.util.List<? extends T>]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UParameter (name = threshold) [@org.jetbrains.annotations.NotNull var threshold: T]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UParameter (name = threshold2) [@org.jetbrains.annotations.NotNull var threshold2: B]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return threshold2] = Nothing
                     USimpleNameReferenceExpression (identifier = threshold2) [threshold2] = Undetermined

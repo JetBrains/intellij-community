@@ -2,7 +2,7 @@ UFile (package = )
     UClass (name = WhenIsKt)
         UMethod (name = foo)
             UParameter (name = bar)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UReturnExpression
                     USwitchExpression

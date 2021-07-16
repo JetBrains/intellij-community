@@ -1,5 +1,5 @@
 public final class WhenIsKt {
-    public static final fun foo(@null bar: java.lang.Object) : void {
+    public static final fun foo(@org.jetbrains.annotations.NotNull bar: java.lang.Object) : void {
         return switch (bar)  {
             it is java.lang.String -> {
                 yield bar

@@ -19,7 +19,7 @@ public final class RunnableManager {
     @org.jetbrains.annotations.NotNull private final var tasks: java.util.List<java.lang.Runnable> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
     private fun RunnableManager() = UastEmptyExpression
     public final fun getTasks() : java.util.List<java.lang.Runnable> = UastEmptyExpression
-    public final fun register(@null runnable: java.lang.Runnable) : void {
+    public final fun register(@org.jetbrains.annotations.NotNull runnable: java.lang.Runnable) : void {
         tasks.[!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
     public final fun runAll() : void {

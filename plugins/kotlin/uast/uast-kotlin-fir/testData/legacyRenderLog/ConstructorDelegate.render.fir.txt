@@ -1,5 +1,5 @@
 public final class ConstructorDelegateKt {
-    public static final fun createBase(@null i: int) : Base {
+    public static final fun createBase(@org.jetbrains.annotations.NotNull i: int) : Base {
         return [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
 }
@@ -9,8 +9,8 @@ public abstract interface Base {
 }
 
 public final class BaseImpl : Base {
-    @null private final var x: int
-    public fun BaseImpl(@null x: int) = UastEmptyExpression
+    @org.jetbrains.annotations.NotNull private final var x: int
+    public fun BaseImpl(@org.jetbrains.annotations.NotNull x: int) = UastEmptyExpression
     public final fun getX() : int = UastEmptyExpression
     public fun print() : void {
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
@@ -18,5 +18,5 @@ public final class BaseImpl : Base {
 }
 
 public final class Derived : Base, java.lang.CharSequence {
-    public fun Derived(@null b: Base) = UastEmptyExpression
+    public fun Derived(@org.jetbrains.annotations.NotNull b: Base) = UastEmptyExpression
 }

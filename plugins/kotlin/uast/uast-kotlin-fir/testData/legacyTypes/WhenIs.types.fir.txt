@@ -1,8 +1,8 @@
 UFile (package = ) [public final class WhenIsKt {...]
     UClass (name = WhenIsKt) [public final class WhenIsKt {...}]
-        UMethod (name = foo) [public static final fun foo(@null bar: java.lang.Object) : void {...}]
-            UParameter (name = bar) [@null var bar: java.lang.Object]
-                UAnnotation (fqName = null) [@null]
+        UMethod (name = foo) [public static final fun foo(@org.jetbrains.annotations.NotNull bar: java.lang.Object) : void {...}]
+            UParameter (name = bar) [@org.jetbrains.annotations.NotNull var bar: java.lang.Object]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
                 UReturnExpression [return switch (bar)  {...]
                     USwitchExpression [switch (bar)  {...] : PsiType:Unit

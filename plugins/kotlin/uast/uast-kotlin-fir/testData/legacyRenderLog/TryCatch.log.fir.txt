@@ -8,7 +8,7 @@ UFile (package = )
                         [!] UnknownKotlinExpression (CALL_EXPRESSION)
                     UCatchClause (e)
                         UParameter (name = e)
-                            UAnnotation (fqName = null)
+                            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                         UBlockExpression
                             [!] UnknownKotlinExpression (CALL_EXPRESSION)
                     UBlockExpression
@@ -28,7 +28,7 @@ UFile (package = )
                         [!] UnknownKotlinExpression (CALL_EXPRESSION)
                     UCatchClause (e)
                         UParameter (name = e)
-                            UAnnotation (fqName = null)
+                            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                             UAnnotation (fqName = not-implemented-annotation)
                         UBlockExpression
                             [!] UnknownKotlinExpression (CALL_EXPRESSION)

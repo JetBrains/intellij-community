@@ -1,8 +1,8 @@
 UFile (package = ) [public final class TypeReferencesKt {...]
     UClass (name = TypeReferencesKt) [public final class TypeReferencesKt {...}]
-        UMethod (name = foo) [public static final fun foo(@null parameter: int) : java.lang.String {...}]
-            UParameter (name = parameter) [@null var parameter: int]
-                UAnnotation (fqName = null) [@null]
+        UMethod (name = foo) [public static final fun foo(@org.jetbrains.annotations.NotNull parameter: int) : java.lang.String {...}]
+            UParameter (name = parameter) [@org.jetbrains.annotations.NotNull var parameter: int]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:Void
                 UDeclarationsExpression [var varWithType: java.lang.String = "Not Null"]
                     ULocalVariable (name = varWithType) [var varWithType: java.lang.String = "Not Null"]
@@ -17,9 +17,9 @@ UFile (package = ) [public final class TypeReferencesKt {...]
                             USimpleNameReferenceExpression (identifier = varWithoutType) [varWithoutType] : PsiType:String
                 UReturnExpression [return result] : PsiType:Void
                     USimpleNameReferenceExpression (identifier = result) [result] : PsiType:String
-        UMethod (name = parameterizedFoo) [public static final fun parameterizedFoo(@null arg: T) : void {...}]
-            UParameter (name = arg) [@null var arg: T]
-                UAnnotation (fqName = null) [@null]
+        UMethod (name = parameterizedFoo) [public static final fun parameterizedFoo(@org.jetbrains.annotations.Nullable arg: T) : void {...}]
+            UParameter (name = arg) [@org.jetbrains.annotations.Nullable var arg: T]
+                UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
             UBlockExpression [{...}] : PsiType:Unit
                 UDeclarationsExpression [var a: T = arg]
                     ULocalVariable (name = a) [var a: T = arg]
