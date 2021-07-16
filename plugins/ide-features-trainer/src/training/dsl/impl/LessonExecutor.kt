@@ -427,7 +427,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
     // A little bit hacky here: visual index should be shown only for the first paragraph.
     // But is is passed here for all paragraphs.
     // But... LessonMessagePane will draw number only for the first active paragraph :)
-    LessonManager.instance.addMessage(text, !hasDetection, taskInfo.taskVisualIndex)
+    LessonManager.instance.addMessage(text, !hasDetection, taskInfo.taskVisualIndex, useInternalParagraphStyle = removeAfterDone)
   }
 
   private fun addAllInactiveMessages() {

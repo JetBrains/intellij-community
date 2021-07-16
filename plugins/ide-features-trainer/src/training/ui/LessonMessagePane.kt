@@ -49,12 +49,13 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
 
   enum class MessageState { NORMAL, PASSED, INACTIVE, RESTORE, INFORMER }
 
-  data class MessageProperties(val state: MessageState = MessageState.NORMAL, val visualIndex: Int? = null)
+  data class MessageProperties(val state: MessageState = MessageState.NORMAL, val visualIndex: Int? = null, val useInternalParagraphStyle: Boolean = false)
 
   private data class LessonMessage(
     val messageParts: List<MessagePart>,
     var state: MessageState,
     val visualIndex: Int?,
+    val useInternalParagraphStyle: Boolean,
     var start: Int = 0,
     var end: Int = 0
   )
@@ -153,7 +154,6 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     StyleConstants.setFontSize(CODE, codeFontSize)
 
     StyleConstants.setFontFamily(LINK, fontFamily)
-    StyleConstants.setUnderline(LINK, true)
     StyleConstants.setFontSize(LINK, fontSize)
 
     StyleConstants.setLeftIndent(TASK_PARAGRAPH_STYLE, UISettings.instance.checkIndent.toFloat())
@@ -220,7 +220,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   }
 
   fun addMessage(messageParts: List<MessagePart>, properties: MessageProperties = MessageProperties()): () -> Rectangle? {
-    val lessonMessage = LessonMessage(messageParts, properties.state, properties.visualIndex)
+    val lessonMessage = LessonMessage(messageParts, properties.state, properties.visualIndex, properties.useInternalParagraphStyle)
     when (properties.state) {
       MessageState.INACTIVE -> inactiveMessages
       MessageState.RESTORE -> restoreMessages
@@ -248,12 +248,17 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     ranges.clear()
     text = ""
     insertOffset = 0
+    var previous: LessonMessage? = null
     for (lessonMessage in allLessonMessages()) {
-      paragraphStyle = if (panelMode) TASK_PARAGRAPH_STYLE else BALLOON_STYLE
+      paragraphStyle = when {
+        previous?.useInternalParagraphStyle == true -> INTERNAL_PARAGRAPH_STYLE
+        panelMode -> TASK_PARAGRAPH_STYLE
+        else -> BALLOON_STYLE
+      }
       val messageParts: List<MessagePart> = lessonMessage.messageParts
       lessonMessage.start = insertOffset
       if (insertOffset != 0)
-        insertText("\n", REGULAR)
+        insertText("\n", paragraphStyle)
       for (part in messageParts) {
         val startOffset = insertOffset
         part.startOffset = startOffset
@@ -277,6 +282,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
       if (lessonMessage.state == MessageState.INACTIVE) {
         setInactiveStyle(lessonMessage)
       }
+      previous = lessonMessage
     }
   }
 
