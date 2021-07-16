@@ -2,7 +2,7 @@ UFile (package = )
     UClass (name = WhenAndDestructingKt)
         UMethod (name = getElementsAdditionalResolve)
             UParameter (name = string)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = arr)

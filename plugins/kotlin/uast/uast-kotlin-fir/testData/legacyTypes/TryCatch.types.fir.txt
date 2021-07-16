@@ -6,9 +6,9 @@ UFile (package = ) [public final class TryCatch {...]
                 UTryExpression [try {...}] : PsiType:Unit
                     UBlockExpression [{...}] : PsiType:Unit
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    UCatchClause (e) [catch (@null var e: java.lang.Throwable) {...}]
-                        UParameter (name = e) [@null var e: java.lang.Throwable]
-                            UAnnotation (fqName = null) [@null]
+                    UCatchClause (e) [catch (@org.jetbrains.annotations.NotNull var e: java.lang.Throwable) {...}]
+                        UParameter (name = e) [@org.jetbrains.annotations.NotNull var e: java.lang.Throwable]
+                            UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                         UBlockExpression [{...}] : PsiType:Unit
                             [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
                     UBlockExpression [{...}] : PsiType:Unit
@@ -26,9 +26,9 @@ UFile (package = ) [public final class TryCatch {...]
                 UTryExpression [try {...}] : PsiType:Unit
                     UBlockExpression [{...}] : PsiType:Unit
                         [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    UCatchClause (e) [catch (@null @not-implemented-annotation var e: java.lang.Throwable) {...}]
-                        UParameter (name = e) [@null @not-implemented-annotation var e: java.lang.Throwable]
-                            UAnnotation (fqName = null) [@null]
+                    UCatchClause (e) [catch (@org.jetbrains.annotations.NotNull @not-implemented-annotation var e: java.lang.Throwable) {...}]
+                        UParameter (name = e) [@org.jetbrains.annotations.NotNull @not-implemented-annotation var e: java.lang.Throwable]
+                            UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                             UAnnotation (fqName = not-implemented-annotation) [@not-implemented-annotation]
                         UBlockExpression [{...}] : PsiType:Unit
                             [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]

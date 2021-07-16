@@ -9,10 +9,10 @@ UFile (package = )
                         [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = setStringRepresentation)
             UParameter (name = value)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 [!] UnknownKotlinExpression (CALL_EXPRESSION)
         UMethod (name = setDataFromString)
             UParameter (name = data)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression

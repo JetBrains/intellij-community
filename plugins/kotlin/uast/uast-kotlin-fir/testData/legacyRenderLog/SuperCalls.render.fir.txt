@@ -7,36 +7,36 @@ public final class SuperCallsKt {
         inner class InnerClass : A("inner class")
     }
     public static final fun getAnon() : A = UastEmptyExpression
-    public static final fun cons(@null a: A) : void {
+    public static final fun cons(@org.jetbrains.annotations.NotNull a: A) : void {
     }
 }
 
 public class A {
-    @null private final var str: java.lang.String
-    public fun A(@null str: java.lang.String) = UastEmptyExpression
-    public fun A(@null i: int) {
+    @org.jetbrains.annotations.NotNull private final var str: java.lang.String
+    public fun A(@org.jetbrains.annotations.NotNull str: java.lang.String) = UastEmptyExpression
+    public fun A(@org.jetbrains.annotations.NotNull i: int) {
         UastEmptyExpression
     }
     public final fun getStr() : java.lang.String = UastEmptyExpression
-    public fun foo(@null a: long) : void {
+    public fun foo(@org.jetbrains.annotations.NotNull a: long) : void {
     }
 }
 
 public final class B : A {
-    public fun B(@null param: java.lang.String) {
+    public fun B(@org.jetbrains.annotations.NotNull param: java.lang.String) {
         UastEmptyExpression
     }
 }
 
 public final class C : A {
-    public fun C(@null p: java.lang.String) {
+    public fun C(@org.jetbrains.annotations.NotNull p: java.lang.String) {
         UastEmptyExpression
     }
-    public fun C(@null i: int) {
+    public fun C(@org.jetbrains.annotations.NotNull i: int) {
         UastEmptyExpression
         [!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
-    public fun foo(@null a: long) : void {
+    public fun foo(@org.jetbrains.annotations.NotNull a: long) : void {
         super.[!] UnknownKotlinExpression (CALL_EXPRESSION)
     }
 }

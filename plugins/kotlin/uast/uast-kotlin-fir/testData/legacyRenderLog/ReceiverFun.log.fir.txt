@@ -3,7 +3,7 @@ UFile (package = )
         UMethod (name = foo)
             UParameter (name = $this$foo)
                 UAnnotation (fqName = not-implemented-annotation)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UReturnExpression
                     UQualifiedReferenceExpression
@@ -12,7 +12,7 @@ UFile (package = )
         UMethod (name = getRx)
             UParameter (name = $this$rx)
                 UAnnotation (fqName = not-implemented-annotation)
-                UAnnotation (fqName = null)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UReturnExpression
                     [!] UnknownKotlinExpression (CALL_EXPRESSION)
