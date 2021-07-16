@@ -35,6 +35,10 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.RESOLUTION_ANCHOR_PROVIDER_CAPABILITY
 import org.jetbrains.kotlin.resolve.ResolutionAnchorProvider
 import org.jetbrains.kotlin.resolve.jvm.JvmPlatformParameters
+import org.jetbrains.kotlin.types.checker.REFINER_CAPABILITY
+import org.jetbrains.kotlin.types.checker.Ref
+import org.jetbrains.kotlin.types.checker.TypeRefinementSupport
+import org.jetbrains.kotlin.types.refinement.TypeRefinement
 
 class IdeaResolverForProject(
     debugName: String,
@@ -75,8 +79,25 @@ class IdeaResolverForProject(
     private val builtInsCache: BuiltInsCache =
         (delegateResolver as? IdeaResolverForProject)?.builtInsCache ?: BuiltInsCache(projectContext, this)
 
+    @OptIn(TypeRefinement::class)
+    private fun getRefinerCapability(): Pair<ModuleCapability<Ref<TypeRefinementSupport>>, Ref<TypeRefinementSupport>> {
+        val isCompositeAnalysisEnabled = projectContext.project.useCompositeAnalysis
+        val typeRefinementSupport = if (isCompositeAnalysisEnabled) {
+            /*
+            * Will be properly initialized with a type refiner created by DI container of ResolverForModule.
+            * Placeholder is necessary to distinguish state in cases when resolver for module is not created at all.
+            * For instance, platform targets with no sources in project.
+            */
+            TypeRefinementSupport.EnabledUninitialized
+        } else {
+            TypeRefinementSupport.Disabled
+        }
+        return REFINER_CAPABILITY to Ref(typeRefinementSupport)
+    }
+
     override fun getAdditionalCapabilities(): Map<ModuleCapability<*>, Any?> {
         return super.getAdditionalCapabilities() +
+                getRefinerCapability() +
                 (PLATFORM_ANALYSIS_SETTINGS to settings) +
                 (RESOLUTION_ANCHOR_PROVIDER_CAPABILITY to resolutionAnchorProvider) +
                 (INVALID_MODULE_NOTIFIER_CAPABILITY to invalidModuleNotifier)
