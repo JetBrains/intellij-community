@@ -6,7 +6,6 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
@@ -640,8 +639,9 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       List<JsonSchemaFileProvider> providers = getProvidersFromFactories(readyFactories);
       myProviders = providers;
       if (!notReadyFactories.isEmpty() && !LightEdit.owns(myProject)) {
-        DumbService.getInstance(myProject).runWhenSmart(() -> {
-          ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          if (myProject.isDisposed()) return;
+          DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
             if (myProviders == providers) {
               List<JsonSchemaFileProvider> newProviders = getProvidersFromFactories(notReadyFactories);
               if (!newProviders.isEmpty()) {
@@ -650,7 +650,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
                 JsonSchemaServiceImpl.this.resetWithCurrentFactories();
               }
             }
-          }));
+          });
         });
       }
       return providers;
