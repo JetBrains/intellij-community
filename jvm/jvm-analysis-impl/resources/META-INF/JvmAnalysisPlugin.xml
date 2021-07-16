@@ -53,7 +53,7 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.testonly.display.name"
                      implementationClass="com.intellij.codeInspection.TestOnlyInspection"/>
-    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="TestFailedLine"
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="TestFailedLine"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspection.test.failed.line.display.name"
                      implementationClass="com.intellij.codeInspection.TestFailedLineInspection"/>
