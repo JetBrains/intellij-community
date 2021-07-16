@@ -177,6 +177,79 @@ public abstract class HLIntentionTestGenerated extends AbstractHLIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/intentions/addNamesToCallArguments")
+    public static class AddNamesToCallArguments extends AbstractHLIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("allNamed.kt")
+        public void testAllNamed() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToCallArguments/allNamed.kt");
+        }
+
+        @TestMetadata("ambiguousCall.kt")
+        public void testAmbiguousCall() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToCallArguments/ambiguousCall.kt");
+        }
+
+        @TestMetadata("genericCall.kt")
+        public void testGenericCall() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToCallArguments/genericCall.kt");
+        }
+
+        @TestMetadata("incompleteCall.kt")
+        public void testIncompleteCall() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToCallArguments/incompleteCall.kt");
+        }
+
+        @TestMetadata("javaMethod.kt")
+        public void testJavaMethod() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToCallArguments/javaMethod.kt");
+        }
+
+        @TestMetadata("notResolved.kt")
+        public void testNotResolved() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToCallArguments/notResolved.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToCallArguments/simple.kt");
+        }
+
+        @TestMetadata("singleArgument.kt")
+        public void testSingleArgument() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToCallArguments/singleArgument.kt");
+        }
+
+        @TestMetadata("superClassConstructor.kt")
+        public void testSuperClassConstructor() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToCallArguments/superClassConstructor.kt");
+        }
+
+        @TestMetadata("trailingLambda.kt")
+        public void testTrailingLambda() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToCallArguments/trailingLambda.kt");
+        }
+
+        @TestMetadata("varargMultiple.kt")
+        public void testVarargMultiple() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToCallArguments/varargMultiple.kt");
+        }
+
+        @TestMetadata("varargSingle.kt")
+        public void testVarargSingle() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToCallArguments/varargSingle.kt");
+        }
+
+        @TestMetadata("varargSingleWithSpread.kt")
+        public void testVarargSingleWithSpread() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToCallArguments/varargSingleWithSpread.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/intentions/addPropertyAccessors")
     public abstract static class AddPropertyAccessors extends AbstractHLIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
