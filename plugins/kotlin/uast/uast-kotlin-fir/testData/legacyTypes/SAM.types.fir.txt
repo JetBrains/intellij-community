@@ -26,7 +26,7 @@ UFile (package = ) [import java.lang.Thread...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
         UMethod (name = bar) [public static final fun bar() : java.lang.Runnable {...}]
             UBlockExpression [{...}] : PsiType:Void
-                UBinaryExpression (operator = =) [foo = { ...}] : PsiType:void
+                UBinaryExpression (operator = =) [foo = { ...}] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = foo) [foo] : PsiType:Runnable
                     ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
                         UBlockExpression [{...}] : PsiType:Runnable
