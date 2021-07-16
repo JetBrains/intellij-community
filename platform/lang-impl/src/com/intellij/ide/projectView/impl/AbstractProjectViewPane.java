@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.*;
@@ -48,6 +48,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.InvokerSupplier;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EmptyIcon;
@@ -325,6 +328,17 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   public void addToolbarActions(@NotNull DefaultActionGroup actionGroup) {
   }
 
+  /**
+   * @return array of user objects from selected paths in the tree
+   */
+  @RequiresEdt
+  public final @NotNull Object @NotNull [] getSelectedUserObjects() {
+    TreePath[] paths = getSelectionPaths();
+    return paths == null
+           ? ArrayUtil.EMPTY_OBJECT_ARRAY
+           : ArrayUtil.toObjectArray(ContainerUtil.mapNotNull(paths, TreeUtil::getLastUserObject));
+  }
+
   @NotNull
   protected <T extends NodeDescriptor<?>> List<T> getSelectedNodes(@NotNull Class<T> nodeClass) {
     TreePath[] paths = getSelectionPaths();
@@ -411,12 +425,49 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return elements.length == 1 ? elements[0] : null;
   }
 
+  /**
+   * @deprecated use {@link #getSelectedUserObjects()} and {@link #getElementsFromNode(Object)}
+   */
+  @Deprecated
   public final PsiElement @NotNull [] getSelectedPSIElements() {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return PsiElement.EMPTY_ARRAY;
     List<PsiElement> result = new ArrayList<>();
     for (TreePath path : paths) {
       result.addAll(getElementsFromNode(path.getLastPathComponent()));
+    }
+    return PsiUtilCore.toPsiElementArray(result);
+  }
+
+  @RequiresEdt
+  public final @Nullable DataProvider selectionProvider() {
+    Object[] selectedUserObjects = getSelectedUserObjects();
+    if (selectedUserObjects.length == 0) {
+      return null;
+    }
+    return dataId -> getDataFromSelection(selectedUserObjects, dataId);
+  }
+
+  @RequiresReadLock(generateAssertion = false)
+  @RequiresBackgroundThread(generateAssertion = false)
+  private @Nullable Object getDataFromSelection(@NotNull Object @NotNull [] selectedUserObjects, @NotNull String dataId) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      final PsiElement[] elements = getPsiElements(selectedUserObjects);
+      return elements.length == 1 ? elements[0] : null;
+    }
+    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      PsiElement[] elements = getPsiElements(selectedUserObjects);
+      return elements.length > 0 ? elements : null;
+    }
+    return null;
+  }
+
+  @RequiresReadLock(generateAssertion = false)
+  @RequiresBackgroundThread(generateAssertion = false)
+  private @NotNull PsiElement @NotNull [] getPsiElements(@NotNull Object @NotNull [] selectedUserObjects) {
+    List<PsiElement> result = new ArrayList<>();
+    for (Object userObject : selectedUserObjects) {
+      ContainerUtil.addAllNotNull(result, getElementsFromNode(userObject));
     }
     return PsiUtilCore.toPsiElementArray(result);
   }

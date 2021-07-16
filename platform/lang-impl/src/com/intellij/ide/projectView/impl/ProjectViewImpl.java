@@ -96,6 +96,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import static com.intellij.application.options.OptionId.PROJECT_VIEW_SHOW_VISIBILITY_ICONS;
+import static com.intellij.openapi.actionSystem.PlatformDataKeys.SLOW_DATA_PROVIDERS;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static com.intellij.ui.treeStructure.Tree.MOUSE_PRESSED_NON_FOCUSED;
 
@@ -1293,23 +1294,17 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     @Override
     public Object getData(@NotNull String dataId) {
       final AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
+
+      if (SLOW_DATA_PROVIDERS.is(dataId) && currentProjectViewPane != null) {
+        DataProvider selectionProvider = currentProjectViewPane.selectionProvider();
+        return selectionProvider == null ? null : List.of(selectionProvider);
+      }
+
       if (currentProjectViewPane != null) {
         final Object paneSpecificData = currentProjectViewPane.getData(dataId);
         if (paneSpecificData != null) return paneSpecificData;
       }
 
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-        if (currentProjectViewPane == null) return null;
-        final PsiElement[] elements = currentProjectViewPane.getSelectedPSIElements();
-        return elements.length == 1 ? elements[0] : null;
-      }
-      if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-        if (currentProjectViewPane == null) {
-          return null;
-        }
-        PsiElement[] elements = currentProjectViewPane.getSelectedPSIElements();
-        return elements.length == 0 ? null : elements;
-      }
       if (LangDataKeys.MODULE.is(dataId)) {
         VirtualFile[] virtualFiles = (VirtualFile[])getData(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName());
         if (virtualFiles == null || virtualFiles.length <= 1) return null;
