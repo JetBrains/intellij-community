@@ -2,15 +2,13 @@
 package org.jetbrains.kotlin.idea.fir.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.fir.api.AbstractHLIntention
-import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicabilityRange
 import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicatorInputProvider
-import org.jetbrains.kotlin.idea.fir.api.applicator.applicabilityRanges
 import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
 import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators
+import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.frontend.api.calls.KtCallWithArguments
 import org.jetbrains.kotlin.idea.frontend.api.calls.getSingleCandidateSymbolOrNull
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
@@ -21,17 +19,7 @@ import org.jetbrains.kotlin.idea.fir.applicators.AddArgumentNamesApplicators.Sin
 class HLAddNameToArgumentIntention :
     AbstractHLIntention<KtValueArgument, Input>(KtValueArgument::class, AddArgumentNamesApplicators.singleArgumentApplicator),
     LowPriorityAction {
-    override val applicabilityRange: HLApplicabilityRange<KtValueArgument> = applicabilityRanges { element ->
-        val expression = element.getArgumentExpression() ?: return@applicabilityRanges emptyList()
-        if (expression is KtLambdaExpression) {
-            // Use OUTSIDE of curly braces only as applicability ranges for lambda inside an argument list (e.g., `run({  })`).
-            // If we use the text range of the curly brace elements, it will include the inside of the braces. This matches FE 1.0 behavior.
-            // Note: Intention is NOT applicable when lambda is trailing lambda after argument list (e.g., `run {  }`).
-            listOfNotNull(TextRange(0, 0), TextRange(element.textLength, element.textLength))
-        } else {
-            listOf(TextRange(0, element.textLength))
-        }
-    }
+    override val applicabilityRange = ApplicabilityRanges.VALUE_ARGUMENT_EXCLUDING_LAMBDA
 
     override val inputProvider: HLApplicatorInputProvider<KtValueArgument, Input> = inputProvider { element ->
         val argumentList = element.parent as? KtValueArgumentList ?: return@inputProvider null
@@ -56,7 +44,8 @@ class HLAddNameToArgumentIntention :
             val valueParameterSymbol = resolvedCall.argumentMapping[argument] ?: return null
             if (valueParameterSymbol.isVararg) {
                 if (argument.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm) &&
-                    !argument.isSpread) {
+                    !argument.isSpread
+                ) {
                     return null
                 }
 
