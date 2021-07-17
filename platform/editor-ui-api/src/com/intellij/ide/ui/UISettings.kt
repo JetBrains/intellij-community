@@ -469,7 +469,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
     private fun calcFractionalMetricsHint(registryKey: String, defaultValue: Boolean): Any {
       val hint: Boolean
-      if (LoadingState.COMPONENTS_LOADED.isOccurred) {
+      if (LoadingState.APP_STARTED.isOccurred) {
         val registryValue = Registry.get(registryKey)
         if (registryValue.isMultiValue) {
           val option = registryValue.selectedOption
