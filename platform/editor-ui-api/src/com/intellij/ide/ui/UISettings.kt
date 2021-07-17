@@ -468,17 +468,20 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       get() = instanceOrNull ?: UISettings(NotRoamableUiSettings())
 
     private fun calcFractionalMetricsHint(registryKey: String, defaultValue: Boolean): Any {
-      val registryValue = Registry.get(registryKey)
       val hint: Boolean
-      if (registryValue.isMultiValue) {
-        val option = registryValue.selectedOption
-        if (option.equals("Enabled")) hint = true
-        else if (option.equals("Disabled")) hint = false
-        else hint = defaultValue
+      if (LoadingState.COMPONENTS_LOADED.isOccurred) {
+        val registryValue = Registry.get(registryKey)
+        if (registryValue.isMultiValue) {
+          val option = registryValue.selectedOption
+          if (option.equals("Enabled")) hint = true
+          else if (option.equals("Disabled")) hint = false
+          else hint = defaultValue
+        }
+        else {
+          hint = if (registryValue.isBoolean && registryValue.asBoolean()) true else defaultValue
+        }
       }
-      else {
-        hint = if (registryValue.isBoolean && registryValue.asBoolean()) true else defaultValue
-      }
+      else hint = defaultValue
       return if (hint) RenderingHints.VALUE_FRACTIONALMETRICS_ON else RenderingHints.VALUE_FRACTIONALMETRICS_OFF
     }
 
