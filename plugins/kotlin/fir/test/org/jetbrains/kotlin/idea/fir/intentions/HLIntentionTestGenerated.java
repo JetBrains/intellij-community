@@ -271,6 +271,26 @@ public abstract class HLIntentionTestGenerated extends AbstractHLIntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("alreadyNamed.kt")
+        public void testAlreadyNamed() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToFollowingArguments/alreadyNamed.kt");
+        }
+
+        @TestMetadata("annotationCall.kt")
+        public void testAnnotationCall() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToFollowingArguments/annotationCall.kt");
+        }
+
+        @TestMetadata("beforeOtherNamed.kt")
+        public void testBeforeOtherNamed() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToFollowingArguments/beforeOtherNamed.kt");
+        }
+
+        @TestMetadata("delegatedConstructor.kt")
+        public void testDelegatedConstructor() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToFollowingArguments/delegatedConstructor.kt");
+        }
+
         @TestMetadata("first.kt")
         public void testFirst() throws Exception {
             runTest("../idea/tests/testData/intentions/addNamesToFollowingArguments/first.kt");
@@ -279,6 +299,26 @@ public abstract class HLIntentionTestGenerated extends AbstractHLIntentionTest {
         @TestMetadata("last.kt")
         public void testLast() throws Exception {
             runTest("../idea/tests/testData/intentions/addNamesToFollowingArguments/last.kt");
+        }
+
+        @TestMetadata("lastUnnamed.kt")
+        public void testLastUnnamed() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToFollowingArguments/lastUnnamed.kt");
+        }
+
+        @TestMetadata("rangeForLambda1.kt")
+        public void testRangeForLambda1() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToFollowingArguments/rangeForLambda1.kt");
+        }
+
+        @TestMetadata("rangeForLambda2.kt")
+        public void testRangeForLambda2() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToFollowingArguments/rangeForLambda2.kt");
+        }
+
+        @TestMetadata("rangeForLambda3.kt")
+        public void testRangeForLambda3() throws Exception {
+            runTest("../idea/tests/testData/intentions/addNamesToFollowingArguments/rangeForLambda3.kt");
         }
 
         @TestMetadata("simple.kt")
