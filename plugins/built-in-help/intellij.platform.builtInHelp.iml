@@ -11,17 +11,7 @@
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="module-library">
-      <library name="org.apache.lucene:lucene-core:5.0.0" type="repository">
-        <properties maven-id="org.apache.lucene:lucene-core:5.0.0" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/5.0.0/lucene-core-5.0.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="org.apache.lucene:lucene-analyzers-common:5.0.0" type="repository">
+      <library name="lucene-analyzers-common" type="repository">
         <properties maven-id="org.apache.lucene:lucene-analyzers-common:5.0.0" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analyzers-common/5.0.0/lucene-analyzers-common-5.0.0.jar!/" />
@@ -32,22 +22,14 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.apache.lucene:lucene-queries:5.0.0" type="repository">
-        <properties maven-id="org.apache.lucene:lucene-queries:5.0.0" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/5.0.0/lucene-queries-5.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/5.0.0/lucene-core-5.0.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="org.apache.lucene:lucene-highlighter:5.0.0" type="repository">
-        <properties maven-id="org.apache.lucene:lucene-highlighter:5.0.0" />
+      <library name="lucene-highlighter" type="repository">
+        <properties maven-id="org.apache.lucene:lucene-highlighter:5.0.0">
+          <exclude>
+            <dependency maven-id="org.apache.lucene:lucene-core" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/5.0.0/lucene-highlighter-5.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/5.0.0/lucene-core-5.0.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-join/5.0.0/lucene-join-5.0.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-memory/5.0.0/lucene-memory-5.0.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/5.0.0/lucene-queries-5.0.0.jar!/" />
@@ -57,12 +39,15 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.apache.lucene:lucene-queryparser:5.0.0" type="repository">
-        <properties maven-id="org.apache.lucene:lucene-queryparser:5.0.0" />
+      <library name="lucene-queryparser" type="repository">
+        <properties maven-id="org.apache.lucene:lucene-queryparser:5.0.0">
+          <exclude>
+            <dependency maven-id="org.apache.lucene:lucene-core" />
+            <dependency maven-id="org.apache.lucene:lucene-queries" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queryparser/5.0.0/lucene-queryparser-5.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/5.0.0/lucene-core-5.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/5.0.0/lucene-queries-5.0.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/5.0.0/lucene-sandbox-5.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
@@ -70,36 +55,27 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.apache.lucene:lucene-codecs:5.0.0" type="repository">
-        <properties maven-id="org.apache.lucene:lucene-codecs:5.0.0" />
+      <library name="lucene-codecs" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-codecs:5.0.0" />
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-codecs/5.0.0/lucene-codecs-5.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/5.0.0/lucene-core-5.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.apache.lucene:lucene-suggest:5.0.0" type="repository">
-        <properties maven-id="org.apache.lucene:lucene-suggest:5.0.0" />
+      <library name="lucene-suggest" type="repository">
+        <properties maven-id="org.apache.lucene:lucene-suggest:5.0.0">
+          <exclude>
+            <dependency maven-id="org.apache.lucene:lucene-analyzers-common" />
+            <dependency maven-id="org.apache.lucene:lucene-core" />
+            <dependency maven-id="org.apache.lucene:lucene-queries" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/5.0.0/lucene-suggest-5.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-analyzers-common/5.0.0/lucene-analyzers-common-5.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/5.0.0/lucene-core-5.0.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-misc/5.0.0/lucene-misc-5.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queries/5.0.0/lucene-queries-5.0.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="org.apache.lucene:lucene-misc:5.0.0" type="repository">
-        <properties maven-id="org.apache.lucene:lucene-misc:5.0.0" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-misc/5.0.0/lucene-misc-5.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/5.0.0/lucene-core-5.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
