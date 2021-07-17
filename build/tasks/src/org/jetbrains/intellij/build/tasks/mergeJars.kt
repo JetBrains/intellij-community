@@ -153,6 +153,7 @@ fun addModuleSources(moduleName: String,
                      moduleNameToSize: MutableMap<String, Int>,
                      moduleOutputDir: Path,
                      modulePatches: Collection<Path>,
+                     searchableOptionsRootDir: Path,
                      extraExcludes: Collection<String>,
                      sourceList: MutableList<Source>,
                      logger: System.Logger) {
@@ -166,6 +167,11 @@ fun addModuleSources(moduleName: String,
   for (moduleOutputPatch in modulePatches) {
     sourceList.add(DirSource(moduleOutputPatch, Collections.emptyList(), sizeConsumer))
     logger.debug { " include $moduleOutputPatch with patches for module '$moduleName'" }
+  }
+
+  val searchableOptionsModuleDir = searchableOptionsRootDir.resolve(moduleName)
+  if (Files.exists(searchableOptionsModuleDir)) {
+    sourceList.add(DirSource(searchableOptionsModuleDir, Collections.emptyList(), sizeConsumer))
   }
 
   val excludes = if (extraExcludes.isEmpty()) {

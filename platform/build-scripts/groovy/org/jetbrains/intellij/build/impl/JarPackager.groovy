@@ -134,6 +134,10 @@ final class JarPackager {
     }
   }
 
+  static Path getSearchableOptionsDir(BuildContext buildContext) {
+    return buildContext.paths.tempDir.resolve("searchableOptionsResult")
+  }
+
   private static void packModuleOutputAndUnpackedProjectLibraries(Collection<String> modules,
                                                                   String jarPath,
                                                                   Path jarFile,
@@ -143,11 +147,13 @@ final class JarPackager {
                                                                   List sourceList) {
     Map<String, Integer> moduleNameToSize = new HashMap<>()
     MethodHandle addModuleSources = BuildHelper.getInstance(buildContext).addModuleSources
+    Path searchableOptionsDir = getSearchableOptionsDir(buildContext)
     for (String moduleName in modules) {
       addModuleSources.invokeWithArguments(moduleName,
                                            moduleNameToSize,
                                            Path.of(buildContext.getModuleOutputPath(buildContext.findRequiredModule(moduleName))),
                                            layoutSpec.moduleOutputPatches.get(moduleName) ?: Collections.<Path> emptyList(),
+                                           searchableOptionsDir,
                                            layout.moduleExcludes.get(moduleName),
                                            sourceList,
                                            buildContext.messages)

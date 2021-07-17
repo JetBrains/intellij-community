@@ -4,11 +4,11 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
-import groovy.io.FileType
 import groovy.json.JsonOutput
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
@@ -60,7 +60,7 @@ final class DistributionJARsBuilder {
   final ProjectStructureMapping projectStructureMapping = new ProjectStructureMapping()
   final PlatformLayout platform
   private final String patchedApplicationInfo
-  private final LinkedHashSet<PluginLayout> pluginsToPublish
+  private final Set<PluginLayout> pluginsToPublish
   private final PluginXmlPatcher pluginXmlPatcher
 
   @CompileStatic(TypeCheckingMode.SKIP)
@@ -276,10 +276,10 @@ final class DistributionJARsBuilder {
     ProductModulesLayout productLayout = buildContext.productProperties.productLayout
     List<String> modulesToIndex = productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish
     modulesToIndex -= "intellij.clion.plugin" // TODO [AK] temporary solution to fix CLion build
-    Path targetDirectory = getSearchableOptionsDir(buildContext)
+    Path targetDirectory = JarPackager.getSearchableOptionsDir(buildContext)
     buildContext.messages.progress("Building searchable options for ${modulesToIndex.size()} modules")
     buildContext.messages.debug("Searchable options are going to be built for the following modules: $modulesToIndex")
-    FileUtil.delete(targetDirectory)
+    NioFiles.deleteRecursively(targetDirectory)
     // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
     // It'll process all UI elements in Settings dialog and build index for them.
     BuildTasksImpl.runApplicationStarter(buildContext,
@@ -288,12 +288,12 @@ final class DistributionJARsBuilder {
                                          systemProperties,
                                          List.of("-ea", "-Xmx1024m", "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader"),
                                          [], TimeUnit.MINUTES.toMillis(10L), classpathCustomizer)
-    String[] modules = targetDirectory.toFile().list()
-    if (modules == null || modules.length == 0) {
+    List<Path> modules = Files.newDirectoryStream(targetDirectory).withCloseable { it.asList() }
+    if (modules.isEmpty()) {
       buildContext.messages.error("Failed to build searchable options index: $targetDirectory is empty")
     }
     else {
-      buildContext.messages.info("Searchable options are built successfully for $modules.length modules")
+      buildContext.messages.info("Searchable options are built successfully for ${modules.size()} modules")
       buildContext.messages.debug("The following modules contain searchable options: $modules")
     }
     return targetDirectory
@@ -412,8 +412,6 @@ final class DistributionJARsBuilder {
   void buildLib() {
     LayoutBuilder layoutBuilder = createLayoutBuilder()
     ProductModulesLayout productLayout = buildContext.productProperties.productLayout
-
-    addSearchableOptions(layoutBuilder)
 
     Path patchedAppInfoFile = buildContext.paths.tempDir.resolve("appInfo.xml")
     Files.createDirectories(patchedAppInfoFile.parent)
@@ -563,65 +561,69 @@ final class DistributionJARsBuilder {
 
     ProductModulesLayout productLayout = buildContext.productProperties.productLayout
     LayoutBuilder layoutBuilder = createLayoutBuilder()
-    buildContext.executeStep("Build non-bundled plugins", BuildOptions.NON_BUNDLED_PLUGINS_STEP) {
-      Path pluginsToPublishDir = buildContext.paths.tempDir.resolve("${buildContext.applicationInfo.productCode}-plugins-to-publish")
-      buildPlugins(layoutBuilder, new ArrayList<PluginLayout>(pluginsToPublish), pluginsToPublishDir, null)
+    buildContext.executeStep("Build non-bundled plugins", BuildOptions.NON_BUNDLED_PLUGINS_STEP, new Runnable() {
+      @Override
+      void run() {
+        Path pluginsToPublishDir = buildContext.paths.tempDir.resolve("${buildContext.applicationInfo.productCode}-plugins-to-publish")
+        buildPlugins(layoutBuilder, List.<PluginLayout>copyOf(pluginsToPublish), pluginsToPublishDir, null)
 
-      String pluginVersion = buildContext.buildNumber.endsWith(".SNAPSHOT")
-        ? buildContext.buildNumber + ".${new SimpleDateFormat('yyyyMMdd').format(new Date())}"
-        : buildContext.buildNumber
-      String pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
-      Path nonBundledPluginsArtifacts = Paths.get(buildContext.paths.artifacts, pluginsDirectoryName)
-      List<PluginRepositorySpec> pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
-      Predicate<PluginLayout> autoPublishPluginChecker = loadPluginsAutoPublishList()
+        String pluginVersion = buildContext.buildNumber.endsWith(".SNAPSHOT")
+          ? buildContext.buildNumber + ".${new SimpleDateFormat('yyyyMMdd').format(new Date())}"
+          : buildContext.buildNumber
+        String pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
+        Path nonBundledPluginsArtifacts = Paths.get(buildContext.paths.artifacts, pluginsDirectoryName)
+        List<PluginRepositorySpec> pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
+        Predicate<PluginLayout> autoPublishPluginChecker = loadPluginsAutoPublishList()
 
-      Path autoUploadingDir = nonBundledPluginsArtifacts.resolve("auto-uploading")
-      Path patchedPluginXmlDir = buildContext.paths.tempDir.resolve("patched-plugin-xml")
-      List<Map.Entry<String, Path>> toArchive = new ArrayList<>()
-      for (plugin in pluginsToPublish) {
-        String directory = getActualPluginDirectoryName(plugin, buildContext)
-        Path targetDirectory = autoPublishPluginChecker.test(plugin) ? autoUploadingDir : nonBundledPluginsArtifacts
-        Path destFile = targetDirectory.resolve("$directory-${pluginVersion}.zip")
+        Path autoUploadingDir = nonBundledPluginsArtifacts.resolve("auto-uploading")
+        Path patchedPluginXmlDir = buildContext.paths.tempDir.resolve("patched-plugin-xml")
+        List<Map.Entry<String, Path>> toArchive = new ArrayList<>()
+        for (plugin in pluginsToPublish) {
+          String directory = getActualPluginDirectoryName(plugin, buildContext)
+          Path targetDirectory = autoPublishPluginChecker.test(plugin) ? autoUploadingDir : nonBundledPluginsArtifacts
+          Path destFile = targetDirectory.resolve("$directory-${pluginVersion}.zip")
 
-        if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-          Path pluginXml = patchedPluginXmlDir.resolve("${plugin.mainModule}/META-INF/plugin.xml")
-          if (!Files.exists(pluginXml)) {
-            buildContext.messages.error("patched plugin.xml not found for ${plugin.mainModule} module: $pluginXml")
+          if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
+            Path pluginXml = patchedPluginXmlDir.resolve("${plugin.mainModule}/META-INF/plugin.xml")
+            if (!Files.exists(pluginXml)) {
+              buildContext.messages.error("patched plugin.xml not found for ${plugin.mainModule} module: $pluginXml")
+            }
+            pluginsToIncludeInCustomRepository
+              .add(new PluginRepositorySpec(pluginZip: destFile.toString(), pluginXml: pluginXml.toString()))
           }
-          pluginsToIncludeInCustomRepository.add(new PluginRepositorySpec(pluginZip: destFile.toString(), pluginXml: pluginXml.toString()))
+          toArchive.add(new AbstractMap.SimpleImmutableEntry(directory, destFile))
         }
-        toArchive.add(new AbstractMap.SimpleImmutableEntry(directory, destFile))
-      }
 
-      BuildHelper.bulkZipWithPrefix(buildContext, pluginsToPublishDir, toArchive, compressPluginArchive)
-      for (Map.Entry<String, Path> item : toArchive) {
-        buildContext.notifyArtifactWasBuilt(item.value)
-      }
+        BuildHelper.bulkZipWithPrefix(buildContext, pluginsToPublishDir, toArchive, compressPluginArchive)
+        for (Map.Entry<String, Path> item : toArchive) {
+          buildContext.notifyArtifactWasBuilt(item.value)
+        }
 
-      for (PluginRepositorySpec item in KeymapPluginsBuilder.buildKeymapPlugins(buildContext, autoUploadingDir)) {
+        for (PluginRepositorySpec item in KeymapPluginsBuilder.buildKeymapPlugins(buildContext, autoUploadingDir)) {
+          if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
+            pluginsToIncludeInCustomRepository.add(item)
+          }
+        }
+
+        PluginLayout helpPlugin = BuiltInHelpPlugin.helpPlugin(buildContext, pluginVersion)
+        if (helpPlugin != null) {
+          PluginRepositorySpec spec = buildHelpPlugin(helpPlugin, pluginsToPublishDir, autoUploadingDir, layoutBuilder)
+          if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
+            pluginsToIncludeInCustomRepository.add(spec)
+          }
+        }
+
         if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-          pluginsToIncludeInCustomRepository.add(item)
+          new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToIncludeInCustomRepository, nonBundledPluginsArtifacts.toString())
+          buildContext.notifyArtifactWasBuilt(nonBundledPluginsArtifacts.resolve("plugins.xml"))
+
+          def autoUploadingDirPath = autoUploadingDir.toString()
+          def autoUploadingPlugins = pluginsToIncludeInCustomRepository.findAll { it.pluginZip.startsWith(autoUploadingDirPath) }
+          new PluginRepositoryXmlGenerator(buildContext).generate(autoUploadingPlugins, autoUploadingDirPath)
+          buildContext.notifyArtifactWasBuilt(autoUploadingDir.resolve("plugins.xml"))
         }
       }
-
-      PluginLayout helpPlugin = BuiltInHelpPlugin.helpPlugin(buildContext, pluginVersion)
-      if (helpPlugin != null) {
-        PluginRepositorySpec spec = buildHelpPlugin(helpPlugin, pluginsToPublishDir, autoUploadingDir, layoutBuilder)
-        if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-          pluginsToIncludeInCustomRepository.add(spec)
-        }
-      }
-
-      if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-        new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToIncludeInCustomRepository, nonBundledPluginsArtifacts.toString())
-        buildContext.notifyArtifactWasBuilt(nonBundledPluginsArtifacts.resolve("plugins.xml"))
-
-        def autoUploadingDirPath = autoUploadingDir.toString()
-        def autoUploadingPlugins = pluginsToIncludeInCustomRepository.findAll { it.pluginZip.startsWith(autoUploadingDirPath) }
-        new PluginRepositoryXmlGenerator(buildContext).generate(autoUploadingPlugins, autoUploadingDirPath)
-        buildContext.notifyArtifactWasBuilt(autoUploadingDir.resolve("plugins.xml"))
-      }
-    }
+    })
   }
 
   /**
@@ -720,7 +722,6 @@ final class DistributionJARsBuilder {
                             Collection<PluginLayout> pluginsToInclude,
                             Path targetDirectory,
                             ProjectStructureMapping parentMapping) {
-    addSearchableOptions(layoutBuilder)
     List<Pair<PluginLayout, Path>> pluginsToScramble = new ArrayList<>()
     for (PluginLayout plugin in pluginsToInclude) {
       boolean isHelpPlugin = "intellij.platform.builtInHelp" == plugin.mainModule
@@ -813,24 +814,6 @@ final class DistributionJARsBuilder {
     if (parentMapping != null) {
       parentMapping.mergeFrom(mapping, "plugins/${getActualPluginDirectoryName(plugin, buildContext)}")
     }
-  }
-
-  private void addSearchableOptions(LayoutBuilder layoutBuilder) {
-    if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
-      Path searchableOptionsDir = getSearchableOptionsDir(buildContext)
-      if (!Files.exists(searchableOptionsDir)) {
-        buildContext.messages.error("There are no searchable options available. " +
-                                    "Please ensure that you call DistributionJARsBuilder#buildSearchableOptions before this method.")
-      }
-      searchableOptionsDir.eachFile(FileType.DIRECTORIES) {
-        layoutBuilder.patchModuleOutput(it.fileName.toString(), it)
-      }
-    }
-  }
-
-  @NotNull
-  private static Path getSearchableOptionsDir(@NotNull BuildContext buildContext) {
-    return buildContext.paths.tempDir.resolve("searchableOptions/result")
   }
 
   void checkOutputOfPluginModules(String mainPluginModule, MultiMap<String, String> moduleJars, MultiMap<String, String> moduleExcludes) {

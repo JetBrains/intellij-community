@@ -89,7 +89,8 @@ final class BuildHelper {
     addModuleSources = lookup.findStatic(jarBuilder,
                                          "addModuleSources",
                                          MethodType.methodType(voidClass, string, Map.class as Class<?>, path,
-                                                              Collection.class as Class<?>, Collection.class as Class<?>, list, logger))
+                                                              Collection.class as Class<?>, Path, Collection.class as Class<?>, list,
+                                                               logger))
     isLibraryMergeable = lookup.findStatic(jarBuilder, "isLibraryMergeable", MethodType.methodType(bool, string,))
   }
 
@@ -198,24 +199,12 @@ final class BuildHelper {
       }
     }
 
-    ClassLoader classLoader = BuildHelper.class.classLoader
-    //if (classLoader instanceof RootLoader) {
-    //  buildContext.messages.debug("Add helper classpath to runtime classpath because $classLoader is used")
-    //  for (Path file : classPathFiles) {
-    //    URL url = file.toUri().toURL()
-    //    buildContext.messages.debug("Add $url to runtime classpath")
-    //    ((RootLoader)classLoader).addURL(url)
-    //  }
-    //}
-    //else {
-      buildContext.messages.debug("Create extra helper classloader (currentClassLoader=$classLoader)")
-      classLoader = UrlClassLoader.build()
-        .parent(ClassLoader.getSystemClassLoader())
-        .usePersistentClasspathIndexForLocalClassDirectories()
-        .useCache()
-        .files(classPathFiles)
-        .get()
-    //}
+    ClassLoader classLoader = UrlClassLoader.build()
+      .parent(ClassLoader.getSystemClassLoader())
+      .usePersistentClasspathIndexForLocalClassDirectories()
+      .useCache()
+      .files(classPathFiles)
+      .get()
     return new BuildHelper(classLoader)
   }
 }
