@@ -1801,6 +1801,26 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("alreadyNamed.kt")
+        public void testAlreadyNamed() throws Exception {
+            runTest("testData/intentions/addNamesToFollowingArguments/alreadyNamed.kt");
+        }
+
+        @TestMetadata("annotationCall.kt")
+        public void testAnnotationCall() throws Exception {
+            runTest("testData/intentions/addNamesToFollowingArguments/annotationCall.kt");
+        }
+
+        @TestMetadata("beforeOtherNamed.kt")
+        public void testBeforeOtherNamed() throws Exception {
+            runTest("testData/intentions/addNamesToFollowingArguments/beforeOtherNamed.kt");
+        }
+
+        @TestMetadata("delegatedConstructor.kt")
+        public void testDelegatedConstructor() throws Exception {
+            runTest("testData/intentions/addNamesToFollowingArguments/delegatedConstructor.kt");
+        }
+
         @TestMetadata("first.kt")
         public void testFirst() throws Exception {
             runTest("testData/intentions/addNamesToFollowingArguments/first.kt");
@@ -1809,6 +1829,26 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("last.kt")
         public void testLast() throws Exception {
             runTest("testData/intentions/addNamesToFollowingArguments/last.kt");
+        }
+
+        @TestMetadata("lastUnnamed.kt")
+        public void testLastUnnamed() throws Exception {
+            runTest("testData/intentions/addNamesToFollowingArguments/lastUnnamed.kt");
+        }
+
+        @TestMetadata("rangeForLambda1.kt")
+        public void testRangeForLambda1() throws Exception {
+            runTest("testData/intentions/addNamesToFollowingArguments/rangeForLambda1.kt");
+        }
+
+        @TestMetadata("rangeForLambda2.kt")
+        public void testRangeForLambda2() throws Exception {
+            runTest("testData/intentions/addNamesToFollowingArguments/rangeForLambda2.kt");
+        }
+
+        @TestMetadata("rangeForLambda3.kt")
+        public void testRangeForLambda3() throws Exception {
+            runTest("testData/intentions/addNamesToFollowingArguments/rangeForLambda3.kt");
         }
 
         @TestMetadata("simple.kt")
