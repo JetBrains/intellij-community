@@ -15,6 +15,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
@@ -102,7 +103,7 @@ public class MavenServerCMDState extends CommandLineState {
           xmsProperty = param;
           continue;
         }
-        if (param.startsWith("-javaagent")) {
+        if (Registry.is("maven.server.vm.remove.javaagent") && param.startsWith("-javaagent")) {
           continue;
         }
         params.getVMParametersList().add(param);
