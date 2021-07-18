@@ -191,7 +191,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       myBuilder.advanceLexer();
       if (!getPatternParser().parseCasePattern()) {
         SyntaxTreeBuilder.Marker patternError = myBuilder.mark();
-        while (!myBuilder.eof() && !atAnyOfTokens(PyTokenTypes.IF_KEYWORD, PyTokenTypes.COLON)) {
+        while (!myBuilder.eof() && !atAnyOfTokens(PyTokenTypes.IF_KEYWORD, PyTokenTypes.COLON, PyTokenTypes.STATEMENT_BREAK)) {
           nextToken();
         }
         patternError.error(PyPsiBundle.message("PARSE.expected.pattern"));
