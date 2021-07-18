@@ -136,7 +136,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     if (!app.isUnitTestMode()) {
       LoadingState.COMPONENTS_LOADED.checkOccurred();
       if (!app.isHeadlessEnvironment() && !app.isCommandLine()) {
-        LOG.assertTrue(!app.isDispatchThread());
+        LOG.assertTrue(!app.isDispatchThread(), "assert !app.isDispatchThread()");
       }
     }
 
