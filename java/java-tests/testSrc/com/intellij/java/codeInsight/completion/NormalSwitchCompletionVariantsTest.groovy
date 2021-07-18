@@ -10,7 +10,8 @@ import org.jetbrains.annotations.NotNull
 
 @CompileStatic
 class NormalSwitchCompletionVariantsTest extends LightFixtureCompletionTestCase {
-  private static final String[] VARIANTS = ["case", "case null", "default"]
+  private static final String[] COMMON_VARIANTS = ["case", "default"]
+  private static final String[] COMMON_OBJECT_VARIANTS = COMMON_VARIANTS + ["case null", "case default"]
 
   @Override
   protected String getBasePath() {
@@ -23,14 +24,18 @@ class NormalSwitchCompletionVariantsTest extends LightFixtureCompletionTestCase 
     return JAVA_17
   }
 
-  void testCompletionVariantsInStmt() { doTest() }
-  void testCompletionVariantsInExpr() { doTest() }
+  void testCompletionPrimitiveTypeExpr() { doTest(COMMON_VARIANTS) }
+  void testCompletionPrimitiveTypeStmt() { doTest(COMMON_VARIANTS) }
+  void testCompletionVariantsInStmt() { doTest(COMMON_OBJECT_VARIANTS) }
+  void testCompletionVariantsInExpr() { doTest(COMMON_OBJECT_VARIANTS) }
+  void testCompletionSealedHierarchyStmt() { doTest(COMMON_OBJECT_VARIANTS + ["case Variant1", "case Variant2"]) }
+  void testCompletionSealedHierarchyExpr() { doTest(COMMON_OBJECT_VARIANTS + ["case Variant1", "case Variant2"]) }
 
-  void doTest() {
+  private void doTest(String[] variants) {
     myFixture.configureByFile(getTestName(false) + ".java")
     myFixture.complete(CompletionType.BASIC)
 
     final List<String> lookupElementStrings = myFixture.getLookupElementStrings()
-    assertSameElements(lookupElementStrings, VARIANTS)
+    assertSameElements(lookupElementStrings, variants)
   }
 }
