@@ -464,4 +464,19 @@ public class PySmartEnterTest extends PyTestCase {
   public void testColonAfterCaseClauseWithoutPatternWithGuardCondition() {
     doTest();
   }
+
+  // PY-49785
+  public void testColonAfterIntermediateCaseClause() {
+    doTest();
+  }
+
+  // PY-49785
+  public void testColonAndIndentAfterIntermediateCaseClause() {
+    doTest();
+  }
+
+  // PY-49785
+  public void testColonAfterFinalCaseClauseWithPrecedingIncompleteCaseClause() {
+    doTest();
+  }
 }
