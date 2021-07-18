@@ -31,7 +31,7 @@ abstract class IdeStructureTestBase {
   @Test
   fun moduleStructureValidation() {
     val buildContext = createBuildContext()
-    val jarBuilder = DistributionJARsBuilder(buildContext, null)
+    val jarBuilder = DistributionJARsBuilder(buildContext, emptySet())
     val validator = ModuleStructureValidator(buildContext, jarBuilder.platform.moduleJars)
     val errors = validator.validate()
     for (error in errors) {
@@ -42,7 +42,7 @@ abstract class IdeStructureTestBase {
   @Test
   fun moduleClosureValidation() {
     val buildContext = createBuildContext()
-    val jarBuilder = DistributionJARsBuilder(buildContext, null)
+    val jarBuilder = DistributionJARsBuilder(buildContext, emptySet())
 
     val module2Jar = jarBuilder.platform.moduleJars.entrySet().flatMap { it.value.map { e -> e to it.key } }.toMap()
     for (kv in module2Jar.entries.sortedBy { it.key }) {
