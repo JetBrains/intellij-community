@@ -17,7 +17,6 @@
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="module" module-name="intellij.platform.icons" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" exported="" />
-    <orderEntry type="library" name="proxy-vole" level="project" />
     <orderEntry type="module" module-name="intellij.platform.analysis" exported="" />
     <orderEntry type="module" module-name="intellij.platform.editor" exported="" />
     <orderEntry type="library" name="pty4j" level="project" />
