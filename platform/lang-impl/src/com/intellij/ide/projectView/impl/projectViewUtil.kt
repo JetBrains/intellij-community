@@ -1,14 +1,21 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl
 
+import com.intellij.ide.projectView.impl.nodes.LibraryGroupNode
+import com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.UnloadedModuleDescription
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
+import com.intellij.util.SmartList
 
 internal fun getNodeElement(userObject: Any?): Any? {
   return when (userObject) {
@@ -60,4 +67,41 @@ private fun moduleBySingleContentRoot(project: Project, file: VirtualFile): Modu
     return null
   }
   return module
+}
+
+internal fun unloadedModules(project: Project, elements: Array<out Any?>): List<UnloadedModuleDescription> {
+  val result = SmartList<UnloadedModuleDescription>()
+  for (element in elements) {
+    val file = when (element) {
+      is PsiDirectory -> element.virtualFile
+      is VirtualFile -> element
+      else -> continue
+    }
+    result += getUnloadedModuleByContentRoot(project, file) ?: continue
+  }
+  return result
+}
+
+private fun getUnloadedModuleByContentRoot(project: Project, file: VirtualFile): UnloadedModuleDescription? {
+  val moduleName = ProjectRootsUtil.findUnloadedModuleByContentRoot(file, project) ?: return null
+  return ModuleManager.getInstance(project).getUnloadedModuleDescription(moduleName)
+}
+
+fun getSelectedLibrary(userObjectsPath: Array<out Any?>?): LibraryOrderEntry? {
+  if (userObjectsPath == null) {
+    return null
+  }
+  val parentObject = userObjectsPath.getOrNull(userObjectsPath.size - 2)
+  if (parentObject !is LibraryGroupNode) {
+    return null
+  }
+  val userObject = userObjectsPath.last()
+  if (userObject is NamedLibraryElementNode) {
+    return userObject.value.orderEntry as? LibraryOrderEntry
+  }
+  val directory = (userObject as PsiDirectoryNode).value
+  val grandParentObject = userObjectsPath.getOrNull(userObjectsPath.size - 3) as? AbstractTreeNode<*>
+  val module = grandParentObject!!.value as Module?
+               ?: return null
+  return ModuleRootManager.getInstance(module).fileIndex.getOrderEntryForFile(directory.virtualFile) as? LibraryOrderEntry
 }
