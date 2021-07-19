@@ -6,14 +6,11 @@ import com.intellij.codeInsight.daemon.impl.GlobalUsageHelper;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -39,34 +36,21 @@ final class RefCountHolder {
   private final Set<PsiAnchor> myDclsUsedMap = ConcurrentCollectionFactory.createConcurrentSet(HashingStrategy.canonical());
   // reference -> import statement the reference has come from
   private final Map<PsiReference, PsiImportStatementBase> myImportStatements = ConcurrentCollectionFactory.createConcurrentMap();
-  // There are two possible states of RefCountHolder:
-  // - ready: RefCountHolder is finished updating, can be queried;
-  // - not_ready: RefCountHolder is empty or being updated now, info can be inconsistent
-  volatile boolean myReady;
 
   private static final Key<Reference<RefCountHolder>> REF_COUNT_HOLDER_IN_FILE_KEY = Key.create("REF_COUNT_HOLDER_IN_FILE_KEY");
 
   @NotNull
-  static RefCountHolder get(@NotNull PsiFile file) {
+  static RefCountHolder get(@NotNull PsiFile file, boolean alwaysNew) {
     Reference<RefCountHolder> ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
-    RefCountHolder holder = com.intellij.reference.SoftReference.dereference(ref);
-    if (holder == null) {
-      holder = new RefCountHolder(file);
-      Reference<RefCountHolder> newRef = new SoftReference<>(holder);
-      while (true) {
-        boolean replaced = ((UserDataHolderEx)file).replace(REF_COUNT_HOLDER_IN_FILE_KEY, ref, newRef);
-        if (replaced) {
-          break;
-        }
-        ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
-        RefCountHolder newHolder = com.intellij.reference.SoftReference.dereference(ref);
-        if (newHolder != null) {
-          holder = newHolder;
-          break;
-        }
-      }
+    if (alwaysNew) {
+      ((UserDataHolderEx)file).replace(REF_COUNT_HOLDER_IN_FILE_KEY, ref, null);
     }
-    return holder;
+    RefCountHolder holder = com.intellij.reference.SoftReference.dereference(ref);
+    return holder == null || alwaysNew ? new RefCountHolder(file) : holder;
+  }
+
+  void storeReadyHolder(@NotNull PsiFile file) {
+    file.putUserData(REF_COUNT_HOLDER_IN_FILE_KEY, new SoftReference<>(this));
   }
 
   private RefCountHolder(@NotNull PsiFile file) {
@@ -110,12 +94,6 @@ final class RefCountHolder {
       };
     }
     return new GlobalUsageHelperBase();
-  }
-
-  private void clear() {
-    myLocalRefsMap.clear();
-    myImportStatements.clear();
-    myDclsUsedMap.clear();
   }
 
   void registerLocallyReferenced(@NotNull PsiNamedElement result) {
@@ -300,23 +278,9 @@ final class RefCountHolder {
     return false;
   }
 
-  boolean analyze(@NotNull PsiFile file,
-                  @NotNull TextRange dirtyScope,
-                  @NotNull ProgressIndicator indicator,
-                  @NotNull Runnable highlight,
-                  @NotNull Runnable postHighlight) {
-    boolean readyBefore = myReady;
-    if (!readyBefore || dirtyScope.equals(file.getTextRange())) {
-      clear();
-    }
-    else {
-      removeInvalidRefs();
-    }
+  boolean analyze(@NotNull Runnable highlight) {
+    removeInvalidRefs();
     highlight.run();
-    ProgressManager.checkCanceled();
-    myReady = true;
-    log("a: ready changed ", readyBefore, "-> true", indicator);
-    postHighlight.run();
     return true;
   }
 
