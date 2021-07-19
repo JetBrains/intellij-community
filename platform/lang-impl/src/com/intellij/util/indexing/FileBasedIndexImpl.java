@@ -1623,13 +1623,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   private final VirtualFileUpdateTask myForceUpdateTask = new VirtualFileUpdateTask();
-  private volatile long myLastOtherProjectInclusionStamp;
 
   private void forceUpdate(@Nullable Project project, @Nullable final GlobalSearchScope filter, @Nullable final VirtualFile restrictedTo) {
     Collection<VirtualFile> allFilesToUpdate = getChangedFilesCollector().getAllFilesToUpdate();
 
     if (!allFilesToUpdate.isEmpty()) {
-      boolean includeFilesFromOtherProjects = restrictedTo == null && System.currentTimeMillis() - myLastOtherProjectInclusionStamp > 100;
+      boolean includeFilesFromOtherProjects = restrictedTo == null && project == null;
       List<VirtualFile> virtualFilesToBeUpdatedForProject = ContainerUtil.filter(
         allFilesToUpdate,
         new ProjectFilesCondition(projectIndexableFiles(project), filter, restrictedTo,
@@ -1638,9 +1637,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
       if (!virtualFilesToBeUpdatedForProject.isEmpty()) {
         myForceUpdateTask.processAll(virtualFilesToBeUpdatedForProject, project);
-      }
-      if (includeFilesFromOtherProjects) {
-        myLastOtherProjectInclusionStamp = System.currentTimeMillis();
       }
     }
   }
