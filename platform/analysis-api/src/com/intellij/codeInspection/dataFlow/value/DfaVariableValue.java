@@ -16,7 +16,6 @@
 
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInspection.dataFlow.lang.ir.Synthetic;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
@@ -182,14 +181,5 @@ public final class DfaVariableValue extends DfaValue {
    */
   public boolean alwaysEqualsToItself(@NotNull DfType type) {
     return myDescriptor.alwaysEqualsToItself(type);
-  }
-
-  /**
-   * Checks whether supplied variable is a temporary variable created previously via {@link com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow#createTempVariable(com.intellij.codeInspection.dataFlow.types.DfType)}
-   *
-   * @return true if supplied variable is a temp variable.
-   */
-  public boolean isTempVariable() {
-    return getDescriptor() instanceof Synthetic;
   }
 }

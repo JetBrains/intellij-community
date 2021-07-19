@@ -144,6 +144,16 @@ public final class ControlFlow {
   }
 
   /**
+   * Checks whether supplied variable is a temporary variable created previously via {@link ControlFlow#createTempVariable(DfType)}
+   *
+   * @param variable to check
+   * @return true if supplied variable is a temp variable.
+   */
+  public static boolean isTempVariable(@NotNull DfaVariableValue variable) {
+    return variable.getDescriptor() instanceof Synthetic;
+  }
+
+  /**
    * Create a synthetic variable (not declared in the original code) to be used within this control flow.
    *
    * @param dfType a type of variable to create

@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
@@ -81,7 +82,7 @@ public class AssignInstruction extends ExpressionPushingInstruction {
     if (!(dfaDest instanceof DfaVariableValue &&
           ((DfaVariableValue)dfaDest).getPsiVariable() instanceof PsiLocalVariable &&
           dfaSource instanceof DfaVariableValue &&
-          (((DfaVariableValue)dfaSource).isTempVariable() ||
+          (ControlFlow.isTempVariable(((DfaVariableValue)dfaSource)) ||
            ((DfaVariableValue)dfaSource).getDescriptor().isCall()))) {
       JavaDfaHelpers.dropLocality(dfaSource, stateBefore);
     }
