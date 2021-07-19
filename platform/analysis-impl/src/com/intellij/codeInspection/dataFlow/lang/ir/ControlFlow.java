@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * Represents code block IR (list of instructions)
  */
-public final class ControlFlowImpl implements ControlFlow {
+public final class ControlFlow {
   private @NotNull final List<Instruction> myInstructions;
   private @NotNull final Object2IntMap<PsiElement> myElementToStartOffsetMap;
   private @NotNull final Object2IntMap<PsiElement> myElementToEndOffsetMap;
@@ -31,7 +31,7 @@ public final class ControlFlowImpl implements ControlFlow {
   private @NotNull final PsiElement myPsiAnchor;
   private int[] myLoopNumbers;
 
-  public ControlFlowImpl(@NotNull final DfaValueFactory factory, @NotNull PsiElement psiAnchor) {
+  public ControlFlow(@NotNull final DfaValueFactory factory, @NotNull PsiElement psiAnchor) {
     myFactory = factory;
     myPsiAnchor = psiAnchor;
     myInstructions = new ArrayList<>();
@@ -46,7 +46,7 @@ public final class ControlFlowImpl implements ControlFlow {
    * @param flow    flow to copy
    * @param factory factory to use
    */
-  public ControlFlowImpl(@NotNull ControlFlowImpl flow, @NotNull DfaValueFactory factory) {
+  public ControlFlow(@NotNull ControlFlow flow, @NotNull DfaValueFactory factory) {
     myFactory = factory;
     myPsiAnchor = flow.myPsiAnchor;
     myElementToEndOffsetMap = flow.myElementToEndOffsetMap;
@@ -55,37 +55,30 @@ public final class ControlFlowImpl implements ControlFlow {
     myInstructions = StreamEx.of(flow.myInstructions).map(instruction -> instruction.bindToFactory(factory)).toImmutableList();
   }
 
-  @Override
   public @NotNull PsiElement getPsiAnchor() {
     return myPsiAnchor;
   }
 
-  @Override
   public Instruction[] getInstructions(){
     return myInstructions.toArray(new Instruction[0]);
   }
 
-  @Override
   public Instruction getInstruction(int index) {
     return myInstructions.get(index);
   }
 
-  @Override
   public int getInstructionCount() {
     return myInstructions.size();
   }
 
-  @Override
   public ControlFlowOffset getNextOffset() {
     return new FixedOffset(myInstructions.size());
   }
 
-  @Override
   public void startElement(PsiElement psiElement) {
     myElementToStartOffsetMap.put(psiElement, myInstructions.size());
   }
 
-  @Override
   public void finishElement(PsiElement psiElement) {
     myElementToEndOffsetMap.put(psiElement, myInstructions.size());
   }
@@ -95,7 +88,6 @@ public final class ControlFlowImpl implements ControlFlow {
     myInstructions.add(instruction);
   }
 
-  @Override
   public int[] getLoopNumbers() {
     return myLoopNumbers;
   }
@@ -117,12 +109,10 @@ public final class ControlFlowImpl implements ControlFlow {
     }
   }
 
-  @Override
   public ControlFlowOffset getStartOffset(final PsiElement element) {
     return new FromMapOffset(element, myElementToStartOffsetMap);
   }
 
-  @Override
   public ControlFlowOffset getEndOffset(final PsiElement element) {
     return new FromMapOffset(element, myElementToEndOffsetMap);
   }
@@ -149,7 +139,6 @@ public final class ControlFlowImpl implements ControlFlow {
     myInstructions.set(index, instruction);
   }
 
-  @Override
   public @NotNull DfaValueFactory getFactory() {
     return myFactory;
   }
@@ -164,7 +153,6 @@ public final class ControlFlowImpl implements ControlFlow {
     return getFactory().getVarFactory().createVariableValue(new Synthetic(getInstructionCount(), dfType));
   }
 
-  @Override
   public @NotNull List<DfaVariableValue> getSynthetics(PsiElement element) {
     int startOffset = getStartOffset(element).getInstructionOffset();
     List<DfaVariableValue> synthetics = new ArrayList<>();

@@ -48,12 +48,12 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
-    private val flow = ControlFlowImpl(factory, context)
+    private val flow = ControlFlow(factory, context)
     private var broken: Boolean = false
     private val trapTracker = TrapTracker(factory, context)
     private val stringType = PsiType.getJavaLangString(context.manager, context.resolveScope)
 
-    fun buildFlow(): ControlFlowImpl? {
+    fun buildFlow(): ControlFlow? {
         processExpression(context)
         if (LOG.isDebugEnabled) {
             val total = totalCount.incrementAndGet()
