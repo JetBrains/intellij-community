@@ -34,39 +34,6 @@ final class JarPackager {
                    BaseLayout layout,
                    LayoutBuilder.LayoutSpec layoutSpec,
                    BuildContext buildContext) {
-    // include all module libraries from the plugin modules added to IDE classpath to layout
-    Stream<JpsLibrary> moduleLibs = actualModuleJars.entrySet()
-      .stream()
-      .filter { !it.key.contains("/") }
-      .flatMap { it.value.stream() }
-      .filter { !layout.modulesWithExcludedModuleLibraries.contains(it) }
-      .flatMap { moduleName ->
-        Collection<String> excluded = layout.excludedModuleLibraries.get(moduleName)
-        buildContext.findRequiredModule(moduleName).dependenciesList.dependencies.stream()
-          .filter(new Predicate<JpsDependencyElement>() {
-            @Override
-            boolean test(JpsDependencyElement it) {
-              if (it instanceof JpsLibraryDependency &&
-                  ((JpsLibraryDependency)it)?.libraryReference?.parentReference?.resolve() instanceof JpsModule) {
-                return JpsJavaExtensionService.instance.getDependencyExtension(it)
-                         ?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) ?: false
-              }
-              else {
-                return false
-              }
-            }
-          })
-          .map { ((JpsLibraryDependency)it).library }
-          .filter(new Predicate<JpsLibrary>() {
-            @Override
-            boolean test(JpsLibrary library) {
-              String libraryName = layoutSpec.getLibraryName(library)
-              return !excluded.contains(libraryName) &&
-                     !layout.includedModuleLibraries.any { it.libraryName == libraryName}
-            }
-          })
-      }
-
     Map<Path, JpsLibrary> copiedFiles = new HashMap<>()
 
     for (ModuleLibraryData data in layout.includedModuleLibraries) {
@@ -106,20 +73,25 @@ final class JarPackager {
       buildLibrary(library, relativePathToLibFile, targetFile, files, layoutSpec, buildContext)
     }
 
-    Map<JpsLibrary, List<Path>> librariesToMerge = packLibraries(outputDir, layout, layoutSpec, moduleLibs, copiedFiles, buildContext)
-
-    List libSources = new ArrayList()
-    boolean isSeparateUberJar = actualModuleJars.size() != 1 || buildContext.paths.distAllDir == outputDir.parent
-    Path uberJarFile = outputDir.resolve(isSeparateUberJar ? "3rd-party.jar" : actualModuleJars.keySet().first())
-    String relativeToDistTargetFilePath = layoutSpec.getOutputFilePath("lib/" + uberJarFile.fileName.toString())
-    for (Map.Entry<JpsLibrary, List<Path>> entry : librariesToMerge.entrySet()) {
-      filesToSourceWithMapping(libSources, entry.value, layoutSpec.projectStructureMapping, entry.key, relativeToDistTargetFilePath,
-                               buildContext)
-    }
-    libSources.sort(null)
-    if (isSeparateUberJar) {
-      buildJar(uberJarFile, libSources, !layoutSpec.copyFiles, buildContext)
+    Map<JpsLibrary, List<Path>> librariesToMerge = packLibraries(actualModuleJars, outputDir, layout, layoutSpec, copiedFiles, buildContext)
+    List libSources
+    if (librariesToMerge.isEmpty()) {
       libSources = null
+    }
+    else {
+      libSources = new ArrayList()
+      boolean isSeparateUberJar = actualModuleJars.size() != 1 || buildContext.paths.distAllDir == outputDir.parent
+      Path uberJarFile = outputDir.resolve(isSeparateUberJar ? "3rd-party.jar" : actualModuleJars.keySet().first())
+      String relativeToDistTargetFilePath = layoutSpec.getOutputFilePath("lib/" + uberJarFile.fileName.toString())
+      for (Map.Entry<JpsLibrary, List<Path>> entry : librariesToMerge.entrySet()) {
+        filesToSourceWithMapping(libSources, entry.value, layoutSpec.projectStructureMapping, entry.key, relativeToDistTargetFilePath,
+                                 buildContext)
+      }
+      libSources.sort(null)
+      if (isSeparateUberJar) {
+        buildJar(uberJarFile, libSources, !layoutSpec.copyFiles, buildContext)
+        libSources = null
+      }
     }
 
     for (Map.Entry<String, List<String>> entry in actualModuleJars.entrySet()) {
@@ -132,6 +104,44 @@ final class JarPackager {
       }
       packModuleOutputAndUnpackedProjectLibraries(entry.value, jarPath, jarFile, layoutSpec, buildContext, layout, sourceList)
     }
+  }
+
+  private static Stream<JpsLibrary> getModuleLibs(Map<String, List<String>> actualModuleJars,
+                                                  BaseLayout layout,
+                                                  LayoutBuilder.LayoutSpec layoutSpec,
+                                                  BuildContext buildContext) {
+    // include all module libraries from the plugin modules added to IDE classpath to layout
+    return actualModuleJars.entrySet()
+      .stream()
+      .filter { !it.key.contains("/") }
+      .flatMap { it.value.stream() }
+      .filter { !layout.modulesWithExcludedModuleLibraries.contains(it) }
+      .flatMap { moduleName ->
+        Collection<String> excluded = layout.excludedModuleLibraries.get(moduleName)
+        buildContext.findRequiredModule(moduleName).dependenciesList.dependencies.stream()
+          .filter(new Predicate<JpsDependencyElement>() {
+            @Override
+            boolean test(JpsDependencyElement it) {
+              if (it instanceof JpsLibraryDependency &&
+                  ((JpsLibraryDependency)it)?.libraryReference?.parentReference?.resolve() instanceof JpsModule) {
+                return JpsJavaExtensionService.instance.getDependencyExtension(it)
+                         ?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) ?: false
+              }
+              else {
+                return false
+              }
+            }
+          })
+          .map { ((JpsLibraryDependency)it).library }
+          .filter(new Predicate<JpsLibrary>() {
+            @Override
+            boolean test(JpsLibrary library) {
+              String libraryName = layoutSpec.getLibraryName(library)
+              return !excluded.contains(libraryName) &&
+                     !layout.includedModuleLibraries.any { it.libraryName == libraryName }
+            }
+          })
+      }
   }
 
   static Path getSearchableOptionsDir(BuildContext buildContext) {
@@ -180,10 +190,10 @@ final class JarPackager {
     }
   }
 
-  private static Map<JpsLibrary, List<Path>> packLibraries(Path outputDir,
+  private static Map<JpsLibrary, List<Path>> packLibraries(Map<String, List<String>> actualModuleJars,
+                                                           Path outputDir,
                                                            BaseLayout layout,
                                                            LayoutBuilder.LayoutSpec layoutSpec,
-                                                           Stream<JpsLibrary> moduleLibs,
                                                            Map<Path, JpsLibrary> copiedFiles,
                                                            BuildContext buildContext) {
     Map<JpsLibrary, List<Path>> toMerge = new HashMap<JpsLibrary, List<Path>>()
@@ -234,7 +244,7 @@ final class JarPackager {
       }
     }
 
-    moduleLibs.forEach(new Consumer<JpsLibrary>() {
+    getModuleLibs(actualModuleJars, layout, layoutSpec, buildContext).forEach(new Consumer<JpsLibrary>() {
       @Override
       void accept(JpsLibrary library) {
         String libName = library.name

@@ -106,7 +106,7 @@ final class CommunityRepositoryModules {
       withModule("intellij.gradle.toolingExtension", "gradle-tooling-extension-api.jar")
       withModule("intellij.gradle.toolingExtension.impl", "gradle-tooling-extension-impl.jar")
       withModule("intellij.gradle.toolingProxy")
-      withProjectLibrary("Gradle")
+      withProjectLibrary("Gradle", "", true)
     },
     plugin("intellij.packageSearch"),
     plugin("intellij.externalSystem.dependencyUpdater"),
