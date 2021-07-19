@@ -2,20 +2,28 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.AutoPopupController
+import com.intellij.codeInsight.completion.CompletionInitializationContext.IDENTIFIER_END_OFFSET
 import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-class CompositeDeclarativeInsertHandler(val handlers: Map<Char, DeclarativeInsertHandler2>, val fallbackInsertHandler: InsertHandler<LookupElement>?) : InsertHandler<LookupElement> {
+open class CompositeDeclarativeInsertHandler(val handlers: Map<Char, DeclarativeInsertHandler2>,
+                                        val fallbackInsertHandler: InsertHandler<LookupElement>?,
+                                        // TODO: move to subclass: too specific to KotlinFunctionInsertHandler
+                                        val isLambda: Boolean,
+                                        val inputValueArguments: Boolean,
+                                        val inputTypeArguments: Boolean)
+  : InsertHandler<LookupElement> {
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
     (handlers[context.completionChar] ?: fallbackInsertHandler)?.handleInsert(context, item)
+    //fallbackInsertHandler?.handleInsert(context, item)
   }
 
   companion object {
     fun withUniversalHandler(completionChars: CharArray, handler: DeclarativeInsertHandler2): CompositeDeclarativeInsertHandler {
       val handlersMap = completionChars.associate { it to handler }
       // it's important not to provide a fallbackInsertHandler
-      return CompositeDeclarativeInsertHandler(handlersMap, null)
+      return CompositeDeclarativeInsertHandler(handlersMap, null, false, false, false)
     }
   }
 }

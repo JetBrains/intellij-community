@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.AutoPopupController
+import com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
@@ -131,16 +132,19 @@ class LookupElementFactory(
             val isSingleParameter = descriptor.valueParameters.size == 1
 
             val parameterType = lastParameter.type
-            val insertHandler = insertHandlerProvider.insertHandler(descriptor) as KotlinFunctionInsertHandler.Normal
-            if (insertHandler.lambdaInfo == null) {
+            val isNotLambda = when (val insertHandler = insertHandlerProvider.insertHandler(descriptor)) {
+                is KotlinFunctionInsertHandler.Normal -> insertHandler.lambdaInfo == null
+                is CompositeDeclarativeInsertHandler -> !insertHandler.isLambda
+                else -> true
+            }
+
+            if (isNotLambda) {
                 val functionParameterCount = getValueParametersCountFromFunctionType(parameterType)
                 add(
-                    createFunctionCallElementWithLambda(
-                        descriptor,
-                        parameterType,
-                        useReceiverTypes,
-                        explicitLambdaParameters = functionParameterCount > 1
-                    )
+                    createFunctionCallElementWithLambda(descriptor,
+                                                        parameterType,
+                                                        useReceiverTypes,
+                                                        explicitLambdaParameters = functionParameterCount > 1)
                 )
             }
 
@@ -163,7 +167,11 @@ class LookupElementFactory(
         explicitLambdaParameters: Boolean
     ): LookupElement {
         var lookupElement = createLookupElement(descriptor, useReceiverTypes)
-        val inputTypeArguments = (insertHandlerProvider.insertHandler(descriptor) as KotlinFunctionInsertHandler.Normal).inputTypeArguments
+        val inputTypeArguments = when(val insertHandler = insertHandlerProvider.insertHandler(descriptor)) {
+            is KotlinFunctionInsertHandler.Normal -> insertHandler.inputTypeArguments
+            is CompositeDeclarativeInsertHandler -> insertHandler.inputTypeArguments
+            else -> false
+        }
         val lambdaInfo = GenerateLambdaInfo(parameterType, explicitLambdaParameters)
         val lambdaPresentation = if (explicitLambdaParameters)
             LambdaSignatureTemplates.lambdaPresentation(parameterType, LambdaSignatureTemplates.SignaturePresentation.NAMES_OR_TYPES)
@@ -229,7 +237,12 @@ class LookupElementFactory(
     ): LookupElement {
         val lookupElement = createLookupElement(descriptor, useReceiverTypes)
 
-        val needTypeArguments = (insertHandlerProvider.insertHandler(descriptor) as KotlinFunctionInsertHandler.Normal).inputTypeArguments
+        //val needTypeArguments = (insertHandlerProvider.insertHandler(descriptor) as KotlinFunctionInsertHandler.Normal).inputTypeArguments
+        val needTypeArguments = when(val insertHandler = insertHandlerProvider.insertHandler(descriptor)) {
+            is KotlinFunctionInsertHandler.Normal -> insertHandler.inputTypeArguments
+            is CompositeDeclarativeInsertHandler -> insertHandler.inputTypeArguments
+            else -> false
+        }
         return FunctionCallWithArgumentsLookupElement(lookupElement, descriptor, argumentText, needTypeArguments)
     }
 

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion.handlers
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionInitializationContext.IDENTIFIER_END_OFFSET
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.editor.Editor
@@ -12,6 +13,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.completion.LambdaSignatureTemplates
+import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -21,6 +23,7 @@ import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getLastParentOfTypeInRow
+import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.KotlinType
 
 class GenerateLambdaInfo(val lambdaType: KotlinType, val explicitParameters: Boolean)
@@ -67,23 +70,39 @@ fun createNormalFunctionInsertHandler(
         }
 
         if (absoluteOpeningBracketOffset == null) {
+            var lambdaCaseInsideBracketOffset = 0
+            var noLambdaCaseInsideBracketOffset = 0
             if (insertLambda) {
                 // todo: get file outside
                 val file = PsiDocumentManager.getInstance(editor.project!!).getPsiFile(editor.document)!!
                 if (file.kotlinCustomSettings.INSERT_WHITESPACES_IN_SIMPLE_ONE_LINE_METHOD) {
-                    builder.offsetToPutCaret = stringToInsert.length + 4
+                    //builder.offsetToPutCaret = stringToInsert.length + 4
                     stringToInsert.append(" {  }")
+                    lambdaCaseInsideBracketOffset = 3
                 } else {
-                    builder.offsetToPutCaret = stringToInsert.length + 3
+                    //builder.offsetToPutCaret = stringToInsert.length + 3
                     stringToInsert.append(" {}")
+                    lambdaCaseInsideBracketOffset = 2
                 }
             } else {
-                builder.offsetToPutCaret = stringToInsert.length + 1
                 stringToInsert.append("($argumentText)")
+                noLambdaCaseInsideBracketOffset = 1
+                //builder.offsetToPutCaret = stringToInsert.length + 1
             }
             val shouldPlaceCaretInBrackets = inputValueArguments || lambdaInfo != null
-            if (!insertTypeArguments && shouldPlaceCaretInBrackets) {
-                builder.withPopupOptions(DeclarativeInsertHandler2.PopupOptions.ParameterInfo)
+            if (!insertTypeArguments) {
+                // no need to insert typeParams, may move cursor around valueParams
+                if (shouldPlaceCaretInBrackets) {
+                    builder.offsetToPutCaret += noLambdaCaseInsideBracketOffset + lambdaCaseInsideBracketOffset
+                    builder.withPopupOptions(DeclarativeInsertHandler2.PopupOptions.ParameterInfo)
+                }
+                else {
+                    builder.offsetToPutCaret += stringToInsert.toString().length
+                }
+            }
+            else {
+                // we would love to put caret inside value params, but we can't, cause we have to stay on typeParams first
+                // so do nothing here.
             }
         } else if (!(insertLambda && lambdaInfo!!.explicitParameters)) {
             builder.addOperation(absoluteOpeningBracketOffset + 1 - offset, argumentText)
@@ -101,7 +120,47 @@ fun createNormalFunctionInsertHandler(
         }
         builder.addOperation(0, stringToInsert.toString())
         builder.withPostInsertHandler(InsertHandler<LookupElement> { context, item ->
-            KotlinCallableInsertHandler.addImport(context, item, callType)
+            var renderedText = item.lookupString
+
+            // TODO: maybe there is a way to detect this at declarative stage
+            if (!argumentsOnly) {
+                surroundWithBracesIfInStringTemplate(context)
+
+                val name = (item.`object` as? DeclarationLookupObject)?.name
+                if (name != null && !name.isSpecial) {
+                    val startOffset = context.startOffset
+                    if (startOffset > 0 && context.document.isTextAt(startOffset - 1, "`")) {
+                        context.document.deleteString(startOffset - 1, startOffset)
+                    }
+                    renderedText = name.render()
+                    context.document.replaceString(context.startOffset, context.startOffset + item.lookupString.length, renderedText)
+                }
+            }
+
+            // TODO: it looks hacky to adjust context this way
+            // brackets with arguments are already present, and they should be kept, that's why we provide fake context
+            // NB: it is important to fork context here, so that original one remains intact
+            context.forkByOffsetMap().let { forkedContext ->
+                val tailOffset = forkedContext.startOffset + renderedText.length
+                forkedContext.tailOffset = tailOffset
+                forkedContext.offsetMap.addOffset(IDENTIFIER_END_OFFSET, tailOffset)
+
+                KotlinCallableInsertHandler.addImport(forkedContext, item, callType)
+            }
+
+            // hack for KT-31902
+            if (callType == CallType.DEFAULT) {
+                val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
+
+                context.file
+                    .findElementAt(context.startOffset)
+                    ?.parent?.getLastParentOfTypeInRow<KtDotQualifiedExpression>()
+                    ?.createSmartPointer()?.let {
+                        psiDocumentManager.commitDocument(context.document)
+                        val dotQualifiedExpression = it.element ?: return@let
+                        KotlinCallableInsertHandler.SHORTEN_REFERENCES.process(dotQualifiedExpression)
+                    }
+            }
         })
 
         handlers[Lookup.NORMAL_SELECT_CHAR] = builder.build()
@@ -145,7 +204,10 @@ fun createNormalFunctionInsertHandler(
     // (
 
     val fallbackHandler = KotlinFunctionInsertHandler.Normal(callType, inputTypeArguments, inputValueArguments, argumentText, lambdaInfo, argumentsOnly)
-    return CompositeDeclarativeInsertHandler(handlers = handlers, fallbackInsertHandler = fallbackHandler)
+    return CompositeDeclarativeInsertHandler(handlers = handlers, fallbackInsertHandler = fallbackHandler,
+                                             isLambda = lambdaInfo != null, inputValueArguments = inputValueArguments,
+                                             inputTypeArguments = inputTypeArguments)
+    //return fallbackHandler
 }
 
 sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallableInsertHandler(callType) {

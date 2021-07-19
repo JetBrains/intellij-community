@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.completion.smart
 
+import com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
@@ -233,8 +234,7 @@ class TypeInstantiationItems(
                     argumentsOnly = true
                 )
 
-                1 -> (lookupElementFactory.insertHandlerProvider
-                    .insertHandler(visibleConstructors.single()) as KotlinFunctionInsertHandler.Normal).copy(argumentsOnly = true)
+                1 -> lookupElementFactory.insertHandlerProvider.insertHandler(visibleConstructors.single(), argumentsOnly = true)
 
                 else -> KotlinFunctionInsertHandler.Normal(
                     CallType.DEFAULT,
@@ -253,12 +253,27 @@ class TypeInstantiationItems(
                 shortenReferences(context, context.startOffset, context.tailOffset)
             }
 
-            if (baseInsertHandler.inputValueArguments) {
-                lookupElement = lookupElement.keepOldArgumentListOnTab()
+            run {
+                val (inputValueArgs, isLambda) = when (baseInsertHandler) {
+                    is KotlinFunctionInsertHandler.Normal -> baseInsertHandler.inputValueArguments to (baseInsertHandler.lambdaInfo != null)
+                    is CompositeDeclarativeInsertHandler -> baseInsertHandler.inputValueArguments to baseInsertHandler.isLambda
+                    else -> false to false
+                }
+                if (inputValueArgs) {
+                    lookupElement = lookupElement.keepOldArgumentListOnTab()
+                }
+                if (isLambda) {
+                    lookupElement.putUserData(KotlinCompletionCharFilter.ACCEPT_OPENING_BRACE, Unit)
+                }
             }
-            if (baseInsertHandler.lambdaInfo != null) {
-                lookupElement.putUserData(KotlinCompletionCharFilter.ACCEPT_OPENING_BRACE, Unit)
-            }
+            //if (baseInsertHandler is KotlinFunctionInsertHandler.Normal) {
+            //    if (baseInsertHandler.inputValueArguments) {
+            //        lookupElement = lookupElement.keepOldArgumentListOnTab()
+            //    }
+            //    if (baseInsertHandler.lambdaInfo != null) {
+            //        lookupElement.putUserData(KotlinCompletionCharFilter.ACCEPT_OPENING_BRACE, Unit)
+            //    }
+            //}
             lookupElement = lookupElement.assignSmartCompletionPriority(SmartCompletionItemPriority.INSTANTIATION)
         }
 
