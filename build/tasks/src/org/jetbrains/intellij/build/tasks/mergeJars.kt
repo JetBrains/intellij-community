@@ -26,7 +26,7 @@ data class ZipSource(val file: Path, override val sizeConsumer: IntConsumer? = n
 
 data class DirSource(val dir: Path, val excludes: List<PathMatcher>, override val sizeConsumer: IntConsumer? = null) : Source
 
-fun createZipSource(file: Path, sizeConsumer: IntConsumer): Any = ZipSource(file = file, sizeConsumer = sizeConsumer)
+fun createZipSource(file: Path, sizeConsumer: IntConsumer?): Any = ZipSource(file = file, sizeConsumer = sizeConsumer)
 
 @JvmOverloads
 fun buildJar(targetFile: Path, sources: List<Source>, logger: System.Logger?, dryRun: Boolean = false) {

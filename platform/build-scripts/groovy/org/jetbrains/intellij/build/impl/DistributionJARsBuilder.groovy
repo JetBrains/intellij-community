@@ -724,10 +724,10 @@ final class DistributionJARsBuilder {
         }
       }
 
-      Path targetDir = targetDirectory.resolve(getActualPluginDirectoryName(plugin, buildContext))
-      processPluginLayout(plugin, layoutBuilder, targetDir, generatedResources, parentMapping, true)
+      Path pluginDir = targetDirectory.resolve(getActualPluginDirectoryName(plugin, buildContext))
+      processPluginLayout(plugin, layoutBuilder, pluginDir, generatedResources, parentMapping, true)
       if (!plugin.pathsToScramble.isEmpty()) {
-        pluginsToScramble.add(new Pair<>(plugin, targetDir))
+        pluginsToScramble.add(new Pair<>(plugin, pluginDir))
       }
     }
 
@@ -739,7 +739,22 @@ final class DistributionJARsBuilder {
     }
     else {
       for (Pair<PluginLayout, Path> pluginPair in pluginsToScramble) {
-        buildContext.proprietaryBuildTools.scrambleTool.scramblePlugin(buildContext, pluginPair.first, pluginPair.second, targetDirectory)
+        PluginLayout pluginLayout = pluginPair.first
+        List<String> pathsToScramble = pluginLayout.pathsToScramble
+        Path pluginDir = pluginPair.second
+        buildContext.proprietaryBuildTools.scrambleTool.scramblePlugin(buildContext, pluginLayout, pluginDir, targetDirectory)
+        BuildHelper buildHelper = BuildHelper.getInstance(buildContext)
+        // update package index
+        for (String path : pathsToScramble) {
+          Path file = pluginDir.resolve(path)
+          Path tempFile = pluginDir.resolve("temp_" + file.fileName.toString())
+          Files.move(file, tempFile)
+          buildHelper.buildJar.invokeWithArguments(file,
+                                                   List.of(buildHelper.createZipSource.invokeWithArguments(tempFile, null)),
+                                                   buildContext.messages,
+                                                   false)
+          Files.delete(tempFile)
+        }
       }
     }
   }
