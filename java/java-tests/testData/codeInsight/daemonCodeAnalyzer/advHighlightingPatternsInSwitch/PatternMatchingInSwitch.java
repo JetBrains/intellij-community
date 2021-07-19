@@ -710,7 +710,7 @@ class Main {
     str = switch(i) {
       case Sub1 s1 -> "ok";
       case Sub2 s2 -> "ok";
-      case Sub3 s3 -> "ok";
+      case Sub3 s3 && true -> "ok";
     };
 
     switch (<error descr="'switch' statement does not cover all possible input values">i</error>) {
@@ -744,6 +744,18 @@ class Main {
       case Sub2 s2 -> "ok";
       case Sub4 s4 -> "ok";
       case Sub6 s6 -> "ok";
+    };
+
+    switch (<error descr="'switch' statement does not cover all possible input values">i</error>) {
+      case Sub1 s1:
+        break;
+      case (Sub2 s2 && false):
+        break;
+      case Sub3 s3:
+        break;
+    }
+    str = switch(<error descr="'switch' expression does not cover all possible input values">i</error>) {
+      case I ii && ii != null -> "ok";
     };
 
     // If the type of the selector expression, T, is not an enum type and also does not name a sealed interface or a sealed class that is abstract
