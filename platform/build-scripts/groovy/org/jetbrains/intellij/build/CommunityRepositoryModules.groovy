@@ -166,9 +166,8 @@ final class CommunityRepositoryModules {
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
     // required for android plugin
-    plugin("intellij.android.smali") {
-      withModule("intellij.android.smali")
-    },
+    plugin("intellij.android.androidCwm"),
+    plugin("intellij.android.smali"),
     plugin("intellij.completionMlRanking"),
     plugin("intellij.completionMlRankingModels") {
       bundlingRestrictions.includeInEapOnly = true
