@@ -72,6 +72,12 @@ public final class SlowOperations {
    * @see com.intellij.openapi.actionSystem.ex.ActionUtil#underModalProgress
    */
   public static void assertSlowOperationsAreAllowed() {
+    if (!EDT.isCurrentThreadEdt()) {
+      return;
+    }
+    if (isInsideActivity(FAST_TRACK)) {
+      throw new ProcessCanceledException();
+    }
     if (isAlwaysAllowed()) {
       return;
     }
@@ -79,13 +85,11 @@ public final class SlowOperations {
       return;
     }
     Application application = ApplicationManager.getApplication();
-    if (!application.isDispatchThread() ||
-        application.isWriteAccessAllowed() ||
-        ourStack.isEmpty() && !Registry.is("ide.slow.operations.assertion.other", false)) {
+    if (application.isWriteAccessAllowed()) {
       return;
     }
-    if (isInsideActivity(FAST_TRACK)) {
-      throw new ProcessCanceledException();
+    if (ourStack.isEmpty() && !Registry.is("ide.slow.operations.assertion.other", false)) {
+      return;
     }
     for (String activity : ourStack) {
       if (!Registry.is("ide.slow.operations.assertion." + activity, true)) {
@@ -108,7 +112,7 @@ public final class SlowOperations {
 
   @ApiStatus.Internal
   public static boolean isInsideActivity(@NotNull String activityName) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    EDT.assertIsEdt();
     for (String activity : ourStack) {
       if (activityName == activity) {
         return true;
@@ -150,7 +154,7 @@ public final class SlowOperations {
   }
 
   public static @NotNull AccessToken allowSlowOperations(@NotNull @NonNls String activityName) {
-    if (isAlwaysAllowed() || !EDT.isCurrentThreadEdt()) {
+    if (!EDT.isCurrentThreadEdt()) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
 
