@@ -115,8 +115,10 @@ class ZipTest {
     zip(archiveFile, mapOf(dir to "test"))
 
     val zipFile = ImmutableZipFile.load(archiveFile)
-    for (name in list) {
-      assertThat(zipFile.getEntry("test/$name")).isNotNull()
+    zipFile.use {
+      for (name in list) {
+        assertThat(zipFile.getEntry("test/$name")).isNotNull()
+      }
     }
   }
 
@@ -148,12 +150,14 @@ class ZipTest {
     ))), logger = null)
 
     val zipFile = ImmutableZipFile.load(archiveFile)
-    for (name in list) {
-      assertThat(zipFile.getEntry("test/$name")).isNull()
+    zipFile.use {
+      for (name in list) {
+        assertThat(zipFile.getEntry("test/$name")).isNull()
+      }
+      assertThat(zipFile.getEntry("do-not-ignore-me")).isNotNull()
+      assertThat(zipFile.getEntry("test-relative-ignore")).isNull()
+      assertThat(zipFile.getEntry("some/nested/dir/icon-robots.txt")).isNull()
     }
-    assertThat(zipFile.getEntry("do-not-ignore-me")).isNotNull()
-    assertThat(zipFile.getEntry("test-relative-ignore")).isNull()
-    assertThat(zipFile.getEntry("some/nested/dir/icon-robots.txt")).isNull()
   }
 
   @Test
@@ -167,10 +171,12 @@ class ZipTest {
     zip(archiveFile, mapOf(dir to ""))
 
     val zipFile = ImmutableZipFile.load(archiveFile)
-    for (name in zipFile.entries) {
-      val entry = zipFile.getEntry("samples/nested_dir/__init__.py")
-      assertThat(entry).isNotNull()
-      assertThat(String(entry.getData(zipFile), Charsets.UTF_8)).isEqualTo("\n")
+    zipFile.use {
+      for (name in zipFile.entries) {
+        val entry = zipFile.getEntry("samples/nested_dir/__init__.py")
+        assertThat(entry).isNotNull()
+        assertThat(String(entry.getData(zipFile), Charsets.UTF_8)).isEqualTo("\n")
+      }
     }
   }
 }

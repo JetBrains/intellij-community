@@ -73,7 +73,7 @@ fun bulkZipWithPrefix(commonSourceDir: Path, items: List<Map.Entry<String, Path>
 private fun formatDuration(value: Long): String {
   return Duration.ofMillis(value).toString().substring(2)
     .replace(Regex("(\\d[HMS])(?!$)"), "$1 ")
-    .toLowerCase()
+    .lowercase()
 }
 
 private fun addDirForResourceFiles(out: ZipFileWriter, dirNameSetToAdd: Set<String>) {
