@@ -11,7 +11,6 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.NotNull
 import training.FeaturesTrainerIcons
 import training.learn.CourseManager
 import training.learn.LearnBundle
@@ -143,7 +142,6 @@ class LearningItems(private val project: Project) : JPanel() {
       it.isOpaque = false
       it.background = Color(0, 0, 0, 0)
       it.alignmentY = TOP_ALIGNMENT
-      //it.add(Box.createVerticalStrut(JBUI.scale(1)))
       it.add(rigid(0, 1))
       val rawIcon = if (expanded.contains(module)) UIUtil.getTreeExpandedIcon() else UIUtil.getTreeCollapsedIcon()
       it.add(createLabelIcon(rawIcon))
@@ -172,7 +170,7 @@ class LearningItems(private val project: Project) : JPanel() {
     return result
   }
 
-  private fun createLabelIcon(rawIcon: @NotNull Icon): JLabel = JLabel(IconUtil.toSize(rawIcon, JBUI.scale(16), JBUI.scale(16)))
+  private fun createLabelIcon(rawIcon: Icon): JLabel = JLabel(IconUtil.toSize(rawIcon, JBUI.scale(16), JBUI.scale(16)))
 
   private fun createModuleProgressLabel(module: IftModule): JBLabel {
     val progressStr = learningProgressString(module.lessons)

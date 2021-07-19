@@ -13,7 +13,7 @@ import java.io.FileFilter
 import java.nio.file.Path
 
 interface LangSupport {
-  /** Is should be a language ID */
+  /** It should be a language ID */
   val primaryLanguage: String
   val defaultProductName: String?
     get() = null

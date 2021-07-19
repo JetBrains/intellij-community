@@ -126,7 +126,7 @@ class JavaRenameLesson
 
   private fun TaskRuntimeContext.getFieldName(): String? {
     val charsSequence = editor.document.charsSequence
-    // get position of declaration because it should not shifted after rename
+    // get position of declaration because it should not shift after rename
     val start = sample.getPosition(2).startOffset
     val end = charsSequence.indexOf(';', start).takeIf { it > 0 } ?: return null
     val newName = charsSequence.subSequence(start, end)

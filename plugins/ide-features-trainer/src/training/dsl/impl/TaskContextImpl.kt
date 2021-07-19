@@ -81,7 +81,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   }
 
   /**
-   * Should not be called more then once in single task (even with [showWarning]
+   * Should not be called more than once in single task (even with [showWarning]
    */
   override fun proposeRestore(restoreCheck: TaskRuntimeContext.() -> RestoreNotification?) {
     checkAndShowNotificationIfNeeded(0, null, restoreCheck) {
@@ -117,7 +117,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   }
 
   /**
-   * Should not be called more then once in single task (even with [proposeRestore]
+   * Should not be called more than once in single task (even with [proposeRestore]
    */
   override fun showWarning(text: String, restoreTaskWhenResolved: Boolean, warningRequired: TaskRuntimeContext.() -> Boolean) {
     val notificationRequired: TaskRuntimeContext.() -> RestoreNotification? = {

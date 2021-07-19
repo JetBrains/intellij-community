@@ -47,10 +47,10 @@ object LearningUiUtil {
   /**
    * Waits for a first component which passes the given matcher under the given root to become visible.
    */
-  fun <T : Component> waitUntilFoundAll(robot: Robot,
-                                        root: Container?,
-                                        matcher: GenericTypeMatcher<T>,
-                                        timeout: Timeout): Collection<T> {
+  private fun <T : Component> waitUntilFoundAll(robot: Robot,
+                                                root: Container?,
+                                                matcher: GenericTypeMatcher<T>,
+                                                timeout: Timeout): Collection<T> {
     val reference = AtomicReference<Collection<T>>()
     Pause.pause(object : Condition("Find component using $matcher") {
       override fun test(): Boolean {

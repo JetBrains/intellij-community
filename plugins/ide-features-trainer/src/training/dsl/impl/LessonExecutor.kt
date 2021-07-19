@@ -269,10 +269,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
 
   private fun rehighlightPreviousComponent() {
     val taskInfo = taskActions[currentTaskIndex]
-    val function = taskInfo.rehighlightComponent
-    if (function == null) {
-      return
-    }
+    val function = taskInfo.rehighlightComponent ?: return
     val condition = continuePreviousHighlighting
     ApplicationManager.getApplication().executeOnPooledThread {
       var ui = taskInfo.userVisibleInfo?.ui
@@ -425,7 +422,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
       }
     }
     // A little bit hacky here: visual index should be shown only for the first paragraph.
-    // But is is passed here for all paragraphs.
+    // But it is passed here for all paragraphs.
     // But... LessonMessagePane will draw number only for the first active paragraph :)
     LessonManager.instance.addMessage(text, !hasDetection, taskInfo.taskVisualIndex, useInternalParagraphStyle = removeAfterDone)
   }
