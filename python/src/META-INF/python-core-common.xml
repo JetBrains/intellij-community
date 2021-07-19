@@ -271,6 +271,7 @@
 
     <projectService serviceImplementation="com.jetbrains.python.console.PyConsoleOptions"/>
     <projectService serviceImplementation="com.jetbrains.python.console.PythonConsoleToolWindow"/>
+    <toolWindowExtractorMode id="Python Console" mode="mirror"/>
 
     <projectConfigurable groupId="build" groupWeight="119" id="reference.idesettings.debugger.python"
                          instance="com.jetbrains.python.debugger.PyDebuggerConfigurable"
