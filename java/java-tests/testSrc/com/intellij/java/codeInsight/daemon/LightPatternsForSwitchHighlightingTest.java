@@ -44,6 +44,10 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     doTest();
   }
 
+  public void testEffectivelyFinal() {
+    doTest();
+  }
+
   public void testSameVariableNameInPatternMatchingInSwitch() {
     doTest();
   }
