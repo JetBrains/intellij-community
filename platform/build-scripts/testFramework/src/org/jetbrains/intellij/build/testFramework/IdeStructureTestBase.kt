@@ -32,7 +32,15 @@ abstract class IdeStructureTestBase {
   fun moduleStructureValidation() {
     val buildContext = createBuildContext()
     val jarBuilder = DistributionJARsBuilder(buildContext, emptySet())
-    val validator = ModuleStructureValidator(buildContext, jarBuilder.platform.moduleJars)
+
+    println("Packed modules:")
+    val moduleJars = jarBuilder.platform.moduleJars
+    val module2Jar = moduleJars.entrySet().flatMap { it.value.map { e -> e to it.key } }.toMap()
+    for (kv in module2Jar.entries.sortedBy { it.key }) {
+      println("  ${kv.key} ${kv.value}")
+    }
+
+    val validator = ModuleStructureValidator(buildContext, moduleJars)
     val errors = validator.validate()
     for (error in errors) {
       errorCollector.addError(IllegalStateException(error))
