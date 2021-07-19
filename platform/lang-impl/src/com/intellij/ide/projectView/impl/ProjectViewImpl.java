@@ -7,8 +7,6 @@ import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
-import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
@@ -1298,40 +1296,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return HelpID.PROJECT_VIEWS;
       }
-      if (ModuleGroup.ARRAY_DATA_KEY.is(dataId)) {
-        final List<ModuleGroup> selectedElements = getSelectedElements(ModuleGroup.class);
-        return selectedElements.isEmpty() ? null : selectedElements.toArray(new ModuleGroup[0]);
-      }
-      if (LibraryGroupElement.ARRAY_DATA_KEY.is(dataId)) {
-        final List<LibraryGroupElement> selectedElements = getSelectedElements(LibraryGroupElement.class);
-        return selectedElements.isEmpty() ? null : selectedElements.toArray(new LibraryGroupElement[0]);
-      }
-      if (NamedLibraryElement.ARRAY_DATA_KEY.is(dataId)) {
-        final List<NamedLibraryElement> selectedElements = getSelectedElements(NamedLibraryElement.class);
-        return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[0]);
-      }
-
       if (QuickActionProvider.KEY.is(dataId)) {
         return ProjectViewImpl.this;
       }
 
       return null;
     }
-  }
-
-  @NotNull
-  private <T> List<T> getSelectedElements(@NotNull Class<T> klass) {
-    List<T> result = new ArrayList<>();
-    final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-    if (viewPane == null) return result;
-    final Object[] elements = viewPane.getSelectedElements();
-    for (Object element : elements) {
-      //element still valid
-      if (element != null && klass.isAssignableFrom(element.getClass())) {
-        result.add((T)element);
-      }
-    }
-    return result;
   }
 
   @Override

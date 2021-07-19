@@ -5,10 +5,7 @@ import com.intellij.ide.*;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.*;
-import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
-import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
-import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
@@ -501,6 +498,18 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       }
       return myDeletePSIElementProvider;
     }
+    if (ModuleGroup.ARRAY_DATA_KEY.is(dataId)) {
+      final List<ModuleGroup> selectedElements = getSelectedValues(selectedUserObjects, ModuleGroup.class);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new ModuleGroup[0]);
+    }
+    if (LibraryGroupElement.ARRAY_DATA_KEY.is(dataId)) {
+      final List<LibraryGroupElement> selectedElements = getSelectedValues(selectedUserObjects, LibraryGroupElement.class);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new LibraryGroupElement[0]);
+    }
+    if (NamedLibraryElement.ARRAY_DATA_KEY.is(dataId)) {
+      final List<NamedLibraryElement> selectedElements = getSelectedValues(selectedUserObjects, NamedLibraryElement.class);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[0]);
+    }
     if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
       return getSelectedValues(selectedUserObjects);
     }
@@ -544,6 +553,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   private @NotNull List<@NotNull UnloadedModuleDescription> getSelectedUnloadedModules(@Nullable Object @NotNull [] selectedUserObjects) {
     return unloadedModules(myProject, getSelectedValues(selectedUserObjects));
+  }
+
+  private <T> @NotNull List<@NotNull T> getSelectedValues(@Nullable Object @NotNull [] selectedUserObjects, @NotNull Class<T> aClass) {
+    return ContainerUtil.filterIsInstance(getSelectedValues(selectedUserObjects), aClass);
   }
 
   public final @Nullable Object @NotNull [] getSelectedValues(@Nullable Object @NotNull [] selectedUserObjects) {
