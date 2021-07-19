@@ -321,7 +321,7 @@ public final class ActionMenu extends JBMenu {
         clearItems();
       }
       if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
-        fillMenu();
+        fillMenuWithRetries();
       }
     }
   }
@@ -329,13 +329,18 @@ public final class ActionMenu extends JBMenu {
   @Override
   public void setPopupMenuVisible(boolean b) {
     if (b && !(SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace))) {
-      //noinspection StatementWithEmptyBody
-      while (!tryFillMenu() && isSelected());
+      fillMenuWithRetries();
       if (!isSelected()) {
         return;
       }
     }
     super.setPopupMenuVisible(b);
+  }
+
+  private void fillMenuWithRetries() {
+    while (!tryFillMenu()) {
+      if (!isSelected()) break;
+    }
   }
 
   private boolean tryFillMenu() {
