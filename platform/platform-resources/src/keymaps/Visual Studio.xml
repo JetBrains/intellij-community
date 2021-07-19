@@ -85,6 +85,7 @@
   <action id="FindNext">
     <keyboard-shortcut first-keystroke="F3"/><!--VS Edit.FindNext-->
     <keyboard-shortcut first-keystroke="control shift DOWN"/><!--VS Edit.NextHighlightedReference-->
+    <keyboard-shortcut first-keystroke="control alt PAGE_DOWN"/><!--ReSharper_ResultListGoToNextLocation-->
     <keyboard-shortcut first-keystroke="alt shift SLASH"/><!--VS Edit.MoveLastCaretDown-->
   </action>
   <action id="Print">
@@ -100,6 +101,7 @@
   <action id="FindPrevious">
     <keyboard-shortcut first-keystroke="shift F3"/><!--VS Edit.FindPrevious-->
     <keyboard-shortcut first-keystroke="control shift UP"/><!--VS Edit.PreviousHighlightedReference-->
+    <keyboard-shortcut first-keystroke="control alt PAGE_UP"/><!--ReSharper_ResultListGoToPrevLocation-->
   </action>
   <action id="CompileDirty">
     <keyboard-shortcut first-keystroke="F7"/>
@@ -562,11 +564,9 @@
   </action>
   <action id="PreviousTab">
     <keyboard-shortcut first-keystroke="alt LEFT"/>
-    <keyboard-shortcut first-keystroke="control alt PAGE_UP"/><!-- VS: Window.PreviousTa, may conflict with ReSharper_ResultListGoToPrevLocation-->
   </action>
   <action id="NextTab">
     <keyboard-shortcut first-keystroke="alt RIGHT"/>
-    <keyboard-shortcut first-keystroke="control alt PAGE_DOWN"/><!--VS: Window.NextTab, may conflict with ReSharper_ResultListGoToNextLocation-->
   </action>
   <action id="HelpTopics">
     <keyboard-shortcut first-keystroke="control F1"/>
