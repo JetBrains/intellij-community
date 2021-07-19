@@ -18,7 +18,7 @@ import static org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts.comp
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/ultraLightFacades")
+@TestMetadata("../../../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/ultraLightFacades")
 public class UltraLightFacadeClassTestGenerated extends AbstractUltraLightFacadeClassTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
