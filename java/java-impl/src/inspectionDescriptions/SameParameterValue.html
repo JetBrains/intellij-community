@@ -17,8 +17,18 @@ public static void main(String[] args) {
 <p>The quick-fix inlines the constant value. This may simplify the method implementation.</p>
 <!-- tooltip end -->
 <p>
-  Use the checkbox below to ignore cases when complicated refactoring may be required.
-  For example, when the reported parameter is modified inside the method or when the passed parameter value is a reference to inaccessible field.
+  Use the <b>Ignore when complicated refactoring may be required</b> option to suppress the inspections when:
+  <ul>
+    <li>the parameter is modified inside the method.</li>
+    <li>the parameter value that is being passed is a reference to an inaccessible field (only in Java).</li>
+    <li>the parameter is a vararg (only in Java).</li>
+  </ul>
+</p>
+<p>
+  Use the <b>Maximal reported method visibility</b> option to control the maximum visibility of methods to be reported.
+</p>
+<p>
+  Use the <b>Minimal reported method usage count</b> field to specify the minimal number of method usages with the same parameter value.
 </p>
 </body>
 </html>

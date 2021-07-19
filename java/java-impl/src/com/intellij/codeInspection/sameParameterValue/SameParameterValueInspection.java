@@ -73,7 +73,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
                                                                                                                   highestModifier,
                                                                                                                   (newModifier) -> highestModifier = newModifier),
                                                                                     JavaBundle
-                                                                                      .message("label.minimal.reported.method.visibility"),
+                                                                                      .message("label.maximal.reported.method.visibility"),
                                                                                     BorderLayout.WEST);
     panel.add(component);
 
