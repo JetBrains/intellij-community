@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult.*;
+import static com.intellij.psi.PsiModifier.ABSTRACT;
+import static com.intellij.psi.PsiModifier.SEALED;
 
 public class SwitchBlockHighlightingModel {
   @NotNull private final LanguageLevel myLevel;
@@ -585,8 +587,8 @@ public class SwitchBlockHighlightingModel {
           PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(firstSwitchLabelInGroup, PsiStatement.class);
           if (prevStatement == null) continue;
           if (ControlFlowUtils.statementMayCompleteNormally(prevStatement)) {
-            patternElements.stream().filter(patternElement -> !alreadyFallThroughElements.contains(patternElement))
-              .forEach(patternElement -> results.add(createError(patternElement, JavaErrorBundle.message("switch.illegal.fall.through.to"))));
+            patternElements.stream().filter(patternElement -> !alreadyFallThroughElements.contains(patternElement)).forEach(
+              patternElement -> results.add(createError(patternElement, JavaErrorBundle.message("switch.illegal.fall.through.to"))));
           }
         }
       }
@@ -667,9 +669,7 @@ public class SwitchBlockHighlightingModel {
         }
         checkEnumCompleteness(selectorClass, enumElements, results);
       }
-      else if (selectorClass != null &&
-               selectorClass.hasModifierProperty(PsiModifier.SEALED) &&
-               selectorClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      else if (selectorClass != null && selectorClass.hasModifierProperty(SEALED) && selectorClass.hasModifierProperty(ABSTRACT)) {
         checkSealedClassCompleteness(selectorClass, elements, results);
       }
       else {
@@ -704,14 +704,16 @@ public class SwitchBlockHighlightingModel {
             PsiPattern removedPattern = patternClasses.remove(nextInheritedClass);
             if (removedPattern != null && JavaPsiPatternUtil.isTotalForType(removedPattern, TypeUtils.getType(nextInheritedClass))) {
               inheritedClassesIterator.remove();
+              continue;
             }
-            else {
-              Collection<PsiClass> newInheritedClasses =
-                DirectClassInheritorsSearch.search(nextInheritedClass, selectorClass.getUseScope(), false).findAll();
-              if (!newInheritedClasses.isEmpty()) {
-                inheritedClassesIterator.remove();
-                newDirectInheritedClasses.addAll(newInheritedClasses);
-              }
+            if (!nextInheritedClass.hasModifierProperty(SEALED) || !nextInheritedClass.hasModifierProperty(ABSTRACT)) {
+              continue;
+            }
+            Collection<PsiClass> newInheritedClasses =
+              DirectClassInheritorsSearch.search(nextInheritedClass, selectorClass.getUseScope(), false).findAll();
+            if (!newInheritedClasses.isEmpty()) {
+              inheritedClassesIterator.remove();
+              newDirectInheritedClasses.addAll(newInheritedClasses);
             }
           }
           if (newDirectInheritedClasses.isEmpty()) break;

@@ -653,7 +653,7 @@ class Main {
     };
   }
 
-  void completeness(Day d, I i, I2 i2) {
+  void completeness(Day d, I i, I2 i2, I3 i3) {
     // old style switch, no completeness check
     switch (d) {
       case MONDAY, TUESDAY -> System.out.println("ok");
@@ -725,7 +725,7 @@ class Main {
       case Sub1 s1 -> "ok";
       case Sub2 s2 -> "ok";
     };
-    switch (i) {
+    switch (<error descr="'switch' statement does not cover all possible input values">i</error>) {
       case Sub1 s1:
         System.out.println("ok");
         break;
@@ -739,7 +739,7 @@ class Main {
         System.out.println("ok");
         break;
     }
-    str = switch(i) {
+    str = switch(<error descr="'switch' expression does not cover all possible input values">i</error>) {
       case Sub1 s1 -> "ok";
       case Sub2 s2 -> "ok";
       case Sub4 s4 -> "ok";
@@ -757,6 +757,15 @@ class Main {
     str = switch(<error descr="'switch' expression does not cover all possible input values">i</error>) {
       case I ii && ii != null -> "ok";
     };
+
+    switch (i3) {
+      case (Sub9 s && true):
+        break;
+      case Sub11 s:
+        break;
+      case Sub12 s && true:
+        break;
+    }
 
     // If the type of the selector expression, T, is not an enum type and also does not name a sealed interface or a sealed class that is abstract
     switch (<error descr="'switch' statement does not cover all possible input values">i2</error>) {
@@ -822,4 +831,19 @@ class Sub7 implements I2 {
 }
 
 class Sub8 implements I2 {
+}
+
+sealed interface I3 {
+}
+
+final class Sub9 implements I3 {
+}
+
+sealed abstract class Sub10 implements I3 {
+}
+
+final class Sub11 extends Sub10 {
+}
+
+final class Sub12 extends Sub10 {
 }
