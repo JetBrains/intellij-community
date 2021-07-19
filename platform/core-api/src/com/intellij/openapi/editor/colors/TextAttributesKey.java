@@ -55,9 +55,15 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     myFallbackAttributeKey = fallbackAttributeKey;
 
     if (fallbackAttributeKey != null) {
-      JBIterable<TextAttributesKey> it = JBIterable.generate(myFallbackAttributeKey, o -> o == this ? null : o.myFallbackAttributeKey);
-      if (equals(it.find(o -> equals(o)))) {
-        throw new IllegalArgumentException("Can't use this fallback key: "+fallbackAttributeKey+": Cycle detected: " + StringUtil.join(it, "->"));
+      checkForCycle(fallbackAttributeKey);
+    }
+  }
+
+  private void checkForCycle(@NotNull TextAttributesKey fallbackAttributeKey) {
+    for (TextAttributesKey key = fallbackAttributeKey; key != null; key = key.myFallbackAttributeKey) {
+      if (equals(key)) {
+        throw new IllegalArgumentException("Can't use this fallback key: " + fallbackAttributeKey + ":" +
+          " Cycle detected: " + StringUtil.join(JBIterable.generate(myFallbackAttributeKey, o -> o == this ? null : o.myFallbackAttributeKey), "->"));
       }
     }
   }
