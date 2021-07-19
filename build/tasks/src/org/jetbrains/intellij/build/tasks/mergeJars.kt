@@ -145,6 +145,7 @@ fun isLibraryMergeable(libName: String): Boolean {
 
 private val commonModuleExcludes = java.util.List.of(
   FileSystems.getDefault().getPathMatcher("glob:**/icon-robots.txt"),
+  FileSystems.getDefault().getPathMatcher("glob:icon-robots.txt"),
   FileSystems.getDefault().getPathMatcher("glob:.unmodified"),
   FileSystems.getDefault().getPathMatcher("glob:classpath.index"),
 )
