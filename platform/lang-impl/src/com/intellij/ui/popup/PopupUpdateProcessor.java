@@ -25,16 +25,6 @@ public abstract class PopupUpdateProcessor extends PopupUpdateProcessorBase {
     myProject = project;
   }
 
-  public PsiElement toPsi(Object lookupItemObject) {
-    if (lookupItemObject instanceof PsiElement) {
-      return (PsiElement)lookupItemObject;
-    }
-    if (lookupItemObject instanceof PSIPresentationBgRendererWrapper.PsiItemWithPresentation) {
-      return ((PSIPresentationBgRendererWrapper.PsiItemWithPresentation)lookupItemObject).getItem();
-    }
-    return null;
-  }
-
   @Override
   public void beforeShown(@NotNull final LightweightWindowEvent windowEvent) {
     final Lookup activeLookup = LookupManager.getInstance(myProject).getActiveLookup();
