@@ -371,15 +371,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) return getTreeExpander();
 
-    if (myTreeStructure instanceof AbstractTreeStructureBase) {
-      @SuppressWarnings("unchecked")
-      List<AbstractTreeNode<?>> nodes = (List)getSelectedNodes(AbstractTreeNode.class);
-      Object data = ((AbstractTreeStructureBase)myTreeStructure).getDataFromProviders(nodes, dataId);
-      if (data != null) {
-        return data;
-      }
-    }
-
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       TreePath[] paths = getSelectionPaths();
       if (paths == null) return null;
@@ -454,6 +445,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   @RequiresReadLock(generateAssertion = false)
   @RequiresBackgroundThread(generateAssertion = false)
   private @Nullable Object getDataFromSelection(@Nullable Object @NotNull [] selectedUserObjects, @NotNull String dataId) {
+    Object treeStructureData = getFromTreeStructure(selectedUserObjects, dataId);
+    if (treeStructureData != null) {
+      return treeStructureData;
+    }
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       final PsiElement[] elements = getPsiElements(selectedUserObjects);
       return elements.length == 1 ? elements[0] : null;
@@ -471,6 +466,19 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       return moduleContext(myProject, selected);
     }
     return null;
+  }
+
+  private @Nullable Object getFromTreeStructure(@Nullable Object @NotNull [] selectedUserObjects, @NotNull String dataId) {
+    if (!(myTreeStructure instanceof AbstractTreeStructureBase)) {
+      return null;
+    }
+    List<AbstractTreeNode<?>> nodes = new ArrayList<>(selectedUserObjects.length);
+    for (Object userObject : selectedUserObjects) {
+      if (userObject instanceof AbstractTreeNode) {
+        nodes.add((AbstractTreeNode<?>)userObject);
+      }
+    }
+    return ((AbstractTreeStructureBase)myTreeStructure).getDataFromProviders(nodes, dataId);
   }
 
   @RequiresReadLock(generateAssertion = false)
