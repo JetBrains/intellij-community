@@ -199,7 +199,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
 
   private static boolean isConvertibleBranch(OldSwitchStatementBranch branch, boolean allowMultipleStatements) {
     int length = branch.getStatements().length;
-    if (length == 0) return branch.isFallthrough();
+    if (length == 0) return branch.isFallthrough() || branch.isDefault();
     if (branch.isFallthrough()) return false;
     if (allowMultipleStatements) return true;
     return length == 1;
@@ -422,9 +422,10 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     boolean existsTotalPatternInBranch = false;
     for (OldSwitchStatementBranch branch : branches) {
       if (!isConvertibleBranch(branch, false)) return null;
-      if (branch.isFallthrough() && branch.getStatements().length == 0) continue;
+      PsiStatement[] statements = branch.getStatements();
+      if (branch.isFallthrough() && statements.length == 0) continue;
       // Only single statement branches are convertible now
-      PsiStatement first = branch.getStatements()[0];
+      PsiStatement first = statements.length > 0 ? statements[0] : null;
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(first);
       PsiExpression rExpression = null;
       if (assignment != null) {
