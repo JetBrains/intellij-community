@@ -15,10 +15,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -153,9 +150,9 @@ public class XsdNamespaceBuilder implements Comparable<XsdNamespaceBuilder> {
 
     XsdNamespaceBuilder builder = (XsdNamespaceBuilder)o;
 
-    if (myNamespace != null ? !myNamespace.equals(builder.myNamespace) : builder.myNamespace != null) return false;
-    if (myVersion != null ? !myVersion.equals(builder.myVersion) : builder.myVersion != null) return false;
-    if (myTags != null ? !myTags.equals(builder.myTags) : builder.myTags != null) return false;
+    if (!Objects.equals(myNamespace, builder.myNamespace)) return false;
+    if (!Objects.equals(myVersion, builder.myVersion)) return false;
+    if (!Objects.equals(myTags, builder.myTags)) return false;
 
     return true;
   }
