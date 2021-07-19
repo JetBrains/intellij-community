@@ -110,14 +110,14 @@ enum class OpenUntrustedProjectChoice {
 
 fun Project.isTrusted() = getTrustedState() == ThreeState.YES
 
-fun Project.getTrustedState() : ThreeState {
+fun Project.getTrustedState(): ThreeState {
   val explicit = this.service<TrustedProjectSettings>().trustedState
   if (explicit != ThreeState.UNSURE) return explicit
   return if (getImplicitTrustedCheckResult(this) is Trusted) ThreeState.YES else ThreeState.UNSURE
 }
 
 fun Project.setTrusted(value: Boolean) {
-  val oldValue = this.service<TrustedProjectSettings>().trustedState;
+  val oldValue = this.service<TrustedProjectSettings>().trustedState
   this.service<TrustedProjectSettings>().trustedState = ThreeState.fromBoolean(value)
 
   if (value && oldValue != ThreeState.YES) {
@@ -150,8 +150,8 @@ private fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUni
                                        SystemProperties.`is`("idea.is.integration.test")
 
 private sealed class TrustedCheckResult {
-  object Trusted: TrustedCheckResult()
-  class NotTrusted(val url: String?): TrustedCheckResult()
+  object Trusted : TrustedCheckResult()
+  class NotTrusted(val url: String?) : TrustedCheckResult()
 }
 
 private fun getImplicitTrustedCheckResult(project: Project): TrustedCheckResult =
@@ -195,7 +195,7 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
 }
 
 @ApiStatus.Experimental
-interface TrustChangeNotifier {
+fun interface TrustChangeNotifier {
   fun projectTrusted(project: Project)
 
   companion object {
