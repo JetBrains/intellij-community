@@ -15,6 +15,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.actions.WindowAction;
+import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
@@ -540,7 +541,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(element.getProject()) {
       @Override
       public void updatePopup(Object lookupItemObject) {
-        PsiElement psiElement = toPsi(lookupItemObject);
+        PsiElement psiElement = PSIPresentationBgRendererWrapper.toPsi(lookupItemObject);
         if (psiElement != null) {
           doShowJavaDocInfo(psiElement, requestFocus, this, original, null, null,
                             useStoredPopupSize, onAutoUpdate);
@@ -592,7 +593,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                             true, onAutoUpdate);
           return;
         }
-        PsiElement psiElement = toPsi(lookupItemObject);
+        PsiElement psiElement = PSIPresentationBgRendererWrapper.toPsi(lookupItemObject);
         if (psiElement != null) {
           doShowJavaDocInfo(psiElement, false, this, originalElement, closeCallback,
                             null, true, onAutoUpdate);
