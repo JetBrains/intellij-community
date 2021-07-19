@@ -424,7 +424,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     for (lessonMessage in inactiveMessages) {
       paintNumber(lessonMessage, UISettings.instance.futureTaskNumberColor)
     }
-    if (activeMessages.lastOrNull()?.state != MessageState.PASSED || panelMode == false) { // lesson can be opened as passed
+    if (activeMessages.lastOrNull()?.state != MessageState.PASSED || !panelMode) { // lesson can be opened as passed
       val firstActiveMessage = firstActiveMessage()
       if (firstActiveMessage != null) {
         val color = if (panelMode) UISettings.instance.activeTaskNumberColor else UISettings.instance.tooltipTaskNumberColor

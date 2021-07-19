@@ -212,7 +212,7 @@ private fun getValueWithCellRenderer(cellRendererComponent: Component, isExtende
     is NodeRenderer -> {
       if (isExtended) cellRendererComponent.getFullText()
       else cellRendererComponent.getFirstText()
-    } //should stands before SimpleColoredComponent because it is more specific
+    } //should stand before SimpleColoredComponent because it is more specific
     is SimpleColoredComponent -> cellRendererComponent.getFullText()
     is MultilineTreeCellRenderer -> cellRendererComponent.text
     else -> cellRendererComponent.findText()

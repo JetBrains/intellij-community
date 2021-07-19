@@ -16,7 +16,7 @@ abstract class LessonContext: LearningDslBase {
 
   /**
    * There will not be any freeze in GUI thread.
-   * The continue of the script will be scheduled with the [delayMillis]
+   * The continuation of the script will be scheduled with the [delayMillis]
    */
   open fun waitBeforeContinue(delayMillis: Int) = Unit
 
