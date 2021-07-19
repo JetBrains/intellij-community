@@ -16,9 +16,9 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.SmartHashSet;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -685,13 +685,13 @@ public class SwitchBlockHighlightingModel {
         directInheritedClasses = Collections.emptyList();
       }
       else {
-        Set<PsiClass> patternClasses = new SmartHashSet<>();
+        Map<PsiClass, PsiPattern> patternClasses = new HashMap<>();
         for (PsiCaseLabelElement element : elements) {
-          if (element instanceof PsiPattern) {
-            PsiClass patternClass = PsiUtil.resolveClassInClassTypeOnly(JavaPsiPatternUtil.getPatternType(((PsiPattern)element)));
-            if (patternClass != null) {
-              patternClasses.add(patternClass);
-            }
+          PsiPattern patternLabelElement = ObjectUtils.tryCast(element, PsiPattern.class);
+          if (patternLabelElement == null) continue;
+          PsiClass patternClass = PsiUtil.resolveClassInClassTypeOnly(JavaPsiPatternUtil.getPatternType(((PsiPattern)element)));
+          if (patternClass != null) {
+            patternClasses.put(patternClass, patternLabelElement);
           }
         }
         directInheritedClasses = new ArrayList<>(
@@ -701,7 +701,8 @@ public class SwitchBlockHighlightingModel {
           List<PsiClass> newDirectInheritedClasses = new SmartList<>();
           while (inheritedClassesIterator.hasNext()) {
             PsiClass nextInheritedClass = inheritedClassesIterator.next();
-            if (patternClasses.remove(nextInheritedClass)) {
+            PsiPattern removedPattern = patternClasses.remove(nextInheritedClass);
+            if (removedPattern != null && JavaPsiPatternUtil.isTotalForType(removedPattern, TypeUtils.getType(nextInheritedClass))) {
               inheritedClassesIterator.remove();
             }
             else {
@@ -713,6 +714,7 @@ public class SwitchBlockHighlightingModel {
               }
             }
           }
+          if (newDirectInheritedClasses.isEmpty()) break;
           directInheritedClasses.addAll(newDirectInheritedClasses);
         }
         if (directInheritedClasses.isEmpty()) return;
