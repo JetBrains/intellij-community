@@ -1354,11 +1354,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[0]);
       }
 
-      if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
-        final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-        return viewPane == null ? null : viewPane.getSelectedElements();
-      }
-
       if (QuickActionProvider.KEY.is(dataId)) {
         return ProjectViewImpl.this;
       }

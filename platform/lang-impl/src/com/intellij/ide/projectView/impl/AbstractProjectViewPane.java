@@ -465,6 +465,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       Object selected = getSingleNodeElement(selectedUserObjects);
       return moduleContext(myProject, selected);
     }
+    if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
+      return getSelectedValues(selectedUserObjects);
+    }
     return null;
   }
 
@@ -498,6 +501,20 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return getNodeElement(selectedUserObjects[0]);
   }
 
+  public final @Nullable Object @NotNull [] getSelectedValues(@Nullable Object @NotNull [] selectedUserObjects) {
+    List<Object> result = new ArrayList<>(selectedUserObjects.length);
+    for (Object userObject : selectedUserObjects) {
+      Object valueFromNode = getValueFromNode(userObject);
+      if (valueFromNode instanceof Object[]) {
+        Collections.addAll(result, (Object[])valueFromNode);
+      }
+      else {
+        result.add(valueFromNode);
+      }
+    }
+    return ArrayUtil.toObjectArray(result);
+  }
+
   private @Nullable PsiElement getFirstElementFromNode(@Nullable Object node) {
     return ContainerUtil.getFirstItem(getElementsFromNode(node));
   }
@@ -525,6 +542,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return null;
   }
 
+  /**
+   * @deprecated use {@link #getSelectedUserObjects()} and {@link #getSelectedValues(Object[])}
+   */
+  @Deprecated
   public final Object @NotNull [] getSelectedElements() {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return PsiElement.EMPTY_ARRAY;
