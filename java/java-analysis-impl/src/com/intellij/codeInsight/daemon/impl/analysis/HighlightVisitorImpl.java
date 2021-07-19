@@ -210,9 +210,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         TextRange dirtyScope = document == null ? null : DaemonCodeAnalyzerEx.getInstanceEx(project).getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
         if (dirtyScope == null) dirtyScope = file.getTextRange();
 
-        success = refCountHolder.analyze(file, dirtyScope, progress, () -> {
-          highlight.run();
-          ProgressManager.checkCanceled();
+        success = refCountHolder.analyze(file, dirtyScope, progress, highlight, () -> {
+          assert refCountHolder.myReady;
           if (document != null) {
             new PostHighlightingVisitor(file, document, refCountHolder).collectHighlights(holder, progress);
           }
