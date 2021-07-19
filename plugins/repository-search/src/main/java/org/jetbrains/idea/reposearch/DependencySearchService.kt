@@ -119,7 +119,7 @@ class DependencySearchService(private val myProject: Project) {
     }
 
     return promises.all(resultSet, ignoreErrors = true).then {
-      if (!resultSet.isEmpty()) {
+      if (!resultSet.isEmpty() && existingFuture == null) {
         thisNewFuture.complete(resultSet)
       }
       return@then 1
