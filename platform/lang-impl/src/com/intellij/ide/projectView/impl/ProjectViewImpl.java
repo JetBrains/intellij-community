@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -44,9 +43,11 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleFileIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
@@ -1318,17 +1319,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
         final LibraryOrderEntry orderEntry = getSelectedLibrary();
         if (orderEntry != null) {
-          return new DeleteProvider() {
-            @Override
-            public void deleteElement(@NotNull DataContext dataContext) {
-              detachLibrary(orderEntry, myProject);
-            }
-
-            @Override
-            public boolean canDeleteElement(@NotNull DataContext dataContext) {
-              return true;
-            }
-          };
+          return new DetachLibraryDeleteProvider(myProject, orderEntry);
         }
         return myDeletePSIElementProvider;
       }
@@ -1390,30 +1381,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
 
       return null;
-    }
-
-    private void detachLibrary(@NotNull final LibraryOrderEntry orderEntry, @NotNull Project project) {
-      final Module module = orderEntry.getOwnerModule();
-      String message = IdeBundle.message("detach.library.from.module", orderEntry.getPresentableName(), module.getName());
-      String title = IdeBundle.message("detach.library");
-      int ret = Messages.showOkCancelDialog(project, message, title, Messages.getQuestionIcon());
-      if (ret != Messages.OK) return;
-      CommandProcessor.getInstance().executeCommand(module.getProject(), () -> {
-        final Runnable action = () -> {
-          ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-          OrderEntry[] orderEntries = rootManager.getOrderEntries();
-          ModifiableRootModel model = rootManager.getModifiableModel();
-          OrderEntry[] modifiableEntries = model.getOrderEntries();
-          for (int i = 0; i < orderEntries.length; i++) {
-            OrderEntry entry = orderEntries[i];
-            if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() == orderEntry.getLibrary()) {
-              model.removeOrderEntry(modifiableEntries[i]);
-            }
-          }
-          model.commit();
-        };
-        ApplicationManager.getApplication().runWriteAction(action);
-      }, title, null);
     }
 
     private Module @Nullable [] getSelectedModules() {
