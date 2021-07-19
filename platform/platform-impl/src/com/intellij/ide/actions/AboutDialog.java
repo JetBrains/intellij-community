@@ -25,7 +25,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,10 +46,6 @@ public class AboutDialog extends DialogWrapper {
   private final List<String> myInfo = new ArrayList<>();
 
   public AboutDialog(@Nullable Project project) {
-    this(project, false);
-  }
-
-  public AboutDialog(Project project, boolean showDebugInfo) {
     super(project, false);
     String appName = ApplicationNamesInfo.getInstance().getFullProductName();
     setResizable(false);
@@ -108,7 +103,7 @@ public class AboutDialog extends DialogWrapper {
     return StringUtil.join(myInfo, "\n") + "\n" + AboutPopup.getExtraInfo();
   }
 
-  @NonNls
+  @SuppressWarnings("DuplicatedCode")
   private Box getText() {
     Box lines = Box.createVerticalBox();
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
