@@ -188,15 +188,14 @@ final class ModuleStructureValidator {
     def classes = new HashSet<String>(predefinedTypes)
     for (moduleName in moduleNames) {
       def outputDirectory = JpsJavaExtensionService.instance.getOutputDirectory(buildContext.findModule(moduleName), false)
+      def outputDirectoryPrefix = outputDirectory.path.replace("\\", "/") + "/"
       outputDirectory.eachFileRecurse(FileType.FILES) {
         if (!it.name.endsWith('.class') || it.name.endsWith("Kt.class")) {
           return
         }
 
-        def className = it.path
-          .replace(outputDirectory.path + "\\", "")
-          .replace(".class", "")
-          .replace("\\", ".")
+        def normalizedPath = it.path.replace("\\", "/")
+        def className = removeSuffixStrict(removePrefixStrict(normalizedPath, outputDirectoryPrefix), ".class").replace("/", ".")
         classes.add(className)
       }
     }
@@ -206,6 +205,30 @@ final class ModuleStructureValidator {
       def xml = new XmlParser().parse(descriptor)
       validateXmlRegistrationsRec(descriptor.name, xml, classes)
     }
+  }
+
+  private String removePrefixStrict(String string, String prefix) {
+    if (prefix == null || prefix.isEmpty()) {
+      throw new IllegalArgumentException("'prefix' is null or empty")
+    }
+
+    if (!string.startsWith(prefix)) {
+      throw new IllegalStateException("String must start with '$prefix': $string")
+    }
+
+    return string.substring(prefix.length())
+  }
+
+  private String removeSuffixStrict(String string, String suffix) {
+    if (suffix == null || suffix.isEmpty()) {
+      throw new IllegalArgumentException("'suffix' is null or empty")
+    }
+
+    if (!string.endsWith(suffix)) {
+      throw new IllegalStateException("String must end with '$suffix': $string")
+    }
+
+    return string.substring(0, string.length() - suffix.length())
   }
 
   private void validateXmlRegistrationsRec(String source, Node xml, HashSet<String> classes) {
