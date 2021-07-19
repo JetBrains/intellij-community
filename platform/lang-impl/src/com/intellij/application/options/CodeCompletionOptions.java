@@ -10,7 +10,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -19,25 +18,29 @@ import java.util.*;
 public class CodeCompletionOptions extends CompositeConfigurable<UnnamedConfigurable> implements EditorOptionsProvider, Configurable.WithEpDependencies {
   public static final String ID = "editor.preferences.completion";
 
-  private CodeCompletionPanel myPanel;
+  private CodeCompletionPanel codeCompletionPanel;
 
   @Override
   public boolean isModified() {
-    return super.isModified() || myPanel != null && myPanel.isModified();
+    return super.isModified() || codeCompletionPanel != null && codeCompletionPanel.isModified();
   }
 
   @Override
   public JComponent createComponent() {
     List<UnnamedConfigurable> configurables = getConfigurables();
-    List<JComponent> addonComponents = new ArrayList<>(configurables.size());
-    List<UnnamedConfigurable> sectionConfigurables = new ArrayList<>(configurables.size());
+    List<UnnamedConfigurable> optionAddons = new ArrayList<>(configurables.size());
+    List<UnnamedConfigurable> sectionAddons = new ArrayList<>(configurables.size());
     for (UnnamedConfigurable configurable : configurables) {
-      if (configurable instanceof CodeCompletionOptionsCustomSection) sectionConfigurables.add(configurable);
-      else addonComponents.add(configurable.createComponent());
+      if (configurable instanceof CodeCompletionOptionsCustomSection) {
+        sectionAddons.add(configurable);
+      }
+      else {
+        optionAddons.add(configurable);
+      }
     }
-    sectionConfigurables.sort(Comparator.comparing(c -> ObjectUtils.notNull(c instanceof Configurable ? ((Configurable)c).getDisplayName() : null, "")));
-    myPanel = new CodeCompletionPanel(addonComponents, ContainerUtil.map(sectionConfigurables, c -> c.createComponent()));
-    return myPanel.myPanel;
+    sectionAddons.sort(Comparator.comparing(c -> ObjectUtils.notNull(c instanceof Configurable ? ((Configurable)c).getDisplayName() : null, "")));
+    codeCompletionPanel = new CodeCompletionPanel();
+    return codeCompletionPanel.createPanel(optionAddons, sectionAddons);
   }
 
   @Override
@@ -48,18 +51,18 @@ public class CodeCompletionOptions extends CompositeConfigurable<UnnamedConfigur
   @Override
   public void reset() {
     super.reset();
-    myPanel.reset();
+    codeCompletionPanel.reset();
   }
 
   @Override
   public void apply() throws ConfigurationException {
     super.apply();
-    myPanel.apply();
+    codeCompletionPanel.apply();
   }
 
   @Override
   public void disposeUIResources() {
-    myPanel = null;
+    codeCompletionPanel = null;
     super.disposeUIResources();
   }
 
