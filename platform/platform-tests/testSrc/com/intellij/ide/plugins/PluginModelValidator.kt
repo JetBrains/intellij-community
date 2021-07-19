@@ -245,7 +245,7 @@ internal class PluginModelValidator(sourceModules: List<Module>) {
           }
           if (id == "com.intellij.modules.java") {
             _errors.add(PluginValidationError(
-              "Use com.intellij.modules.java id instead of com.intellij.modules.java",
+              "Use com.intellij.java id instead of com.intellij.modules.java",
               getErrorInfo(),
             ))
             continue
