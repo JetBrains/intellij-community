@@ -155,7 +155,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
 
     myList.getEmptyText().setText(VcsBundle.message("history.loading.revisions"));
 
-    myDiffPanel = DiffManager.getInstance().createRequestPanel(myProject, this, getFrame());
+    myDiffPanel = DiffManager.getInstance().createRequestPanel(myProject, this, getFrame(false));
     myUpdateQueue = new MergingUpdateQueue("VcsSelectionHistoryDialog", 300, true, myList, this);
 
     mySplitter = new JBSplitter(true, DIFF_SPLITTER_PROPORTION_KEY, DIFF_SPLITTER_PROPORTION);
