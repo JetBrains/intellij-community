@@ -123,7 +123,16 @@ public final class PluginDownloader {
     return myReleaseVersion;
   }
 
-  public boolean isFromMarketplace() { return myPluginUrl.startsWith(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST); }
+  public boolean isFromMarketplace() {
+    try {
+      URL pluginURL = new URL(myPluginUrl);
+      URL defaultPluginsHost = new URL(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST);
+      return pluginURL.getHost().equals(defaultPluginsHost.getHost());
+    }
+    catch (MalformedURLException ignored) {
+      return false;
+    }
+  }
 
   public boolean isLicenseOptional() {
     return myLicenseOptional;
@@ -187,7 +196,7 @@ public final class PluginDownloader {
     if (myFile == null) return null;
 
     // The null check is required for cases when plugins are requested during initial IDE setup (e.g. in Rider initial setup wizard).
-    if (ApplicationManager.getApplication() != null && Registry.is("marketplace.certificate.signature.check") && !isPluginFromBuiltinRepo()) {
+    if (ApplicationManager.getApplication() != null && (isFromMarketplace() || Registry.is("marketplace.certificate.signature.check"))) {
       boolean certified = PluginSignatureChecker.verify(myDescriptor, myFile, showMessageOnError);
       if (!certified) {
         myShownErrors = true;
