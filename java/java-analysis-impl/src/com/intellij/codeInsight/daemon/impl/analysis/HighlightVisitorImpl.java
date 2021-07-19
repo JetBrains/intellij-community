@@ -203,19 +203,22 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (updateWholeFile) {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         if (progress == null) throw new IllegalStateException("Must be run under progress");
-        RefCountHolder refCountHolder = RefCountHolder.get(file);
-        myRefCountHolder = refCountHolder;
         Project project = file.getProject();
         Document document = PsiDocumentManager.getInstance(project).getDocument(file);
         TextRange dirtyScope = document == null ? null : DaemonCodeAnalyzerEx.getInstanceEx(project).getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
         if (dirtyScope == null) dirtyScope = file.getTextRange();
+        RefCountHolder refCountHolder = RefCountHolder.get(file, dirtyScope.equals(file.getTextRange()));
+        myRefCountHolder = refCountHolder;
 
-        success = refCountHolder.analyze(file, dirtyScope, progress, highlight, () -> {
-          assert refCountHolder.myReady;
+        success = refCountHolder.analyze(() -> {
+          highlight.run();
+          ProgressManager.checkCanceled();
           if (document != null) {
             new PostHighlightingVisitor(file, document, refCountHolder).collectHighlights(holder, progress);
           }
         });
+
+        refCountHolder.storeReadyHolder(file);
       }
       else {
         myRefCountHolder = null;
