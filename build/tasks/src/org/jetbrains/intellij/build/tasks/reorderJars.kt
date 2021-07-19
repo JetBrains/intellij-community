@@ -31,14 +31,14 @@ fun main(args: Array<String>) {
               bootClassPathJarNames = listOf("bootstrap.jar", "util.jar", "jdom.jar", "log4j.jar", "jna.jar"),
               stageDir = Path.of(args[2]),
               antLibDir = null,
-              platformPrefix = "idea", logger = System.getLogger(""))
+              mainJarName = "idea.jar", logger = System.getLogger(""))
 }
 
 fun reorderJars(homeDir: Path,
                 targetDir: Path,
                 bootClassPathJarNames: Iterable<String>,
                 stageDir: Path,
-                platformPrefix: String,
+                mainJarName: String,
                 antLibDir: Path?,
                 logger: Logger) {
   val libDir = homeDir.resolve("lib")
@@ -50,10 +50,14 @@ fun reorderJars(homeDir: Path,
     else -> "linux"
   }
 
-  val sourceToNames = readClassLoadingLog(PackageIndexBuilder::class.java.classLoader.getResourceAsStream("$classifier/class-report.txt")!!, homeDir)
+  val sourceToNames = readClassLoadingLog(
+    classLoadingLog = PackageIndexBuilder::class.java.classLoader.getResourceAsStream("$classifier/class-report.txt")!!,
+    rootDir = homeDir,
+    mainJarName = mainJarName
+  )
   val coreClassLoaderFiles = computeAppClassPath(sourceToNames, libDir, antLibDir)
 
-  logger.log(Logger.Level.INFO, "Reordering *.jar files in $homeDir")
+  logger.info("Reordering *.jar files in $homeDir")
   doReorderJars(sourceToNames = sourceToNames, sourceDir = homeDir, targetDir = targetDir, logger = logger)
   val resultFile = libDir.resolve("classpath.txt")
   Files.writeString(resultFile, coreClassLoaderFiles.joinToString(separator = "\n") { libDir.relativize(it).toString() })
@@ -83,12 +87,15 @@ private inline fun addJarsFromDir(dir: Path, consumer: (Sequence<Path>) -> Unit)
   }
 }
 
-internal fun readClassLoadingLog(classLoadingLog: InputStream, rootDir: Path): Map<Path, List<String>> {
+internal fun readClassLoadingLog(classLoadingLog: InputStream, rootDir: Path, mainJarName: String): Map<Path, List<String>> {
   val sourceToNames = LinkedHashMap<Path, MutableList<String>>()
   classLoadingLog.bufferedReader().forEachLine {
     val data = it.split(':', limit = 2)
-    val source = rootDir.resolve(data[1])
-    sourceToNames.computeIfAbsent(source) { mutableListOf() }.add(data[0])
+    var sourcePath = data[1]
+    if (sourcePath == "lib/idea.jar") {
+      sourcePath = "lib/$mainJarName"
+    }
+    sourceToNames.computeIfAbsent(rootDir.resolve(sourcePath)) { mutableListOf() }.add(data[0])
   }
   return sourceToNames
 }

@@ -1115,7 +1115,7 @@ idea.fatal.error.notification=disabled
       .invokeWithArguments(buildContext.paths.distAllDir, buildContext.paths.distAllDir,
                            buildContext.getBootClassPathJarNames(),
                            buildContext.paths.tempDir,
-                           buildContext.productProperties.platformPrefix ?: "idea",
+                           buildContext.productProperties.productLayout.mainJarName,
                            buildContext.productProperties.isAntRequired ? Path.of(buildContext.paths.communityHome, "lib/ant/lib") : null,
                            buildContext.messages)
   }

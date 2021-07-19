@@ -88,7 +88,7 @@ class ReorderJarsTest {
     val tempDir = tempDir.createDir()
     Files.createDirectories(tempDir)
 
-    doReorderJars(readClassLoadingLog(path.resolve("order.txt").inputStream(), path), path, tempDir, TaskTest.logger)
+    doReorderJars(readClassLoadingLog(path.resolve("order.txt").inputStream(), path, "idea.jar"), path, tempDir, TaskTest.logger)
     val files = tempDir.toFile().listFiles()!!
     assertThat(files).isNotNull()
     assertThat(files).hasSize(1)
@@ -112,7 +112,7 @@ class ReorderJarsTest {
     Files.createDirectories(tempDir)
 
     val path = testDataPath
-    doReorderJars(readClassLoadingLog(path.resolve("zkmOrder.txt").inputStream(), path), path, tempDir, TaskTest.logger)
+    doReorderJars(readClassLoadingLog(path.resolve("zkmOrder.txt").inputStream(), path, "idea.jar"), path, tempDir, TaskTest.logger)
     val files = tempDir.toFile().listFiles()!!
     assertThat(files).isNotNull()
     val file = files[0]
