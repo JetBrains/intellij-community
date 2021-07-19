@@ -29,6 +29,7 @@ import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -40,30 +41,26 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public final class ActionMenu extends JBMenu {
   private final String myPlace;
-  private DataContext myContext;
+  private final DataContext myContext;
   private final ActionRef<ActionGroup> myGroup;
   private final PresentationFactory myPresentationFactory;
   private final Presentation myPresentation;
   private boolean myMnemonicEnabled;
-  private MenuItemSynchronizer myMenuItemSynchronizer;
   private StubItem myStubItem;  // A PATCH!!! Do not remove this code, otherwise you will lose all keyboard navigation in JMenuBar.
   private final boolean myUseDarkIcons;
   private Disposable myDisposable;
 
-  public ActionMenu(final DataContext context,
-                    @NotNull final String place,
-                    final ActionGroup group,
-                    final PresentationFactory presentationFactory,
-                    final boolean enableMnemonics,
-                    final boolean useDarkIcons
-  ) {
+  public ActionMenu(@Nullable DataContext context,
+                    @NotNull String place,
+                    @NotNull ActionGroup group,
+                    @NotNull PresentationFactory presentationFactory,
+                    boolean enableMnemonics,
+                    boolean useDarkIcons) {
     myContext = context;
     myPlace = place;
     myGroup = ActionRef.fromAction(group);
@@ -76,11 +73,6 @@ public final class ActionMenu extends JBMenu {
 
     init();
 
-    // addNotify won't be called for menus in MacOS system menu
-    if (SystemInfo.isMacSystemMenu) {
-      installSynchronizer();
-    }
-
     // Triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
     getPopupMenu();
   }
@@ -91,41 +83,14 @@ public final class ActionMenu extends JBMenu {
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
-  public void updateContext(DataContext context) {
-    myContext = context;
-  }
-
-  public AnAction getAnAction() { return myGroup.getAction(); }
-
-  @Override
-  public void addNotify() {
-    super.addNotify();
-    installSynchronizer();
-  }
-
-  private void installSynchronizer() {
-    if (myMenuItemSynchronizer == null) {
-      myMenuItemSynchronizer = new MenuItemSynchronizer();
-      myGroup.getAction().addPropertyChangeListener(myMenuItemSynchronizer);
-      myPresentation.addPropertyChangeListener(myMenuItemSynchronizer);
-    }
-  }
+  public @NotNull AnAction getAnAction() { return myGroup.getAction(); }
 
   @Override
   public void removeNotify() {
-    uninstallSynchronizer();
     super.removeNotify();
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
       myDisposable = null;
-    }
-  }
-
-  private void uninstallSynchronizer() {
-    if (myMenuItemSynchronizer != null) {
-      myGroup.getAction().removePropertyChangeListener(myMenuItemSynchronizer);
-      myPresentation.removePropertyChangeListener(myMenuItemSynchronizer);
-      myMenuItemSynchronizer = null;
     }
   }
 
@@ -163,12 +128,18 @@ public final class ActionMenu extends JBMenu {
     addMenuListener(menuListener);
     getModel().addChangeListener(menuListener);
 
+    updateFromPresentation(myMnemonicEnabled);
+  }
+
+  public void updateFromPresentation(boolean enableMnemonics) {
+    myMnemonicEnabled = enableMnemonics;
     setVisible(myPresentation.isVisible());
     setEnabled(myPresentation.isEnabled());
-    setText(myPresentation.getText());
-    updateIcon();
 
-    setMnemonicEnabled(myMnemonicEnabled);
+    setText(myPresentation.getText(myMnemonicEnabled));
+    setMnemonic(myPresentation.getMnemonic());
+    setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
+    updateIcon();
   }
 
   private void addStubItem() {
@@ -177,15 +148,8 @@ public final class ActionMenu extends JBMenu {
     }
   }
 
-  public void setMnemonicEnabled(boolean enable) {
-    myMnemonicEnabled = enable;
-    setText(myPresentation.getText(enable));
-    setMnemonic(myPresentation.getMnemonic());
-    setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
-  }
-
   @Override
-  public void setDisplayedMnemonicIndex(final int index) throws IllegalArgumentException {
+  public void setDisplayedMnemonicIndex(int index) throws IllegalArgumentException {
     super.setDisplayedMnemonicIndex(myMnemonicEnabled ? index : -1);
   }
 
@@ -197,19 +161,19 @@ public final class ActionMenu extends JBMenu {
   private void updateIcon() {
     UISettings settings = UISettings.getInstanceOrNull();
     if (settings != null && settings.getShowIconsInMenus()) {
-      final Presentation presentation = myPresentation;
-      Icon icon = presentation.getIcon();
+      Icon icon = myPresentation.getIcon();
       if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace) && icon != null) {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
         icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
       }
-      if (isShowIcons()) {
+      if (isShowNoIcons()) {
         setIcon(null);
         setDisabledIcon(null);
-      } else {
+      }
+      else {
         setIcon(icon);
-        if (presentation.getDisabledIcon() != null) {
-          setDisabledIcon(presentation.getDisabledIcon());
+        if (myPresentation.getDisabledIcon() != null) {
+          setDisabledIcon(myPresentation.getDisabledIcon());
         }
         else {
           setDisabledIcon(icon == null ? null : IconLoader.getDisabledIcon(icon));
@@ -218,7 +182,7 @@ public final class ActionMenu extends JBMenu {
     }
   }
 
-  static boolean isShowIcons() {
+  static boolean isShowNoIcons() {
     return SystemInfo.isMac && Registry.get("ide.macos.main.menu.alignment.options").isOptionEnabled("No icons");
   }
 
@@ -245,7 +209,7 @@ public final class ActionMenu extends JBMenu {
   }
 
   private class MenuListenerImpl implements ChangeListener, MenuListener {
-    ScheduledFuture myDelayedClear;
+    ScheduledFuture<?> myDelayedClear;
     boolean isSelected = false;
 
     @Override
@@ -297,9 +261,9 @@ public final class ActionMenu extends JBMenu {
       };
 
       if (SystemInfo.isMacSystemMenu && myPlace.equals(ActionPlaces.MAIN_MENU)) {
-        // Menu items may contain mnemonic and they can affect key-event dispatching (when Alt pressed)
+        // Menu items may contain mnemonic, and they can affect key-event dispatching (when Alt pressed)
         // To avoid influence of mnemonic it's necessary to clear items when menu was hidden.
-        // When user selects item of system menu (under MacOs) AppKit generates such sequence: CloseParentMenu -> PerformItemAction
+        // When user selects item of system menu (under macOS) AppKit generates such sequence: CloseParentMenu -> PerformItemAction
         // So we can destroy menu-item before item's action performed, and because of that action will not be executed.
         // Defer clearing to avoid this problem.
         myDelayedClear = EdtScheduledExecutorService.getInstance().schedule(clearSelf, 1000, TimeUnit.MILLISECONDS);
@@ -365,8 +329,6 @@ public final class ActionMenu extends JBMenu {
       for (Component menuComponent : getMenuComponents()) {
         if (menuComponent instanceof ActionMenu) {
           ((ActionMenu)menuComponent).clearItems();
-          // hideNotify is not called on Macs
-          ((ActionMenu)menuComponent).uninstallSynchronizer();
         }
         else if (menuComponent instanceof ActionMenuItem) {
           // Looks like an old-fashioned ugly workaround
@@ -404,34 +366,6 @@ public final class ActionMenu extends JBMenu {
                    RelativePoint.getNorthEastOf(this));
   }
 
-  // TODO: fix listener registration after 'PresentationFactory.clearPresentationCaches'
-  private class MenuItemSynchronizer implements PropertyChangeListener {
-    @Override
-    public void propertyChange(PropertyChangeEvent e) {
-      String name = e.getPropertyName();
-      if (Presentation.PROP_VISIBLE.equals(name)) {
-        setVisible(myPresentation.isVisible());
-        if (SystemInfo.isMacSystemMenu && myPlace.equals(ActionPlaces.MAIN_MENU)) {
-          validate();
-        }
-      }
-      else if (Presentation.PROP_ENABLED.equals(name)) {
-        setEnabled(myPresentation.isEnabled());
-      }
-      else if (Presentation.PROP_MNEMONIC_KEY.equals(name)) {
-        setMnemonic(myPresentation.getMnemonic());
-      }
-      else if (Presentation.PROP_MNEMONIC_INDEX.equals(name)) {
-        setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
-      }
-      else if (Presentation.PROP_TEXT_WITH_SUFFIX.equals(name)) {
-        setText(myPresentation.getText(true));
-      }
-      else if (Presentation.PROP_ICON.equals(name) || Presentation.PROP_DISABLED_ICON.equals(name)) {
-        updateIcon();
-      }
-    }
-  }
   private static final class UsabilityHelper implements IdeEventQueue.EventDispatcher, AWTEventListener, Disposable {
     private Component myComponent;
     private Point myStartMousePoint;
