@@ -199,20 +199,6 @@ final class DistributionJARsBuilder {
     }
   }
 
-  static void reorderJars(@NotNull BuildContext buildContext) {
-    if (buildContext.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
-      return
-    }
-
-    BuildHelper.getInstance(buildContext).reorderJars
-      .invokeWithArguments(buildContext.paths.distAllDir, buildContext.paths.distAllDir,
-                           buildContext.getBootClassPathJarNames(),
-                           buildContext.paths.tempDir,
-                           buildContext.productProperties.platformPrefix ?: "idea",
-                           buildContext.productProperties.isAntRequired ? Paths.get(buildContext.paths.communityHome, "lib/ant/lib") : null,
-                           buildContext.messages)
-  }
-
   private static BuildTaskRunnable<Void> createBuildBrokenPluginListTask() {
     return BuildTaskRunnable.task(BuildOptions.BROKEN_PLUGINS_LIST_STEP, "Build broken plugin list") { BuildContext buildContext ->
       Path targetFile = buildContext.paths.tempDir.resolve("brokenPlugins.db")

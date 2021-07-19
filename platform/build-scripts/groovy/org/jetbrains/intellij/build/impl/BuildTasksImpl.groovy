@@ -485,11 +485,11 @@ idea.fatal.error.notification=disabled
            distributionJARsBuilder.buildJARs()
            DistributionJARsBuilder.buildAdditionalArtifacts(buildContext, distributionJARsBuilder.projectStructureMapping)
            scramble(buildContext)
-           DistributionJARsBuilder.reorderJars(buildContext)
+           reorderJars(buildContext)
          }
          else {
            buildContext.messages.info("Skipped building product distributions because 'intellij.build.target.os' property is set to '$BuildOptions.OS_NONE'")
-           DistributionJARsBuilder.reorderJars(buildContext)
+           reorderJars(buildContext)
            DistributionJARsBuilder.buildSearchableOptions(buildContext, distributionJARsBuilder.getModulesForPluginsToPublish())
            distributionJARsBuilder.buildNonBundledPlugins(true)
          }
@@ -711,7 +711,7 @@ idea.fatal.error.notification=disabled
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private void scramble(BuildContext buildContext) {
+  private static void scramble(BuildContext buildContext) {
     if (!buildContext.productProperties.scrambleMainJar) {
       return
     }
@@ -1010,7 +1010,7 @@ idea.fatal.error.notification=disabled
     distributionJARsBuilder.buildJARs()
     DistributionJARsBuilder.buildInternalUtilities(buildContext)
     scramble(buildContext)
-    DistributionJARsBuilder.reorderJars(buildContext)
+    reorderJars(buildContext)
     layoutShared()
     Map<String, String> checkerConfig = buildContext.productProperties.versionCheckerConfig
     if (checkerConfig != null) {
@@ -1040,7 +1040,7 @@ idea.fatal.error.notification=disabled
       }
     }
 
-    DistributionJARsBuilder.reorderJars(buildContext)
+    reorderJars(buildContext)
     JvmArchitecture arch = CpuArch.isArm64() ? JvmArchitecture.aarch64 : JvmArchitecture.x64
     if (includeBinAndRuntime) {
       setupJBre(arch.name())
@@ -1104,5 +1104,19 @@ idea.fatal.error.notification=disabled
       Files.move(distBinDir.resolve("inspect.sh"), targetPath, StandardCopyOption.REPLACE_EXISTING)
       buildContext.patchInspectScript(targetPath)
     }
+  }
+
+  private static void reorderJars(@NotNull BuildContext buildContext) {
+    if (buildContext.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
+      return
+    }
+
+    BuildHelper.getInstance(buildContext).reorderJars
+      .invokeWithArguments(buildContext.paths.distAllDir, buildContext.paths.distAllDir,
+                           buildContext.getBootClassPathJarNames(),
+                           buildContext.paths.tempDir,
+                           buildContext.productProperties.platformPrefix ?: "idea",
+                           buildContext.productProperties.isAntRequired ? Path.of(buildContext.paths.communityHome, "lib/ant/lib") : null,
+                           buildContext.messages)
   }
 }
