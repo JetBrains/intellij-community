@@ -7,7 +7,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 
 @LearningDsl
-abstract class LessonContext: LearningDslBase {
+abstract class LessonContext : LearningDslBase {
   /**
    * Start a new task in a lesson context
    */

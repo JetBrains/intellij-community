@@ -21,7 +21,7 @@ private class LessonStateBase : PersistentStateComponent<LessonStateBase> {
 
   companion object {
     internal val instance: LessonStateBase
-    get() = ApplicationManager.getApplication().getService(LessonStateBase::class.java)
+      get() = ApplicationManager.getApplication().getService(LessonStateBase::class.java)
   }
 }
 

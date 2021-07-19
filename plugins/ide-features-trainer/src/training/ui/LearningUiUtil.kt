@@ -21,9 +21,9 @@ object LearningUiUtil {
 
   val robot: Robot
     get() {
-      if(myRobot == null)
+      if (myRobot == null)
         synchronized(this) {
-          if(myRobot == null) initializeRobot()
+          if (myRobot == null) initializeRobot()
         }
       return myRobot ?: throw IllegalStateException("Cannot initialize the robot")
     }
@@ -34,9 +34,9 @@ object LearningUiUtil {
   }
 
   private fun releaseRobot() {
-    if(myRobot != null) {
-      synchronized(this){
-        if (myRobot != null){
+    if (myRobot != null) {
+      synchronized(this) {
+        if (myRobot != null) {
           myRobot!!.cleanUpWithoutDisposingWindows()  // releases ScreenLock
           myRobot = null
         }
@@ -130,9 +130,10 @@ object LearningUiUtil {
     timeout: Timeout = Timeout.timeout(10, TimeUnit.SECONDS),
     crossinline finderFunction: (ComponentType) -> Boolean = { true }): ComponentType {
     try {
-      return waitUntilFound(robot, this?.target() as Container?,
-                                        typeMatcher(ComponentType::class.java) { finderFunction(it) },
-                                        timeout)
+      return waitUntilFound(robot,
+                            this?.target() as Container?,
+                            typeMatcher(ComponentType::class.java) { finderFunction(it) },
+                            timeout)
     }
     catch (e: WaitTimedOutError) {
       throw ComponentLookupException(

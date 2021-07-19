@@ -213,8 +213,9 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
       PsiDocumentManager.getInstance(runtimeContext.project).commitDocument(runtimeContext.editor.document)
       calculateState(runtimeContext)
     }
+
     var state: T? = null
-    addStep(recorder.futureActionAndCheckAround(actionId, { state = calculateAction()}) {
+    addStep(recorder.futureActionAndCheckAround(actionId, { state = calculateAction() }) {
       state?.let { checkState(runtimeContext, it, calculateAction()) } ?: false
     })
   }
@@ -256,7 +257,8 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
       DumbService.getInstance(runtimeContext.project).waitForSmartMode()
       // This wait implementation is quite ugly, but it works and it is needed in the test mode only. So should be ok for now.
       if (waitEditorToBeReady) {
-        val psiFile = invokeAndWaitIfNeeded { PsiDocumentManager.getInstance(project).getPsiFile(runtimeContext.editor.document) } ?: return@Runnable
+        val psiFile = invokeAndWaitIfNeeded { PsiDocumentManager.getInstance(project).getPsiFile(runtimeContext.editor.document) }
+                      ?: return@Runnable
         var t = 0
         val step = 100
         while (!runReadAction { DaemonCodeAnalyzerEx.getInstanceEx(project).isErrorAnalyzingFinished(psiFile) }) {
@@ -333,7 +335,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
 
   // This method later can be converted to the public (But I'm not sure it will be ever needed in a such form)
   override fun triggerByFoundPathAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
-                                                    checkTree: TaskRuntimeContext.(tree: JTree) -> TreePath?) {
+                                              checkTree: TaskRuntimeContext.(tree: JTree) -> TreePath?) {
     triggerByUiComponentAndHighlight l@{
       val tree = LearningUiUtil.findComponentOrNull(JTree::class.java) {
         checkTree(it) != null
@@ -348,7 +350,6 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
       tree
     }
   }
-
 
 
   private fun triggerByUiComponentAndHighlight(findAndHighlight: TaskRuntimeContext.() -> Component?) {

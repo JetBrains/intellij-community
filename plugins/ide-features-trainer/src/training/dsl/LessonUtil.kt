@@ -69,6 +69,7 @@ object LessonUtil {
       }
     }
   }
+
   fun insertIntoSample(sample: LessonSample, inserted: String): String {
     return sample.text.substring(0, sample.startOffset) + inserted + sample.text.substring(sample.startOffset)
   }
@@ -175,7 +176,8 @@ object LessonUtil {
   }
 
   fun actionName(actionId: String): @NlsActions.ActionText String {
-    val name = ActionManager.getInstance().getAction(actionId).templatePresentation.text?.replace("...", "") ?: error("No action with ID $actionId")
+    val name = ActionManager.getInstance().getAction(actionId).templatePresentation.text?.replace("...", "")
+               ?: error("No action with ID $actionId")
     return "<strong>${name}</strong>"
   }
 
@@ -200,7 +202,7 @@ object LessonUtil {
     }
   }
 
-  fun checkToolbarIsShowing(ui: ActionButton): Boolean   {
+  fun checkToolbarIsShowing(ui: ActionButton): Boolean {
     // Some buttons are duplicated to several tab-panels. It is a way to find an active one.
     val parentOfType = UIUtil.getParentOfType(JBTabsImpl.Toolbar::class.java, ui)
     val location = parentOfType?.location
@@ -241,11 +243,11 @@ object LessonUtil {
     val popupBounds = popupWindow.bounds
     val screenRectangle = ScreenUtil.getScreenRectangle(learningComponent)
 
-    if (!learningRectangle.intersects(popupBounds)) return false// ok, no intersection
+    if (!learningRectangle.intersects(popupBounds)) return false // ok, no intersection
 
-    if (!screenRectangle.contains(learningRectangle)) return false// we can make some strange moves in this case
+    if (!screenRectangle.contains(learningRectangle)) return false // we can make some strange moves in this case
 
-    if (learningRectangle.width + popupBounds.width > screenRectangle.width) return false// some huge sizes
+    if (learningRectangle.width + popupBounds.width > screenRectangle.width) return false // some huge sizes
 
     when (learningToolWindow.anchor) {
       ToolWindowAnchor.LEFT -> {
@@ -303,7 +305,7 @@ fun TaskContext.checkToolWindowState(toolWindowId: String, isShowing: Boolean) {
   }
 }
 
-fun <L: Any> TaskRuntimeContext.subscribeForMessageBus(topic: Topic<L>, handler: L) {
+fun <L : Any> TaskRuntimeContext.subscribeForMessageBus(topic: Topic<L>, handler: L) {
   project.messageBus.connect(taskDisposable).subscribe(topic, handler)
 }
 
@@ -382,8 +384,8 @@ fun LessonContext.highlightButtonById(actionId: String, clearHighlights: Boolean
     ApplicationManager.getApplication().executeOnPooledThread {
       val result =
         LearningUiUtil.findAllShowingComponentWithTimeout(null, ActionButton::class.java, seconds01) { ui ->
-        ui.action == needToFindButton && LessonUtil.checkToolbarIsShowing(ui)
-      }
+          ui.action == needToFindButton && LessonUtil.checkToolbarIsShowing(ui)
+        }
       taskInvokeLater {
         feature.complete(result.isNotEmpty())
         for (button in result) {

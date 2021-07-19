@@ -74,6 +74,7 @@ abstract class TaskContext : LearningDslBase {
 
   /** Insert text in the current position */
   open fun type(text: String) = Unit
+
   /** Write a text to the learn panel (panel with a learning tasks). */
   open fun runtimeText(@Nls callback: RuntimeTextContext.() -> String?) = Unit
 
@@ -90,7 +91,9 @@ abstract class TaskContext : LearningDslBase {
   open fun triggers(vararg actionIds: String) = Unit
 
   /** An user need to rice an action which leads to necessary state change */
-  open fun <T : Any?> trigger(actionId: String, calculateState: TaskRuntimeContext.() -> T, checkState: TaskRuntimeContext.(T, T) -> Boolean) = Unit
+  open fun <T : Any?> trigger(actionId: String,
+                              calculateState: TaskRuntimeContext.() -> T,
+                              checkState: TaskRuntimeContext.(T, T) -> Boolean) = Unit
 
   /** An user need to rice an action which leads to appropriate end state */
   fun trigger(actionId: String, checkState: TaskRuntimeContext.() -> Boolean) {
@@ -130,10 +133,10 @@ abstract class TaskContext : LearningDslBase {
   protected open fun triggerByFoundPathAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
                                                     checkTree: TaskRuntimeContext.(tree: JTree) -> TreePath?) = Unit
 
-  inline fun <reified T: Component> triggerByPartOfComponent(highlightBorder: Boolean = true, highlightInside: Boolean = false,
-                                                             usePulsation: Boolean = false,
-                                                             noinline selector: ((candidates: Collection<T>) -> T?)? = null,
-                                                             crossinline rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
+  inline fun <reified T : Component> triggerByPartOfComponent(highlightBorder: Boolean = true, highlightInside: Boolean = false,
+                                                              usePulsation: Boolean = false,
+                                                              noinline selector: ((candidates: Collection<T>) -> T?)? = null,
+                                                              crossinline rectangle: TaskRuntimeContext.(T) -> Rectangle?) {
     val componentClass = T::class.java
     @Suppress("DEPRECATION")
     triggerByFoundPathAndHighlightImpl(componentClass, highlightBorder, highlightInside, usePulsation, selector) { rectangle(it) }
@@ -141,11 +144,11 @@ abstract class TaskContext : LearningDslBase {
 
   @Deprecated("Use inline version")
   open fun <T : Component> triggerByFoundPathAndHighlightImpl(componentClass: Class<T>,
-                                                         highlightBorder: Boolean,
-                                                         highlightInside: Boolean,
-                                                         usePulsation: Boolean,
-                                                         selector: ((candidates: Collection<T>) -> T?)?,
-                                                         rectangle: TaskRuntimeContext.(T) -> Rectangle?) = Unit
+                                                              highlightBorder: Boolean,
+                                                              highlightInside: Boolean,
+                                                              usePulsation: Boolean,
+                                                              selector: ((candidates: Collection<T>) -> T?)?,
+                                                              rectangle: TaskRuntimeContext.(T) -> Rectangle?) = Unit
 
   fun triggerByListItemAndHighlight(highlightBorder: Boolean = true, highlightInside: Boolean = false, usePulsation: Boolean = false,
                                     checkList: TaskRuntimeContext.(item: Any) -> Boolean) {

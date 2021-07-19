@@ -30,7 +30,10 @@ import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import kotlin.math.max
 
-internal class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: Editor?, val predefinedFile: VirtualFile?) : Disposable {
+internal class LessonExecutor(val lesson: KLesson,
+                              val project: Project,
+                              initialEditor: Editor?,
+                              val predefinedFile: VirtualFile?) : Disposable {
   private data class TaskInfo(val content: () -> Unit,
                               var restoreIndex: Int,
                               var taskProperties: TaskProperties?,
@@ -44,7 +47,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
                               val removeAfterDoneMessages: MutableList<Int> = mutableListOf())
 
   var predefinedEditor: Editor? by WeakReferenceDelegator(initialEditor)
-  private set
+    private set
 
   private val selectedEditor: Editor?
     get() {

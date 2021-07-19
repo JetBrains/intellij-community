@@ -61,7 +61,7 @@ internal fun showActionKeyPopup(parent: Component, point: Point, height: Int, ac
     .setHideOnKeyOutside(true)
     .setHideOnClickOutside(true)
     .setAnimationCycle(0)
-    .setCalloutShift(height/2 + 1)
+    .setCalloutShift(height / 2 + 1)
     .setCornerToPointerDistance(80)
     .setBlockClicksThroughBalloon(true)
     .setBorderColor(JBUI.CurrentTheme.Tooltip.borderColor())

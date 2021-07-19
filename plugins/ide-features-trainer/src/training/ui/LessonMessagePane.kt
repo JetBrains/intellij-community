@@ -49,7 +49,9 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
 
   enum class MessageState { NORMAL, PASSED, INACTIVE, RESTORE, INFORMER }
 
-  data class MessageProperties(val state: MessageState = MessageState.NORMAL, val visualIndex: Int? = null, val useInternalParagraphStyle: Boolean = false)
+  data class MessageProperties(val state: MessageState = MessageState.NORMAL,
+                               val visualIndex: Int? = null,
+                               val useInternalParagraphStyle: Boolean = false)
 
   private data class LessonMessage(
     val messageParts: List<MessagePart>,
@@ -89,7 +91,8 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
         val rangeData = getRangeDataForMouse(me) ?: return
         val middle = (rangeData.range.first + rangeData.range.last) / 2
         val rectangle = modelToView2D(middle)
-        rangeData.action(Point(rectangle.x.roundToInt(), (rectangle.y.roundToInt() + rectangle.height.roundToInt() / 2)), rectangle.height.roundToInt())
+        rangeData.action(Point(rectangle.x.roundToInt(), (rectangle.y.roundToInt() + rectangle.height.roundToInt() / 2)),
+                         rectangle.height.roundToInt())
       }
 
       override fun mouseMoved(me: MouseEvent) {
@@ -454,7 +457,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
       calculateHeight()
       if (numberHeight > textHeight) {
         size--
-        while(calculateHeight() >= textHeight) {
+        while (calculateHeight() >= textHeight) {
           size--
         }
         size++
@@ -518,15 +521,15 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     val firstActiveMessage = firstActiveMessage()
     if (panelMode && lastActiveMessage != null && lastActiveMessage.state == MessageState.NORMAL) {
       val c = UISettings.instance.activeTaskBorder
-      val a = if (totalAnimation == 0) 255 else 255*currentAnimation/totalAnimation
+      val a = if (totalAnimation == 0) 255 else 255 * currentAnimation / totalAnimation
       val needColor = Color(c.red, c.green, c.blue, a)
       drawRectangleAroundMessage(firstActiveMessage, lastActiveMessage, g2d, needColor)
     }
   }
 
   private fun firstActiveMessage(): LessonMessage? = activeMessages.indexOfLast { it.state == MessageState.PASSED }
-                                       .takeIf { it != -1 && it < activeMessages.size - 1 }
-                                       ?.let { activeMessages[it + 1] } ?: activeMessages.firstOrNull()
+                                                       .takeIf { it != -1 && it < activeMessages.size - 1 }
+                                                       ?.let { activeMessages[it + 1] } ?: activeMessages.firstOrNull()
 
   private fun drawRectangleAroundText(myMessage: MessagePart,
                                       g2d: Graphics2D,

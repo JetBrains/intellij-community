@@ -121,7 +121,7 @@ object FileUtils {
     if (lastIndexOf == -1) throw IOException("Invalid Jar path format")
     val splitIdx = lastIndexOf + 4 // ".jar"
     val filePath = path.substring(0, splitIdx)
-    val pathInsideJar = path.substring(splitIdx + 2 ,path.length) // remove "!/"
+    val pathInsideJar = path.substring(splitIdx + 2, path.length) // remove "!/"
     return Pair(filePath, pathInsideJar)
   }
 }

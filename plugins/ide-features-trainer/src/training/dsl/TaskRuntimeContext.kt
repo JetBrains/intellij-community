@@ -29,7 +29,7 @@ open class TaskRuntimeContext internal constructor(private val lessonExecutor: L
                                                    internal val actionsRecorder: ActionsRecorder,
                                                    val restorePreviousTaskCallback: () -> Unit,
                                                    private val previousGetter: () -> PreviousTaskInfo
-): LearningDslBase {
+) : LearningDslBase {
   internal constructor(base: TaskRuntimeContext)
     : this(base.lessonExecutor, base.actionsRecorder, base.restorePreviousTaskCallback, base.previousGetter)
 

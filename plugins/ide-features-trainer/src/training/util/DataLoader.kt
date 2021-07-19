@@ -6,6 +6,7 @@ import java.io.InputStream
 
 object DataLoader {
   private const val DATA_PATH = "data/"
+
   //Path to use for online reloading. Should contain the full path to res/ folder, like /Users/user/training/res/.
   private const val LIVE_DATA_PATH = ""
 

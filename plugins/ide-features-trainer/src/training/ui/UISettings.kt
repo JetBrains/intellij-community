@@ -52,13 +52,13 @@ internal class UISettings {
   val completedColor: Color = JBColor.namedColor("Label.successForeground", 0x368746, 0x50A661)
   val activeTaskBorder: Color = JBColor.namedColor("Component.focusColor", 0x97C3F3, 0x3D6185)
 
-  val tooltipBackgroundColor: Color = JBColor.namedColor("Lesson.Tooltip.background",0x1071E8, 0x0E62CF)
+  val tooltipBackgroundColor: Color = JBColor.namedColor("Lesson.Tooltip.background", 0x1071E8, 0x0E62CF)
   val tooltipButtonBackgroundColor: Color = JBColor.namedColor("Lesson.Tooltip.spanBackground", 0x0D5CBD, 0x0250B0)
-  val tooltipTextColor: Color = JBColor.namedColor("Lesson.Tooltip.foreground",0xF5F5F5)
+  val tooltipTextColor: Color = JBColor.namedColor("Lesson.Tooltip.foreground", 0xF5F5F5)
 
-  val activeTaskNumberColor: Color = JBColor.namedColor("Lesson.stepNumberForeground",0x808080, 0xFEFEFE)
+  val activeTaskNumberColor: Color = JBColor.namedColor("Lesson.stepNumberForeground", 0x808080, 0xFEFEFE)
   val futureTaskNumberColor: Color = activeTaskNumberColor.addAlpha(0.3)
-  val tooltipTaskNumberColor: Color = JBColor.namedColor("Lesson.Tooltip.stepNumberForeground",0x6CA6ED, 0x6A9DDE)
+  val tooltipTaskNumberColor: Color = JBColor.namedColor("Lesson.Tooltip.stepNumberForeground", 0x6CA6ED, 0x6A9DDE)
 
   //BORDERS
   val emptyBorder: Border
@@ -83,8 +83,8 @@ internal class UISettings {
     val instance: UISettings
       get() = ApplicationManager.getApplication().getService(UISettings::class.java)
 
-    private fun Color.addAlpha(alpha: Double) : Color {
-      return JBColor { Color(red, green, blue, (255*alpha).toInt()) }
+    private fun Color.addAlpha(alpha: Double): Color {
+      return JBColor { Color(red, green, blue, (255 * alpha).toInt()) }
     }
   }
 }
