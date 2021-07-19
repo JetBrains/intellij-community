@@ -61,8 +61,8 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.getImplicitReceivers
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
+import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.getImplicitReceivers
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -672,7 +672,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         val originalReceiverInfo = ktChangeInfo.methodDescriptor.receiver
         if (function is KtCallableDeclaration && newReceiverInfo != originalReceiverInfo) {
             findReceiverIntroducingConflicts(result, function, newReceiverInfo)
-            findInternalExplicitReceiverConflicts(refUsages.get(), result, originalReceiverInfo)
+            findInternalExplicitReceiverConflicts(function, refUsages.get(), result, originalReceiverInfo)
             findReceiverToParameterInSafeCallsConflicts(refUsages.get(), result, ktChangeInfo)
             findThisLabelConflicts(refUsages, result, ktChangeInfo, function)
         }
@@ -865,21 +865,25 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
     }
 
     private fun findInternalExplicitReceiverConflicts(
+        function: KtCallableDeclaration,
         usages: Array<UsageInfo>,
         result: MultiMap<PsiElement, String>,
         originalReceiverInfo: KotlinParameterInfo?
     ) {
         if (originalReceiverInfo != null) return
 
+        val isObjectFunction = function.containingClassOrObject is KtObjectDeclaration
+
         loop@ for (usageInfo in usages) {
             if (!(usageInfo is KotlinFunctionCallUsage || usageInfo is KotlinPropertyCallUsage || usageInfo is KotlinByConventionCallUsage)) continue
 
             val callElement = usageInfo.element as? KtElement ?: continue
+
             val parent = callElement.parent
 
             val elementToReport = when {
                 usageInfo is KotlinByConventionCallUsage -> callElement
-                parent is KtQualifiedExpression && parent.selectorExpression === callElement -> parent
+                parent is KtQualifiedExpression && parent.selectorExpression === callElement && !isObjectFunction -> parent
                 else -> continue@loop
             }
 
