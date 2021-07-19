@@ -206,11 +206,14 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         }
 
         storage = LookupStorage(targetDataDir, pathConverter)
-        LOG.info("kotlin compiler references index is opened")
+        LOG.info("kotlin CRI storage is opened")
     }
 
     private fun closeStorage() {
-        storage?.close()
+        storage?.close().let {
+            LOG.info("kotlin CRI storage is closed" + if (it == null) " (didn't exist)" else "")
+        }
+
         storage = null
     }
 

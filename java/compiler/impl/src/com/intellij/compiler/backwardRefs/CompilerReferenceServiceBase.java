@@ -453,10 +453,14 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
         myActiveBuilds++;
         myDirtyScopeHolder.compilerActivityStarted();
       }
-      if (myReader != null) {
+
+      boolean myReaderIsNotNull = myReader != null;
+      if (myReaderIsNotNull) {
         myReader.close(reason == IndexCloseReason.AN_EXCEPTION);
         myReader = null;
       }
+
+      LOG.info("backward reference index reader is closed" + (myReaderIsNotNull ? "" : " (didn't exist)"));
     } finally {
       myOpenCloseLock.unlock();
     }
