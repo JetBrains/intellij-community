@@ -690,9 +690,14 @@ public final class HighlightControlFlowUtil {
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, innerClass));
       return highlightInfo;
     }
-    return checkWriteToFinalInsideLambda(variable, context);
+    HighlightInfo finalInsideLambdaInfo = checkWriteToFinalInsideLambda(variable, context);
+    if (finalInsideLambdaInfo != null) {
+      return finalInsideLambdaInfo;
+    }
+    return checkFinalUsageInsideGuardedPattern(variable, context);
   }
 
+  @Nullable
   private static HighlightInfo checkWriteToFinalInsideLambda(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
     final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(context, PsiLambdaExpression.class);
     if (lambdaExpression != null && !PsiTreeUtil.isAncestor(lambdaExpression, variable, true)) {
@@ -706,6 +711,20 @@ public final class HighlightControlFlowUtil {
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, lambdaExpression));
         return ErrorFixExtensionPoint.registerFixes(highlightInfo, context, "lambda.variable.must.be.final");
       }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static HighlightInfo checkFinalUsageInsideGuardedPattern(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
+    PsiGuardedPattern guardedPattern = PsiTreeUtil.getParentOfType(context, PsiGuardedPattern.class);
+    if (guardedPattern == null) return null;
+    if (!isEffectivelyFinal(variable, guardedPattern, context)) {
+      HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context)
+        .descriptionAndTooltip(JavaErrorBundle.message("guarded.pattern.variable.must.be.final")).create();
+      // todo quick-fix may be registered here, but
+      // todo com.intellij.codeInsight.intention.QuickFixFactory.createVariableAccessFromInnerClassFix should be fix beforehand
+      return highlightInfo;
     }
     return null;
   }
