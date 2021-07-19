@@ -7,6 +7,7 @@ import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -41,7 +42,7 @@ final class RefCountHolder {
   // There are two possible states of RefCountHolder:
   // - ready: RefCountHolder is finished updating, can be queried;
   // - not_ready: RefCountHolder is empty or being updated now, info can be inconsistent
-  private volatile boolean myReady;
+  volatile boolean myReady;
 
   private static final Key<Reference<RefCountHolder>> REF_COUNT_HOLDER_IN_FILE_KEY = Key.create("REF_COUNT_HOLDER_IN_FILE_KEY");
 
@@ -302,17 +303,20 @@ final class RefCountHolder {
   boolean analyze(@NotNull PsiFile file,
                   @NotNull TextRange dirtyScope,
                   @NotNull ProgressIndicator indicator,
-                  @NotNull Runnable analyze) {
+                  @NotNull Runnable highlight,
+                  @NotNull Runnable postHighlight) {
     boolean readyBefore = myReady;
-    if (dirtyScope.equals(file.getTextRange())) {
+    if (!readyBefore || dirtyScope.equals(file.getTextRange())) {
       clear();
     }
     else {
       removeInvalidRefs();
     }
-    analyze.run();
+    highlight.run();
+    ProgressManager.checkCanceled();
     myReady = true;
     log("a: ready changed ", readyBefore, "-> true", indicator);
+    postHighlight.run();
     return true;
   }
 
