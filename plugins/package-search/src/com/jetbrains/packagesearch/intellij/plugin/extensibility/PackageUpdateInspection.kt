@@ -38,6 +38,7 @@ internal abstract class PackageUpdateInspection : LocalInspectionTool() {
             val scope = packageUpdateInfo.usageInfo.scope
             val unifiedDependency = packageUpdateInfo.packageModel.toUnifiedDependency(currentVersion, scope)
             val versionElement = tryDoing { getVersionPsiElement(file, unifiedDependency) } ?: continue
+            if(versionElement.containingFile != file) continue
 
             problemsHolder.registerProblem(
                 versionElement,
