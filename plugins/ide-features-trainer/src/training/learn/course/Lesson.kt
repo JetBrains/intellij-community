@@ -40,7 +40,7 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
   /** Map: name -> url */
   open val helpLinks: Map<String, String> get() = emptyMap()
 
-  open val testScriptProperties : TaskTestContext.TestScriptProperties = TaskTestContext.TestScriptProperties()
+  open val testScriptProperties: TaskTestContext.TestScriptProperties = TaskTestContext.TestScriptProperties()
 
   open fun onLessonEnd(project: Project, lessonPassed: Boolean) = Unit
 

@@ -57,7 +57,7 @@ class JavaInheritanceHierarchyLesson
 
     task("GotoImplementation") {
       text(JavaLessonsBundle.message("java.inheritance.hierarchy.invoke.implementations.again", icon(AllIcons.Gutter.ImplementedMethod),
-                                 action(it)))
+                                     action(it)))
       triggerByUiComponentAndHighlight { ui: InplaceButton ->
         ui.toolTipText == IdeBundle.message("show.in.find.window.button.name")
       }
@@ -115,12 +115,12 @@ class JavaInheritanceHierarchyLesson
     }
 
     text(JavaLessonsBundle.message("java.inheritance.hierarchy.last.note",
-                               action("GotoImplementation"),
-                               action("GotoSuperMethod"),
-                               action("MethodHierarchy"),
-                               action("TypeHierarchy"),
-                               action("GotoAction"),
-                               strong("hierarchy")))
+                                   action("GotoImplementation"),
+                                   action("GotoSuperMethod"),
+                                   action("MethodHierarchy"),
+                                   action("TypeHierarchy"),
+                                   action("GotoAction"),
+                                   strong("hierarchy")))
   }
 
   private fun TaskRuntimeContext.atDeclarationPosition(): Boolean {

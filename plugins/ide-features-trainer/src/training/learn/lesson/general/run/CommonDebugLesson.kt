@@ -165,6 +165,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
               override fun sessionPaused() {
                 sessionPaused = true
               }
+
               override fun sessionStopped() {
                 val activeToolWindow = LearningUiManager.activeToolWindow
                 if (activeToolWindow != null && !mayBeStopped && LessonManager.instance.currentLesson == this@CommonDebugLesson) {

@@ -61,7 +61,8 @@ class JavaRefactoringMenuLesson : RefactoringMenuLessonBase("java.refactoring.me
       restoreIfModifiedOrMoved()
       if (adaptToNotNativeLocalization) {
         JavaLessonsBundle.message("java.refactoring.menu.inline.variable", code(inlineVariableName),
-                                  action("Refactorings.QuickListPopupAction"), strong(RefactoringBundle.message("inline.variable.title")), action(it))
+                                  action("Refactorings.QuickListPopupAction"), strong(RefactoringBundle.message("inline.variable.title")),
+                                  action(it))
       }
       else JavaLessonsBundle.message("java.refactoring.menu.inline.variable.eng",
                                      code(inlineVariableName), action("Refactorings.QuickListPopupAction"), action(it))

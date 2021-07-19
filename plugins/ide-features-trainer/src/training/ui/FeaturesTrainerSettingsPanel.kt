@@ -22,14 +22,13 @@ private class FeaturesTrainerSettingsPanel : BoundConfigurable(LearnBundle.messa
         comboBox<LanguageOption>(DefaultComboBoxModel(options), {
           val languageName = LangManager.getInstance().state.languageName
           options.find { it.id == languageName } ?: options[0]
-        }, { language ->
-                             val chosen = languagesExtensions.first { it.language == language?.id }
-                             resetPrimaryLanguage(chosen.instance)
-                           })
+        }, { language -> resetPrimaryLanguage(languagesExtensions.first { it.language == language?.id }.instance) }
+        )
       }
     }
     row {
-      buttonFromAction(LearnBundle.message("learn.option.reset.progress"), "settings", ActionManager.getInstance().getAction("ResetLearningProgressAction"))
+      buttonFromAction(LearnBundle.message("learn.option.reset.progress"), "settings",
+                       ActionManager.getInstance().getAction("ResetLearningProgressAction"))
     }
   }
 

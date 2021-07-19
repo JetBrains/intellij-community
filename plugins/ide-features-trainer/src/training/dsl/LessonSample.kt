@@ -9,6 +9,7 @@ class LessonSample(val text: String,
                    private val positions: Map<Int, LessonSamplePosition>) {
   constructor(text: String, position: LessonSamplePosition) :
     this(text, mapOf(Pair(0, LessonSamplePosition(0, position.startOffset, position.selection))))
+
   constructor(text: String, startOffset: Int) : this(text, LessonSamplePosition(0, startOffset))
 
   val startOffset: Int
@@ -130,7 +131,8 @@ fun prepareSampleFromCurrentState(editor: Editor): LessonSample {
   val text = editor.document.text
   val currentCaret = editor.caretModel.currentCaret
   val position =
-    if (currentCaret.hasSelection()) LessonSamplePosition(id = 0, startOffset = currentCaret.offset, selection = Pair(currentCaret.selectionStart, currentCaret.selectionEnd))
+    if (currentCaret.hasSelection()) LessonSamplePosition(id = 0, startOffset = currentCaret.offset,
+                                                          selection = Pair(currentCaret.selectionStart, currentCaret.selectionEnd))
     else LessonSamplePosition(id = 0, startOffset = currentCaret.offset)
   return LessonSample(text, mapOf(Pair(0, position)))
 }

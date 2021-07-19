@@ -11,7 +11,8 @@ abstract class LearningCourseBase(val lang: String) : LearningCourse {
   val langSupport: LangSupport by lazy { LangManager.getInstance().getLangSupportById(lang) ?: error("No language with id $lang") }
 
   fun loadSample(path: String): LessonSample {
-    val content = DataLoader.getResourceAsStream("modules/${lang.toLowerCase()}/$path", javaClass.classLoader).readBytes().toString(Charsets.UTF_8)
+    val content = DataLoader.getResourceAsStream("modules/${lang.toLowerCase()}/$path", javaClass.classLoader)
+      .readBytes().toString(Charsets.UTF_8)
     return parseLessonSample(content)
   }
 }

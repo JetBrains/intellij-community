@@ -35,12 +35,12 @@ import javax.swing.JLabel
 import javax.swing.JList
 
 @LearningDsl
-class TaskTestContext(rt: TaskRuntimeContext): TaskRuntimeContext(rt) {
+class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
   private val defaultTimeout = Timeout.timeout(3, TimeUnit.SECONDS)
 
   val robot: Robot get() = LearningUiUtil.robot
 
-  data class TestScriptProperties (
+  data class TestScriptProperties(
     val duration: Int = 15, //seconds
     val skipTesting: Boolean = false
   )
@@ -80,7 +80,7 @@ class TaskTestContext(rt: TaskRuntimeContext): TaskRuntimeContext(rt) {
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
   fun <C : Container> ContainerFixture<C>.jList(containingItem: String? = null, timeout: Timeout = defaultTimeout): JListFixture {
-    return generalListFinder(timeout, containingItem) { element, p ->  element == p }
+    return generalListFinder(timeout, containingItem) { element, p -> element == p }
   }
 
   /**
@@ -224,6 +224,7 @@ private fun getValueWithCellRenderer(cellRendererComponent: Component, isExtende
 private class ExtendedJListCellReader : BasicJListCellReader() {
   override fun valueAt(list: JList<*>, index: Int): String? {
     val element = list.model.getElementAt(index) ?: return null
+
     @Suppress("UNCHECKED_CAST")
     val cellRendererComponent = (list as JList<Any>).cellRenderer
       .getListCellRendererComponent(list, element, index, true, true)
@@ -303,7 +304,7 @@ private open class ComponentFixture<S, C : Component>(selfType: Class<S>, robot:
   }
 }
 
-private class ActionButtonFixture(robot: Robot, target: ActionButton):
+private class ActionButtonFixture(robot: Robot, target: ActionButton) :
   ComponentFixture<ActionButtonFixture, ActionButton>(ActionButtonFixture::class.java, robot, target), ContainerFixture<ActionButton>
 
 private class IdeFrameFixture(robot: Robot, target: IdeFrameImpl)

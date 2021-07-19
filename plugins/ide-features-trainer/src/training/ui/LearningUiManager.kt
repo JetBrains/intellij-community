@@ -47,7 +47,7 @@ object LearningUiManager {
   private var currentCallbackId = 0
 
   /** The returned Id should be used in the text only once */
-  fun addCallback(callback: () -> Unit) : Int {
+  fun addCallback(callback: () -> Unit): Int {
     callbackMap[currentCallbackId++] = callback
     return currentCallbackId - 1
   }

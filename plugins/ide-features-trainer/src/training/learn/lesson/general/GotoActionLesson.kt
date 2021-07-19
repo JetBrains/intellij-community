@@ -46,7 +46,7 @@ class GotoActionLesson(private val sample: LessonSample, private val firstLesson
       task("About") {
         showWarningIfSearchPopupClosed()
         text(LessonsBundle.message("goto.action.invoke.about.action",
-                              LessonUtil.actionName(it).toLowerCase(), LessonUtil.rawEnter()))
+                                   LessonUtil.actionName(it).toLowerCase(), LessonUtil.rawEnter()))
         triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { dialog: JDialog ->
           dialog.title?.contains(IdeBundle.message("about.popup.about.app", ApplicationNamesInfo.getInstance().fullProductName)) ?: false
         }

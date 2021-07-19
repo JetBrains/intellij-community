@@ -77,7 +77,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     }
 
     preferredSize = Dimension(UISettings.instance.width, 100)
-    with (UISettings.instance) {
+    with(UISettings.instance) {
       border = EmptyBorder(northInset, JBUI.scale(18), southInset, JBUI.scale(18))
     }
   }
@@ -219,7 +219,8 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     addMessages(messages, properties)
   }
 
-  fun addMessages(messageParts: List<MessagePart>, properties: LessonMessagePane.MessageProperties = LessonMessagePane.MessageProperties()) {
+  fun addMessages(messageParts: List<MessagePart>,
+                  properties: LessonMessagePane.MessageProperties = LessonMessagePane.MessageProperties()) {
     val needToShow = lessonMessagePane.addMessage(messageParts, properties)
     adjustMessagesArea()
     if (properties.state != LessonMessagePane.MessageState.INACTIVE) {
@@ -238,7 +239,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     if (scrollToNewMessages) {
       adjustMessagesArea()
       val visibleSize = visibleRect.size
-      val needToScroll = max(0, y - visibleSize.height/2)
+      val needToScroll = max(0, y - visibleSize.height / 2)
       learnToolWindow.scrollTo(needToScroll)
     }
   }

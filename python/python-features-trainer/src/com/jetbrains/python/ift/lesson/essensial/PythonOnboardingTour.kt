@@ -316,7 +316,8 @@ class PythonOnboardingTour :
             val width = stop.x + stop.width - x
             val height = stop.y + stop.height - y
             Rectangle(x, y, width, height)
-          } else null
+          }
+          else null
         }
       }
     }
@@ -505,7 +506,7 @@ class PythonOnboardingTour :
       restoreByUi(delayMillis = defaultRestoreDelay)
     }
 
-    fun returnTypeMessage(project: Project)=
+    fun returnTypeMessage(project: Project) =
       if (PythonLessonsUtil.isPython3Installed(project)) PyPsiBundle.message("INTN.specify.return.type.in.annotation")
       else PyPsiBundle.message("INTN.specify.return.type.in.docstring")
 

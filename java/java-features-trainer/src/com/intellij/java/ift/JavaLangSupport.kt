@@ -38,7 +38,7 @@ class JavaLangSupport : AbstractLangSupport() {
 
   override val langCourseFeedback get() = getFeedbackLink(this, false)
 
-  override val readMeCreator= ReadMeCreator()
+  override val readMeCreator = ReadMeCreator()
 
   override fun installAndOpenLearningProject(projectPath: Path,
                                              projectToClose: Project?,

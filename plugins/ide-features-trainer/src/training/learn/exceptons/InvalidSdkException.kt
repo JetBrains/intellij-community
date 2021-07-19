@@ -3,4 +3,4 @@ package training.learn.exceptons
 
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 
-open class InvalidSdkException(@DialogMessage s : String) : Exception(s)
+open class InvalidSdkException(@DialogMessage s: String) : Exception(s)

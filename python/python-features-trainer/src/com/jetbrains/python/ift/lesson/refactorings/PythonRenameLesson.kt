@@ -91,7 +91,7 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
       }
       val dynamicReferencesString = "[$dynamicWord]"
       text(PythonLessonsBundle.message("python.rename.expand.dynamic.references",
-                                 code("teams"), strong(dynamicReferencesString)))
+                                       code("teams"), strong(dynamicReferencesString)))
 
       triggerByFoundPathAndHighlight { _: JTree, path: TreePath ->
         path.pathCount == 6 && path.getPathComponent(5).toString().contains("company_members")
