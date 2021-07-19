@@ -717,6 +717,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/stepOver/stepOverInsideInlineFun.kt");
         }
 
+        @TestMetadata("stepOverInvokeMethod.kt")
+        public void testStepOverInvokeMethod() throws Exception {
+            runTest("testData/stepping/stepOver/stepOverInvokeMethod.kt");
+        }
+
         @TestMetadata("stepOverReifiedParam.kt")
         public void testStepOverReifiedParam() throws Exception {
             runTest("testData/stepping/stepOver/stepOverReifiedParam.kt");
@@ -1279,6 +1284,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
         @TestMetadata("stepOutInlineFunctionStdlib.kt")
         public void testStepOutInlineFunctionStdlib() throws Exception {
             runTest("testData/stepping/custom/stepOutInlineFunctionStdlib.kt");
+        }
+
+        @TestMetadata("stepOverInvokeMethodInLambda.kt")
+        public void testStepOverInvokeMethodInLambda() throws Exception {
+            runTest("testData/stepping/custom/stepOverInvokeMethodInLambda.kt");
         }
 
         @TestMetadata("stepOverNonLocalReturnInLambda.kt")
