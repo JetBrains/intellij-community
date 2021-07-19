@@ -2,9 +2,9 @@
 package com.intellij.codeInspection.ex;
 
 public interface InspectListener {
-  default void inspectionFinished(long duration, long threadId, int problemsCount, InspectionToolWrapper<?, ?> tool, InspectionKind kind) {}
+  default void inspectionFinished(long durationMs, long threadId, int problemCount, InspectionToolWrapper<?, ?> tool, InspectionKind kind) {}
 
-  default void activityFinished(long duration, long threadId, ActivityKind activityKind) {}
+  default void activityFinished(long durationMs, long threadId, ActivityKind activityKind) {}
 
   enum InspectionKind {
     LOCAL,
