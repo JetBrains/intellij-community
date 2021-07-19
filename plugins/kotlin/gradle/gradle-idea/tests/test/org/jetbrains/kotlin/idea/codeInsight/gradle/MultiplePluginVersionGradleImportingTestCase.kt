@@ -7,7 +7,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.rd.attach
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
@@ -70,7 +70,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
             val classLoaderKey = "java.system.class.loader"
             System.getProperty(classLoaderKey)?.let { configuredClassLoader ->
                 System.clearProperty(classLoaderKey)
-                testRootDisposable.attach {
+                Disposer.register (testRootDisposable) {
                     System.setProperty(classLoaderKey, configuredClassLoader)
                 }
             }
@@ -79,7 +79,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         val gradleNativeKey = "org.gradle.native"
         System.getProperty(gradleNativeKey).let { configuredGradleNative ->
             System.setProperty(gradleNativeKey, "false")
-            testRootDisposable.attach {
+            Disposer.register(testRootDisposable) {
                 if (configuredGradleNative == null) System.clearProperty(gradleNativeKey)
                 else System.setProperty(gradleNativeKey, configuredGradleNative)
             }

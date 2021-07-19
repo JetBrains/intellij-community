@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.rd
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.paint.RectanglePainter2D
 import com.jetbrains.rd.swing.awtMousePoint
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.IPropertyView
 import com.jetbrains.rd.util.reactive.ISource
 import com.jetbrains.rd.util.reactive.map
@@ -30,7 +32,12 @@ internal fun IdeGlassPane.mouseMoved(): ISource<MouseEvent> {
                 }
             }
 
-            this@mouseMoved.addMouseMotionPreprocessor(listener, lifetime.createNestedDisposable())
+          val nestedDisposable = Disposer.newDisposable()
+          lifetime.onTermination {
+            Disposer.dispose(nestedDisposable)
+          }
+
+          this@mouseMoved.addMouseMotionPreprocessor(listener, nestedDisposable)
         }
     }
 }
@@ -41,20 +48,6 @@ internal fun IdeGlassPane.childAtMouse(container: Container): ISource<Component?
     .map { SwingUtilities.convertPoint(it.component, it.x, it.y, container) }
     .map { container.getComponentAt(it) }
 
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-@Deprecated("Use version from `SwingReactiveEx`")
-internal fun JComponent.childAtMouse(): IPropertyView<Component?> = this@childAtMouse.awtMousePoint()
-    .map {
-        if (it == null) null
-        else {
-            this@childAtMouse.getComponentAt(it)
-        }
-    }
-
-fun Graphics2D.draw2DRect(rect: Rectangle, strokeWidth: Double, color: Color) {
-    this.color = color
-    RectanglePainter2D.DRAW.paint(this, rect, null, LinePainter2D.StrokeType.CENTERED, strokeWidth, RenderingHints.VALUE_ANTIALIAS_OFF)
-}
 
 fun Graphics2D.fill2DRect(rect: Rectangle, color: Color) {
     this.color = color

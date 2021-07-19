@@ -20,7 +20,7 @@ fun defineNestedLifetime(disposable: Disposable): LifetimeDefinition {
     return lifetimeDefinition
   }
 
-  disposable.attach { if (lifetimeDefinition.lifetime.isAlive) lifetimeDefinition.terminate() }
+  Disposer.register(disposable) { if (lifetimeDefinition.lifetime.isAlive) lifetimeDefinition.terminate() }
   return lifetimeDefinition
 }
 
@@ -32,18 +32,4 @@ internal fun Lifetime.createNestedDisposable(debugName: String = "lifetimeToDisp
     Disposer.dispose(d)
   }
   return d
-}
-
-@Suppress("ObjectLiteralToLambda")
-/**
- * Executes the given action when this disposable will be disposed
- * @throws com.intellij.util.IncorrectOperationException if this disposable is being disposed or is already disposed
- * @see Disposer.register
- */
-inline fun Disposable.attach(crossinline disposable: () -> Unit) {
-  Disposer.register(this, object : Disposable {
-    override fun dispose() {
-      disposable()
-    }
-  })
 }
