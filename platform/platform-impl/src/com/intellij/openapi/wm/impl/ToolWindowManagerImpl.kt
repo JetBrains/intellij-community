@@ -1925,7 +1925,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val id = entry.id
     val decorator = entry.toolWindow.getOrCreateDecoratorComponent()
     val windowedDecorator = FrameWrapper(project, title = "$id - ${project.name}", component = decorator)
-    val window = windowedDecorator.getFrame()
+    val window = windowedDecorator.getFrame(false)
 
     MnemonicHelper.init((window as RootPaneContainer).contentPane)
 

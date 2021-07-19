@@ -248,21 +248,27 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     ActionUtil.registerForEveryKeyboardShortcut(rootPane, closeAction, CommonShortcuts.getCloseActiveWindow())
   }
 
-  fun getFrame(): Window {
+  fun getFrame(decorated: Boolean = true): Window {
     assert(!isDisposed) { "Already disposed!" }
     var result = frame
     if (result == null) {
       val parent = WindowManager.getInstance().getIdeFrame(project)!!
-      result = if (isDialog) createJDialog(parent) else createJFrame(parent)
+      result = if (isDialog) createJDialog(parent) else createJFrame(parent, decorated)
       frame = result
     }
     return result
   }
 
+  fun getFrame(): Window {
+    return getFrame(true)
+  }
+
   val isActive: Boolean
     get() = frame?.isActive == true
 
-  protected open fun createJFrame(parent: IdeFrame): JFrame = MyJFrame(this, parent)
+  protected open fun createJFrame(parent: IdeFrame, decorated: Boolean = true): JFrame = MyJFrame(this, parent, decorated)
+
+  protected open fun createJFrame(parent: IdeFrame): JFrame = createJFrame(parent, true)
 
   protected open fun createJDialog(parent: IdeFrame): JDialog = MyJDialog(this, parent)
 
@@ -309,7 +315,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     (frame as RootPaneContainer).rootPane.revalidate()
   }
 
-  private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeFrame) : JFrame(), DataProvider, IdeFrame.Child, IdeFrameEx {
+  private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeFrame, decorated: Boolean = true) : JFrame(), DataProvider, IdeFrame.Child, IdeFrameEx {
     private var frameTitle: String? = null
     private var fileTitle: String? = null
     private var file: Path? = null
@@ -325,8 +331,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       focusTraversalPolicy = IdeFocusTraversalPolicy()
       // NB!: the root pane must be set before decorator,
       // which holds its own client properties in a root pane
-      myFrameDecorator = IdeFrameDecorator.decorate(this, owner)
-
+      if(decorated)
+        myFrameDecorator = IdeFrameDecorator.decorate(this, owner)
     }
 
     override fun isInFullScreen() = false
