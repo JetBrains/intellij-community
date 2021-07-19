@@ -207,7 +207,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfType dfType = filterDfTypeOnAssignment(var, getDfType(value)).meet(var.getDfType());
     if (dfType == DfType.BOTTOM) return; // likely uncompilable code or bad CFG
     if (value instanceof DfaVariableValue && !ControlFlow.isTempVariable(var) &&
-        !ControlFlow.isTempVariable(((DfaVariableValue)value)) &&
+        !ControlFlow.isTempVariable((DfaVariableValue)value) &&
         (var.getQualifier() == null || !ControlFlow.isTempVariable(var.getQualifier()))) {
       // assigning a = b when b is known to be null: could be ephemeral
       checkEphemeral(var, value);

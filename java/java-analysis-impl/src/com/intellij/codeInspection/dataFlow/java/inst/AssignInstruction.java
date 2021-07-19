@@ -82,7 +82,7 @@ public class AssignInstruction extends ExpressionPushingInstruction {
     if (!(dfaDest instanceof DfaVariableValue &&
           ((DfaVariableValue)dfaDest).getPsiVariable() instanceof PsiLocalVariable &&
           dfaSource instanceof DfaVariableValue &&
-          (ControlFlow.isTempVariable(((DfaVariableValue)dfaSource)) ||
+          (ControlFlow.isTempVariable((DfaVariableValue)dfaSource) ||
            ((DfaVariableValue)dfaSource).getDescriptor().isCall()))) {
       JavaDfaHelpers.dropLocality(dfaSource, stateBefore);
     }
