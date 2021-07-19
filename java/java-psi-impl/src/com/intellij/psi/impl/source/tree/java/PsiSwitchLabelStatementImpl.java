@@ -104,6 +104,53 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
       return true;
     });
 
-    return thisSwitchLabelIsImmediate.get();
+    if (!thisSwitchLabelIsImmediate.get()) return false;
+
+    final PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(getPrevSibling());
+
+    if (prevSibling instanceof PsiBreakStatement) return true;
+    if (prevSibling instanceof PsiBlockStatement && hasBreakStatement((PsiBlockStatement)prevSibling)) return true;
+
+    final PsiSwitchLabelStatement prevCaseLabel = PsiTreeUtil.getPrevSiblingOfType(this, PsiSwitchLabelStatement.class);
+    if (prevCaseLabel != null && isNullCaseLabel(prevCaseLabel)) return true;
+
+    return isFirstCaseLabel(this);
+  }
+
+  /**
+   * Checks if the passed switch case label is {@code "case null"} only
+   * @param label a switch case label to check
+   * @return true if the passed label is for {@code "case null"}
+   */
+  private static boolean isNullCaseLabel(PsiSwitchLabelStatement label) {
+    final PsiCaseLabelElementList list = label.getCaseLabelElementList();
+    if (list == null) return true;
+    final PsiCaseLabelElement[] elements = list.getElements();
+    return elements.length == 1 && elements[0].textMatches(PsiKeyword.NULL);
+  }
+
+  /**
+   * Checks if the block statement contains the {@code break} keyword
+   * @param block a code block to analyze
+   * @return true if the passed code block contains {@code break}
+   */
+  private static boolean hasBreakStatement(PsiBlockStatement block) {
+    final PsiCodeBlock prevCaseLabelCodeBlock = block.getCodeBlock();
+    final PsiStatement[] statements = prevCaseLabelCodeBlock.getStatements();
+
+    return statements.length != 0 && statements[statements.length - 1] instanceof PsiBreakStatement;
+  }
+
+  /**
+   * Checks if the passed {@link PsiSwitchLabelStatement} instance is the first switch case label of its switch statement
+   * @param switchLabel a switch case label to check
+   * @return true if the passed switch case label case is the first in its switch statement
+   */
+  private static boolean isFirstCaseLabel(PsiSwitchLabelStatement switchLabel) {
+    final PsiElement switchBody = switchLabel.getParent();
+    if (!(switchBody instanceof PsiCodeBlock)) return false;
+
+    final PsiStatement[] statements = ((PsiCodeBlock)switchBody).getStatements();
+    return statements.length != 0 && statements[0] == switchLabel;
   }
 }
