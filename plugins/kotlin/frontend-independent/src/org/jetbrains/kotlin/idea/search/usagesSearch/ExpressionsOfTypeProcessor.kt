@@ -319,16 +319,14 @@ class ExpressionsOfTypeProcessor(
                     true, true, false
                 ).findAll()
 
-                val classes = (inheritanceClasses + declarationClass).filter {
-                    it !is KtLightClass
-                }
+                val classes = (inheritanceClasses + declarationClass).filter { it !is KtLightClass }
 
                 val searchRequestCollector = SearchRequestCollector(SearchSession())
                 val resultProcessor = StaticMemberRequestResultProcessor(member, classes)
 
                 val memberName = runReadAction { member.name }
                 for (klass in classes) {
-                    val request = klass.name + "." + declarationName
+                    val request = runReadAction { klass.name } + "." + declarationName
 
                     testLog { "Searched references to static $memberName in non-Java files by request $request" }
                     searchRequestCollector.searchWord(
