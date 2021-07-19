@@ -4526,6 +4526,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       reinitFontsAndSettings();
     }
 
+    void resetEditorFontSize() {
+      myFontSize = -1;
+      reinitFonts();
+    }
+
     @NotNull
     @Override
     public FontPreferences getFontPreferences() {
@@ -4984,6 +4989,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           int size = myScheme.getEditorFontSize() - e.getWheelRotation();
           if (size >= MIN_FONT_SIZE) {
             setFontSize(size, SwingUtilities.convertPoint(this, e.getPoint(), getViewport()));
+            if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) {
+              EditorColorsManager.getInstance().getGlobalScheme().setEditorFontSize(size);
+              if (myScheme instanceof MyColorSchemeDelegate) {
+                ((MyColorSchemeDelegate) myScheme).resetEditorFontSize();
+              }
+              ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null);
+            }
           }
           return;
         }
