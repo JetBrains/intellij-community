@@ -2,13 +2,13 @@ public final class TryCatch {
     public fun TryCatch() = UastEmptyExpression
     public final fun catches() : void {
         try {
-            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+            body()
         }
         catch (@org.jetbrains.annotations.NotNull var e: java.lang.Throwable) {
-            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+            catcher()
         }
         finally {
-            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+            finalizer()
         }
     }
     public final fun body() : void {
@@ -23,13 +23,13 @@ public final class TryCatchAnnotations {
     public fun TryCatchAnnotations() = UastEmptyExpression
     public final fun catches() : void {
         try {
-            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+            body()
         }
         catch (@org.jetbrains.annotations.NotNull @not-implemented-annotation var e: java.lang.Throwable) {
-            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+            catcher()
         }
         finally {
-            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+            finalizer()
         }
     }
     public final fun body() : void {

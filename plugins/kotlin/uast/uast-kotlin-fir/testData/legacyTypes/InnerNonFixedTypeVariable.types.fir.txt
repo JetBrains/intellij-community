@@ -4,10 +4,20 @@ UFile (package = ) [public final class InnerNonFixedTypeVariableKt {...]
             UParameter (name = list) [@org.jetbrains.annotations.NotNull var list: java.util.List<? extends java.lang.Object>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:Set<Unit>
-                UQualifiedReferenceExpression [list.[!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:Set<Unit>
-                    UQualifiedReferenceExpression [list.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:NonExistentClass
+                UQualifiedReferenceExpression [list.filterIsInstance().<anonymous class>(mutableSetOf(), { var it: <ErrorType> ->...})] : PsiType:Set<Unit>
+                    UQualifiedReferenceExpression [list.filterIsInstance()] : PsiType:NonExistentClass
                         USimpleNameReferenceExpression (identifier = list) [list] : PsiType:List<? extends Object>
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [filterIsInstance()] : PsiType:NonExistentClass
+                            UIdentifier (Identifier (filterIsInstance)) [UIdentifier (Identifier (filterIsInstance))]
+                            USimpleNameReferenceExpression (identifier = filterIsInstance, resolvesTo = null) [filterIsInstance] : PsiType:NonExistentClass
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>(mutableSetOf(), { var it: <ErrorType> ->...})] : PsiType:Set<Unit>
+                        UIdentifier (Identifier (mapTo)) [UIdentifier (Identifier (mapTo))]
+                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:Set<Unit>
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [mutableSetOf()] : PsiType:Set<Unit>
+                            UIdentifier (Identifier (mutableSetOf)) [UIdentifier (Identifier (mutableSetOf))]
+                            USimpleNameReferenceExpression (identifier = mutableSetOf, resolvesTo = null) [mutableSetOf] : PsiType:Set<Unit>
+                        ULambdaExpression [{ var it: <ErrorType> ->...}] : PsiType:NonExistentClass
+                            UParameter (name = it) [var it: <ErrorType>]
+                            UBlockExpression [{...}] : PsiType:Unit
     UClass (name = Some) [public final class Some {...}]
         UMethod (name = Some) [public fun Some() = UastEmptyExpression]

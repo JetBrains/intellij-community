@@ -5,14 +5,20 @@ UFile (package = )
             UBlockExpression
                 UTryExpression
                     UBlockExpression
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                            UIdentifier (Identifier (body))
+                            USimpleNameReferenceExpression (identifier = body, resolvesTo = null)
                     UCatchClause (e)
                         UParameter (name = e)
                             UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                         UBlockExpression
-                            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                                UIdentifier (Identifier (catcher))
+                                USimpleNameReferenceExpression (identifier = catcher, resolvesTo = null)
                     UBlockExpression
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                            UIdentifier (Identifier (finalizer))
+                            USimpleNameReferenceExpression (identifier = finalizer, resolvesTo = null)
         UMethod (name = body)
             UBlockExpression
         UMethod (name = catcher)
@@ -25,15 +31,21 @@ UFile (package = )
             UBlockExpression
                 UTryExpression
                     UBlockExpression
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                            UIdentifier (Identifier (body))
+                            USimpleNameReferenceExpression (identifier = body, resolvesTo = null)
                     UCatchClause (e)
                         UParameter (name = e)
                             UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                             UAnnotation (fqName = not-implemented-annotation)
                         UBlockExpression
-                            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                                UIdentifier (Identifier (catcher))
+                                USimpleNameReferenceExpression (identifier = catcher, resolvesTo = null)
                     UBlockExpression
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                            UIdentifier (Identifier (finalizer))
+                            USimpleNameReferenceExpression (identifier = finalizer, resolvesTo = null)
         UMethod (name = body)
             UBlockExpression
         UMethod (name = catcher)

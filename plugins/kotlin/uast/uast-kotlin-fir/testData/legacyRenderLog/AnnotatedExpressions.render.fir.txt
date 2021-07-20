@@ -16,7 +16,7 @@ public final class AnnotatedExpressionsKt {
                 yield null
             }
 
-            str.[!] UnknownKotlinExpression (CALL_EXPRESSION) != null -> {
+            str.isNotEmpty() != null -> {
                 yield null
             }
 

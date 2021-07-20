@@ -168,4 +168,4 @@ Z -> [!] UnknownKotlinExpression (TYPE_PARAMETER)
 T -> USimpleNameReferenceExpression (identifier = T)
 foo -> UDeclarationsExpression
 Z -> USimpleNameReferenceExpression (identifier = Z)
-    TODO -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
+    TODO -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))

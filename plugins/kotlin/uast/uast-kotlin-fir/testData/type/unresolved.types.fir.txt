@@ -14,7 +14,10 @@ UFile (package = ) [public final class UnresolvedKt {...]
             UParameter (name = prop) [@null var prop: error.NonExistentClass]
                 UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}]
-                UastEmptyExpression [UastEmptyExpression]
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [<anonymous class>(prop)]
+                    UIdentifier (Identifier (UnresolvedBase)) [UIdentifier (Identifier (UnresolvedBase))]
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>]
+                    USimpleNameReferenceExpression (identifier = prop) [prop] : PsiType:NonExistentClass
         UMethod (name = getProp) [public final fun getProp() : error.NonExistentClass = UastEmptyExpression]
         UMethod (name = bar) [public fun bar() : error.NonExistentClass {...}]
             UBlockExpression [{...}] : PsiType:Unit

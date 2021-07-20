@@ -1,1 +1,1 @@
-Obj -> [!] UnknownKotlinExpression (CALL_EXPRESSION) from KtNameReferenceExpression
+Obj -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtNameReferenceExpression

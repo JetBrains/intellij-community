@@ -36,4 +36,7 @@ UFile (package = )
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                                     UBlockExpression
                                         UReturnExpression
-                                            [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
+                                                UIdentifier (Identifier (Used))
+                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                                UThisExpression (label = null)

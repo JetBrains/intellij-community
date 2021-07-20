@@ -28,7 +28,7 @@ class FirKotlinUMethod(
             val kotlinOrigin = psi.kotlinOrigin
             return when {
                 kotlinOrigin is KtConstructor<*> ->
-                    FirKotlinConstructorUMethod(kotlinOrigin.containingClassOrObject, psi, givenParent)
+                    KotlinConstructorUMethod(kotlinOrigin.containingClassOrObject, psi, givenParent)
                 kotlinOrigin is KtParameter && kotlinOrigin.getParentOfType<KtClass>(true)?.isAnnotation() == true ->
                     KotlinUAnnotationMethod(psi, givenParent)
                 else ->

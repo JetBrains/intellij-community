@@ -1,5 +1,5 @@
 Suppress -> USimpleNameReferenceExpression (identifier = Suppress) from KtNameReferenceExpression
-foo -> [!] UnknownKotlinExpression (CALL_EXPRESSION) from KtNameReferenceExpression
+foo -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtNameReferenceExpression
 Suppress -> USimpleNameReferenceExpression (identifier = Suppress) from KtNameReferenceExpression
 Suppress -> USimpleNameReferenceExpression (identifier = Suppress) from KtNameReferenceExpression
 Suppress -> USimpleNameReferenceExpression (identifier = Suppress) from KtNameReferenceExpression
@@ -14,9 +14,9 @@ a -> USimpleNameReferenceExpression (identifier = a) from KtNameReferenceExpress
 b -> USimpleNameReferenceExpression (identifier = b) from KtNameReferenceExpression
 String -> USimpleNameReferenceExpression (identifier = String) from KtNameReferenceExpression
 Suppress -> USimpleNameReferenceExpression (identifier = Suppress) from KtNameReferenceExpression
-isBlank() -> UQualifiedReferenceExpression from KtDotQualifiedExpression
+isBlank -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtDotQualifiedExpression
 str -> USimpleNameReferenceExpression (identifier = str) from KtNameReferenceExpression
-isBlank -> [!] UnknownKotlinExpression (CALL_EXPRESSION) from KtNameReferenceExpression
-isNotEmpty() -> UQualifiedReferenceExpression from KtDotQualifiedExpression
+isBlank -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtNameReferenceExpression
+isNotEmpty -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtDotQualifiedExpression
 str -> USimpleNameReferenceExpression (identifier = str) from KtNameReferenceExpression
-isNotEmpty -> [!] UnknownKotlinExpression (CALL_EXPRESSION) from KtNameReferenceExpression
+isNotEmpty -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtNameReferenceExpression

@@ -5,5 +5,11 @@ UFile (package = )
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = sdCardPathLocal)
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                            UIdentifier (Identifier (lazy))
+                            USimpleNameReferenceExpression (identifier = lazy, resolvesTo = null)
+                            ULambdaExpression
+                                UBlockExpression
+                                    UReturnExpression
+                                        ULiteralExpression (value = "/sdcard")
         UMethod (name = getAnnotatedDelegate)

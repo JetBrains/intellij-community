@@ -25,15 +25,18 @@ UFile (package = ) [public final class StringTemplateComplexForUInjectionHostKt 
                     ULiteralExpression (value = "literal") ["literal"] = "literal"
                     USimpleNameReferenceExpression (identifier = case4) [case4] = Undetermined
                 ULiteralExpression (value = " z") [" z"] = " z"
-        UField (name = literalInLiteral2) [@org.jetbrains.annotations.NotNull private static final var literalInLiteral2: java.lang.String = "a " + "literal" + case4.[!] UnknownKotlinExpression (CALL_EXPRESSION) + " z"]
+        UField (name = literalInLiteral2) [@org.jetbrains.annotations.NotNull private static final var literalInLiteral2: java.lang.String = "a " + "literal" + case4.repeat(4) + " z"]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UPolyadicExpression (operator = +) ["a " + "literal" + case4.[!] UnknownKotlinExpression (CALL_EXPRESSION) + " z"] = Undetermined
+            UPolyadicExpression (operator = +) ["a " + "literal" + case4.repeat(4) + " z"] = Undetermined
                 ULiteralExpression (value = "a ") ["a "] = "a "
-                UQualifiedReferenceExpression ["literal" + case4.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                UQualifiedReferenceExpression ["literal" + case4.repeat(4)] = external repeat(4)((long)4)
                     UPolyadicExpression (operator = +) ["literal" + case4] = Undetermined
                         ULiteralExpression (value = "literal") ["literal"] = "literal"
                         USimpleNameReferenceExpression (identifier = case4) [case4] = Undetermined
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [repeat(4)] = external repeat(4)((long)4)
+                        UIdentifier (Identifier (repeat)) [UIdentifier (Identifier (repeat))]
+                        USimpleNameReferenceExpression (identifier = repeat, resolvesTo = null) [repeat] = external repeat(4)((long)4)
+                        ULiteralExpression (value = 4) [4] = (long)4
                 ULiteralExpression (value = " z") [" z"] = " z"
         UField (name = empty) [@org.jetbrains.annotations.NotNull private static final var empty: java.lang.String = ""]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -53,12 +56,19 @@ UFile (package = ) [public final class StringTemplateComplexForUInjectionHostKt 
                     USimpleNameReferenceExpression (identifier = i) [i] = Undetermined
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] = Undetermined
-                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [var template1: java.lang.String = [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                    ULocalVariable (name = template1) [var template1: java.lang.String = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [var template2: java.lang.String = "." + [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                    ULocalVariable (name = template2) [var template2: java.lang.String = "." + [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                        UPolyadicExpression (operator = +) ["." + [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(baz)] = external println(baz)(external baz())
+                    UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
+                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println(baz)(external baz())
+                    USimpleNameReferenceExpression (identifier = baz) [baz] = external baz()
+                UDeclarationsExpression [var template1: java.lang.String = simpleForTemplate()] = Undetermined
+                    ULocalVariable (name = template1) [var template1: java.lang.String = simpleForTemplate()]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [simpleForTemplate()] = external simpleForTemplate()()
+                            UIdentifier (Identifier (simpleForTemplate)) [UIdentifier (Identifier (simpleForTemplate))]
+                            USimpleNameReferenceExpression (identifier = simpleForTemplate, resolvesTo = null) [simpleForTemplate] = external simpleForTemplate()()
+                UDeclarationsExpression [var template2: java.lang.String = "." + simpleForTemplate()] = Undetermined
+                    ULocalVariable (name = template2) [var template2: java.lang.String = "." + simpleForTemplate()]
+                        UPolyadicExpression (operator = +) ["." + simpleForTemplate()] = Undetermined
                             ULiteralExpression (value = ".") ["."] = "."
-                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [simpleForTemplate()] = external simpleForTemplate()()
+                                UIdentifier (Identifier (simpleForTemplate)) [UIdentifier (Identifier (simpleForTemplate))]
+                                USimpleNameReferenceExpression (identifier = simpleForTemplate, resolvesTo = null) [simpleForTemplate] = external simpleForTemplate()()

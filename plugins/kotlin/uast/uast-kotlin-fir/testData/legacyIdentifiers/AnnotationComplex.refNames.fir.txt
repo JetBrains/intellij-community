@@ -2,15 +2,15 @@ String -> USimpleNameReferenceExpression (identifier = String) from KtNameRefere
 Annotation -> USimpleNameReferenceExpression (identifier = Annotation) from KtNameReferenceExpression
 Annotation -> USimpleNameReferenceExpression (identifier = Annotation) from KtNameReferenceExpression
 AnnotationArray -> USimpleNameReferenceExpression (identifier = AnnotationArray) from KtNameReferenceExpression
-Annotation -> [!] UnknownKotlinExpression (CALL_EXPRESSION) from KtNameReferenceExpression
+Annotation -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) from KtNameReferenceExpression
 AnnotationArray -> USimpleNameReferenceExpression (identifier = AnnotationArray) from KtNameReferenceExpression
 value -> USimpleNameReferenceExpression (identifier = value) from KtNameReferenceExpression
-Annotation -> [!] UnknownKotlinExpression (CALL_EXPRESSION) from KtNameReferenceExpression
+Annotation -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) from KtNameReferenceExpression
 Annotation -> USimpleNameReferenceExpression (identifier = Annotation) from KtNameReferenceExpression
 AnnotationArray -> USimpleNameReferenceExpression (identifier = AnnotationArray) from KtNameReferenceExpression
-Annotation -> [!] UnknownKotlinExpression (CALL_EXPRESSION) from KtNameReferenceExpression
+Annotation -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtNameReferenceExpression
 strings -> USimpleNameReferenceExpression (identifier = strings) from KtNameReferenceExpression
-arrayOf -> [!] UnknownKotlinExpression (CALL_EXPRESSION) from KtNameReferenceExpression
+arrayOf -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) from KtNameReferenceExpression
 AnnotationArray -> USimpleNameReferenceExpression (identifier = AnnotationArray) from KtNameReferenceExpression
-Annotation -> [!] UnknownKotlinExpression (CALL_EXPRESSION) from KtNameReferenceExpression
+Annotation -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtNameReferenceExpression
 strings -> USimpleNameReferenceExpression (identifier = strings) from KtNameReferenceExpression

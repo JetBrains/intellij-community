@@ -2,7 +2,6 @@
 
 package org.jetbrains.uast.kotlin
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
@@ -279,6 +278,14 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                         alternative { KotlinUTypeReferenceExpression(element, givenParent) },
                         alternative { convertReceiverParameter(element) }
                     ).firstOrNull()
+                is KtConstructorDelegationCall ->
+                    el<UCallExpression> { KotlinUFunctionCallExpression(element, givenParent) }
+                is KtSuperTypeCallEntry ->
+                    el<UExpression> {
+                        (element.getParentOfType<KtClassOrObject>(true)?.parent as? KtObjectLiteralExpression)
+                            ?.toUElementOfType<UExpression>()
+                            ?: KotlinUFunctionCallExpression(element, givenParent)
+                    }
                 is KtImportDirective -> {
                     el<UImportStatement>(build(::KotlinUImportStatement))
                 }
@@ -410,6 +417,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                 is KtDotQualifiedExpression -> expr<UQualifiedReferenceExpression>(build(::KotlinUQualifiedReferenceExpression))
                 is KtSafeQualifiedExpression -> expr<UQualifiedReferenceExpression>(build(::KotlinUSafeQualifiedExpression))
                 is KtSimpleNameExpression -> expr<USimpleNameReferenceExpression>(build(::FirKotlinUSimpleReferenceExpression))
+                is KtCallExpression -> expr<UCallExpression>(build(::KotlinUFunctionCallExpression))
 
                 is KtBinaryExpression -> {
                     if (expression.operationToken == KtTokens.ELVIS) {

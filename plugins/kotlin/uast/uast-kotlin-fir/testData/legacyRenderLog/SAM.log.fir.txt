@@ -18,7 +18,11 @@ UFile (package = )
                 UQualifiedReferenceExpression
                     USimpleNameReferenceExpression (identifier = java)
                     USimpleNameReferenceExpression (identifier = lang)
-                [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                    UIdentifier (Identifier (Runnable))
+                    USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = null)
+                    ULambdaExpression
+                        UBlockExpression
         UMethod (name = getNotSam)
         UMethod (name = getFoo)
         UMethod (name = setFoo)
@@ -36,7 +40,11 @@ UFile (package = )
                             ULambdaExpression
                                 UBlockExpression
                             UTypeReferenceExpression (name = java.lang.Runnable)
-                [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                    UIdentifier (Identifier (runRunnable))
+                    USimpleNameReferenceExpression (identifier = runRunnable, resolvesTo = null)
+                    ULambdaExpression
+                        UBlockExpression
                 UReturnExpression
                     ULambdaExpression
                         UBlockExpression
@@ -46,30 +54,73 @@ UFile (package = )
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UReturnExpression
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                        UIdentifier (Identifier (r))
+                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
         UMethod (name = test1)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = thread1)
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
+                            UIdentifier (Identifier (Thread))
+                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                            ULambdaExpression
+                                UBlockExpression
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                        UIdentifier (Identifier (println))
+                                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
+                                        ULiteralExpression (value = "hello1")
         UMethod (name = test2)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = thread2)
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
+                            UIdentifier (Identifier (Thread))
+                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                UIdentifier (Identifier (Runnable))
+                                USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = null)
+                                ULambdaExpression
+                                    UBlockExpression
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                            UIdentifier (Identifier (println))
+                                            USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
+                                            ULiteralExpression (value = "hello2")
         UMethod (name = test3)
             UBlockExpression
-                [!] UnknownKotlinExpression (CALL_EXPRESSION)
-                [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                    UIdentifier (Identifier (ambiguousSamAcceptor))
+                    USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor, resolvesTo = null)
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                        UIdentifier (Identifier (Supplier))
+                        USimpleNameReferenceExpression (identifier = Supplier, resolvesTo = null)
+                        ULambdaExpression
+                            UBlockExpression
+                                UReturnExpression
+                                    ULiteralExpression (value = "Supplier")
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                    UIdentifier (Identifier (ambiguousSamAcceptor))
+                    USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor, resolvesTo = null)
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                        UIdentifier (Identifier (Callable))
+                        USimpleNameReferenceExpression (identifier = Callable, resolvesTo = null)
+                        ULambdaExpression
+                            UBlockExpression
+                                UReturnExpression
+                                    ULiteralExpression (value = "Callable")
         UMethod (name = ambiguousSamAcceptor)
             UParameter (name = s)
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UReturnExpression
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                        UIdentifier (Identifier (TODO))
+                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null)
         UMethod (name = ambiguousSamAcceptor)
             UParameter (name = s)
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
                 UReturnExpression
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                        UIdentifier (Identifier (TODO))
+                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null)

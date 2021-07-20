@@ -79,18 +79,42 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                     UBinaryExpression (operator = +) ["a" + a] : PsiType:String
                                         ULiteralExpression (value = "a") ["a"] : PsiType:String
                                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
-                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar({ var it: <ErrorType> ->...})] : PsiType:Unit
+                    UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
+                    USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] : PsiType:Unit
+                    ULambdaExpression [{ var it: <ErrorType> ->...}] : PsiType:Function1<? super Integer, ? extends Integer>
+                        UParameter (name = it) [var it: <ErrorType>]
+                        UBlockExpression [{...}] : PsiType:int
+                            UIfExpression [if (it > 5) return] : PsiType:Unit
+                                UBinaryExpression (operator = >) [it > 5] : PsiType:boolean
+                                    USimpleNameReferenceExpression (identifier = it) [it] : PsiType:int
+                                    ULiteralExpression (value = 5) [5] : PsiType:int
+                                UReturnExpression [return] : PsiType:Void
+                            UDeclarationsExpression [var b: int = 1]
+                                ULocalVariable (name = b) [var b: int = 1]
+                                    ULiteralExpression (value = 1) [1] : PsiType:int
+                            UReturnExpression [return it + b]
+                                UBinaryExpression (operator = +) [it + b] : PsiType:int
+                                    USimpleNameReferenceExpression (identifier = it) [it] : PsiType:int
+                                    USimpleNameReferenceExpression (identifier = b) [b] : PsiType:int
                 UDeclarationsExpression [var x: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                     ULocalVariable (name = x) [var x: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                         ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
                             UBlockExpression [{...}] : PsiType:Unit
-                                UDeclarationsExpression [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                                    ULocalVariable (name = vardbcd0724) [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                                UDeclarationsExpression [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)]
+                                    ULocalVariable (name = vardbcd0724) [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [listOf(1, 2)] : PsiType:List<? extends Integer>
+                                            UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
+                                            USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends Integer>
+                                            ULiteralExpression (value = 1) [1] : PsiType:int
+                                            ULiteralExpression (value = 2) [2] : PsiType:int
                 UDeclarationsExpression [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                     ULocalVariable (name = y) [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                         ULambdaExpression [{ ...}] : PsiType:Function0<? extends List<? extends Integer>>
                             UBlockExpression [{...}] : PsiType:Unit
-                                UReturnExpression [return [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                                UReturnExpression [return listOf(1)]
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(1)] : PsiType:List<? extends Integer>
+                                        UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
+                                        USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends Integer>
+                                        ULiteralExpression (value = 1) [1] : PsiType:int

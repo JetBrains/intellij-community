@@ -36,18 +36,37 @@ UFile (package = ) [public final class TypeReferencesKt {...]
                                     ULiteralExpression (value = null) [null]
                                 USimpleNameReferenceExpression (identifier = var708e23eb) [var708e23eb]
                                 UReturnExpression [return] : PsiType:Void
-                UDeclarationsExpression [var tl: java.util.List<? extends T> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    ULocalVariable (name = tl) [var tl: java.util.List<? extends T> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UDeclarationsExpression [var tsl: java.util.List<? extends java.lang.String> = tl.[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    ULocalVariable (name = tsl) [var tsl: java.util.List<? extends java.lang.String> = tl.[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                        UQualifiedReferenceExpression [tl.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:List<? extends String>
+                UDeclarationsExpression [var tl: java.util.List<? extends T> = listOf(at)]
+                    ULocalVariable (name = tl) [var tl: java.util.List<? extends T> = listOf(at)]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(at)] : PsiType:List<? extends T>
+                            UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
+                            USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends T>
+                            USimpleNameReferenceExpression (identifier = at) [at] : PsiType:T
+                UDeclarationsExpression [var tsl: java.util.List<? extends java.lang.String> = tl.map({ var it: <ErrorType> ->...})]
+                    ULocalVariable (name = tsl) [var tsl: java.util.List<? extends java.lang.String> = tl.map({ var it: <ErrorType> ->...})]
+                        UQualifiedReferenceExpression [tl.map({ var it: <ErrorType> ->...})] : PsiType:List<? extends String>
                             USimpleNameReferenceExpression (identifier = tl) [tl] : PsiType:List<? extends T>
-                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [map({ var it: <ErrorType> ->...})] : PsiType:List<? extends String>
+                                UIdentifier (Identifier (map)) [UIdentifier (Identifier (map))]
+                                USimpleNameReferenceExpression (identifier = map, resolvesTo = null) [map] : PsiType:List<? extends String>
+                                ULambdaExpression [{ var it: <ErrorType> ->...}] : PsiType:Function1<? super T, ? extends String>
+                                    UParameter (name = it) [var it: <ErrorType>]
+                                    UBlockExpression [{...}] : PsiType:String
+                                        UReturnExpression [return it.toString()]
+                                            UQualifiedReferenceExpression [it.toString()] : PsiType:String
+                                                USimpleNameReferenceExpression (identifier = it) [it] : PsiType:T
+                                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : PsiType:String
+                                                    UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
+                                                    USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] : PsiType:String
                 UDeclarationsExpression [var lls: java.util.List<? extends java.util.List<? extends java.lang.String>>]
                     ULocalVariable (name = lls) [var lls: java.util.List<? extends java.util.List<? extends java.lang.String>>]
                 UDeclarationsExpression [var llsAliased: java.util.List]
                     ULocalVariable (name = llsAliased) [var llsAliased: java.util.List]
                 UDeclarationsExpression [var llt: java.util.List<? extends java.util.List<? extends T>>]
                     ULocalVariable (name = llt) [var llt: java.util.List<? extends java.util.List<? extends T>>]
-                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [parameterizedFoo(emptyList())] : PsiType:Unit
+                    UIdentifier (Identifier (parameterizedFoo)) [UIdentifier (Identifier (parameterizedFoo))]
+                    USimpleNameReferenceExpression (identifier = parameterizedFoo, resolvesTo = null) [parameterizedFoo] : PsiType:Unit
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [emptyList()] : PsiType:List<? extends String>
+                        UIdentifier (Identifier (emptyList)) [UIdentifier (Identifier (emptyList))]
+                        USimpleNameReferenceExpression (identifier = emptyList, resolvesTo = null) [emptyList] : PsiType:List<? extends String>

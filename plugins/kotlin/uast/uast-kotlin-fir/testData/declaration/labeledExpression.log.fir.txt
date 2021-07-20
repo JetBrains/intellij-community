@@ -17,9 +17,29 @@ UFile (package = )
             UParameter (name = other)
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
-                [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
+                    UIdentifier (Identifier (with))
+                    USimpleNameReferenceExpression (identifier = with, resolvesTo = null)
+                    USimpleNameReferenceExpression (identifier = other)
+                    ULambdaExpression
+                        UBlockExpression
+                            UReturnExpression
+                                UQualifiedReferenceExpression
+                                    USuperExpression (label = Foo)
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                                        UIdentifier (Identifier (foo))
+                                        USimpleNameReferenceExpression (identifier = foo, resolvesTo = null)
         UMethod (name = baz)
             UParameter (name = other)
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
-                [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
+                    UIdentifier (Identifier (with))
+                    USimpleNameReferenceExpression (identifier = with, resolvesTo = null)
+                    USimpleNameReferenceExpression (identifier = other)
+                    ULambdaExpression
+                        UBlockExpression
+                            UReturnExpression
+                                UQualifiedReferenceExpression
+                                    UThisExpression (label = Foo)
+                                    USimpleNameReferenceExpression (identifier = p)

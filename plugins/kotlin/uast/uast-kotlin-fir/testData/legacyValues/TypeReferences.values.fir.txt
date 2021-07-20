@@ -20,7 +20,7 @@ UFile (package = ) [public final class TypeReferencesKt {...]
         UMethod (name = parameterizedFoo) [public static final fun parameterizedFoo(@org.jetbrains.annotations.Nullable arg: T) : void {...}]
             UParameter (name = arg) [@org.jetbrains.annotations.Nullable var arg: T]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
-            UBlockExpression [{...}] = Undetermined
+            UBlockExpression [{...}] = external parameterizedFoo(emptyList())(external emptyList()())
                 UDeclarationsExpression [var a: T = arg] = Undetermined
                     ULocalVariable (name = a) [var a: T = arg]
                         USimpleNameReferenceExpression (identifier = arg) [arg] = Undetermined
@@ -36,18 +36,46 @@ UFile (package = ) [public final class TypeReferencesKt {...]
                                     ULiteralExpression (value = null) [null] = null
                                 USimpleNameReferenceExpression (identifier = var708e23eb) [var708e23eb] = Undetermined
                                 UReturnExpression [return] = Nothing
-                UDeclarationsExpression [var tl: java.util.List<? extends T> = [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                    ULocalVariable (name = tl) [var tl: java.util.List<? extends T> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [var tsl: java.util.List<? extends java.lang.String> = tl.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                    ULocalVariable (name = tsl) [var tsl: java.util.List<? extends java.lang.String> = tl.[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                        UQualifiedReferenceExpression [tl.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                            USimpleNameReferenceExpression (identifier = tl) [tl] = (var tl = Undetermined)
-                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                UDeclarationsExpression [var tl: java.util.List<? extends T> = listOf(at)] = Undetermined
+                    ULocalVariable (name = tl) [var tl: java.util.List<? extends T> = listOf(at)]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(at)] = external listOf(at)((var at = Undetermined))
+                            UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
+                            USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf(at)((var at = Undetermined))
+                            USimpleNameReferenceExpression (identifier = at) [at] = (var at = Undetermined)
+                UDeclarationsExpression [var tsl: java.util.List<? extends java.lang.String> = tl.map({ var it: <ErrorType> ->...})] = Undetermined
+                    ULocalVariable (name = tsl) [var tsl: java.util.List<? extends java.lang.String> = tl.map({ var it: <ErrorType> ->...})]
+                        UQualifiedReferenceExpression [tl.map({ var it: <ErrorType> ->...})] = external map({ var it: <ErrorType> ->
+
+    return it.toString()
+})(Undetermined)
+                            USimpleNameReferenceExpression (identifier = tl) [tl] = (var tl = external listOf(at)((var at = Undetermined)))
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [map({ var it: <ErrorType> ->...})] = external map({ var it: <ErrorType> ->
+
+    return it.toString()
+})(Undetermined)
+                                UIdentifier (Identifier (map)) [UIdentifier (Identifier (map))]
+                                USimpleNameReferenceExpression (identifier = map, resolvesTo = null) [map] = external map({ var it: <ErrorType> ->
+
+    return it.toString()
+})(Undetermined)
+                                ULambdaExpression [{ var it: <ErrorType> ->...}] = Undetermined
+                                    UParameter (name = it) [var it: <ErrorType>]
+                                    UBlockExpression [{...}] = Nothing
+                                        UReturnExpression [return it.toString()] = Undetermined
+                                            UQualifiedReferenceExpression [it.toString()] = external toString()()
+                                                USimpleNameReferenceExpression (identifier = it) [it] = external it()
+                                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] = external toString()()
+                                                    UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
+                                                    USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] = external toString()()
                 UDeclarationsExpression [var lls: java.util.List<? extends java.util.List<? extends java.lang.String>>] = Undetermined
                     ULocalVariable (name = lls) [var lls: java.util.List<? extends java.util.List<? extends java.lang.String>>]
                 UDeclarationsExpression [var llsAliased: java.util.List] = Undetermined
                     ULocalVariable (name = llsAliased) [var llsAliased: java.util.List]
                 UDeclarationsExpression [var llt: java.util.List<? extends java.util.List<? extends T>>] = Undetermined
                     ULocalVariable (name = llt) [var llt: java.util.List<? extends java.util.List<? extends T>>]
-                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [parameterizedFoo(emptyList())] = external parameterizedFoo(emptyList())(external emptyList()())
+                    UIdentifier (Identifier (parameterizedFoo)) [UIdentifier (Identifier (parameterizedFoo))]
+                    USimpleNameReferenceExpression (identifier = parameterizedFoo, resolvesTo = null) [parameterizedFoo] = external parameterizedFoo(emptyList())(external emptyList()())
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [emptyList()] = external emptyList()()
+                        UIdentifier (Identifier (emptyList)) [UIdentifier (Identifier (emptyList))]
+                        USimpleNameReferenceExpression (identifier = emptyList, resolvesTo = null) [emptyList] = external emptyList()()
