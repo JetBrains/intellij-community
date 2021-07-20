@@ -44,6 +44,8 @@ interface BaseKotlinUastResolveProviderService {
 
     fun resolveCall(ktElement: KtElement): PsiMethod?
 
+    fun resolveToClassIfConstructorCall(ktCallElement: KtCallElement, source: UElement): PsiElement?
+
     fun resolveToDeclaration(ktExpression: KtExpression): PsiElement?
 
     fun resolveToType(ktTypeReference: KtTypeReference, source: UElement): PsiType?
