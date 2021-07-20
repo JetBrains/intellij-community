@@ -211,11 +211,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
         highlight.run();
         ProgressManager.checkCanceled();
+        refCountHolder.storeReadyHolder(file);
         if (document != null) {
           new PostHighlightingVisitor(file, document, refCountHolder).collectHighlights(holder, progress);
         }
-
-        refCountHolder.storeReadyHolder(file);
       }
       else {
         myRefCountHolder = null;
@@ -1364,9 +1363,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         JavaResolveResult[] results = JavaResolveUtil.resolveWithContainingFile(ref, resolver, true, true, myFile);
         return results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
       }
-      else {
-        return ref.advancedResolve(true);
-      }
+      return ref.advancedResolve(true);
     }
     catch (IndexNotReadyException e) {
       return null;
