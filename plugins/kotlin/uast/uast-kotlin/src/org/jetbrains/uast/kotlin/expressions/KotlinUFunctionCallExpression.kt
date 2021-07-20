@@ -24,7 +24,9 @@ class KotlinUFunctionCallExpression(
         baseResolveProviderService.getReceiverType(sourcePsi, this)
     }
 
-    override val methodName by lz { resolvedCall?.resultingDescriptor?.name?.asString() }
+    override val methodName by lz {
+        baseResolveProviderService.resolvedFunctionName(sourcePsi)
+    }
 
     override val classReference by lz {
         KotlinClassViaConstructorUSimpleReferenceExpression(sourcePsi, methodName.orAnonymous("class"), this)
