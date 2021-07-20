@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
+import java.io.File
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
@@ -100,10 +100,10 @@ internal class EmptyStatisticsEventLogger : StatisticsEventLogger {
     CompletableFuture.completedFuture(null)
 }
 
-object EmptyEventLogFilesProvider: EventLogFilesProvider() {
-  override fun getLogFilesDir(): Path? = null
+object EmptyEventLogFilesProvider: EventLogFilesProvider {
+  override fun getLogFiles(): List<File> = emptyList()
 
-  override fun getLogFiles(): List<EventLogFile> = emptyList()
+  override fun getLogFilesExceptActive(): List<File> = emptyList()
 }
 
 @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")

@@ -10,17 +10,44 @@ interface EventLogRecorderConfig {
 
   fun isSendEnabled(): Boolean
 
-  fun getLogFilesProvider(): EventLogFilesProvider
+  fun getFilesToSendProvider(): FilesToSendProvider
 }
 
-abstract class EventLogFilesProvider {
-  abstract fun getLogFilesDir(): Path?
+interface EventLogFilesProvider {
+  fun getLogFiles(): List<File>
+  fun getLogFilesExceptActive(): List<File>
+}
 
-  abstract fun getLogFiles(): List<EventLogFile>
+class DefaultEventLogFilesProvider(private val dir: Path,
+                                   private val activeFileProvider: () -> String?) : EventLogFilesProvider {
+  override fun getLogFiles(): List<File> {
+    return dir.toFile().listFiles()?.toList().orEmpty()
+  }
 
-  fun getFilesToSend(maxFilesToSend: Int, activeFile: String?): List<File> {
-    val files = getLogFilesDir()?.toFile()?.listFiles { f: File -> activeFile == null || !StatisticsStringUtil.equals(f.name, activeFile) }
-    if (files == null) return emptyList()
+  override fun getLogFilesExceptActive(): List<File> {
+    val activeFile = activeFileProvider()
+    return getLogFiles().filter { f: File -> activeFile == null || !StatisticsStringUtil.equals(f.name, activeFile) }
+  }
+}
+
+interface FilesToSendProvider {
+  fun getFilesToSend(): List<EventLogFile>
+}
+
+class DefaultFilesToSendProvider(private val logFilesProvider: EventLogFilesProvider,
+                                 private val maxFilesToSend: Int,
+                                 private val filterActiveFile: Boolean) : FilesToSendProvider {
+  override fun getFilesToSend(): List<EventLogFile> {
+    val files = if (filterActiveFile) {
+      logFilesProvider.getLogFilesExceptActive()
+    }
+    else {
+      logFilesProvider.getLogFiles()
+    }
+    return getFilesToSend(files, maxFilesToSend).map { EventLogFile(it) }
+  }
+
+  private fun getFilesToSend(files: List<File>, maxFilesToSend: Int): List<File> {
     val filteredFiles = if (maxFilesToSend == -1) {
       files.toList()
     }
@@ -28,17 +55,5 @@ abstract class EventLogFilesProvider {
       files.take(maxFilesToSend)
     }
     return filteredFiles
-  }
-
-}
-
-class DefaultEventLogFilesProvider(private val dir: Path,
-                                   private val maxFilesToSend: Int,
-                                   private val activeFileProvider: () -> String?) : EventLogFilesProvider() {
-  override fun getLogFilesDir(): Path = dir
-
-  override fun getLogFiles(): List<EventLogFile> {
-    val activeFile = activeFileProvider()
-    return getFilesToSend(maxFilesToSend, activeFile).map { EventLogFile(it) }.toList()
   }
 }

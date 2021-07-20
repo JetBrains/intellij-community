@@ -217,7 +217,7 @@ public class EventLogStatisticsService implements StatisticsService {
   @NotNull
   protected static List<EventLogFile> getLogFiles(@NotNull EventLogRecorderConfig provider, @NotNull DataCollectorDebugLogger logger) {
     try {
-      return provider.getLogFilesProvider().getLogFiles();
+      return provider.getFilesToSendProvider().getFilesToSend();
     }
     catch (Exception e) {
       final String message = e.getMessage();

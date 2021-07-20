@@ -60,7 +60,7 @@ object EventLogExternalUploader {
   }
 
   fun startExternalUpload(recorderId: String, isTest: Boolean) {
-    val recorder = EventLogInternalRecorderConfig(recorderId)
+    val recorder = EventLogInternalRecorderConfig(recorderId, false)
     if (!recorder.isSendEnabled()) {
       LOG.info("Don't start external process because sending logs is disabled")
       return
@@ -84,7 +84,7 @@ object EventLogExternalUploader {
   private fun prepareUploadCommand(config: EventLogRecorderConfiguration,
                                    recorder: EventLogRecorderConfig,
                                    applicationInfo: EventLogApplicationInfo): Array<out String> {
-    val logFiles = recorder.getLogFilesProvider().getFilesToSend(config.maxFilesToSend, null).map { it.absolutePath }
+    val logFiles = recorder.getFilesToSendProvider().getFilesToSend().map { it.file.absolutePath }
     if (logFiles.isEmpty()) {
       throw EventLogUploadException("No available logs to send", NO_LOGS)
     }
