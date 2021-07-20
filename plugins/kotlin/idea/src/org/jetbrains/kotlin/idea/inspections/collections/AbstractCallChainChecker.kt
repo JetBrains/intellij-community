@@ -35,14 +35,14 @@ abstract class AbstractCallChainChecker : AbstractKotlinInspection() {
         val apiVersion by lazy { expression.languageVersionSettings.apiVersion }
         val actualConversions = conversionGroups[ConversionId(firstCalleeExpression, secondCalleeExpression)]?.filter {
             it.replaceableApiVersion == null || apiVersion >= it.replaceableApiVersion
-        } ?: return null
+        }?.sortedByDescending { it.removeNotNullAssertion } ?: return null
 
         val context = expression.analyze()
         val firstResolvedCall = firstExpression.getResolvedCall(context) ?: return null
-        val conversion = actualConversions.firstOrNull { firstResolvedCall.isCalling(FqName(it.firstFqName)) } ?: return null
         val secondResolvedCall = expression.getResolvedCall(context) ?: return null
-
-        if (!additionalCallCheck(conversion, firstResolvedCall, secondResolvedCall, context)) return null
+        val conversion = actualConversions.firstOrNull {
+            firstResolvedCall.isCalling(FqName(it.firstFqName)) && additionalCallCheck(it, firstResolvedCall, secondResolvedCall, context)
+        } ?: return null
 
         // Do not apply for lambdas with return inside
         val lambdaArgument = firstCallExpression.lambdaArguments.firstOrNull()

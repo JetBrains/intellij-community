@@ -10,5 +10,5 @@ fun main() {
         OrderItem("Tea", price = 1.5, count = 2)
     )
 
-    val max = order.map<caret> { it.price }.maxOrNull()
+    val min = order.minOfOrNull { it.price }
 }

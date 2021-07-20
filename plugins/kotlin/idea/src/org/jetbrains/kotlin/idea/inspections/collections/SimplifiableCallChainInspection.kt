@@ -51,10 +51,14 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
                     val functionalArgumentReturnType = firstResolvedCall.lastFunctionalArgumentReturnType(context) ?: return@check false
                     if (functionalArgumentReturnType.isNullable()) return@check false
                 }
-                if (conversion.firstName == "map" && conversion.secondName in listOf("max", "maxOrNull", "min", "minOrNull")) {
+                if (conversion.removeNotNullAssertion &&
+                    conversion.firstName == "map" &&
+                    conversion.secondName in listOf("max", "maxOrNull", "min", "minOrNull")
+                ) {
                     val parent = expression.parent
                     if (parent !is KtPostfixExpression || parent.operationToken != KtTokens.EXCLEXCL) return@check false
                 }
+
                 if (conversion.firstName == "map" && conversion.secondName == "sum" && conversion.replacement == "sumOf") {
                     val type = firstResolvedCall.lastFunctionalArgumentReturnType(context) ?: return@check false
                     if (!KotlinBuiltIns.isInt(type) && !KotlinBuiltIns.isLong(type) &&
@@ -185,18 +189,33 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
                 removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
             ),
             Conversion(
+                "kotlin.collections.map", "kotlin.collections.max", "maxOfOrNull",
+                replaceableApiVersion = ApiVersion.KOTLIN_1_4,
+            ),
+            Conversion(
                 "kotlin.collections.map", "kotlin.collections.maxOrNull", "maxOf",
                 removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
+            ),
+            Conversion(
+                "kotlin.collections.map", "kotlin.collections.maxOrNull", "maxOfOrNull",
+                replaceableApiVersion = ApiVersion.KOTLIN_1_4,
             ),
             Conversion(
                 "kotlin.collections.map", "kotlin.collections.min", "minOf",
                 removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
             ),
             Conversion(
+                "kotlin.collections.map", "kotlin.collections.min", "minOfOrNull",
+                replaceableApiVersion = ApiVersion.KOTLIN_1_4,
+            ),
+            Conversion(
                 "kotlin.collections.map", "kotlin.collections.minOrNull", "minOf",
                 removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
             ),
-
+            Conversion(
+                "kotlin.collections.map", "kotlin.collections.minOrNull", "minOfOrNull",
+                replaceableApiVersion = ApiVersion.KOTLIN_1_4,
+            ),
             Conversion(
                 "kotlin.collections.mapNotNull", "kotlin.collections.first", "firstNotNullOf",
                 replaceableApiVersion = ApiVersion.KOTLIN_1_5
@@ -205,7 +224,6 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
                 "kotlin.collections.mapNotNull", "kotlin.collections.firstOrNull", "firstNotNullOfOrNull",
                 replaceableApiVersion = ApiVersion.KOTLIN_1_5
             ),
-
             Conversion("kotlin.collections.listOf", "kotlin.collections.filterNotNull", "listOfNotNull")
         ).map {
             when (val replacement = it.replacement) {
