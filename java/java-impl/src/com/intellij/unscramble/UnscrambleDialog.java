@@ -421,7 +421,6 @@ public class UnscrambleDialog extends DialogWrapper {
       try {
         String line = reader.readLine();
         if (line == null) return null;
-        line = line.trim();
         String name = getExceptionAbbreviation(line);
         if (name != null) return name;
       }
@@ -447,6 +446,7 @@ public class UnscrambleDialog extends DialogWrapper {
       }
     }
     String clazz = line.substring(lastDelimiter);
+    if (clazz.isEmpty()) return null;
     String abbreviate = abbreviate(clazz);
     return abbreviate.length() > 1 ? abbreviate : clazz;
   }
