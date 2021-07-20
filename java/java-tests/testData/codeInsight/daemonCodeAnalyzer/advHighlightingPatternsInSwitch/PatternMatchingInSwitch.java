@@ -204,6 +204,15 @@ class Main {
       case null -> "null";
       default -> "def";
     };
+
+    switch (o) {
+      case <error descr="Unexpected type. Found: 'int', required: 'class or array'">int ii</error>: break;
+      default: break;
+    }
+    str = switch (o) {
+      case <error descr="Unexpected type. Found: 'int', required: 'class or array'">int ii</error> -> "";
+      default -> "";
+    };
   }
 
   void duplicateLabels(Integer i) {
