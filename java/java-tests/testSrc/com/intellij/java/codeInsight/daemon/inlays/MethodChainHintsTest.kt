@@ -28,6 +28,7 @@ public class Chains {
     A a() {return null;}
   }
 
+  @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     new A()
     new A()
@@ -57,6 +58,7 @@ public class Chains {
     A a() {return null;}
   }
 
+  @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     new A()
       .b()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B] #>
@@ -87,6 +89,7 @@ public class Chains {
     A a() {return null;}
   }
 
+  @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     A a = new A();
     a.b().c()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C] #>
@@ -117,6 +120,7 @@ public class Chains {
     A a() {return null;}
   }
 
+  @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     A a = new A();
     a.b().c() // comment
@@ -147,6 +151,7 @@ public class Chains {
     A a() {return null;}
   }
 
+  @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     new A()
       .b()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B] #>
@@ -186,6 +191,7 @@ public class Chains {
     A a() {return null;}
   }
 
+  @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     new A()
       .b(() -> {
