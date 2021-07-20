@@ -341,7 +341,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     return new RemoteConnectionBuilder(debuggerInServerMode, transport, debugPort)
       .checkValidity(checkValidity)
       .asyncAgent(true)
-      .memoryAgent(DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
       .create(parameters);
   }
 
@@ -356,7 +355,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     return new RemoteConnectionBuilder(settings.LOCAL, settings.getTransport(), settings.getDebugPort())
       .checkValidity(checkValidity)
       .asyncAgent(true)
-      .memoryAgent(DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
       .create(parameters);
   }
 
