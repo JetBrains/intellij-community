@@ -309,7 +309,7 @@ class DynamicPluginsTest {
         val extension = ep!!.extensionList.single()
         assertThat(extension.key).isEqualTo("foo")
         assertThat(extension.pluginDescriptor)
-          .isEqualTo(PluginManagerCore.getPluginSet().findEnabledPlugin(PluginId.findId(fooBuilder.id)!!)!!)
+          .isEqualTo(PluginManagerCore.getPluginSet().findEnabledModule("intellij.foo.sub")!!)
       }
       assertThat(ep!!.extensionList).isEmpty()
     }

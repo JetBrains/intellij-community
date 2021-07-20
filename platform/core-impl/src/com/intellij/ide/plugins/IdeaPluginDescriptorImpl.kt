@@ -479,9 +479,19 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun isRequireRestart() = isRestartRequired
 
-  override fun equals(other: Any?) = this === other || id == if (other is IdeaPluginDescriptorImpl) other.id else null
+  override fun equals(other: Any?): Boolean {
+    if (this === other) {
+      return true
+    }
+    if (other !is IdeaPluginDescriptorImpl) {
+      return false
+    }
+    return id == other.id && descriptorPath == other.descriptorPath
+  }
 
-  override fun hashCode() = id.hashCode()
+  override fun hashCode(): Int {
+    return 31 * id.hashCode() + (descriptorPath?.hashCode() ?: 0)
+  }
 
   override fun toString(): String {
     return "PluginDescriptor(name=$name, id=$id, descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
