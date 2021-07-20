@@ -6,7 +6,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.inspections.AssociateFunction
 import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionFix
@@ -178,39 +178,39 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
             Conversion("kotlin.collections.map", "kotlin.collections.filterNotNull", "mapNotNull"),
             Conversion("kotlin.collections.map", "kotlin.collections.toMap", "associate"),
             Conversion(
-                "kotlin.collections.map", "kotlin.collections.sum", "sumOf", replaceableLanguageVersion = LanguageVersion.KOTLIN_1_4
+                "kotlin.collections.map", "kotlin.collections.sum", "sumOf", replaceableApiVersion = ApiVersion.KOTLIN_1_4
             ),
             Conversion(
                 "kotlin.collections.map", "kotlin.collections.max", "maxOf",
-                removeNotNullAssertion = true, replaceableLanguageVersion = LanguageVersion.KOTLIN_1_4
+                removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
             ),
             Conversion(
                 "kotlin.collections.map", "kotlin.collections.maxOrNull", "maxOf",
-                removeNotNullAssertion = true, replaceableLanguageVersion = LanguageVersion.KOTLIN_1_4
+                removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
             ),
             Conversion(
                 "kotlin.collections.map", "kotlin.collections.min", "minOf",
-                removeNotNullAssertion = true, replaceableLanguageVersion = LanguageVersion.KOTLIN_1_4
+                removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
             ),
             Conversion(
                 "kotlin.collections.map", "kotlin.collections.minOrNull", "minOf",
-                removeNotNullAssertion = true, replaceableLanguageVersion = LanguageVersion.KOTLIN_1_4
+                removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
             ),
 
             Conversion(
                 "kotlin.collections.mapNotNull", "kotlin.collections.first", "firstNotNullOf",
-                replaceableLanguageVersion = LanguageVersion.KOTLIN_1_5
+                replaceableApiVersion = ApiVersion.KOTLIN_1_5
             ),
             Conversion(
                 "kotlin.collections.mapNotNull", "kotlin.collections.firstOrNull", "firstNotNullOfOrNull",
-                replaceableLanguageVersion = LanguageVersion.KOTLIN_1_5
+                replaceableApiVersion = ApiVersion.KOTLIN_1_5
             ),
 
             Conversion("kotlin.collections.listOf", "kotlin.collections.filterNotNull", "listOfNotNull")
         ).map {
             when (val replacement = it.replacement) {
                 "min", "max", "minBy", "maxBy" -> listOf(
-                    it.copy(replacement = "${replacement}OrNull", replaceableLanguageVersion = LanguageVersion.KOTLIN_1_4),
+                    it.copy(replacement = "${replacement}OrNull", replaceableApiVersion = ApiVersion.KOTLIN_1_4),
                     it
                 )
                 else -> listOf(it)

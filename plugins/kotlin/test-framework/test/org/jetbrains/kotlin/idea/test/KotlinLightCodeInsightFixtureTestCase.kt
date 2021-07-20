@@ -40,8 +40,11 @@ import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
-import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.CompilerSettings.Companion.DEFAULT_ADDITIONAL_ARGUMENTS
+import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
@@ -313,7 +316,7 @@ private fun configureCompilerOptions(fileText: String, project: Project, module:
     // TODO: refactor such tests or add sophisticated check for the directive
     val options = InTextDirectivesUtils.findListWithPrefixes(fileText, "// $COMPILER_ARGUMENTS_DIRECTIVE ").firstOrNull()
 
-    if (version != null || jvmTarget != null || options != null) {
+    if (version != null || apiVersion != null || jvmTarget != null || options != null) {
         configureLanguageAndApiVersion(
             project, module,
             version ?: LanguageVersion.LATEST_STABLE.versionString,
