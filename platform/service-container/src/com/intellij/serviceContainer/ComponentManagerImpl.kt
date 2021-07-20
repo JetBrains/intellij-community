@@ -941,8 +941,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
       for (service in services) {
         val adapter = (componentKeyToAdapter.remove(service.`interface`) ?: continue) as ServiceComponentAdapter
         val instance = adapter.getInitializedInstance() ?: continue
-        val implClass = instance.javaClass
-        clearServiceHotCacheOnUnload(implClass)
         if (instance is Disposable) {
           Disposer.dispose(instance)
         }
@@ -956,7 +954,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
       while (iterator.hasNext()) {
         val adapter = iterator.next() as? LightServiceComponentAdapter ?: continue
         val instance = adapter.getComponentInstance(null)
-        serviceInstanceHotCache.remove(instance.javaClass)
         if ((instance.javaClass.classLoader as? PluginAwareClassLoader)?.pluginId == pluginId) {
           if (instance is Disposable) {
             Disposer.dispose(instance)
@@ -966,41 +963,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
         }
       }
     }
-  }
 
-  private fun clearServiceHotCacheOnUnload(implClass: Class<Any>) {
-    if (serviceInstanceHotCache.remove(implClass) != null || Modifier.isFinal(implClass.modifiers)) {
-      return
-    }
-
-    for (it in implClass.interfaces) {
-      if (serviceInstanceHotCache.remove(it) != null) {
-        return
-      }
-    }
-
-    var aClass: Class<*> = implClass.superclass
-    if (aClass === Object::class.java) {
-      return
-    }
-
-    do {
-      if (serviceInstanceHotCache.remove(aClass) != null) {
-        return
-      }
-
-      for (it in aClass.interfaces) {
-        if (serviceInstanceHotCache.remove(it) != null) {
-          return
-        }
-      }
-
-      aClass = aClass.superclass ?: break
-      if (aClass === Object::class.java) {
-        return
-      }
-    }
-    while (true)
+    serviceInstanceHotCache.clear()
   }
 
   @Internal
