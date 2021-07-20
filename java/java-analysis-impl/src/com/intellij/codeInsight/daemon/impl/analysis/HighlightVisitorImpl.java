@@ -2018,7 +2018,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitGuardedPattern(PsiGuardedPattern pattern) {
     super.visitGuardedPattern(pattern);
-    myHolder.add(checkFeature(pattern, HighlightingFeature.PATTERN_MATCHING_FOR_SWITCH));
+    myHolder.add(checkFeature(pattern, HighlightingFeature.GUARDED_AND_PARENTHESIZED_PATTERNS));
+    if (myHolder.hasErrorResults()) return;
+    PsiExpression guardingExpr = pattern.getGuardingExpression();
+    if (guardingExpr == null) return;
+    // 14.30.1 Kinds of Patterns GuardedPattern: PrimaryPattern && ConditionalAndExpression
+    // 15.23. ConditionalAndExpression: Each operand of the conditional-and operator must be of type boolean or Boolean, or a compile-time error occurs.
+    if (!TypeConversionUtil.isBooleanType(guardingExpr.getType())) {
+      String message = JavaErrorBundle.message("incompatible.types", JavaHighlightUtil.formatType(PsiType.BOOLEAN),
+                                               JavaHighlightUtil.formatType(guardingExpr.getType()));
+      myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(guardingExpr).descriptionAndTooltip(message).create());
+    }
   }
 
   @Override
