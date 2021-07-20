@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurat
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.irOrLegacyCompiler
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsBrowserBasedConfigurator.Companion.browserSubTarget
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsNodeBasedConfigurator.Companion.nodejsSubTarget
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JvmModuleConfigurator.Companion.testFramework
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.GradlePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
@@ -103,7 +104,7 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
 interface JsBrowserBasedConfigurator {
     companion object : ModuleConfiguratorSettings() {
         private fun Reader.cssSupportNeeded(module: Module): Boolean =
-            isApplication(module) || settingValue(module, ModuleConfiguratorWithTests.testFramework) != KotlinTestFramework.NONE
+            isApplication(module) || settingValue(module, testFramework) != KotlinTestFramework.NONE
 
         fun GradleIRListBuilder.browserSubTarget(module: Module, reader: Reader) {
             if (reader.isApplication(module)) {

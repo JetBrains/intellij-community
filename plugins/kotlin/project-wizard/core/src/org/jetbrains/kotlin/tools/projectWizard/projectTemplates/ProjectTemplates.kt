@@ -379,7 +379,7 @@ object ComposeDesktopApplicationProjectTemplate : ProjectTemplate() {
                 },
                 subModules = emptyList()
             ).withConfiguratorSettings<JvmSinglePlatformModuleConfigurator> {
-                ModuleConfiguratorWithTests.testFramework withValue KotlinTestFramework.NONE
+                JvmModuleConfigurator.testFramework withValue KotlinTestFramework.NONE
                 JvmModuleConfigurator.targetJvmVersion withValue TargetJvmVersion.JVM_11
             }
         )
@@ -407,7 +407,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                 template = ComposeMppModuleTemplate(),
                 listOf(
                     ModuleType.common.createDefaultTarget().withConfiguratorSettings<CommonTargetConfigurator> {
-                        ModuleConfiguratorWithTests.testFramework withValue KotlinTestFramework.NONE
+                        JvmModuleConfigurator.testFramework withValue KotlinTestFramework.NONE
                     },
                     Module(
                         "android",
@@ -417,7 +417,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                         subModules = emptyList()
                     ).withConfiguratorSettings<AndroidTargetConfigurator> {
                         configurator.androidPlugin withValue AndroidGradlePlugin.LIBRARY
-                        ModuleConfiguratorWithTests.testFramework withValue KotlinTestFramework.NONE
+                        JvmModuleConfigurator.testFramework withValue KotlinTestFramework.NONE
                     },
                     Module(
                         "desktop",
@@ -426,7 +426,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                         sourceSets = createDefaultSourceSets(),
                         subModules = emptyList()
                     ).withConfiguratorSettings<JvmTargetConfigurator> {
-                        ModuleConfiguratorWithTests.testFramework withValue KotlinTestFramework.NONE
+                        JvmModuleConfigurator.testFramework withValue KotlinTestFramework.NONE
                         JvmModuleConfigurator.targetJvmVersion withValue TargetJvmVersion.JVM_11
                     }
                 )
@@ -439,7 +439,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                 subModules = emptyList(),
                 dependencies = mutableListOf(ModuleReference.ByModule(common))
             ).withConfiguratorSettings<AndroidSinglePlatformModuleConfigurator> {
-                ModuleConfiguratorWithTests.testFramework withValue KotlinTestFramework.NONE
+                JvmModuleConfigurator.testFramework withValue KotlinTestFramework.NONE
             }
             +Module(
                 "desktop",
@@ -455,7 +455,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                         subModules = emptyList(),
                         dependencies = mutableListOf(ModuleReference.ByModule(common))
                     ).withConfiguratorSettings<JvmTargetConfigurator> {
-                        ModuleConfiguratorWithTests.testFramework withValue KotlinTestFramework.NONE
+                        JvmModuleConfigurator.testFramework withValue KotlinTestFramework.NONE
                         JvmModuleConfigurator.targetJvmVersion withValue TargetJvmVersion.JVM_11
                     }
                 ),

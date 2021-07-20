@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurat
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.kind
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsBrowserBasedConfigurator.Companion.browserSubTarget
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsNodeBasedConfigurator.Companion.nodejsSubTarget
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.ModuleConfiguratorWithTests.Companion.testFramework
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JvmModuleConfigurator.Companion.testFramework
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.buildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.isGradle
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
@@ -89,7 +89,7 @@ enum class JsCompiler(override val text: String) : DisplayableSettingItem {
 
 abstract class AbstractBrowserTargetConfigurator: JsTargetConfigurator, ModuleConfiguratorWithTests {
     override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> =
-        super<ModuleConfiguratorWithTests>.getConfiguratorSettings() + super<JsTargetConfigurator>.getConfiguratorSettings()
+         super<JsTargetConfigurator>.getConfiguratorSettings()
 
     override val text = KotlinNewProjectWizardBundle.message("module.configurator.js.browser")
 
@@ -152,6 +152,8 @@ object CommonTargetConfigurator : TargetConfiguratorWithTests(), SimpleTargetCon
     override val text: String = KotlinNewProjectWizardBundle.message("module.configurator.common")
 
     override fun defaultTestFramework(): KotlinTestFramework = KotlinTestFramework.COMMON
+
+    override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> = emptyList()
 }
 
 object JvmTargetConfigurator : JvmModuleConfigurator,
@@ -181,7 +183,7 @@ object JvmTargetConfigurator : JvmModuleConfigurator,
                     "withJava"()
                 }
             }
-            val testFramework = inContextOfModuleConfigurator(module) { testFramework.reference.settingValue }
+            val testFramework = inContextOfModuleConfigurator(module) { getTestFramework(module) }
             if (testFramework != KotlinTestFramework.NONE) {
                 testFramework.usePlatform?.let { usePlatform ->
                     "testRuns[\"test\"].executionTask.configure" {
