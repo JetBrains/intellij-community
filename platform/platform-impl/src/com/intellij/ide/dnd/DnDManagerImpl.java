@@ -383,8 +383,13 @@ public final class DnDManagerImpl extends DnDManager {
       JTree tree = (JTree)component;
       Rectangle visible = tree.getVisibleRect();
       int dx = point.getOriginalPoint().x - visible.x;
-      bounds.x -= dx;
-      bounds.width = visible.width;
+      if (aType == DnDEvent.DropTargetHighlightingType.RECTANGLE || dx < 0) {
+        bounds.x -= dx;
+        bounds.width = visible.width;
+      }
+      else {
+        bounds.width = visible.width - dx;
+      }
     }
     else if (component instanceof JList) {
       JList<?> list = (JList<?>)component;
