@@ -547,11 +547,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     if (label != null && result is MigLayoutRow && result.components.size > 1) {
       val component = result.components[1]
 
-      for (labeledComponent in labeledComponents) {
-        if (labeledComponent.isInstance(component)) {
+      if (labeledComponents.any { clazz -> clazz.isInstance(component) }) {
           label.labelFor = component
-          break
-        }
       }
     }
     return result
