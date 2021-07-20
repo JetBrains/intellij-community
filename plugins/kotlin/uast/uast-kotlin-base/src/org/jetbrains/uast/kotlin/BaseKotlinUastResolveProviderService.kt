@@ -45,6 +45,8 @@ interface BaseKotlinUastResolveProviderService {
 
     fun resolveCall(ktElement: KtElement): PsiMethod?
 
+    fun isResolvedToExtension(ktCallElement: KtCallElement): Boolean
+
     fun resolvedFunctionName(ktCallElement: KtCallElement): String?
 
     fun callKind(ktCallElement: KtCallElement): UastCallKind
