@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.psi.classOrObjectVisitor
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.resolve.checkers.ExpectedActualDeclarationChecker.Companion.allStrongIncompatibilities
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
+import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectedActualResolver
 import org.jetbrains.kotlin.resolve.multiplatform.OptionalAnnotationUtil
 
@@ -40,12 +41,12 @@ class OptionalExpectationInspection : AbstractKotlinInspection() {
             for (actualModuleDescriptor in implementingModules) {
                 val compatibility = ExpectedActualResolver.findActualForExpected(descriptor, actualModuleDescriptor) ?: continue
                 if (!compatibility.allStrongIncompatibilities() &&
-                    (ExpectedActualResolver.Compatibility.Compatible in compatibility ||
+                    (ExpectActualCompatibility.Compatible in compatibility ||
                             !compatibility.values.flatMapTo(
                                 hashSetOf()
                             ) { it }.all { actual ->
                                 val expectedOnes = ExpectedActualResolver.findExpectedForActual(actual, descriptor.module)
-                                expectedOnes != null && ExpectedActualResolver.Compatibility.Compatible in expectedOnes.keys
+                                expectedOnes != null && ExpectActualCompatibility.Compatible in expectedOnes.keys
                             })
                 ) continue
                 val platform = actualModuleDescriptor.platform ?: continue
