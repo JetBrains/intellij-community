@@ -3,7 +3,6 @@ package com.intellij.ide.ui;
 
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.diagnostic.StartUpPerformanceService;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.OptionDescription;
@@ -180,7 +179,6 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
     public void runActivity(@NotNull Project project) {
       // for given project
       cacheAll(null, project);
-      StartUpPerformanceService.getInstance().lastOptionTopHitProviderFinishedForProject(project);
     }
 
     private static void cacheAll(@Nullable ProgressIndicator indicator, @Nullable Project project) {
