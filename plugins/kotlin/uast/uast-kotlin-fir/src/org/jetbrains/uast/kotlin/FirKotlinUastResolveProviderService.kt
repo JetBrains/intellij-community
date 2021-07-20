@@ -100,6 +100,13 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
+    override fun isResolvedToExtension(ktCallElement: KtCallElement): Boolean {
+        analyseForUast(ktCallElement) {
+            val resolvedFunctionLikeSymbol = ktCallElement.resolveCall()?.targetFunction?.candidates?.singleOrNull() ?: return false
+            return resolvedFunctionLikeSymbol.isExtension
+        }
+    }
+
     override fun resolvedFunctionName(ktCallElement: KtCallElement): String? {
         analyseForUast(ktCallElement) {
             val resolvedFunctionLikeSymbol = ktCallElement.resolveCall()?.targetFunction?.candidates?.singleOrNull() ?: return null
