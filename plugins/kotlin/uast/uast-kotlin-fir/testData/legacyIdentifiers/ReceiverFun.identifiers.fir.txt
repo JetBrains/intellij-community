@@ -11,4 +11,4 @@ String -> USimpleNameReferenceExpression (identifier = String)
 rx -> null
 Regex -> USimpleNameReferenceExpression (identifier = Regex)
 get -> [!] UnknownKotlinExpression (PROPERTY_ACCESSOR)
-    toRegex -> [!] UnknownKotlinExpression (CALL_EXPRESSION)
+    toRegex -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))

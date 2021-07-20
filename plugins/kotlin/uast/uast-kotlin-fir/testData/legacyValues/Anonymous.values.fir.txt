@@ -10,15 +10,32 @@ UFile (package = ) [import java.io.Closeable...]
                             UClass (name = null) [final class null : java.lang.Runnable {...}]
                                 UMethod (name = run) [public fun run() : void {...}]
                                     UBlockExpression [{...}] = Undetermined
-                UQualifiedReferenceExpression [runnable.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                UQualifiedReferenceExpression [runnable.run()] = external run()()
                     USimpleNameReferenceExpression (identifier = runnable) [runnable] = (var runnable = Undetermined)
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [var runnable2: java.lang.Runnable = [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                    ULocalVariable (name = runnable2) [var runnable2: java.lang.Runnable = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UQualifiedReferenceExpression [runnable2.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                    USimpleNameReferenceExpression (identifier = runnable2) [runnable2] = (var runnable2 = Undetermined)
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [run()] = external run()()
+                        UIdentifier (Identifier (run)) [UIdentifier (Identifier (run))]
+                        USimpleNameReferenceExpression (identifier = run, resolvesTo = null) [run] = external run()()
+                UDeclarationsExpression [var runnable2: java.lang.Runnable = Runnable({ ...})] = Undetermined
+                    ULocalVariable (name = runnable2) [var runnable2: java.lang.Runnable = Runnable({ ...})]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [Runnable({ ...})] = external Runnable({
+    println()
+})(Undetermined)
+                            UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
+                            USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = null) [Runnable] = external Runnable({
+    println()
+})(Undetermined)
+                            ULambdaExpression [{ ...}] = Undetermined
+                                UBlockExpression [{...}] = external println()()
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [println()] = external println()()
+                                        UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
+                                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println()()
+                UQualifiedReferenceExpression [runnable2.run()] = external run()()
+                    USimpleNameReferenceExpression (identifier = runnable2) [runnable2] = (var runnable2 = external Runnable({
+    println()
+})(Undetermined))
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [run()] = external run()()
+                        UIdentifier (Identifier (run)) [UIdentifier (Identifier (run))]
+                        USimpleNameReferenceExpression (identifier = run, resolvesTo = null) [run] = external run()()
                 UDeclarationsExpression [var closeableRunnable: java.lang.Object = anonymous object : Runnable, Closeable { override fun close() {} override fun run() {} }] = Undetermined
                     ULocalVariable (name = closeableRunnable) [var closeableRunnable: java.lang.Object = anonymous object : Runnable, Closeable { override fun close() {} override fun run() {} }]
                         UObjectLiteralExpression [anonymous object : Runnable, Closeable { override fun close() {} override fun run() {} }] = Undetermined

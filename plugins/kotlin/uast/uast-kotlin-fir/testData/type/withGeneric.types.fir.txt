@@ -30,15 +30,19 @@ UFile (package = ) [public final class WithGenericKt {...]
                     UTypeReferenceExpression (name = java.lang.String) [java.lang.String]
         UMethod (name = box) [public static final fun box() : java.lang.String {...}]
             UBlockExpression [{...}] : PsiType:Void
-                UIfExpression [if ([!] UnknownKotlinExpression (CALL_EXPRESSION) != null) return "fail: test1"] : PsiType:Unit
-                    UBinaryExpression (operator = !=) [[!] UnknownKotlinExpression (CALL_EXPRESSION) != null] : PsiType:boolean
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UIfExpression [if (test1() != null) return "fail: test1"] : PsiType:Unit
+                    UBinaryExpression (operator = !=) [test1() != null] : PsiType:boolean
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [test1()] : PsiType:Integer
+                            UIdentifier (Identifier (test1)) [UIdentifier (Identifier (test1))]
+                            USimpleNameReferenceExpression (identifier = test1, resolvesTo = null) [test1] : PsiType:Integer
                         ULiteralExpression (value = null) [null] : PsiType:Void
                     UReturnExpression [return "fail: test1"] : PsiType:Void
                         ULiteralExpression (value = "fail: test1") ["fail: test1"] : PsiType:String
-                UIfExpression [if ([!] UnknownKotlinExpression (CALL_EXPRESSION) != null) return "fail: test2"] : PsiType:Unit
-                    UBinaryExpression (operator = !=) [[!] UnknownKotlinExpression (CALL_EXPRESSION) != null] : PsiType:boolean
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UIfExpression [if (test2() != null) return "fail: test2"] : PsiType:Unit
+                    UBinaryExpression (operator = !=) [test2() != null] : PsiType:boolean
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [test2()] : PsiType:Integer
+                            UIdentifier (Identifier (test2)) [UIdentifier (Identifier (test2))]
+                            USimpleNameReferenceExpression (identifier = test2, resolvesTo = null) [test2] : PsiType:Integer
                         ULiteralExpression (value = null) [null] : PsiType:Void
                     UReturnExpression [return "fail: test2"] : PsiType:Void
                         ULiteralExpression (value = "fail: test2") ["fail: test2"] : PsiType:String
@@ -47,7 +51,9 @@ UFile (package = ) [public final class WithGenericKt {...]
                         ULiteralExpression (value = "fail") ["fail"] : PsiType:String
                 UTryExpression [try {...] : PsiType:Object
                     UBlockExpression [{...}] : PsiType:int
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [test3()] : PsiType:int
+                            UIdentifier (Identifier (test3)) [UIdentifier (Identifier (test3))]
+                            USimpleNameReferenceExpression (identifier = test3, resolvesTo = null) [test3] : PsiType:int
                     UCatchClause (e) [catch (@org.jetbrains.annotations.NotNull var e: java.lang.NullPointerException) {...}]
                         UParameter (name = e) [@org.jetbrains.annotations.NotNull var e: java.lang.NullPointerException]
                             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -63,7 +69,10 @@ UFile (package = ) [public final class WithGenericKt {...]
                         ULiteralExpression (value = "fail: test3") ["fail: test3"] : PsiType:String
                 UTryExpression [try {...] : PsiType:Unit
                     UBlockExpression [{...}] : PsiType:Unit
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [castToString(null)] : PsiType:Unit
+                            UIdentifier (Identifier (castToString)) [UIdentifier (Identifier (castToString))]
+                            USimpleNameReferenceExpression (identifier = castToString, resolvesTo = null) [castToString] : PsiType:Unit
+                            ULiteralExpression (value = null) [null] : PsiType:Void
                     UCatchClause (e) [catch (@org.jetbrains.annotations.NotNull var e: java.lang.Exception) {...}]
                         UParameter (name = e) [@org.jetbrains.annotations.NotNull var e: java.lang.Exception]
                             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]

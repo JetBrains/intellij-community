@@ -4,16 +4,34 @@ UFile (package = ) [public final class NonTrivialIdentifiersKt {...]
             UParameter (name = a) [@org.jetbrains.annotations.Nullable var a: A]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
             UBlockExpression [{...}] : PsiType:Unit
-                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UDeclarationsExpression [var p: A = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    ULocalVariable (name = p) [var p: A = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:Unit
+                    UIdentifier (Identifier (()) [UIdentifier (Identifier (())]
+                    USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:Unit
+                UDeclarationsExpression [var p: A = <anonymous class>()]
+                    ULocalVariable (name = p) [var p: A = <anonymous class>()]
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<anonymous class>()] : PsiType:A
+                            UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
+                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:A
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [invoke({ ...})] : PsiType:Unit
+                    UIdentifier (Identifier ({)) [UIdentifier (Identifier ({))]
+                    USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:Unit
+                    ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
+                        UBlockExpression [{...}] : PsiType:Unit
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [invoke({ ...})] : PsiType:Unit
+                                UIdentifier (Identifier (p)) [UIdentifier (Identifier (p))]
+                                USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:Unit
+                                ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
+                                    UBlockExpression [{...}] : PsiType:Unit
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:Unit
+                                            UIdentifier (Identifier (()) [UIdentifier (Identifier (())]
+                                            USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:Unit
     UClass (name = A) [public final class A {...}]
         UMethod (name = A) [public fun A() = UastEmptyExpression]
         UMethod (name = invoke) [public final fun invoke() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
-                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:Unit
+                    UIdentifier (Identifier (()) [UIdentifier (Identifier (())]
+                    USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:Unit
         UMethod (name = invoke) [public final fun invoke(@org.jetbrains.annotations.NotNull f: kotlin.jvm.functions.Function0<? extends kotlin.Unit>) : void {...}]
             UParameter (name = f) [@org.jetbrains.annotations.NotNull var f: kotlin.jvm.functions.Function0<? extends kotlin.Unit>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]

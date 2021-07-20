@@ -16,12 +16,15 @@ UFile (package = ) [public abstract interface Pizza {...]
         UMethod (name = getSize) [public fun getSize() : int = UastEmptyExpression]
         UMethod (name = getName) [public fun getName() : java.lang.String {...}]
             UBlockExpression [{...}] = Nothing
-                UReturnExpression [return java.lang.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Nothing
-                    UQualifiedReferenceExpression [java.lang.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                UReturnExpression [return java.lang.<anonymous class>("Margherita")] = Nothing
+                    UQualifiedReferenceExpression [java.lang.<anonymous class>("Margherita")] = external <anonymous class>("Margherita")("Margherita")
                         UQualifiedReferenceExpression [java.lang] = external lang()
                             USimpleNameReferenceExpression (identifier = java) [java] = external java()
                             USimpleNameReferenceExpression (identifier = lang) [lang] = external lang()
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<anonymous class>("Margherita")] = external <anonymous class>("Margherita")("Margherita")
+                            UIdentifier (Identifier (String)) [UIdentifier (Identifier (String))]
+                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>("Margherita")("Margherita")
+                            ULiteralExpression (value = "Margherita") ["Margherita"] = "Margherita"
         UMethod (name = contains) [public fun contains(@org.jetbrains.annotations.NotNull ingredient: Pizza.Ingredient) : boolean {...}]
             UParameter (name = ingredient) [@org.jetbrains.annotations.NotNull var ingredient: Pizza.Ingredient]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]

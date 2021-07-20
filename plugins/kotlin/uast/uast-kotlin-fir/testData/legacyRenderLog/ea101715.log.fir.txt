@@ -4,7 +4,10 @@ UFile (package = )
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = a)
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
+                            UIdentifier (Identifier (Obj))
+                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                            ULiteralExpression (value = 555)
     UClass (name = Obj)
         UField (name = INSTANCE)
             UAnnotation (fqName = null)

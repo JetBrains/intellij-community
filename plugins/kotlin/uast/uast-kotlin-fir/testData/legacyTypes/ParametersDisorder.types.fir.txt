@@ -24,44 +24,120 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
             UBlockExpression [{...}] : PsiType:Unit
         UMethod (name = call) [public static final fun call() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
-                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UQualifiedReferenceExpression ["abc".[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:Unit
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [global(2.2, 2)] : PsiType:Unit
+                    UIdentifier (Identifier (global)) [UIdentifier (Identifier (global))]
+                    USimpleNameReferenceExpression (identifier = global, resolvesTo = null) [global] : PsiType:Unit
+                    ULiteralExpression (value = 2.2) [2.2] : PsiType:float
+                    ULiteralExpression (value = 2) [2] : PsiType:int
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [withDefault("bbb")] : PsiType:Unit
+                    UIdentifier (Identifier (withDefault)) [UIdentifier (Identifier (withDefault))]
+                    USimpleNameReferenceExpression (identifier = withDefault, resolvesTo = null) [withDefault] : PsiType:Unit
+                    ULiteralExpression (value = "bbb") ["bbb"] : PsiType:String
+                UQualifiedReferenceExpression ["abc".withReceiver(1, 1.2)] : PsiType:Unit
                     ULiteralExpression (value = "abc") ["abc"] : PsiType:String
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UQualifiedReferenceExpression [Math.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:double
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [withReceiver(1, 1.2)] : PsiType:Unit
+                        UIdentifier (Identifier (withReceiver)) [UIdentifier (Identifier (withReceiver))]
+                        USimpleNameReferenceExpression (identifier = withReceiver, resolvesTo = null) [withReceiver] : PsiType:Unit
+                        ULiteralExpression (value = 1) [1] : PsiType:int
+                        ULiteralExpression (value = 1.2) [1.2] : PsiType:float
+                UQualifiedReferenceExpression [Math.atan2(1.3, 3.4)] : PsiType:double
                     USimpleNameReferenceExpression (identifier = Math) [Math] : PsiType:Unit
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UQualifiedReferenceExpression [java.lang.String.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:NonExistentClass
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [atan2(1.3, 3.4)] : PsiType:double
+                        UIdentifier (Identifier (atan2)) [UIdentifier (Identifier (atan2))]
+                        USimpleNameReferenceExpression (identifier = atan2, resolvesTo = null) [atan2] : PsiType:double
+                        ULiteralExpression (value = 1.3) [1.3] : PsiType:double
+                        ULiteralExpression (value = 3.4) [3.4] : PsiType:double
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>("param1", "param2")] : PsiType:NonExistentClass
+                    UIdentifier (Identifier (unresolvedMethod)) [UIdentifier (Identifier (unresolvedMethod))]
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
+                    ULiteralExpression (value = "param1") ["param1"] : PsiType:String
+                    ULiteralExpression (value = "param2") ["param2"] : PsiType:String
+                UQualifiedReferenceExpression [java.lang.String.format("%i %i %i", 1, 2, 3)] : PsiType:NonExistentClass
                     UQualifiedReferenceExpression [java.lang.String] : PsiType:Unit
                         UQualifiedReferenceExpression [java.lang] : PsiType:Unit
                             USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Unit
                             USimpleNameReferenceExpression (identifier = lang) [lang] : PsiType:Unit
                         USimpleNameReferenceExpression (identifier = String) [String] : PsiType:Unit
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UQualifiedReferenceExpression [java.lang.String.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:NonExistentClass
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 4)) [format("%i %i %i", 1, 2, 3)] : PsiType:NonExistentClass
+                        UIdentifier (Identifier (format)) [UIdentifier (Identifier (format))]
+                        USimpleNameReferenceExpression (identifier = format, resolvesTo = null) [format] : PsiType:NonExistentClass
+                        ULiteralExpression (value = "%i %i %i") ["%i %i %i"] : PsiType:String
+                        ULiteralExpression (value = 1) [1] : PsiType:int
+                        ULiteralExpression (value = 2) [2] : PsiType:int
+                        ULiteralExpression (value = 3) [3] : PsiType:int
+                UQualifiedReferenceExpression [java.lang.String.format("%i %i %i", arrayOf(1, 2, 3))] : PsiType:NonExistentClass
                     UQualifiedReferenceExpression [java.lang.String] : PsiType:Unit
                         UQualifiedReferenceExpression [java.lang] : PsiType:Unit
                             USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Unit
                             USimpleNameReferenceExpression (identifier = lang) [lang] : PsiType:Unit
                         USimpleNameReferenceExpression (identifier = String) [String] : PsiType:Unit
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UQualifiedReferenceExpression [java.lang.String.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:NonExistentClass
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [format("%i %i %i", arrayOf(1, 2, 3))] : PsiType:NonExistentClass
+                        UIdentifier (Identifier (format)) [UIdentifier (Identifier (format))]
+                        USimpleNameReferenceExpression (identifier = format, resolvesTo = null) [format] : PsiType:NonExistentClass
+                        ULiteralExpression (value = "%i %i %i") ["%i %i %i"] : PsiType:String
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3)) [arrayOf(1, 2, 3)] : PsiType:Integer[]
+                            UIdentifier (Identifier (arrayOf)) [UIdentifier (Identifier (arrayOf))]
+                            USimpleNameReferenceExpression (identifier = arrayOf, resolvesTo = null) [arrayOf] : PsiType:Integer[]
+                            ULiteralExpression (value = 1) [1] : PsiType:int
+                            ULiteralExpression (value = 2) [2] : PsiType:int
+                            ULiteralExpression (value = 3) [3] : PsiType:int
+                UQualifiedReferenceExpression [java.lang.String.format("%i %i %i", arrayOf(1, 2, 3), arrayOf(4, 5, 6))] : PsiType:NonExistentClass
                     UQualifiedReferenceExpression [java.lang.String] : PsiType:Unit
                         UQualifiedReferenceExpression [java.lang] : PsiType:Unit
                             USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Unit
                             USimpleNameReferenceExpression (identifier = lang) [lang] : PsiType:Unit
                         USimpleNameReferenceExpression (identifier = String) [String] : PsiType:Unit
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UQualifiedReferenceExpression [java.lang.String.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:NonExistentClass
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3)) [format("%i %i %i", arrayOf(1, 2, 3), arrayOf(4, 5, 6))] : PsiType:NonExistentClass
+                        UIdentifier (Identifier (format)) [UIdentifier (Identifier (format))]
+                        USimpleNameReferenceExpression (identifier = format, resolvesTo = null) [format] : PsiType:NonExistentClass
+                        ULiteralExpression (value = "%i %i %i") ["%i %i %i"] : PsiType:String
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3)) [arrayOf(1, 2, 3)] : PsiType:Integer[]
+                            UIdentifier (Identifier (arrayOf)) [UIdentifier (Identifier (arrayOf))]
+                            USimpleNameReferenceExpression (identifier = arrayOf, resolvesTo = null) [arrayOf] : PsiType:Integer[]
+                            ULiteralExpression (value = 1) [1] : PsiType:int
+                            ULiteralExpression (value = 2) [2] : PsiType:int
+                            ULiteralExpression (value = 3) [3] : PsiType:int
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3)) [arrayOf(4, 5, 6)] : PsiType:Integer[]
+                            UIdentifier (Identifier (arrayOf)) [UIdentifier (Identifier (arrayOf))]
+                            USimpleNameReferenceExpression (identifier = arrayOf, resolvesTo = null) [arrayOf] : PsiType:Integer[]
+                            ULiteralExpression (value = 4) [4] : PsiType:int
+                            ULiteralExpression (value = 5) [5] : PsiType:int
+                            ULiteralExpression (value = 6) [6] : PsiType:int
+                UQualifiedReferenceExpression [java.lang.String.format("%i %i %i", "".chunked(2).toTypedArray())] : PsiType:NonExistentClass
                     UQualifiedReferenceExpression [java.lang.String] : PsiType:Unit
                         UQualifiedReferenceExpression [java.lang] : PsiType:Unit
                             USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Unit
                             USimpleNameReferenceExpression (identifier = lang) [lang] : PsiType:Unit
                         USimpleNameReferenceExpression (identifier = String) [String] : PsiType:Unit
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [format("%i %i %i", "".chunked(2).toTypedArray())] : PsiType:NonExistentClass
+                        UIdentifier (Identifier (format)) [UIdentifier (Identifier (format))]
+                        USimpleNameReferenceExpression (identifier = format, resolvesTo = null) [format] : PsiType:NonExistentClass
+                        ULiteralExpression (value = "%i %i %i") ["%i %i %i"] : PsiType:String
+                        UQualifiedReferenceExpression ["".chunked(2).toTypedArray()] : PsiType:String[]
+                            UQualifiedReferenceExpression ["".chunked(2)] : PsiType:List<? extends String>
+                                ULiteralExpression (value = "") [""] : PsiType:String
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [chunked(2)] : PsiType:List<? extends String>
+                                    UIdentifier (Identifier (chunked)) [UIdentifier (Identifier (chunked))]
+                                    USimpleNameReferenceExpression (identifier = chunked, resolvesTo = null) [chunked] : PsiType:List<? extends String>
+                                    ULiteralExpression (value = 2) [2] : PsiType:int
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toTypedArray()] : PsiType:String[]
+                                UIdentifier (Identifier (toTypedArray)) [UIdentifier (Identifier (toTypedArray))]
+                                USimpleNameReferenceExpression (identifier = toTypedArray, resolvesTo = null) [toTypedArray] : PsiType:String[]
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with(<anonymous class>(), { ...})] : PsiType:Unit
+                    UIdentifier (Identifier (with)) [UIdentifier (Identifier (with))]
+                    USimpleNameReferenceExpression (identifier = with, resolvesTo = null) [with] : PsiType:Unit
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<anonymous class>()] : PsiType:A
+                        UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
+                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:A
+                    ULambdaExpression [{ ...}] : PsiType:Function1<? super A, ? extends Unit>
+                        UBlockExpression [{...}] : PsiType:Unit
+                            UQualifiedReferenceExpression ["def".with2Receivers(8, 7.0)] : PsiType:Unit
+                                ULiteralExpression (value = "def") ["def"] : PsiType:String
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with2Receivers(8, 7.0)] : PsiType:Unit
+                                    UIdentifier (Identifier (with2Receivers)) [UIdentifier (Identifier (with2Receivers))]
+                                    USimpleNameReferenceExpression (identifier = with2Receivers, resolvesTo = null) [with2Receivers] : PsiType:Unit
+                                    ULiteralExpression (value = 8) [8] : PsiType:int
+                                    ULiteralExpression (value = 7.0) [7.0] : PsiType:float
         UMethod (name = objectLiteral) [public static final fun objectLiteral() : void {...}]
             UBlockExpression [{...}] : PsiType:Parent
                 UObjectLiteralExpression [anonymous object : Parent(b = 1, a = "foo") { }] : PsiType:Parent

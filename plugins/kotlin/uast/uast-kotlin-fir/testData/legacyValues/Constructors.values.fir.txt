@@ -8,8 +8,15 @@ UFile (package = ) [public final class A {...]
         UMethod (name = A) [public fun A(@org.jetbrains.annotations.NotNull i: int) {...}]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] = Undetermined
-                UastEmptyExpression [UastEmptyExpression] = Undetermined
+            UBlockExpression [{...}] = external <anonymous class>(i.toString())(external toString()())
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<anonymous class>(i.toString())] = external <anonymous class>(i.toString())(external toString()())
+                    UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>(i.toString())(external toString()())
+                    UQualifiedReferenceExpression [i.toString()] = external toString()()
+                        USimpleNameReferenceExpression (identifier = i) [i] = Undetermined
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] = external toString()()
+                            UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
+                            USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] = external toString()()
         UMethod (name = getStr) [public final fun getStr() : java.lang.String = UastEmptyExpression]
     UClass (name = AWithInit) [public final class AWithInit {...}]
         UField (name = str) [@org.jetbrains.annotations.NotNull private final var str: java.lang.String]
@@ -17,14 +24,23 @@ UFile (package = ) [public final class A {...]
         UMethod (name = AWithInit) [public fun AWithInit(@org.jetbrains.annotations.NotNull str: java.lang.String) {...}]
             UParameter (name = str) [@org.jetbrains.annotations.NotNull var str: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] = Undetermined
-                UBlockExpression [{...}] = Undetermined
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+            UBlockExpression [{...}] = external println()()
+                UBlockExpression [{...}] = external println()()
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [println()] = external println()()
+                        UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
+                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println()()
         UMethod (name = AWithInit) [public fun AWithInit(@org.jetbrains.annotations.NotNull i: int) {...}]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] = Undetermined
-                UastEmptyExpression [UastEmptyExpression] = Undetermined
+            UBlockExpression [{...}] = external <anonymous class>(i.toString())(external toString()())
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<anonymous class>(i.toString())] = external <anonymous class>(i.toString())(external toString()())
+                    UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>(i.toString())(external toString()())
+                    UQualifiedReferenceExpression [i.toString()] = external toString()()
+                        USimpleNameReferenceExpression (identifier = i) [i] = Undetermined
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] = external toString()()
+                            UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
+                            USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] = external toString()()
         UMethod (name = getStr) [public final fun getStr() : java.lang.String = UastEmptyExpression]
     UClass (name = AWith2Init) [public final class AWith2Init {...}]
         UField (name = str) [@org.jetbrains.annotations.NotNull private final var str: java.lang.String]
@@ -32,16 +48,29 @@ UFile (package = ) [public final class A {...]
         UMethod (name = AWith2Init) [public fun AWith2Init(@org.jetbrains.annotations.NotNull str: java.lang.String) {...}]
             UParameter (name = str) [@org.jetbrains.annotations.NotNull var str: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] = Undetermined
-                UBlockExpression [{...}] = Undetermined
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UBlockExpression [{...}] = Undetermined
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+            UBlockExpression [{...}] = external println(2)((long)2)
+                UBlockExpression [{...}] = external println(1)((long)1)
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(1)] = external println(1)((long)1)
+                        UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
+                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println(1)((long)1)
+                        ULiteralExpression (value = 1) [1] = (long)1
+                UBlockExpression [{...}] = external println(2)((long)2)
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(2)] = external println(2)((long)2)
+                        UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
+                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println(2)((long)2)
+                        ULiteralExpression (value = 2) [2] = (long)2
         UMethod (name = AWith2Init) [public fun AWith2Init(@org.jetbrains.annotations.NotNull i: int) {...}]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] = Undetermined
-                UastEmptyExpression [UastEmptyExpression] = Undetermined
+            UBlockExpression [{...}] = external <anonymous class>(i.toString())(external toString()())
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<anonymous class>(i.toString())] = external <anonymous class>(i.toString())(external toString()())
+                    UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>(i.toString())(external toString()())
+                    UQualifiedReferenceExpression [i.toString()] = external toString()()
+                        USimpleNameReferenceExpression (identifier = i) [i] = Undetermined
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] = external toString()()
+                            UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
+                            USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] = external toString()()
         UMethod (name = getStr) [public final fun getStr() : java.lang.String = UastEmptyExpression]
     UClass (name = AOnlyInit) [public final class AOnlyInit {...}]
         UMethod (name = AOnlyInit) [public fun AOnlyInit() = UastEmptyExpression]
@@ -52,17 +81,23 @@ UFile (package = ) [public final class A {...]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Undetermined
-                UastEmptyExpression [UastEmptyExpression] = Undetermined
-                UBinaryExpression (operator = =) [a = i.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+                    UIdentifier (Identifier ()) [UIdentifier (Identifier ())]
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
+                UBinaryExpression (operator = =) [a = i.toString()] = Undetermined
                     USimpleNameReferenceExpression (identifier = a) [a] = external a()
-                    UQualifiedReferenceExpression [i.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    UQualifiedReferenceExpression [i.toString()] = external toString()()
                         USimpleNameReferenceExpression (identifier = i) [i] = Undetermined
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] = external toString()()
+                            UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
+                            USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] = external toString()()
         UMethod (name = AWithSecondary) [public fun AWithSecondary(@org.jetbrains.annotations.NotNull s: java.lang.String) {...}]
             UParameter (name = s) [@org.jetbrains.annotations.NotNull var s: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Undetermined
-                UastEmptyExpression [UastEmptyExpression] = Undetermined
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+                    UIdentifier (Identifier ()) [UIdentifier (Identifier ())]
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
                 UBinaryExpression (operator = =) [a = s] = Undetermined
                     USimpleNameReferenceExpression (identifier = a) [a] = external a()
                     USimpleNameReferenceExpression (identifier = s) [s] = Undetermined
@@ -77,28 +112,38 @@ UFile (package = ) [public final class A {...]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Undetermined
-                UastEmptyExpression [UastEmptyExpression] = Undetermined
-                UBlockExpression [{...}] = Undetermined
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
-                UBinaryExpression (operator = =) [a = i.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+                    UIdentifier (Identifier ()) [UIdentifier (Identifier ())]
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
+                UBlockExpression [{...}] = external println()()
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [println()] = external println()()
+                        UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
+                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println()()
+                UBinaryExpression (operator = =) [a = i.toString()] = Undetermined
                     USimpleNameReferenceExpression (identifier = a) [a] = external a()
-                    UQualifiedReferenceExpression [i.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    UQualifiedReferenceExpression [i.toString()] = external toString()()
                         USimpleNameReferenceExpression (identifier = i) [i] = Undetermined
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] = external toString()()
+                            UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
+                            USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] = external toString()()
         UMethod (name = AWithSecondaryInit) [public fun AWithSecondaryInit(@org.jetbrains.annotations.NotNull s: java.lang.String) {...}]
             UParameter (name = s) [@org.jetbrains.annotations.NotNull var s: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] = Undetermined
-                UastEmptyExpression [UastEmptyExpression] = Undetermined
+            UBlockExpression [{...}] = external toString()()
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+                    UIdentifier (Identifier ()) [UIdentifier (Identifier ())]
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
                 UBinaryExpression (operator = =) [a = s] = Undetermined
                     USimpleNameReferenceExpression (identifier = a) [a] = external a()
                     USimpleNameReferenceExpression (identifier = s) [s] = Undetermined
                 UDeclarationsExpression [var local: java.lang.String = s] = Undetermined
                     ULocalVariable (name = local) [var local: java.lang.String = s]
                         USimpleNameReferenceExpression (identifier = s) [s] = Undetermined
-                UQualifiedReferenceExpression [local.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                UQualifiedReferenceExpression [local.toString()] = external toString()()
                     USimpleNameReferenceExpression (identifier = local) [local] = (var local = Undetermined)
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] = external toString()()
+                        UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
+                        USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] = external toString()()
         UMethod (name = getA) [public final fun getA() : java.lang.String = UastEmptyExpression]
         UMethod (name = setA) [public final fun setA(@org.jetbrains.annotations.NotNull value: java.lang.String) : void = UastEmptyExpression]
             UParameter (name = value) [@org.jetbrains.annotations.NotNull var value: java.lang.String]
@@ -111,9 +156,11 @@ UFile (package = ) [public final class A {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Undetermined
                 UBlockExpression [{...}] = Undetermined
-                    UBinaryExpression (operator = =) [a = i.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                    UBinaryExpression (operator = =) [a = i.toString()] = Undetermined
                         USimpleNameReferenceExpression (identifier = a) [a] = Undetermined
-                        UQualifiedReferenceExpression [i.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                        UQualifiedReferenceExpression [i.toString()] = external toString()()
                             USimpleNameReferenceExpression (identifier = i) [i] = Undetermined
-                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] = external toString()()
+                                UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
+                                USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] = external toString()()
         UMethod (name = getA) [public final fun getA() : java.lang.String = UastEmptyExpression]
