@@ -1,9 +1,9 @@
 public final class ReifiedResolveKt {
     public static final fun resolve() : void {
-        [!] UnknownKotlinExpression (CALL_EXPRESSION)
-        var x: java.lang.String = [!] UnknownKotlinExpression (CALL_EXPRESSION)
-        [!] UnknownKotlinExpression (CALL_EXPRESSION)
-        var y: java.lang.String = [!] UnknownKotlinExpression (CALL_EXPRESSION)
-        var z: java.util.List<? extends java.lang.String> = [!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)
+        foo()
+        var x: java.lang.String = foo()
+        bar()
+        var y: java.lang.String = bar()
+        var z: java.util.List<? extends java.lang.String> = listOf("foo").filterIsInstance()
     }
 }

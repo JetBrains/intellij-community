@@ -7,7 +7,17 @@ UFile (package = )
                 UQualifiedReferenceExpression
                     UQualifiedReferenceExpression
                         USimpleNameReferenceExpression (identifier = list)
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                            UIdentifier (Identifier (filterIsInstance))
+                            USimpleNameReferenceExpression (identifier = filterIsInstance, resolvesTo = null)
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
+                        UIdentifier (Identifier (mapTo))
+                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                            UIdentifier (Identifier (mutableSetOf))
+                            USimpleNameReferenceExpression (identifier = mutableSetOf, resolvesTo = null)
+                        ULambdaExpression
+                            UParameter (name = it)
+                            UBlockExpression
     UClass (name = Some)
         UMethod (name = Some)

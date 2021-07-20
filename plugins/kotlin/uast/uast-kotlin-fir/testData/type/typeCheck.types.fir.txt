@@ -4,12 +4,14 @@ UFile (package = ) [public final class TypeCheckKt {...]
             UParameter (name = $this$asString) [@org.jetbrains.annotations.Nullable var $this$asString: java.lang.Object]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
             UBlockExpression [{...}] : PsiType:Void
-                UReturnExpression [return if (x !is java.lang.String) x.[!] UnknownKotlinExpression (CALL_EXPRESSION) else x] : PsiType:Void
-                    UIfExpression [if (x !is java.lang.String) x.[!] UnknownKotlinExpression (CALL_EXPRESSION) else x] : PsiType:String
+                UReturnExpression [return if (x !is java.lang.String) x.toString() else x] : PsiType:Void
+                    UIfExpression [if (x !is java.lang.String) x.toString() else x] : PsiType:String
                         UBinaryExpressionWithType [x !is java.lang.String] : PsiType:boolean
                             USimpleNameReferenceExpression (identifier = x) [x] : PsiType:NonExistentClass
                             UTypeReferenceExpression (name = java.lang.String) [java.lang.String]
-                        UQualifiedReferenceExpression [x.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:String
+                        UQualifiedReferenceExpression [x.toString()] : PsiType:String
                             USimpleNameReferenceExpression (identifier = x) [x] : PsiType:NonExistentClass
-                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : PsiType:String
+                                UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
+                                USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] : PsiType:String
                         USimpleNameReferenceExpression (identifier = x) [x] : PsiType:NonExistentClass

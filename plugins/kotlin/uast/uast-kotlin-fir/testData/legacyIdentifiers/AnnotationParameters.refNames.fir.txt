@@ -7,7 +7,7 @@ Int -> USimpleNameReferenceExpression (identifier = Int) from KtNameReferenceExp
 String -> USimpleNameReferenceExpression (identifier = String) from KtNameReferenceExpression
 RequiresPermission -> USimpleNameReferenceExpression (identifier = RequiresPermission) from KtNameReferenceExpression
 anyOf -> USimpleNameReferenceExpression (identifier = anyOf) from KtNameReferenceExpression
-intArrayOf -> [!] UnknownKotlinExpression (CALL_EXPRESSION) from KtNameReferenceExpression
+intArrayOf -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3)) from KtNameReferenceExpression
 IntRange -> USimpleNameReferenceExpression (identifier = IntRange) from KtNameReferenceExpression
 from -> USimpleNameReferenceExpression (identifier = from) from KtNameReferenceExpression
 to -> USimpleNameReferenceExpression (identifier = to) from KtNameReferenceExpression
