@@ -22,7 +22,6 @@ import org.jetbrains.uast.util.ClassSetsWrapper
 class KotlinUastLanguagePlugin : UastLanguagePlugin {
     override val priority = 10
 
-
     override val language: Language
         get() = KotlinLanguage.INSTANCE
 
@@ -64,7 +63,7 @@ class KotlinUastLanguagePlugin : UastLanguagePlugin {
         val parent = element.parent
         val parentUElement = convertElementWithParent(parent, null) ?: return null
 
-        val uExpression = KotlinUFunctionCallExpression(element, parentUElement, resolvedCall)
+        val uExpression = KotlinUFunctionCallExpression(element, parentUElement)
         val method = uExpression.resolve() ?: return null
         if (method.name != methodName) return null
         return UastLanguagePlugin.ResolvedMethod(uExpression, method)
@@ -86,7 +85,7 @@ class KotlinUastLanguagePlugin : UastLanguagePlugin {
         val parent = KotlinConverter.unwrapElements(element.parent) ?: return null
         val parentUElement = convertElementWithParent(parent, null) ?: return null
 
-        val uExpression = KotlinUFunctionCallExpression(element, parentUElement, resolvedCall)
+        val uExpression = KotlinUFunctionCallExpression(element, parentUElement)
         val method = uExpression.resolve() ?: return null
         val containingClass = method.containingClass ?: return null
         return UastLanguagePlugin.ResolvedConstructor(uExpression, method, containingClass)
