@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.JobProgress
 import com.intellij.openapi.progress.Progress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import kotlinx.coroutines.*
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 
@@ -32,18 +31,18 @@ internal class ReadAction<T>(
       return action(JobProgress(coroutineContext.job))
     }
     return supervisorScope {
-      readLoop()
+      readLoop(this)
     }
   }
 
-  private suspend fun readLoop(): T {
+  private suspend fun readLoop(rootScope: CoroutineScope): T {
     while (true) {
-      coroutineContext.ensureActive()
+      rootScope.coroutineContext.ensureActive()
       if (application.isWriteActionPending || application.isWriteActionInProgress) {
         yieldToPendingWriteActions() // Write actions are executed on the write thread => wait until write action is processed.
       }
       try {
-        when (val readResult = tryReadAction()) {
+        when (val readResult = tryReadAction(rootScope)) {
           is ReadResult.Successful -> return readResult.value
           is ReadResult.UnsatisfiedConstraint -> readResult.waitForConstraint.join()
         }
@@ -54,8 +53,7 @@ internal class ReadAction<T>(
     }
   }
 
-  private suspend fun tryReadAction(): ReadResult<T> {
-    val loopContext = coroutineContext
+  private suspend fun tryReadAction(rootScope: CoroutineScope): ReadResult<T> {
     return withContext(CoroutineName("read action")) {
       val readJob: Job = this@withContext.coroutineContext.job
       val cancellation = {
@@ -70,7 +68,7 @@ internal class ReadAction<T>(
             ReadResult.Successful(action(JobProgress(readJob)))
           }
           else {
-            ReadResult.UnsatisfiedConstraint(waitForConstraint(loopContext, unsatisfiedConstraint))
+            ReadResult.UnsatisfiedConstraint(waitForConstraint(rootScope, unsatisfiedConstraint))
           }
         }
       }
@@ -93,8 +91,8 @@ private suspend fun yieldToPendingWriteActions() {
   yieldUntilRun(ApplicationManager.getApplication()::invokeLater)
 }
 
-private fun waitForConstraint(ctx: CoroutineContext, constraint: ConstrainedExecution.ContextConstraint): Job {
-  return CoroutineScope(ctx).launch(Dispatchers.Unconfined + CoroutineName("waiting for constraint '$constraint'")) {
+private fun waitForConstraint(rootScope: CoroutineScope, constraint: ConstrainedExecution.ContextConstraint): Job {
+  return rootScope.launch(Dispatchers.Unconfined + CoroutineName("waiting for constraint '$constraint'")) {
     check(ApplicationManager.getApplication().isReadAccessAllowed) // schedule while holding read lock
     yieldUntilRun(constraint::schedule)
     check(constraint.isCorrectContext())
