@@ -508,9 +508,9 @@ public class PsiTreeUtil {
   @Contract("null, _ -> null")
   public static @Nullable <T extends PsiElement> T getNextSiblingOfType(@Nullable PsiElement sibling, @NotNull Class<T> aClass) {
     if (sibling == null) return null;
-    for (PsiElement child = sibling.getNextSibling(); child != null; child = child.getNextSibling()) {
-      if (aClass.isInstance(child)) {
-        return aClass.cast(child);
+    for (PsiElement nextSibling = sibling.getNextSibling(); nextSibling != null; nextSibling = nextSibling.getNextSibling()) {
+      if (aClass.isInstance(nextSibling)) {
+        return aClass.cast(nextSibling);
       }
     }
     return null;
@@ -519,9 +519,9 @@ public class PsiTreeUtil {
   @Contract("null, _ -> null")
   public static @Nullable <T extends PsiElement> T getPrevSiblingOfType(@Nullable PsiElement sibling, @NotNull Class<T> aClass) {
     if (sibling == null) return null;
-    for (PsiElement child = sibling.getPrevSibling(); child != null; child = child.getPrevSibling()) {
-      if (aClass.isInstance(child)) {
-        return aClass.cast(child);
+    for (PsiElement prevSibling = sibling.getPrevSibling(); prevSibling != null; prevSibling = prevSibling.getPrevSibling()) {
+      if (aClass.isInstance(prevSibling)) {
+        return aClass.cast(prevSibling);
       }
     }
     return null;
