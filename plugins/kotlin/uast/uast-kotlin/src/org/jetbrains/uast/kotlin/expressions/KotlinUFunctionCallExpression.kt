@@ -21,9 +21,7 @@ class KotlinUFunctionCallExpression(
         get() = sourcePsi.getResolvedCall(sourcePsi.analyze())
 
     override val receiverType by lz {
-        val resolvedCall = this.resolvedCall ?: return@lz null
-        val receiver = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver ?: return@lz null
-        receiver.type.toPsiType(this, sourcePsi, boxed = true)
+        baseResolveProviderService.getReceiverType(sourcePsi, this)
     }
 
     override val methodName by lz { resolvedCall?.resultingDescriptor?.name?.asString() }
