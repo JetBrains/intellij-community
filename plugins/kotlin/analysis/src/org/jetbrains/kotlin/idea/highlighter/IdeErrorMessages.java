@@ -6,7 +6,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.kotlin.diagnostics.Diagnostic;
 import org.jetbrains.kotlin.diagnostics.UnboundDiagnostic;
 import org.jetbrains.kotlin.diagnostics.rendering.*;
 import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle;
@@ -16,6 +15,8 @@ import org.jetbrains.kotlin.js.resolve.diagnostics.JsCallDataHtmlRenderer;
 import java.net.URL;
 
 import static org.jetbrains.kotlin.diagnostics.Errors.*;
+import static org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages.adaptGenerics1;
+import static org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages.adaptGenerics2;
 import static org.jetbrains.kotlin.diagnostics.rendering.Renderers.*;
 import static org.jetbrains.kotlin.diagnostics.rendering.TabledDescriptorRenderer.TextElementType;
 import static org.jetbrains.kotlin.idea.highlighter.HtmlTabledDescriptorRenderer.tableForTypes;
@@ -183,14 +184,14 @@ public class IdeErrorMessages {
                 new LanguageFeatureMessageRenderer(LanguageFeatureMessageRenderer.Type.ERROR, true));
 
         MAP.put(NO_ACTUAL_FOR_EXPECT, KotlinIdeaAnalysisBundle.htmlMessage("html.expected.0.has.no.actual.declaration.in.module.1.2.html"), DECLARATION_NAME_WITH_KIND,
-                MODULE_WITH_PLATFORM, new PlatformIncompatibilityDiagnosticRenderer(IdeMultiplatformDiagnosticRenderingMode.INSTANCE));
+                MODULE_WITH_PLATFORM, adaptGenerics1(new PlatformIncompatibilityDiagnosticRenderer(IdeMultiplatformDiagnosticRenderingMode.INSTANCE)));
         MAP.put(ACTUAL_WITHOUT_EXPECT, KotlinIdeaAnalysisBundle.htmlMessage("html.0.has.no.corresponding.expected.declaration.1.html"),
                 CAPITALIZED_DECLARATION_NAME_WITH_KIND_AND_PLATFORM,
-                new PlatformIncompatibilityDiagnosticRenderer(IdeMultiplatformDiagnosticRenderingMode.INSTANCE));
+                adaptGenerics1(new PlatformIncompatibilityDiagnosticRenderer(IdeMultiplatformDiagnosticRenderingMode.INSTANCE)));
 
         MAP.put(NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS,
                 KotlinIdeaAnalysisBundle.htmlMessage("html.actual.class.0.has.no.corresponding.members.for.expected.class.members.1.html"),
-                NAME, new IncompatibleExpectedActualClassScopesRenderer(IdeMultiplatformDiagnosticRenderingMode.INSTANCE));
+                NAME, adaptGenerics2(new IncompatibleExpectedActualClassScopesRenderer(IdeMultiplatformDiagnosticRenderingMode.INSTANCE)));
 
         String MESSAGE_FOR_CONCURRENT_HASH_MAP_CONTAINS =
                 KotlinIdeaAnalysisBundle.htmlMessage(
