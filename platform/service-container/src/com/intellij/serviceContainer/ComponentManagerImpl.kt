@@ -38,7 +38,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.picocontainer.ComponentAdapter
-import org.picocontainer.MutablePicoContainer
 import org.picocontainer.PicoContainer
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -58,7 +57,7 @@ private val emptyConstructorMethodType = MethodType.methodType(Void.TYPE)
 abstract class ComponentManagerImpl @JvmOverloads constructor(
   internal val parent: ComponentManagerImpl?,
   setExtensionsRootArea: Boolean = parent == null
-) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), MutablePicoContainer, ComponentManagerEx, IComponentStoreOwner {
+) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), PicoContainer, ComponentManagerEx, IComponentStoreOwner {
   protected enum class ContainerState {
     PRE_INIT, COMPONENT_CREATED, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
   }
@@ -1227,7 +1226,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     }
   }
 
-  final override fun unregisterComponent(componentKey: Any): ComponentAdapter? {
+  final fun unregisterComponent(componentKey: Any): ComponentAdapter? {
     assertComponentsSupported()
 
     val adapter = componentKeyToAdapter.remove(componentKey) ?: return null
@@ -1251,7 +1250,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     throw UnsupportedOperationException("Do not use getComponentInstanceOfType()")
   }
 
-  final override fun registerComponentInstance(componentKey: Any, componentInstance: Any): ComponentAdapter {
+  final fun registerComponentInstance(componentKey: Any, componentInstance: Any): ComponentAdapter {
     assertComponentsSupported()
 
     val componentAdapter = object : ComponentAdapter {
@@ -1268,10 +1267,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     }
     componentAdapters.add(componentAdapter)
     return componentAdapter
-  }
-
-  final override fun registerComponentImplementation(componentKey: Any, componentImplementation: Class<*>): ComponentAdapter {
-    throw UnsupportedOperationException()
   }
 
   private fun assertComponentsSupported() {

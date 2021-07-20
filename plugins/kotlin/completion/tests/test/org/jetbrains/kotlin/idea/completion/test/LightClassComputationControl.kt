@@ -6,12 +6,11 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.impl.java.stubs.PsiClassStub
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub
+import com.intellij.serviceContainer.ComponentManagerImpl
 import org.jetbrains.kotlin.asJava.builder.LightClassConstructionContext
 import org.jetbrains.kotlin.asJava.builder.StubComputationTracker
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.junit.Assert
-import org.picocontainer.MutablePicoContainer
-import java.util.*
 import java.util.Collections.synchronizedList
 
 object LightClassComputationControl {
@@ -47,7 +46,7 @@ object LightClassComputationControl {
 }
 
 inline fun <reified T : Any, R> ComponentManager.withServiceRegistered(instance: T, body: () -> R): R {
-    val picoContainer = picoContainer as MutablePicoContainer
+    val picoContainer = this as ComponentManagerImpl
     val key = T::class.java.name
     try {
         picoContainer.unregisterComponent(key)
