@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.MouseDragHelper;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.GeometryUtil;
 import com.intellij.util.ui.ImageUtil;
@@ -370,12 +371,30 @@ public final class DnDManagerImpl extends DnDManager {
 
   void showHighlighter(RelativeRectangle rectangle, int aType, DnDEvent aEvent) {
     JLayeredPane layeredPane = getLayeredPane(rectangle.getPoint().getComponent());
-    Rectangle bounds = rectangle.getRectangleOn(layeredPane);
-    showHighlighter(layeredPane, aEvent, bounds, aType);
+    showHighlighter(layeredPane, rectangle, aType, aEvent);
   }
 
   void showHighlighter(JLayeredPane layeredPane, final RelativeRectangle rectangle, final int aType, final DnDEvent event) {
     final Rectangle bounds = rectangle.getRectangleOn(layeredPane);
+    // update selected row bounds according to the visible rectangle
+    RelativePoint point = rectangle.getPoint();
+    Component component = point == null ? null : point.getOriginalComponent();
+    if (component instanceof JTree) {
+      JTree tree = (JTree)component;
+      Rectangle visible = tree.getVisibleRect();
+      int dx = point.getOriginalPoint().x - visible.x;
+      bounds.x -= dx;
+      bounds.width = visible.width;
+    }
+    else if (component instanceof JList) {
+      JList<?> list = (JList<?>)component;
+      if (JList.VERTICAL == list.getLayoutOrientation()) {
+        Rectangle visible = list.getVisibleRect();
+        int dx = point.getOriginalPoint().x - visible.x;
+        bounds.x -= dx;
+        bounds.width = visible.width;
+      }
+    }
     showHighlighter(layeredPane, event, bounds, aType);
   }
 
