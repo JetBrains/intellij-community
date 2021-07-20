@@ -30,7 +30,7 @@ internal class ReadAction<T>(
       }
       return action(JobProgress(coroutineContext.job))
     }
-    return supervisorScope {
+    return coroutineScope {
       readLoop(this)
     }
   }
@@ -41,26 +41,19 @@ internal class ReadAction<T>(
       if (application.isWriteActionPending || application.isWriteActionInProgress) {
         yieldToPendingWriteActions() // Write actions are executed on the write thread => wait until write action is processed.
       }
-      try {
-        when (val readResult = tryReadAction(rootScope)) {
-          is ReadResult.Successful -> return readResult.value
-          is ReadResult.UnsatisfiedConstraint -> readResult.waitForConstraint.join()
-        }
-      }
-      catch (e: CancellationException) {
-        continue // retry
+      when (val readResult = tryReadAction(rootScope)) {
+        is ReadResult.Successful -> return readResult.value
+        is ReadResult.UnsatisfiedConstraint -> readResult.waitForConstraint.join()
+        is ReadResult.WritePending -> Unit // retry
       }
     }
   }
 
   private suspend fun tryReadAction(rootScope: CoroutineScope): ReadResult<T> {
-    return withContext(CoroutineName("read action")) {
-      val readJob: Job = this@withContext.coroutineContext.job
-      val cancellation = {
-        readJob.cancel()
-      }
-      lateinit var result: ReadResult<T>
-      ProgressIndicatorUtils.runActionAndCancelBeforeWrite(application, cancellation) {
+    lateinit var result: ReadResult<T>
+    val readJob = rootScope.launch(CoroutineName("read action")) {
+      val readJob = coroutineContext.job
+      ProgressIndicatorUtils.runActionAndCancelBeforeWrite(application, readJob::cancel) {
         readJob.ensureActive()
         application.tryRunReadAction {
           val unsatisfiedConstraint = constraints.findUnsatisfiedConstraint()
@@ -72,15 +65,21 @@ internal class ReadAction<T>(
           }
         }
       }
-      readJob.ensureActive()
+    }
+    readJob.join()
+    return if (readJob.isCancelled) {
+      ReadResult.WritePending
+    }
+    else {
       result
     }
   }
 }
 
-private sealed class ReadResult<T> {
+private sealed class ReadResult<out T> {
   class Successful<T>(val value: T) : ReadResult<T>()
-  class UnsatisfiedConstraint<T>(val waitForConstraint: Job) : ReadResult<T>()
+  class UnsatisfiedConstraint(val waitForConstraint: Job) : ReadResult<Nothing>()
+  object WritePending : ReadResult<Nothing>()
 }
 
 /**
