@@ -4,11 +4,7 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
-import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.resolve.CompileTimeConstantUtils
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.uast.*
@@ -126,12 +122,7 @@ class KotlinUFunctionCallExpression(
     }
 
     override val kind: UastCallKind by lz {
-        val resolvedCall = resolvedCall ?: return@lz UastCallKind.METHOD_CALL
-        when {
-            resolvedCall.resultingDescriptor is ConstructorDescriptor -> UastCallKind.CONSTRUCTOR_CALL
-            this.isAnnotationArgumentArrayInitializer() -> UastCallKind.NESTED_ARRAY_INITIALIZER
-            else -> UastCallKind.METHOD_CALL
-        }
+        baseResolveProviderService.callKind(sourcePsi)
     }
 
     override val receiver: UExpression? by lz {
@@ -184,19 +175,6 @@ class KotlinUFunctionCallExpression(
         valueArguments.acceptList(visitor)
 
         visitor.afterVisitCallExpression(this)
-    }
-
-    private fun isAnnotationArgumentArrayInitializer(): Boolean {
-        // KtAnnotationEntry (or KtCallExpression when annotation is nested) -> KtValueArgumentList -> KtValueArgument -> arrayOf call
-        val isAnnotationArgument = when (val elementAt2 = sourcePsi.parents.elementAtOrNull(2)) {
-            is KtAnnotationEntry -> true
-            is KtCallExpression -> elementAt2.getParentOfType<KtAnnotationEntry>(true, KtDeclaration::class.java) != null
-            else -> false
-        }
-        if (!isAnnotationArgument) return false
-
-        val resolvedCall = resolvedCall ?: return false
-        return CompileTimeConstantUtils.isArrayFunctionCall(resolvedCall)
     }
 
     override fun convertParent(): UElement? = super.convertParent().let { result ->
