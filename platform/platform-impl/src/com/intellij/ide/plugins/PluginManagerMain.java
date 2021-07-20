@@ -274,16 +274,18 @@ public final class PluginManagerMain {
     switch (description) {
       case PluginManagerCore.DISABLE:
         PluginManagerCore.onEnable(false);
+        break;
       case PluginManagerCore.ENABLE:
         if (PluginManagerCore.onEnable(true)) {
           notifyPluginsUpdated(null);
         }
+        break;
       case PluginManagerCore.EDIT:
         IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(null);
         PluginManagerConfigurable.showPluginConfigurable(frame != null ? frame.getComponent() : null,
                                                          null,
                                                          List.of());
-      default:
+        break;
     }
   }
 
