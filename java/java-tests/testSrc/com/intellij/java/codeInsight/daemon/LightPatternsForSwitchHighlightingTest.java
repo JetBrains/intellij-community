@@ -59,6 +59,10 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     doTest();
   }
 
+  public void testGuardedPatterns() {
+    doTest();
+  }
+
   public void testIdentifierHighlighterForPatternVariable() {
     PsiFile file = myFixture.configureByFile(getTestName(false) + ".java");
     PsiElement element = myFixture.getElementAtCaret();
