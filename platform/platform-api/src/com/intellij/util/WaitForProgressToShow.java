@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -14,48 +13,48 @@ public final class WaitForProgressToShow {
   private WaitForProgressToShow() {
   }
 
-  public static void runOrInvokeAndWaitAboveProgress(final Runnable command) {
+  /**
+   * @deprecated Use {@link com.intellij.openapi.application.Application#invokeAndWait(Runnable)} instead.
+   */
+  @Deprecated
+  public static void runOrInvokeAndWaitAboveProgress(@NotNull Runnable command) {
     runOrInvokeAndWaitAboveProgress(command, ModalityState.defaultModalityState());
   }
 
-  public static void runOrInvokeAndWaitAboveProgress(final Runnable command, @Nullable final ModalityState modalityState) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      command.run();
-    } else {
-      final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-      if (pi != null) {
-        execute(pi);
-        application.invokeAndWait(command);
-      } else {
-        final ModalityState notNullModalityState = modalityState == null ? ModalityState.NON_MODAL : modalityState;
-        application.invokeAndWait(command, notNullModalityState);
-      }
-    }
+  /**
+   * @deprecated Use {@link com.intellij.openapi.application.Application#invokeAndWait(Runnable, ModalityState)} instead.
+   */
+  @Deprecated
+  public static void runOrInvokeAndWaitAboveProgress(@NotNull Runnable command,
+                                                     @Nullable ModalityState modalityState) {
+    if (modalityState == null) modalityState = ModalityState.defaultModalityState();
+    ApplicationManager.getApplication().invokeAndWait(command, modalityState);
   }
 
-  public static void runOrInvokeLaterAboveProgress(final Runnable command, @Nullable final ModalityState modalityState, @NotNull final Project project) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
-      command.run();
-    } else {
-      final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
-      if (pi != null) {
-        execute(pi);
-        application.invokeLater(command, pi.getModalityState(), o -> (! project.isOpen()) || project.isDisposed());
-      } else {
-        final ModalityState notNullModalityState = modalityState == null ? ModalityState.NON_MODAL : modalityState;
-        application.invokeLater(command, notNullModalityState, project.getDisposed());
-      }
-    }
+  /**
+   * @deprecated Use {@link ModalityUiUtil#invokeLaterIfNeeded(Runnable, ModalityState)} instead.
+   */
+  @Deprecated
+  public static void runOrInvokeLaterAboveProgress(@NotNull Runnable command,
+                                                   @Nullable ModalityState modalityState,
+                                                   @NotNull Project project) {
+    if (modalityState == null) modalityState = ModalityState.defaultModalityState();
+    ModalityUiUtil.invokeLaterIfNeeded(command, modalityState, project.getDisposed());
   }
 
+  /**
+   * Waits until modal dialog with progress indicator is shown on screen.
+   *
+   * @deprecated Violates threading assertions in ProgressWindow.
+   */
+  @Deprecated
   public static void execute(ProgressIndicator pi) {
     if (pi.isShowing()) {
       final long maxWait = 3000;
       final long start = System.currentTimeMillis();
-      while ((! pi.isPopupWasShown()) && (pi.isRunning()) && (System.currentTimeMillis() - maxWait < start)) {
+      while ((!pi.isPopupWasShown()) && (pi.isRunning()) && (System.currentTimeMillis() - maxWait < start)) {
         final Object lock = new Object();
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (lock) {
           try {
             lock.wait(100);
