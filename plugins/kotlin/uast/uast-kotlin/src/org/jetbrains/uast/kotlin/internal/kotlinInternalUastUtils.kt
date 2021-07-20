@@ -330,6 +330,21 @@ internal fun resolveToPsiMethod(
     }
 }
 
+internal fun resolveToClassIfConstructorCallImpl(ktCallElement: KtCallElement, source: UElement): PsiElement? =
+    when (val resultingDescriptor = ktCallElement.getResolvedCall(ktCallElement.analyze())?.descriptorForResolveViaConstructor()) {
+        is ConstructorDescriptor -> {
+            ktCallElement.calleeExpression?.let { resolveToDeclarationImpl(it, resultingDescriptor.constructedClass) }
+        }
+        is SamConstructorDescriptor ->
+            (resultingDescriptor.returnType?.getFunctionalInterfaceType(source, ktCallElement) as? PsiClassType)?.resolve()
+        else -> null
+    }
+
+// In new inference, SAM constructor is substituted with a function descriptor, so we use candidate descriptor to preserve behavior
+private fun ResolvedCall<*>.descriptorForResolveViaConstructor(): CallableDescriptor? {
+    return if (this is NewResolvedCallImpl) candidateDescriptor else resultingDescriptor
+}
+
 internal fun resolveToDeclarationImpl(sourcePsi: KtExpression): PsiElement? =
     when (sourcePsi) {
         is KtSimpleNameExpression ->

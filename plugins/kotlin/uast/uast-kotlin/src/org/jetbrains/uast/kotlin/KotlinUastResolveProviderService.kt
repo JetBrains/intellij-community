@@ -118,6 +118,10 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return resolveToPsiMethod(ktElement)
     }
 
+    override fun resolveToClassIfConstructorCall(ktCallElement: KtCallElement, source: UElement): PsiElement? {
+        return resolveToClassIfConstructorCallImpl(ktCallElement, source)
+    }
+
     override fun resolveToDeclaration(ktExpression: KtExpression): PsiElement? {
         if (ktExpression is KtExpressionWithLabel) {
             return ktExpression.analyze()[BindingContext.LABEL_TARGET, ktExpression.getTargetLabel()]
