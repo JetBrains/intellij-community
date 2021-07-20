@@ -2614,6 +2614,18 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "55",
+    "name": "intellij.ruby.javascriptDebugger",
+    "n": "i.ruby.javascriptDebugger",
+    "package": "com.intellij.javascript.debugger.rails",
+    "sourceModule": "intellij.ruby.javascriptDebugger",
+    "descriptor": "ruby/ruby-javascript-debugger/resources/intellij.ruby.javascriptDebugger.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "YP",
     "name": "intellij.safe.push",
     "n": "i.safe.push",
@@ -3513,6 +3525,18 @@
     "sourceModule": "intellij.yaml",
     "descriptor": "community/plugins/yaml/resources/META-INF/plugin.xml",
     "pluginId": "org.jetbrains.plugins.yaml",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "vF",
+    "name": "util.android-studio.android-studio-roboscope-plugin",
+    "n": "util.android-studio.android-studio-roboscope-plugin",
+    "package": "org.jetbrains.kotlin.util.androidStudio.roboscope",
+    "sourceModule": "util.android-studio.android-studio-roboscope-plugin",
+    "descriptor": "plugins/kotlin/tools/android-studio/android-studio-roboscope-plugin/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.kotlin.androidStudio.roboscope",
     "type": 1
   }
 }, {
@@ -4966,6 +4990,14 @@
     "id": "2K_YF",
     "source": "2K",
     "target": "YF",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_55",
+    "source": "2K",
+    "target": "55",
     "type": 1
   }
 }, {
@@ -7483,6 +7515,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "55_gg",
+    "source": "55",
+    "target": "gg",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "YP_KQ",
     "source": "YP",
     "target": "KQ",
@@ -8446,6 +8486,22 @@
     "id": "ZR_xs",
     "source": "ZR",
     "target": "xs",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "vF_S9",
+    "source": "vF",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "vF_w3",
+    "source": "vF",
+    "target": "w3",
     "type": 0
   }
 } ]
