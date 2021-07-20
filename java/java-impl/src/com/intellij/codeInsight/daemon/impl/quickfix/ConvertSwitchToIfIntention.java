@@ -375,7 +375,9 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
     if (aClass == null) {
       return commentTracker.text(value);
     }
-    return aClass.getQualifiedName() + '.' + commentTracker.text(referenceExpression);
+    String qualifiedName = aClass.getQualifiedName();
+    String className = qualifiedName != null ? qualifiedName : aClass.getName();
+    return className + '.' + commentTracker.text(referenceExpression);
   }
 
   private static void dumpBody(SwitchStatementBranch branch, @NonNls StringBuilder out, CommentTracker commentTracker) {
