@@ -431,8 +431,7 @@ public class SwitchBlockHighlightingModel {
         PsiType patternType = JavaPsiPatternUtil.getPatternType((PsiPattern)label);
         if (!(patternType instanceof PsiClassType) && !(patternType instanceof PsiArrayType)) {
           String expectedTypes = JavaErrorBundle.message("switch.class.or.array.type.expected");
-          return createError(label, JavaErrorBundle.message("incompatible.types", expectedTypes,
-                                                            JavaHighlightUtil.formatType(mySelectorType)));
+          return createError(label, JavaErrorBundle.message("unexpected.type", expectedTypes, JavaHighlightUtil.formatType(patternType)));
         }
         if (!TypeConversionUtil.areTypesConvertible(mySelectorType, patternType)) {
           return HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, label.getTextRange(), 0);
