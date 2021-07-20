@@ -20,14 +20,11 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.ui.IdeUICustomization
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.layout.*
-import javax.swing.JTextField
-import kotlin.math.max
+import com.intellij.util.ui.JBUI
 
 class CodeCompletionOptions : BoundCompositeConfigurable<UnnamedConfigurable>(
   ApplicationBundle.message("title.code.completion"), "reference.settingsdialog.IDE.editor.code.completion"),
@@ -47,8 +44,8 @@ class CodeCompletionOptions : BoundCompositeConfigurable<UnnamedConfigurable>(
 
   override fun getId() = ID
 
-  override fun getDependencies(): MutableCollection<BaseExtensionPointName<*>> =
-    mutableListOf(CodeCompletionConfigurableEP.EP_NAME)
+  override fun getDependencies(): Collection<BaseExtensionPointName<*>> =
+    listOf(CodeCompletionConfigurableEP.EP_NAME)
 
   var caseSensitive: Int
     get() =
@@ -110,9 +107,7 @@ class CodeCompletionOptions : BoundCompositeConfigurable<UnnamedConfigurable>(
     return panel {
       buttonGroup {
         fullRow {
-          val cbMatchCaseCell = checkBox(ApplicationBundle.message("completion.option.match.case"))
-          cbMatchCase = cbMatchCaseCell.component
-
+          cbMatchCase = checkBox(ApplicationBundle.message("completion.option.match.case")).component
           rbLettersOnly = radioButton(ApplicationBundle.message("completion.option.first.letter.only"))
             .enableIf(cbMatchCase.selected)
             .component.apply { isSelected = true }
@@ -133,7 +128,7 @@ class CodeCompletionOptions : BoundCompositeConfigurable<UnnamedConfigurable>(
             fullRow {
               checkBox(ApplicationBundle.message("checkbox.autocomplete.basic"), prop = settings::AUTOCOMPLETE_ON_CODE_COMPLETION)
               label(KeymapUtil.getFirstKeyboardShortcutText(actionManager.getAction(IdeActions.ACTION_CODE_COMPLETION)))
-                .component.foreground = JBColor.GRAY
+                .component.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
             }
           }
 
@@ -142,7 +137,7 @@ class CodeCompletionOptions : BoundCompositeConfigurable<UnnamedConfigurable>(
               checkBox(ApplicationBundle.message("checkbox.autocomplete.smart.type"),
                        prop = settings::AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION)
               label(KeymapUtil.getFirstKeyboardShortcutText(actionManager.getAction(IdeActions.ACTION_SMART_TYPE_COMPLETION)))
-                .component.foreground = JBColor.GRAY
+                .component.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
             }
           }
         }
@@ -171,7 +166,8 @@ class CodeCompletionOptions : BoundCompositeConfigurable<UnnamedConfigurable>(
       }
 
       fullRow {
-        val cbAutopopupJavaDoc = checkBox(ApplicationBundle.message("editbox.autopopup.javadoc.in"), prop = settings::AUTO_POPUP_JAVADOC_INFO)
+        val cbAutopopupJavaDoc = checkBox(ApplicationBundle.message("editbox.autopopup.javadoc.in"),
+                                          prop = settings::AUTO_POPUP_JAVADOC_INFO)
         intTextField(prop = settings::JAVADOC_INFO_DELAY,
                      columns = 4,
                      range = CodeInsightSettings.JAVADOC_INFO_DELAY_RANGE.asRange(),
@@ -209,33 +205,15 @@ class CodeCompletionOptions : BoundCompositeConfigurable<UnnamedConfigurable>(
     }
   }
 
-  private fun getIntegerValue(s: String): Int {
-    val value = StringUtilRt.parseInt(s, 0)
-    return max(value, 0)
-  }
-
-  private fun isModified(textField: JTextField, value: Int): Boolean {
-    return getIntegerValue(textField.text) != value
-  }
-
-  private fun isModified(checkBox: JBCheckBox?, value: Boolean): Boolean {
-    return if (checkBox == null) {
-      false
-    }
-    else {
-      checkBox.isSelected != value
-    }
-  }
-
   private fun RowBuilder.addOptions() {
     configurables.filter { !(it is CodeCompletionOptionsCustomSection) }
       .forEach { appendDslConfigurableRow(it) }
   }
 
   private fun RowBuilder.addSections() {
-    configurables.filter { it is CodeCompletionOptionsCustomSection }
+    configurables.filterIsInstance<CodeCompletionOptionsCustomSection>()
       .sortedWith(Comparator.comparing { c ->
-        (if (c is Configurable) c.displayName else null) ?: ""
+        (c as? Configurable)?.displayName ?: ""
       })
       .forEach { appendDslConfigurableRow(it) }
   }
