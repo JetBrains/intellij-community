@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build
 
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.intellij.build.impl.ClassVersionChecker
 import org.jetbrains.intellij.build.impl.LayoutBuilder
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
@@ -10,7 +9,6 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructur
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-
 /**
  * Builds artifacts which are used in Kotlin Compiler and UpSource
  *
@@ -18,57 +16,27 @@ import java.nio.file.Paths
  */
 @Deprecated
 final class IntelliJCoreArtifactsBuilder {
-  private static final List<String> ANALYSIS_API_MODULES = [
-    "intellij.platform.analysis",
-    "intellij.platform.boot",
-    "intellij.platform.core",
-    "intellij.platform.duplicates.analysis",
-    "intellij.platform.editor",
-    "intellij.platform.editor.ex",
-    "intellij.platform.extensions",
-    "intellij.platform.codeStyle",
-    "intellij.platform.indexing",
-    "intellij.java.analysis",
-    "intellij.java.indexing",
-    "intellij.java.psi",
-    "intellij.java.structureView",
-    "intellij.platform.jps.model",
-    "intellij.platform.jps.model.serialization",
-    "intellij.platform.projectModel",
-    "intellij.platform.util",
-    "intellij.platform.util.rt",
-    "intellij.platform.util.text.matching",
-    "intellij.platform.util.collections",
-    "intellij.platform.util.strings",
-    "intellij.platform.util.xmlDom",
-    "intellij.platform.util.diagnostic",
-    "intellij.platform.util.classLoader",
-    "intellij.xml.analysis",
-    "intellij.xml.psi",
-    "intellij.xml.structureView",
-    "intellij.jvm.analysis",
-  ]
-  private static final List<String> ANALYSIS_IMPL_MODULES = [
-    "intellij.platform.analysis.impl",
-    "intellij.platform.core.impl",
-    "intellij.platform.codeStyle.impl",
-    "intellij.platform.indexing.impl",
-    "intellij.java.analysis.impl",
-    "intellij.java.indexing.impl",
-    "intellij.java.psi.impl",
-    "intellij.platform.projectModel.impl",
-    "intellij.platform.structureView.impl",
-    "intellij.xml.analysis.impl",
-    "intellij.xml.psi.impl",
-    "intellij.xml.structureView.impl",
-    "intellij.jvm.analysis.impl",
-  ]
   private static final List<String> VERSIONED_LIBRARIES = [
     "ASM", "Guava", "Trove4j", "cli-parser", "lz4-java",
     "OroMatcher", "jna", "Log4J", "StreamEx"
   ]
   private static final List<String> UNVERSIONED_LIBRARIES = [
     "jetbrains-annotations-java5", "JDOM"
+  ]
+  private static final List<String> CORE_MODULES = [
+    "intellij.platform.util.rt",
+    "intellij.platform.util.classLoader",
+    "intellij.platform.util.text.matching",
+    "intellij.platform.util.collections",
+    "intellij.platform.util.strings",
+    "intellij.platform.util.xmlDom",
+    "intellij.platform.util.diagnostic",
+    "intellij.platform.util",
+    "intellij.platform.core",
+    "intellij.platform.core.impl",
+    "intellij.platform.extensions",
+    "intellij.java.psi",
+    "intellij.java.psi.impl",
   ]
 
   private final BuildContext buildContext
@@ -78,7 +46,7 @@ final class IntelliJCoreArtifactsBuilder {
   }
 
   void compileModules() {
-    BuildTasks.create(buildContext).compileModules(ANALYSIS_API_MODULES + ANALYSIS_IMPL_MODULES)
+    BuildTasks.create(buildContext).compileModules(CORE_MODULES)
   }
 
   void layoutIntelliJCore() {
@@ -92,8 +60,6 @@ final class IntelliJCoreArtifactsBuilder {
       processCoreLayout(coreArtifactDir, new ProjectStructureMapping(), true)
       ant.move(file: "$coreArtifactDir/annotations-java5.jar", tofile: "$coreArtifactDir/annotations.jar")
       buildContext.notifyArtifactWasBuilt(coreArtifactDir)
-
-      new ClassVersionChecker(["": "1.8", "intellij-core-analysis-deprecated.jar": "11"]).checkVersions(buildContext, coreArtifactDir)
 
       def intellijCoreZip = "${buildContext.paths.artifacts}/intellij-core-${buildContext.buildNumber}.zip"
       ant.zip(destfile: intellijCoreZip) {
@@ -111,27 +77,13 @@ final class IntelliJCoreArtifactsBuilder {
   }
 
   private void processCoreLayout(Path coreArtifactDir, ProjectStructureMapping projectStructureMapping, boolean copyFiles) {
-    List<String> analysisModules = ANALYSIS_API_MODULES + ANALYSIS_IMPL_MODULES
     List<String> versionedLibs = VERSIONED_LIBRARIES
     List<String> unversionedLibs = UNVERSIONED_LIBRARIES
+    List<String> coreModules = CORE_MODULES
+
     new LayoutBuilder(buildContext, false).process(coreArtifactDir.toString(), projectStructureMapping, copyFiles) {
       jar("intellij-core.jar") {
-        module("intellij.platform.util.rt")
-        module("intellij.platform.util.classLoader")
-        module("intellij.platform.util.text.matching")
-        module("intellij.platform.util.collections")
-        module("intellij.platform.util.strings")
-        module("intellij.platform.util.xmlDom")
-        module("intellij.platform.util.diagnostic")
-        module("intellij.platform.util")
-        module("intellij.platform.core")
-        module("intellij.platform.core.impl")
-        module("intellij.platform.extensions")
-        module("intellij.java.psi")
-        module("intellij.java.psi.impl")
-      }
-      jar("intellij-core-analysis-deprecated.jar") {
-        analysisModules.each { module it }
+        coreModules.each { module(it) }
       }
       versionedLibs.each { projectLibrary(it) }
       unversionedLibs.each { projectLibrary(it, true) }
