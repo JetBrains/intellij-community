@@ -317,6 +317,9 @@
       "key": "FileColor.Yellow"
     },
     {
+      "key": "FileColor.Gray"
+    },
+    {
       "key": "FlameGraph.frameForeground",
       "description": "Java profiler flame graph",
       "deprecated": true
