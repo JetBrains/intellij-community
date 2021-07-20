@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.descriptors.ParameterDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.idea.frontend.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.idea.frontend.api.analyseForUast
+import org.jetbrains.kotlin.idea.frontend.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.idea.frontend.api.types.*
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
@@ -94,6 +95,17 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             }
             else ->
                 return null
+        }
+    }
+
+    override fun resolveToClassIfConstructorCall(ktCallElement: KtCallElement, source: UElement): PsiElement? {
+        analyseForUast(ktCallElement) {
+            val resolvedFunctionLikeSymbol = ktCallElement.resolveCall()?.targetFunction?.candidates?.singleOrNull() ?: return null
+            return when (resolvedFunctionLikeSymbol) {
+                is KtConstructorSymbol -> null // TODO: PsiClass for the containing class
+                // TODO: SAM constructor
+                else -> null
+            }
         }
     }
 
