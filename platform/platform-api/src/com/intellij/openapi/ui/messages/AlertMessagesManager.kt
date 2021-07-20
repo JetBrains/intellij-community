@@ -400,8 +400,15 @@ private class AlertDialog(project: Project?,
     else {
       myCheckBoxDoNotShowDialog.font = JBFont.regular()
       val wrapper = Wrapper(myCheckBoxDoNotShowDialog)
+      val checkBoxLeftOffset = myCheckBoxDoNotShowDialog.insets.left
       // vertical gap 12 between text message and check box
       wrapper.border = JBUI.Borders.emptyTop(4) // +8 from textPanel layout vGap
+      for (child in UIUtil.uiChildren(textPanel)) {
+        if (child != mySouthPanel) {
+          (child as JComponent).border = JBUI.Borders.emptyLeft(checkBoxLeftOffset)
+        }
+      }
+      (dialogPanel.layout as BorderLayout).hgap -= checkBoxLeftOffset
       // vertical gap 22 between check box and visual part of buttons
       (mySouthPanel.layout as BorderLayout).vgap = JBUI.scale(22 - buttonInsets.top)
       mySouthPanel.add(wrapper, BorderLayout.NORTH)
