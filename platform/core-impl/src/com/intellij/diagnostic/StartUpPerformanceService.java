@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,18 +17,13 @@ import java.util.Objects;
 
 @ApiStatus.Internal
 public interface StartUpPerformanceService {
-  void lastOptionTopHitProviderFinishedForProject(@NotNull Project project);
-
   void reportStatistics(@NotNull Project project);
 
-  @NotNull
-  Map<String, Object2LongMap<String>> getPluginCostMap();
+  @NotNull Map<String, Object2LongMap<String>> getPluginCostMap();
 
-  @Nullable
-  Object2IntMap<String> getMetrics();
+  @Nullable Object2IntMap<String> getMetrics();
 
-  @Nullable
-  ByteBuffer getLastReport();
+  @Nullable ByteBuffer getLastReport();
 
   @NotNull
   static StartUpPerformanceService getInstance() {

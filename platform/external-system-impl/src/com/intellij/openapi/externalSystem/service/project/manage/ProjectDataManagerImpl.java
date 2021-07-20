@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.diagnostic.Activity;
@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.*;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -34,23 +33,20 @@ import java.util.function.Function;
 
 /**
  * Aggregates all {@link ProjectDataService#EP_NAME registered data services} and provides entry points for project data management.
- *
- * @author Denis Zhdanov
  */
-public class ProjectDataManagerImpl implements ProjectDataManager {
+public final class ProjectDataManagerImpl implements ProjectDataManager {
   private static final Logger LOG = Logger.getInstance(ProjectDataManagerImpl.class);
   private static final Function<ProjectDataService<?, ?>, Key<?>> KEY_MAPPER = ProjectDataService::getTargetDataKey;
 
   public static ProjectDataManagerImpl getInstance() {
-    ProjectDataManager service = ApplicationManager.getApplication().getService(ProjectDataManager.class);
-    return (ProjectDataManagerImpl)service;
+    return (ProjectDataManagerImpl)ProjectDataManager.getInstance();
   }
 
   @Override
   @NotNull
   public List<ProjectDataService<?, ?>> findService(@NotNull Key<?> key) {
-    List<ProjectDataService<?, ?>> result =
-      new ArrayList<>(ProjectDataService.EP_NAME.getByGroupingKey(key, ProjectDataManagerImpl.class, KEY_MAPPER));
+    List<ProjectDataService<?, ?>> result = new ArrayList<>(ProjectDataService.EP_NAME
+                                                              .getByGroupingKey(key, ProjectDataManagerImpl.class, KEY_MAPPER));
     ExternalSystemApiUtil.orderAwareSort(result);
     return result;
   }
@@ -155,9 +151,10 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
       }
     }
     runFinalTasks(project, synchronous, onSuccessImportTasks);
-    Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
-    StartUpPerformanceService.getInstance().reportStatistics(project);
+    Application app = ApplicationManager.getApplication();
+    if (!app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
+      StartUpPerformanceService.getInstance().reportStatistics(project);
+    }
   }
 
   private static void runFinalTasks(@NotNull Project project, boolean synchronous, List<? extends Runnable> tasks) {

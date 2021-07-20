@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
-public class ModalityUiUtil {
+public final class ModalityUiUtil {
   /**
    * Use this method when access any PSI, VirtualFiles, project/module model or other project settings, otherwise using
    * a corresponding method from UiUtil is allowed.<p/>

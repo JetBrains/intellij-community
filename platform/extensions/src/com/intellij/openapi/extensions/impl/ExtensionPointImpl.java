@@ -298,19 +298,17 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     }
   }
 
-  public final void processImplementations(boolean shouldBeSorted, @NotNull BiConsumer<? super Supplier<@Nullable T>, ? super PluginDescriptor> consumer) {
+  public final void processImplementations(boolean shouldBeSorted, @NotNull BiConsumer<Supplier<@Nullable T>, PluginDescriptor> consumer) {
     if (isInReadOnlyMode()) {
       for (T extension : cachedExtensions) {
-        Supplier<T> supplier = () -> extension;
-        consumer.accept(supplier, pluginDescriptor /* doesn't matter for tests */);
+        consumer.accept(() -> extension, pluginDescriptor /* doesn't matter for tests */);
       }
       return;
     }
 
     // do not use getThreadSafeAdapterList - no need to check that no listeners, because processImplementations is not a generic-purpose method
     for (ExtensionComponentAdapter adapter : shouldBeSorted ? getSortedAdapters() : adapters) {
-      Supplier<T> supplier = () -> adapter.createInstance(componentManager);
-      consumer.accept(supplier, adapter.getPluginDescriptor());
+      consumer.accept(() -> adapter.createInstance(componentManager), adapter.getPluginDescriptor());
     }
   }
 
