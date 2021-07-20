@@ -137,6 +137,8 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     myActiveVcs = vcs;
     myVcsHistoryProvider = vcsHistoryProvider;
 
+    setIsDecorated(false);
+
     myComments = new JEditorPane(UIUtil.HTML_MIME, "");
     myComments.setPreferredSize(new JBDimension(150, 100));
     myComments.setEditable(false);
@@ -155,7 +157,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
 
     myList.getEmptyText().setText(VcsBundle.message("history.loading.revisions"));
 
-    myDiffPanel = DiffManager.getInstance().createRequestPanel(myProject, this, getFrame(false));
+    myDiffPanel = DiffManager.getInstance().createRequestPanel(myProject, this, getFrame());
     myUpdateQueue = new MergingUpdateQueue("VcsSelectionHistoryDialog", 300, true, myList, this);
 
     mySplitter = new JBSplitter(true, DIFF_SPLITTER_PROPORTION_KEY, DIFF_SPLITTER_PROPORTION);
