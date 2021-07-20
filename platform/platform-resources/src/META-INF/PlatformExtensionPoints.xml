@@ -197,7 +197,7 @@
     <extensionPoint name="fileIconPatcher" interface="com.intellij.ide.FileIconPatcher" dynamic="true"/>
     <extensionPoint name="iconLayerProvider" interface="com.intellij.ide.IconLayerProvider"/>
 
-    <extensionPoint name="customizableActionGroupProvider" interface="com.intellij.ide.ui.customization.CustomizableActionGroupProvider"/>
+    <extensionPoint name="customizableActionGroupProvider" interface="com.intellij.ide.ui.customization.CustomizableActionGroupProvider" dynamic="true"/>
 
     <extensionPoint name="generalOptionsProvider" beanClass="com.intellij.ide.GeneralSettingsConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.SearchableConfigurable"/>
