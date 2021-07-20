@@ -17,10 +17,10 @@ import org.jetbrains.uast.kotlin.internal.TypedResolveResult
 import org.jetbrains.uast.visitor.UastVisitor
 
 class KotlinUFunctionCallExpression(
-        override val sourcePsi: KtCallElement,
-        givenParent: UElement?,
-        private val _resolvedCall: ResolvedCall<*>?
-) : KotlinAbstractUExpression(givenParent), UCallExpressionEx, KotlinUElementWithType, UMultiResolvable {
+    override val sourcePsi: KtCallElement,
+    givenParent: UElement?,
+    private val _resolvedCall: ResolvedCall<*>?
+) : KotlinAbstractUExpression(givenParent), UCallExpression, KotlinUElementWithType, UMultiResolvable {
 
     constructor(psi: KtCallElement, uastParent: UElement?) : this(psi, uastParent, null)
 
@@ -62,17 +62,23 @@ class KotlinUFunctionCallExpression(
             }
             is KtLambdaExpression ->
                 KotlinUIdentifier(calleeExpression.functionLiteral.lBrace, this)
-            else -> KotlinUIdentifier(
-                sourcePsi.valueArgumentList?.leftParenthesis
-                    ?: sourcePsi.lambdaArguments.singleOrNull()?.getLambdaExpression()?.functionLiteral?.lBrace
-                    ?: calleeExpression, this)
+            else ->
+                KotlinUIdentifier(
+                    sourcePsi.valueArgumentList?.leftParenthesis
+                        ?: sourcePsi.lambdaArguments.singleOrNull()?.getLambdaExpression()?.functionLiteral?.lBrace
+                        ?: calleeExpression, this
+                )
         }
     }
 
     override val valueArgumentCount: Int
         get() = sourcePsi.valueArguments.size
 
-    override val valueArguments by lz { sourcePsi.valueArguments.map { KotlinConverter.convertOrEmpty(it.getArgumentExpression(), this) } }
+    override val valueArguments by lz {
+        sourcePsi.valueArguments.map {
+            baseResolveProviderService.baseKotlinConverter.convertOrEmpty(it.getArgumentExpression(), this)
+        }
+    }
 
     override fun getArgumentForParameter(i: Int): UExpression? {
         val resolvedCall = resolvedCall
@@ -110,10 +116,15 @@ class KotlinUFunctionCallExpression(
     override val typeArgumentCount: Int
         get() = sourcePsi.typeArguments.size
 
-    override val typeArguments by lz { sourcePsi.typeArguments.map { it.typeReference.toPsiType(this, boxed = true) } }
+    override val typeArguments by lz {
+        sourcePsi.typeArguments.map { ktTypeProjection ->
+            ktTypeProjection.typeReference?.let { baseResolveProviderService.resolveToType(it, this) } ?: UastErrorType
+        }
+    }
 
-    override val returnType: PsiType?
-        get() = getExpressionType()
+    override val returnType: PsiType? by lz {
+        getExpressionType()
+    }
 
     override val kind: UastCallKind by lz {
         val resolvedCall = resolvedCall ?: return@lz UastCallKind.METHOD_CALL
@@ -124,51 +135,47 @@ class KotlinUFunctionCallExpression(
         }
     }
 
-    override val receiver: UExpression?
-        get() {
-            (uastParent as? UQualifiedReferenceExpression)?.let {
-                if (it.selector == this) return it.receiver
-            }
-
-            val ktNameReferenceExpression = sourcePsi.calleeExpression as? KtNameReferenceExpression ?: return null
-            val localCallableDeclaration =
-                baseResolveProviderService.resolveToDeclaration(ktNameReferenceExpression) as? PsiVariable ?: return null
-            if (localCallableDeclaration !is PsiLocalVariable && localCallableDeclaration !is PsiParameter) return null
-
-            // an implicit receiver for variables calls (KT-25524)
-            return object : KotlinAbstractUExpression(this), UReferenceExpression {
-
-                override val sourcePsi: KtNameReferenceExpression get() = ktNameReferenceExpression
-
-                override val resolvedName: String? get() = localCallableDeclaration.name
-
-                override fun resolve(): PsiElement? = localCallableDeclaration
-
-            }
-
+    override val receiver: UExpression? by lz {
+        (uastParent as? UQualifiedReferenceExpression)?.let {
+            if (it.selector == this) return@lz it.receiver
         }
 
-    private val multiResolved by lazy(fun(): Iterable<TypedResolveResult<PsiMethod>> {
+        val ktNameReferenceExpression = sourcePsi.calleeExpression as? KtNameReferenceExpression ?: return@lz null
+        val localCallableDeclaration =
+            baseResolveProviderService.resolveToDeclaration(ktNameReferenceExpression) as? PsiVariable ?: return@lz null
+        if (localCallableDeclaration !is PsiLocalVariable && localCallableDeclaration !is PsiParameter) return@lz null
+
+        // an implicit receiver for variables calls (KT-25524)
+        object : KotlinAbstractUExpression(this), UReferenceExpression {
+
+            override val sourcePsi: KtNameReferenceExpression get() = ktNameReferenceExpression
+
+            override val resolvedName: String? get() = localCallableDeclaration.name
+
+            override fun resolve(): PsiElement = localCallableDeclaration
+
+        }
+    }
+
+    private val multiResolved: Iterable<TypedResolveResult<PsiMethod>> by lz {
         val contextElement = sourcePsi
-        val calleeExpression = contextElement.calleeExpression as? KtReferenceExpression ?: return emptyList()
-        val methodName = methodName ?: calleeExpression.text ?: return emptyList()
+        val calleeExpression = contextElement.calleeExpression as? KtReferenceExpression ?: return@lz emptyList()
+        val methodName = methodName ?: calleeExpression.text ?: return@lz emptyList()
         val variants = baseResolveProviderService.getReferenceVariants(calleeExpression, methodName)
-        return variants.flatMap {
+        variants.flatMap {
             when (it) {
                 is PsiClass -> it.constructors.asSequence()
                 is PsiMethod -> sequenceOf(it)
                 else -> emptySequence()
             }
         }.map { TypedResolveResult(it) }.asIterable()
-    })
-
-    override fun multiResolve(): Iterable<TypedResolveResult<PsiMethod>> = multiResolved
-
-
-    override fun resolve(): PsiMethod? {
-        val descriptor = resolvedCall?.resultingDescriptor ?: return null
-        return resolveToPsiMethod(sourcePsi, descriptor)
     }
+
+    override fun multiResolve(): Iterable<TypedResolveResult<PsiMethod>> =
+        multiResolved
+
+    override fun resolve(): PsiMethod? =
+        baseResolveProviderService.resolveCall(sourcePsi)
 
     override fun accept(visitor: UastVisitor) {
         if (visitor.visitCallExpression(this)) return
@@ -198,12 +205,11 @@ class KotlinUFunctionCallExpression(
             is UMethod -> result.uastBody ?: result
             is UClass ->
                 result.methods
-                        .filterIsInstance<KotlinConstructorUMethod>()
-                        .firstOrNull { it.isPrimary }
-                        ?.uastBody
+                    .filterIsInstance<KotlinConstructorUMethod>()
+                    .firstOrNull { it.isPrimary }
+                    ?.uastBody
                 ?: result
             else -> result
         }
     }
-
 }
