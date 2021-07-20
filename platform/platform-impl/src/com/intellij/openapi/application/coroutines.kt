@@ -34,6 +34,19 @@ suspend fun <T> smartReadAction(project: Project, action: (progress: Progress) -
   return constrainedReadAction(ReadConstraints.inSmartMode(project), action)
 }
 
+/**
+ * Runs given [action] under [read lock][com.intellij.openapi.application.Application.runReadAction]
+ * **without** preventing write actions.
+ *
+ * The function suspends if at the moment of calling it's not possible to acquire the read lock,
+ * or if [constraints] are not [satisfied][ContextConstraint.isCorrectContext].
+ * If the write action happens while the [action] is running, then the [action] is canceled,
+ * and the function suspends until its possible to acquire the read lock, and then the [action] is tried again.
+ *
+ * Since the [action] might me executed several times, it must be idempotent.
+ * The function returns when given [action] was completed fully.
+ * [Progress] passed to the action must be used to check for cancellation inside the [action].
+ */
 suspend fun <T> constrainedReadAction(constraints: ReadConstraints, action: (progress: Progress) -> T): T {
   val application: ApplicationEx = ApplicationManager.getApplication() as ApplicationEx
   check(!application.isDispatchThread) {
