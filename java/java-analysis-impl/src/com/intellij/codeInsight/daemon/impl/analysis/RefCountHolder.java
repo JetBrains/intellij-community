@@ -10,8 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMatcherImpl;
@@ -25,28 +23,27 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
 final class RefCountHolder {
   private final PsiFile myFile;
   // resolved elements -> list of their references in this file
-  private final MultiMap<PsiElement, PsiReference> myLocalRefsMap = MultiMap.createConcurrentSet();
+  private final MultiMap<PsiElement, PsiReference> myLocalRefsMap;
 
-  private final Set<PsiAnchor> myDclsUsedMap = ConcurrentCollectionFactory.createConcurrentSet(HashingStrategy.canonical());
+  private final Set<PsiAnchor> myDclsUsedMap;
   // reference -> import statement the reference has come from
-  private final Map<PsiReference, PsiImportStatementBase> myImportStatements = ConcurrentCollectionFactory.createConcurrentMap();
+  private final Map<PsiReference, PsiImportStatementBase> myImportStatements;
 
   private static final Key<Reference<RefCountHolder>> REF_COUNT_HOLDER_IN_FILE_KEY = Key.create("REF_COUNT_HOLDER_IN_FILE_KEY");
 
   @NotNull
   static RefCountHolder get(@NotNull PsiFile file, boolean alwaysNew) {
     Reference<RefCountHolder> ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
-    if (alwaysNew) {
-      ((UserDataHolderEx)file).replace(REF_COUNT_HOLDER_IN_FILE_KEY, ref, null);
-    }
-    RefCountHolder holder = com.intellij.reference.SoftReference.dereference(ref);
-    return holder == null || alwaysNew ? new RefCountHolder(file) : holder;
+    RefCountHolder storedHolder = com.intellij.reference.SoftReference.dereference(ref);
+    return storedHolder == null || alwaysNew ? new RefCountHolder(file) : storedHolder.removeInvalidRefs();
   }
 
   void storeReadyHolder(@NotNull PsiFile file) {
@@ -54,7 +51,14 @@ final class RefCountHolder {
   }
 
   private RefCountHolder(@NotNull PsiFile file) {
+    this(file, MultiMap.createConcurrentSet(), ConcurrentCollectionFactory.createConcurrentSet(HashingStrategy.canonical()), ConcurrentCollectionFactory.createConcurrentMap());
+  }
+  // copy ctr
+  private RefCountHolder(@NotNull PsiFile file, @NotNull MultiMap<PsiElement, PsiReference> myLocalRefsMap, @NotNull Set<PsiAnchor> myDclsUsedMap, @NotNull Map<PsiReference, PsiImportStatementBase> myImportStatements) {
     myFile = file;
+    this.myLocalRefsMap = myLocalRefsMap;
+    this.myDclsUsedMap = myDclsUsedMap;
+    this.myImportStatements = myImportStatements;
     log("c: created for ", file);
   }
 
@@ -142,25 +146,42 @@ final class RefCountHolder {
     myLocalRefsMap.putValue(refElement, ref);
   }
 
-  private void removeInvalidRefs() {
-    List<Pair<PsiElement, PsiReference>> toRemove = new ArrayList<>();
+  @NotNull
+  private RefCountHolder removeInvalidRefs() {
+    boolean changed = false;
+    MultiMap<PsiElement, PsiReference> newLocalRefsMap = MultiMap.createConcurrentSet();
     for (Map.Entry<PsiElement, Collection<PsiReference>> entry : myLocalRefsMap.entrySet()) {
       PsiElement element = entry.getKey();
       for (PsiReference ref : entry.getValue()) {
-        if (!ref.getElement().isValid()) {
-          toRemove.add(Pair.create(element, ref));
+        if (ref.getElement().isValid()) {
+          newLocalRefsMap.putValue(element, ref);
+        }
+        else {
+          changed = true;
         }
       }
     }
-    for (Pair<PsiElement, PsiReference> pair : toRemove) {
-      myLocalRefsMap.remove(pair.first, pair.second);
+    Set<PsiAnchor> newDclsUsedMap = ConcurrentCollectionFactory.createConcurrentSet(HashingStrategy.canonical());
+    for (PsiAnchor element : myDclsUsedMap) {
+      if (element.retrieve() != null) {
+        newDclsUsedMap.add(element);
+      }
+      else {
+        changed = true;
+      }
     }
-    myImportStatements.entrySet().removeIf(e -> !e.getValue().isValid() || !e.getKey().getElement().isValid());
-    removeInvalidFrom(myDclsUsedMap);
-  }
-
-  private static void removeInvalidFrom(@NotNull Collection<? extends PsiAnchor> collection) {
-    collection.removeIf(element -> element.retrieve() == null);
+    Map<PsiReference, PsiImportStatementBase> newImportStatements = ConcurrentCollectionFactory.createConcurrentMap();
+    for (Map.Entry<PsiReference, PsiImportStatementBase> entry : myImportStatements.entrySet()) {
+      PsiReference key = entry.getKey();
+      PsiImportStatementBase value = entry.getValue();
+      if (value.isValid() && key.getElement().isValid()) {
+        newImportStatements.put(key, value);
+      }
+      else {
+        changed = true;
+      }
+    }
+    return changed ? new RefCountHolder(myFile, newLocalRefsMap, newDclsUsedMap, newImportStatements) : this;
   }
 
   boolean isReferenced(@NotNull PsiElement element) {
@@ -276,12 +297,6 @@ final class RefCountHolder {
       }
     }
     return false;
-  }
-
-  boolean analyze(@NotNull Runnable highlight) {
-    removeInvalidRefs();
-    highlight.run();
-    return true;
   }
 
   private static void log(@NonNls Object @NotNull ... info) {
