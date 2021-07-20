@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.switchbranches;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
@@ -90,7 +90,7 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
         return range.stream().mapToObj(c -> Value.fromConstant(TypeConversionUtil.computeCastTo(c, type))).collect(Collectors.toList());
       }
       Set<Object> values = dfr.getExpressionValues(expression);
-      if (!values.isEmpty() && values.size() <= MAX_NUMBER_OF_BRANCHES && values.stream().allMatch(v -> v instanceof String)) {
+      if (!values.isEmpty() && values.size() <= MAX_NUMBER_OF_BRANCHES && ContainerUtil.and(values, v -> v instanceof String)) {
         return values.stream().map(Value::fromConstant).sorted(Comparator.comparing(v -> (String)v.myValue)).collect(Collectors.toList());
       }
     }
