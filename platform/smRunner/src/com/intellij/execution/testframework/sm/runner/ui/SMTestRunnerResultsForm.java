@@ -73,8 +73,6 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 
-import static com.intellij.rt.execution.TestListenerProtocol.CLASS_CONFIGURATION;
-
 /**
  * @author: Roman Chernyatchik
  */
@@ -330,7 +328,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    */
   @Override
   public void onTestStarted(@NotNull final SMTestProxy testProxy) {
-    if (!testProxy.isConfig() && !CLASS_CONFIGURATION.equals(testProxy.getName())) {
+    if (!testProxy.isConfig() && !TestListenerProtocol.CLASS_CONFIGURATION.equals(testProxy.getName())) {
       updateOnTestStarted(false);
     }
     _addTestOrSuite(testProxy);
