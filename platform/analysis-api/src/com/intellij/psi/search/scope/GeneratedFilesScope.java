@@ -26,4 +26,9 @@ public final class GeneratedFilesScope extends NamedScope {
           }
     );
   }
+
+  @Override
+  public @NotNull String getDefaultColorName() {
+    return "Gray";
+  }
 }
