@@ -434,19 +434,24 @@ public class UnscrambleDialog extends DialogWrapper {
   @Nullable
   private static String getExceptionAbbreviation(String line) {
     line = StringUtil.trimStart(line.trim(), "Caused by: ");
-    int lastDelimiter = 0;
+    int classNameStart = 0;
+    int classNameEnd = line.length();
     for (int j = 0; j < line.length(); j++) {
       char c = line.charAt(j);
       if (c == '.' || c == '$') {
-        lastDelimiter = j;
+        classNameStart = j + 1;
         continue;
+      }
+      if (c == ':') {
+        classNameEnd = j;
+        break;
       }
       if (!StringUtil.isJavaIdentifierPart(c)) {
         return null;
       }
     }
-    String clazz = line.substring(lastDelimiter);
-    if (clazz.isEmpty()) return null;
+    if (classNameStart >= classNameEnd) return null;
+    String clazz = line.substring(classNameStart, classNameEnd);
     String abbreviate = abbreviate(clazz);
     return abbreviate.length() > 1 ? abbreviate : clazz;
   }
