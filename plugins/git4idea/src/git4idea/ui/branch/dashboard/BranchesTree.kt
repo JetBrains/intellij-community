@@ -402,16 +402,19 @@ internal class FilteringBranchesTree(project: Project,
   private fun BranchNodeDescriptor.getDirectChildren() = nodeDescriptorsModel.getChildrenForParent(this)
 
   fun update(initial: Boolean) {
-    if (rebuildTree(initial)) {
+    val branchesReloaded = uiController.reloadBranches()
+    runPreservingTreeState(initial) {
+      searchModel.updateStructure()
+    }
+    if (branchesReloaded) {
       tree.revalidate()
       tree.repaint()
     }
   }
 
-  fun rebuildTree(initial: Boolean): Boolean {
-    val rebuilded = uiController.reloadBranches()
-    val treeState = if (initial) treeStateHolder.treeState else TreeState.createOn(tree, root)
-    searchModel.updateStructure()
+  private fun runPreservingTreeState(loadSaved: Boolean, runnable: () -> Unit) {
+    val treeState = if (loadSaved) treeStateHolder.treeState else TreeState.createOn(tree, root)
+    runnable()
     if (treeState != null) {
       treeState.applyTo(tree)
     }
@@ -424,15 +427,14 @@ internal class FilteringBranchesTree(project: Project,
         TreeUtil.expandAll(tree)
       }
     }
-    return rebuilded
   }
 
   fun refreshTree() {
-    val treeState = TreeState.createOn(tree, root)
-    tree.selectionModel.clearSelection()
-    refreshNodeDescriptorsModel()
-    searchModel.updateStructure()
-    treeState.applyTo(tree)
+    runPreservingTreeState(false) {
+      tree.selectionModel.clearSelection()
+      refreshNodeDescriptorsModel()
+      searchModel.updateStructure()
+    }
   }
 
   fun refreshNodeDescriptorsModel() {
