@@ -353,7 +353,7 @@ private class AlertDialog(project: Project?,
 
     if (myIsTitleComponent && !StringUtil.isEmpty(myTitle)) {
       val titleComponent = createTextComponent(JTextPane(), UIUtil.removeMnemonic(myTitle!!))
-      titleComponent.font = JBFont.h3().asBold()
+      titleComponent.font = JBFont.h4()
       myTitleComponent = titleComponent
       textPanel.add(titleComponent, BorderLayout.NORTH)
     }
@@ -371,7 +371,7 @@ private class AlertDialog(project: Project?,
         }
       }, myMessage!!.replace("(\r\n|\n)".toRegex(), "<br/>"))
 
-      messageComponent.font = JBFont.medium()
+      messageComponent.font = JBFont.regular()
       myMessageComponent = messageComponent
 
       val lines = myMessage.length / 100
@@ -398,7 +398,7 @@ private class AlertDialog(project: Project?,
       myButtonsPanel.border = JBUI.Borders.emptyTop(14 - buttonInsets.top) // +8 from textPanel layout vGap
     }
     else {
-      myCheckBoxDoNotShowDialog.font = JBFont.medium()
+      myCheckBoxDoNotShowDialog.font = JBFont.regular()
       val wrapper = Wrapper(myCheckBoxDoNotShowDialog)
       // vertical gap 12 between text message and check box
       wrapper.border = JBUI.Borders.emptyTop(4) // +8 from textPanel layout vGap
@@ -490,9 +490,9 @@ private class AlertDialog(project: Project?,
     val size = button.preferredSize
     val insets = button.insets
 
-    val width100 = JBUI.scale(100) + insets.left + insets.right
-    if (size.width < width100) {
-      size.width = width100
+    val width = JBUI.scale(72) + insets.left + insets.right
+    if (size.width < width) {
+      size.width = width
     }
     else {
       val diffWidth = JBUI.scale(20) - UIUtil.getButtonTextHorizontalOffset(button, size, null)
@@ -501,9 +501,9 @@ private class AlertDialog(project: Project?,
       }
     }
 
-    val height28 = JBUI.scale(28) + insets.top + insets.bottom
-    if (size.height < height28) {
-      size.height = height28
+    val height = JBUI.scale(24) + insets.top + insets.bottom
+    if (size.height < height) {
+      size.height = height
     }
 
     button.preferredSize = size

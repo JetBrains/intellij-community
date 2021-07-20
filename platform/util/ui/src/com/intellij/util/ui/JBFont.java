@@ -84,7 +84,7 @@ public class JBFont extends Font {
   public static JBFont h1() { return label().biggerOn(9).asBold(); }
   public static JBFont h2() { return label().biggerOn(5); }
   public static JBFont h3() { return label().biggerOn(3); }
-  public static JBFont h4() { return label().asBold(); }
+  public static JBFont h4() { return label().biggerOn(1).asBold(); }
   public static JBFont regular() { return label(); }
   public static JBFont medium() { return SystemInfo.isWindows ? label() : label().lessOn(1); }
   public static JBFont small() { return SystemInfo.isWindows ? label() : label().lessOn(2); }
