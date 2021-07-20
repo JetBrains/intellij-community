@@ -1,10 +1,10 @@
 public final class PropertyTest {
     public fun PropertyTest() = UastEmptyExpression
     public final fun getStringRepresentation() : java.lang.String {
-        return this.[!] UnknownKotlinExpression (CALL_EXPRESSION)
+        return this.toString()
     }
     public final fun setStringRepresentation(@org.jetbrains.annotations.NotNull value: java.lang.String) : void {
-        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        setDataFromString(value)
     }
     public final fun setDataFromString(@org.jetbrains.annotations.NotNull data: java.lang.String) : void {
     }

@@ -6,4 +6,4 @@ length -> USimpleNameReferenceExpression (identifier = length) from KtNameRefere
 MyReceiverAnnotation -> USimpleNameReferenceExpression (identifier = MyReceiverAnnotation) from KtNameReferenceExpression
 String -> USimpleNameReferenceExpression (identifier = String) from KtNameReferenceExpression
 Regex -> USimpleNameReferenceExpression (identifier = Regex) from KtNameReferenceExpression
-toRegex -> [!] UnknownKotlinExpression (CALL_EXPRESSION) from KtNameReferenceExpression
+toRegex -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtNameReferenceExpression

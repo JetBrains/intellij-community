@@ -13,11 +13,11 @@ class FirKotlinUClass(
     givenParent: UElement?,
 ) : BaseKotlinUClass(psi, givenParent) {
     override fun buildPrimaryConstructorUMethod(ktClass: KtClassOrObject?, psi: KtLightMethod, givenParent: UElement?): UMethod {
-        return FirKotlinConstructorUMethod(ktClass, psi, givenParent)
+        return KotlinConstructorUMethod(ktClass, psi, givenParent)
     }
 
     override fun buildSecondaryConstructorUMethod(ktClass: KtClassOrObject?, psi: KtLightMethod, givenParent: UElement?): UMethod {
-        return FirKotlinSecondaryConstructorWithInitializersUMethod(ktClass, psi, givenParent)
+        return KotlinSecondaryConstructorWithInitializersUMethod(ktClass, psi, givenParent)
     }
 
     companion object {

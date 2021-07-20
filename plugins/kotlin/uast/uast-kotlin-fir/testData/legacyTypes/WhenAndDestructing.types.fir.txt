@@ -4,9 +4,13 @@ UFile (package = ) [public final class WhenAndDestructingKt {...]
             UParameter (name = string) [@org.jetbrains.annotations.NotNull var string: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:Unit
-                UDeclarationsExpression [var arr: java.util.List<? extends java.lang.String> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    ULocalVariable (name = arr) [var arr: java.util.List<? extends java.lang.String> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UDeclarationsExpression [var arr: java.util.List<? extends java.lang.String> = listOf("1", "2")]
+                    ULocalVariable (name = arr) [var arr: java.util.List<? extends java.lang.String> = listOf("1", "2")]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [listOf("1", "2")] : PsiType:List<? extends String>
+                            UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
+                            USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends String>
+                            ULiteralExpression (value = "1") ["1"] : PsiType:String
+                            ULiteralExpression (value = "2") ["2"] : PsiType:String
                 USwitchExpression [switch (string)  {...] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = string) [string] : PsiType:String
                     UExpressionList (when) [    "aaaa" -> {...    ] : PsiType:Unit

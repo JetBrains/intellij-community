@@ -21,7 +21,7 @@ open class KotlinUBlockExpression(
         if (directParent is UnknownKotlinExpression && directParent.sourcePsi is KtAnonymousInitializer) {
             val containingUClass = directParent.getContainingUClass() ?: return directParent
             containingUClass.methods.find {
-                it is BaseKotlinConstructorUMethod && it.isPrimary || it is BaseKotlinSecondaryConstructorWithInitializersUMethod
+                it is KotlinConstructorUMethod && it.isPrimary || it is KotlinSecondaryConstructorWithInitializersUMethod
             }?.let {
                 return it.uastBody
             }

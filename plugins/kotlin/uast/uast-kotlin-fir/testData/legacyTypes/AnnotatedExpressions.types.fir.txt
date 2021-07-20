@@ -37,11 +37,13 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                                 UExpressionList (when_entry) [{...]
                                     UYieldExpression [yield null]
                                         ULiteralExpression (value = null) [null] : PsiType:Void
-                            USwitchClauseExpressionWithBody [str.[!] UnknownKotlinExpression (CALL_EXPRESSION) != null -> {...]
-                                UBinaryExpression (operator = !=) [str.[!] UnknownKotlinExpression (CALL_EXPRESSION) != null] : PsiType:boolean
-                                    UQualifiedReferenceExpression [str.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:boolean
+                            USwitchClauseExpressionWithBody [str.isNotEmpty() != null -> {...]
+                                UBinaryExpression (operator = !=) [str.isNotEmpty() != null] : PsiType:boolean
+                                    UQualifiedReferenceExpression [str.isNotEmpty()] : PsiType:boolean
                                         USimpleNameReferenceExpression (identifier = str) [str] : PsiType:String
-                                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [isNotEmpty()] : PsiType:boolean
+                                            UIdentifier (Identifier (isNotEmpty)) [UIdentifier (Identifier (isNotEmpty))]
+                                            USimpleNameReferenceExpression (identifier = isNotEmpty, resolvesTo = null) [isNotEmpty] : PsiType:boolean
                                     ULiteralExpression (value = null) [null] : PsiType:Void
                                 UExpressionList (when_entry) [{...]
                                     UYieldExpression [yield null]

@@ -16,7 +16,7 @@ public final class BrokenMethodKt {
                 public static final class Companion {
                     private fun Companion() = UastEmptyExpression
                     public final fun doStuff1(@org.jetbrains.annotations.NotNull $this$doStuff1: java.lang.Object) : TestUsed.Used {
-                        return [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                        return <anonymous class>(this)
                     }
                 }
             }

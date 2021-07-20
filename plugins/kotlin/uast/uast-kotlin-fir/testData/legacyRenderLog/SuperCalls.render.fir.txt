@@ -15,7 +15,7 @@ public class A {
     @org.jetbrains.annotations.NotNull private final var str: java.lang.String
     public fun A(@org.jetbrains.annotations.NotNull str: java.lang.String) = UastEmptyExpression
     public fun A(@org.jetbrains.annotations.NotNull i: int) {
-        UastEmptyExpression
+        <anonymous class>(i.toString())
     }
     public final fun getStr() : java.lang.String = UastEmptyExpression
     public fun foo(@org.jetbrains.annotations.NotNull a: long) : void {
@@ -24,20 +24,20 @@ public class A {
 
 public final class B : A {
     public fun B(@org.jetbrains.annotations.NotNull param: java.lang.String) {
-        UastEmptyExpression
+        <anonymous class>(param)
     }
 }
 
 public final class C : A {
     public fun C(@org.jetbrains.annotations.NotNull p: java.lang.String) {
-        UastEmptyExpression
+        <anonymous class>(p)
     }
     public fun C(@org.jetbrains.annotations.NotNull i: int) {
-        UastEmptyExpression
-        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        <anonymous class>(i)
+        println()
     }
     public fun foo(@org.jetbrains.annotations.NotNull a: long) : void {
-        super.[!] UnknownKotlinExpression (CALL_EXPRESSION)
+        super.foo(a)
     }
 }
 

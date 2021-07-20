@@ -1,9 +1,12 @@
 UFile (package = ) [public final class Demo {...]
     UClass (name = Demo) [public final class Demo {...}]
-        UField (name = foo) [@null private final var foo: error.NonExistentClass = X.[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+        UField (name = foo) [@null private final var foo: error.NonExistentClass = X.<anonymous class>("lorem")]
             UAnnotation (fqName = null) [@null]
-            UQualifiedReferenceExpression [X.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+            UQualifiedReferenceExpression [X.<anonymous class>("lorem")] = external <anonymous class>("lorem")("lorem")
                 USimpleNameReferenceExpression (identifier = X) [X] = external X()
-                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [<anonymous class>("lorem")] = external <anonymous class>("lorem")("lorem")
+                    UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>("lorem")("lorem")
+                    ULiteralExpression (value = "lorem") ["lorem"] = "lorem"
         UMethod (name = Demo) [public fun Demo() = UastEmptyExpression]
         UMethod (name = getFoo) [public final fun getFoo() : error.NonExistentClass = UastEmptyExpression]

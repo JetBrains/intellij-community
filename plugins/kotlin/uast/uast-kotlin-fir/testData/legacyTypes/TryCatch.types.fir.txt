@@ -5,14 +5,20 @@ UFile (package = ) [public final class TryCatch {...]
             UBlockExpression [{...}] : PsiType:Unit
                 UTryExpression [try {...}] : PsiType:Unit
                     UBlockExpression [{...}] : PsiType:Unit
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [body()] : PsiType:Unit
+                            UIdentifier (Identifier (body)) [UIdentifier (Identifier (body))]
+                            USimpleNameReferenceExpression (identifier = body, resolvesTo = null) [body] : PsiType:Unit
                     UCatchClause (e) [catch (@org.jetbrains.annotations.NotNull var e: java.lang.Throwable) {...}]
                         UParameter (name = e) [@org.jetbrains.annotations.NotNull var e: java.lang.Throwable]
                             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                         UBlockExpression [{...}] : PsiType:Unit
-                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [catcher()] : PsiType:Unit
+                                UIdentifier (Identifier (catcher)) [UIdentifier (Identifier (catcher))]
+                                USimpleNameReferenceExpression (identifier = catcher, resolvesTo = null) [catcher] : PsiType:Unit
                     UBlockExpression [{...}] : PsiType:Unit
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [finalizer()] : PsiType:Unit
+                            UIdentifier (Identifier (finalizer)) [UIdentifier (Identifier (finalizer))]
+                            USimpleNameReferenceExpression (identifier = finalizer, resolvesTo = null) [finalizer] : PsiType:Unit
         UMethod (name = body) [public final fun body() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
         UMethod (name = catcher) [public final fun catcher() : void {...}]
@@ -25,15 +31,21 @@ UFile (package = ) [public final class TryCatch {...]
             UBlockExpression [{...}] : PsiType:Unit
                 UTryExpression [try {...}] : PsiType:Unit
                     UBlockExpression [{...}] : PsiType:Unit
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [body()] : PsiType:Unit
+                            UIdentifier (Identifier (body)) [UIdentifier (Identifier (body))]
+                            USimpleNameReferenceExpression (identifier = body, resolvesTo = null) [body] : PsiType:Unit
                     UCatchClause (e) [catch (@org.jetbrains.annotations.NotNull @not-implemented-annotation var e: java.lang.Throwable) {...}]
                         UParameter (name = e) [@org.jetbrains.annotations.NotNull @not-implemented-annotation var e: java.lang.Throwable]
                             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                             UAnnotation (fqName = not-implemented-annotation) [@not-implemented-annotation]
                         UBlockExpression [{...}] : PsiType:Unit
-                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [catcher()] : PsiType:Unit
+                                UIdentifier (Identifier (catcher)) [UIdentifier (Identifier (catcher))]
+                                USimpleNameReferenceExpression (identifier = catcher, resolvesTo = null) [catcher] : PsiType:Unit
                     UBlockExpression [{...}] : PsiType:Unit
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [finalizer()] : PsiType:Unit
+                            UIdentifier (Identifier (finalizer)) [UIdentifier (Identifier (finalizer))]
+                            USimpleNameReferenceExpression (identifier = finalizer, resolvesTo = null) [finalizer] : PsiType:Unit
         UMethod (name = body) [public final fun body() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
         UMethod (name = catcher) [public final fun catcher() : void {...}]

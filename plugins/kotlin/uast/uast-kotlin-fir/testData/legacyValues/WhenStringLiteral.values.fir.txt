@@ -1,8 +1,10 @@
 UFile (package = ) [public final class WhenStringLiteralKt {...]
     UClass (name = WhenStringLiteralKt) [public final class WhenStringLiteralKt {...}]
-        UField (name = a) [@org.jetbrains.annotations.Nullable private static final var a: java.lang.String = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+        UField (name = a) [@org.jetbrains.annotations.Nullable private static final var a: java.lang.String = readLine()]
             UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
-            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [readLine()] = external readLine()()
+                UIdentifier (Identifier (readLine)) [UIdentifier (Identifier (readLine))]
+                USimpleNameReferenceExpression (identifier = readLine, resolvesTo = null) [readLine] = external readLine()()
         UField (name = b) [@org.jetbrains.annotations.NotNull private static final var b: int = switch (a)  {...]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             USwitchExpression [switch (a)  {...] = Phi((long)1, (long)2)

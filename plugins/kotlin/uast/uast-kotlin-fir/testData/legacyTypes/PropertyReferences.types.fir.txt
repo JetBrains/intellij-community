@@ -2,9 +2,12 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
     UClass (name = PropertyReferencesKt) [public final class PropertyReferencesKt {...}]
         UMethod (name = properties) [public static final fun properties() : void {...}]
             UBlockExpression [{...}] : PsiType:int
-                UDeclarationsExpression [var a: A = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    ULocalVariable (name = a) [var a: A = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UDeclarationsExpression [var a: A = <anonymous class>(17)]
+                    ULocalVariable (name = a) [var a: A = <anonymous class>(17)]
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<anonymous class>(17)] : PsiType:A
+                            UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
+                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:A
+                            ULiteralExpression (value = 17) [17] : PsiType:int
                 UDeclarationsExpression [var x: int = -a.mutableProp]
                     ULocalVariable (name = x) [var x: int = -a.mutableProp]
                         UPrefixExpression (operator = -) [-a.mutableProp] : PsiType:int

@@ -79,7 +79,24 @@ UFile (package = org.jetbrains.uast.kotlin)
                                     UBinaryExpression (operator = +)
                                         ULiteralExpression (value = "a")
                                         USimpleNameReferenceExpression (identifier = a)
-                [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                    UIdentifier (Identifier (bar))
+                    USimpleNameReferenceExpression (identifier = bar, resolvesTo = null)
+                    ULambdaExpression
+                        UParameter (name = it)
+                        UBlockExpression
+                            UIfExpression
+                                UBinaryExpression (operator = >)
+                                    USimpleNameReferenceExpression (identifier = it)
+                                    ULiteralExpression (value = 5)
+                                UReturnExpression
+                            UDeclarationsExpression
+                                ULocalVariable (name = b)
+                                    ULiteralExpression (value = 1)
+                            UReturnExpression
+                                UBinaryExpression (operator = +)
+                                    USimpleNameReferenceExpression (identifier = it)
+                                    USimpleNameReferenceExpression (identifier = b)
                 UDeclarationsExpression
                     ULocalVariable (name = x)
                         ULambdaExpression
@@ -87,10 +104,17 @@ UFile (package = org.jetbrains.uast.kotlin)
                                 UDeclarationsExpression
                                     ULocalVariable (name = vardbcd0724)
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull)
-                                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
+                                            UIdentifier (Identifier (listOf))
+                                            USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null)
+                                            ULiteralExpression (value = 1)
+                                            ULiteralExpression (value = 2)
                 UDeclarationsExpression
                     ULocalVariable (name = y)
                         ULambdaExpression
                             UBlockExpression
                                 UReturnExpression
-                                    [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                        UIdentifier (Identifier (listOf))
+                                        USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null)
+                                        ULiteralExpression (value = 1)

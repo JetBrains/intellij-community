@@ -1,26 +1,29 @@
 public final class ResolveKt {
     public static final fun bar() : void {
-        [!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)
-        [!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)
-        [!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)
-        [!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)
-        [!] UnknownKotlinExpression (CALL_EXPRESSION).size
-        [!] UnknownKotlinExpression (CALL_EXPRESSION).indices
-        var date: java.util.Date = java.util.[!] UnknownKotlinExpression (CALL_EXPRESSION)
+        <anonymous class>().foo()
+        <anonymous class>().inlineFoo()
+        listOf(<anonymous class>()).forEach({ var it: <ErrorType> ->
+
+            println(it)
+        })
+        listOf("").joinToString()
+        listOf("").size
+        listOf("").indices
+        var date: java.util.Date = java.util.<anonymous class>()
         date.time = 1000
-        [!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)
-        [!] UnknownKotlinExpression (CALL_EXPRESSION).entries.[!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)
+        listOf("").last()
+        mutableMapOf(1 <other> "1").entries.first().setValue("123")
         var intRange: kotlin.ranges.LongRange = 0 .. 3
-        intRange.[!] UnknownKotlinExpression (CALL_EXPRESSION)
-        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        intRange.contains(2 as int)
+        <anonymous class>(1, 2)
     }
     public static final fun barT(@org.jetbrains.annotations.NotNull t: T) : void {
-        t.[!] UnknownKotlinExpression (CALL_EXPRESSION)
+        t.foo()
     }
     public static final fun barTL(@org.jetbrains.annotations.NotNull listT: T) : void {
-        listT.[!] UnknownKotlinExpression (CALL_EXPRESSION)
+        listT.isEmpty()
         for (a : listT) {
-            a.[!] UnknownKotlinExpression (CALL_EXPRESSION)
+            a.foo()
         }
     }
 }

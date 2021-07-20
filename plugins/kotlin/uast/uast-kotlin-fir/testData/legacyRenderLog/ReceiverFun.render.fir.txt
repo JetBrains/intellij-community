@@ -3,7 +3,7 @@ public final class ReceiverFunKt {
         return this.length
     }
     public static final fun getRx(@not-implemented-annotation @org.jetbrains.annotations.NotNull $this$rx: java.lang.String) : kotlin.text.Regex {
-        return [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        return toRegex()
     }
 }
 

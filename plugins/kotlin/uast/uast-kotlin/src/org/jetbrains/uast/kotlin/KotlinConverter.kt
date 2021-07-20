@@ -2,7 +2,6 @@
 
 package org.jetbrains.uast.kotlin
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement

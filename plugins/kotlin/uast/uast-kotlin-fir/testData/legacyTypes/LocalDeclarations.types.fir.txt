@@ -9,13 +9,17 @@ UFile (package = ) [public final class LocalDeclarationsKt {...]
                     UVariable (name = bar) [var bar: kotlin.jvm.functions.Function0<? extends Local> = fun () {...}]
                         ULambdaExpression [fun () {...}]
                             UBlockExpression [{...}]
-                                UReturnExpression [return [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                                UReturnExpression [return <anonymous class>()]
+                                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<anonymous class>()] : PsiType:Local
+                                        UIdentifier (Identifier (Local)) [UIdentifier (Identifier (Local))]
+                                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:Local
                 UDeclarationsExpression [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}]
                     ULocalVariable (name = baz) [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}]
                         ULambdaExpression [fun () {...}]
                             UBlockExpression [{...}] : PsiType:Local
-                                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<anonymous class>()] : PsiType:Local
+                                    UIdentifier (Identifier (Local)) [UIdentifier (Identifier (Local))]
+                                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:Local
                 UDeclarationsExpression [var someLocalFun: kotlin.jvm.functions.Function2<? super java.lang.Integer,? super java.lang.String,? extends java.lang.Integer> = fun (@org.jetbrains.annotations.NotNull var text: java.lang.String) {...}]
                     UVariable (name = someLocalFun) [var someLocalFun: kotlin.jvm.functions.Function2<? super java.lang.Integer,? super java.lang.String,? extends java.lang.Integer> = fun (@org.jetbrains.annotations.NotNull var text: java.lang.String) {...}]
                         ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var text: java.lang.String) {...}]
@@ -24,7 +28,11 @@ UFile (package = ) [public final class LocalDeclarationsKt {...]
                             UBlockExpression [{...}]
                                 UReturnExpression [return 42]
                                     ULiteralExpression (value = 42) [42] : PsiType:int
-                UReturnExpression [return [!] UnknownKotlinExpression (CALL_EXPRESSION) == [!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:Void
-                    UBinaryExpression (operator = ==) [[!] UnknownKotlinExpression (CALL_EXPRESSION) == [!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:boolean
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UReturnExpression [return bar() == <anonymous class>()] : PsiType:Void
+                    UBinaryExpression (operator = ==) [bar() == <anonymous class>()] : PsiType:boolean
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [bar()] : PsiType:Local
+                            UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
+                            USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] : PsiType:Local
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<anonymous class>()] : PsiType:Local
+                            UIdentifier (Identifier (Local)) [UIdentifier (Identifier (Local))]
+                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:Local

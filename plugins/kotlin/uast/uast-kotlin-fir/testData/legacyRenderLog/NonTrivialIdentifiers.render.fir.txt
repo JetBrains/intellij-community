@@ -1,15 +1,19 @@
 public final class NonTrivialIdentifiersKt {
     public static final fun main(@org.jetbrains.annotations.Nullable a: A) : void {
-        [!] UnknownKotlinExpression (CALL_EXPRESSION)
-        var p: A = [!] UnknownKotlinExpression (CALL_EXPRESSION)
-        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        invoke()
+        var p: A = <anonymous class>()
+        invoke({
+            invoke({
+                invoke()
+            })
+        })
     }
 }
 
 public final class A {
     public fun A() = UastEmptyExpression
     public final fun invoke() : void {
-        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        invoke()
     }
     public final fun invoke(@org.jetbrains.annotations.NotNull f: kotlin.jvm.functions.Function0<? extends kotlin.Unit>) : void {
     }

@@ -35,5 +35,8 @@ UFile (package = ) [public final class BrokenMethodKt {...]
                                     UParameter (name = $this$doStuff1) [@org.jetbrains.annotations.NotNull var $this$doStuff1: java.lang.Object]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                                     UBlockExpression [{...}] = Nothing
-                                        UReturnExpression [return [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Nothing
-                                            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                                        UReturnExpression [return <anonymous class>(this)] = Nothing
+                                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<anonymous class>(this)] = external <anonymous class>(this)(Undetermined)
+                                                UIdentifier (Identifier (Used)) [UIdentifier (Identifier (Used))]
+                                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>(this)(Undetermined)
+                                                UThisExpression (label = null) [this] = Undetermined

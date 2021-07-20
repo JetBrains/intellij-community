@@ -6,7 +6,11 @@ UFile (package = )
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = arr)
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
+                            UIdentifier (Identifier (listOf))
+                            USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null)
+                            ULiteralExpression (value = "1")
+                            ULiteralExpression (value = "2")
                 USwitchExpression
                     USimpleNameReferenceExpression (identifier = string)
                     UExpressionList (when)

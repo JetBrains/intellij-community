@@ -4,8 +4,11 @@ UFile (package = ) [public final class ConstructorDelegateKt {...]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Nothing
-                UReturnExpression [return [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Nothing
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                UReturnExpression [return <anonymous class>(i)] = Nothing
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<anonymous class>(i)] = external <anonymous class>(i)(Undetermined)
+                        UIdentifier (Identifier (BaseImpl)) [UIdentifier (Identifier (BaseImpl))]
+                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>(i)(Undetermined)
+                        USimpleNameReferenceExpression (identifier = i) [i] = Undetermined
     UClass (name = Base) [public abstract interface Base {...}]
         UMethod (name = print) [public abstract fun print() : void = UastEmptyExpression]
     UClass (name = BaseImpl) [public final class BaseImpl : Base {...}]
@@ -16,12 +19,18 @@ UFile (package = ) [public final class ConstructorDelegateKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
         UMethod (name = getX) [public final fun getX() : int = UastEmptyExpression]
         UMethod (name = print) [public fun print() : void {...}]
-            UBlockExpression [{...}] = Undetermined
-                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+            UBlockExpression [{...}] = external print(x)(Undetermined)
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [print(x)] = external print(x)(Undetermined)
+                    UIdentifier (Identifier (print)) [UIdentifier (Identifier (print))]
+                    USimpleNameReferenceExpression (identifier = print, resolvesTo = null) [print] = external print(x)(Undetermined)
+                    USimpleNameReferenceExpression (identifier = x) [x] = Undetermined
     UClass (name = Derived) [public final class Derived : Base, java.lang.CharSequence {...}]
-        UExpressionList (super_delegation) [super_delegation Base : [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+        UExpressionList (super_delegation) [super_delegation Base : createBase(10)] = Undetermined
             UTypeReferenceExpression (name = Base) [Base] = Undetermined
-            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [createBase(10)] = Undetermined
+                UIdentifier (Identifier (createBase)) [UIdentifier (Identifier (createBase))]
+                USimpleNameReferenceExpression (identifier = createBase, resolvesTo = null) [createBase] = Undetermined
+                ULiteralExpression (value = 10) [10] = Undetermined
         UExpressionList (super_delegation) [super_delegation java.lang.CharSequence : "abc"] = Undetermined
             UTypeReferenceExpression (name = java.lang.CharSequence) [java.lang.CharSequence] = Undetermined
             ULiteralExpression (value = "abc") ["abc"] = Undetermined

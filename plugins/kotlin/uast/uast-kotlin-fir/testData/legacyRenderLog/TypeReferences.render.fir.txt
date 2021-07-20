@@ -11,11 +11,14 @@ public final class TypeReferencesKt {
             var var708e23eb: T = arg
             if (var708e23eb != null) var708e23eb else return
         }
-        var tl: java.util.List<? extends T> = [!] UnknownKotlinExpression (CALL_EXPRESSION)
-        var tsl: java.util.List<? extends java.lang.String> = tl.[!] UnknownKotlinExpression (CALL_EXPRESSION)
+        var tl: java.util.List<? extends T> = listOf(at)
+        var tsl: java.util.List<? extends java.lang.String> = tl.map({ var it: <ErrorType> ->
+
+            return it.toString()
+        })
         var lls: java.util.List<? extends java.util.List<? extends java.lang.String>>
         var llsAliased: java.util.List
         var llt: java.util.List<? extends java.util.List<? extends T>>
-        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        parameterizedFoo(emptyList())
     }
 }
