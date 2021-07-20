@@ -411,8 +411,9 @@ abstract class Cell : BaseBuilder {
       .applyToComponent { bind(property) }
   }
 
-  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
-    return intTextField(prop.toBinding(), columns, range)
+  @JvmOverloads
+  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null, step: Int? = null): CellBuilder<JBTextField> {
+    return intTextField(prop.toBinding(), columns, range, step)
   }
 
   @JvmOverloads
