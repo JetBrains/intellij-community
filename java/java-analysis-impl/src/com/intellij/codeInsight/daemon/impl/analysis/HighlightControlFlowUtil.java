@@ -19,10 +19,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.FileTypeUtils;
-import com.intellij.psi.util.JavaPsiRecordUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.BitUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
@@ -715,11 +712,16 @@ public final class HighlightControlFlowUtil {
     return null;
   }
 
+  /**
+   * 14.30.1 Kinds of Patterns
+   * <p>Any variable that is used but not declared in the guarding expression of a guarded pattern must either be final or effectively final.
+   */
   @Nullable
   private static HighlightInfo checkFinalUsageInsideGuardedPattern(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
     PsiGuardedPattern guardedPattern = PsiTreeUtil.getParentOfType(context, PsiGuardedPattern.class);
     if (guardedPattern == null) return null;
-    if (!isEffectivelyFinal(variable, guardedPattern, context)) {
+    PsiPatternVariable patternVariable = JavaPsiPatternUtil.getPatternVariable(guardedPattern);
+    if (variable != patternVariable && !isEffectivelyFinal(variable, guardedPattern, context)) {
       HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context)
         .descriptionAndTooltip(JavaErrorBundle.message("guarded.pattern.variable.must.be.final")).create();
       // todo quick-fix may be registered here, but

@@ -1,6 +1,5 @@
 class Test {
   void test1(Object o, int mode) {
-    // Any variable that is used but not declared in the guarding expression of a guarded pattern must either be final or effectively final
     switch (o) {
       case (Integer i) && i == <error descr="Variable used in guarded pattern should be final or effectively final">mode</error> -> System.out.println();
       default -> {}
@@ -13,6 +12,11 @@ class Test {
       }) == <error descr="Variable used in guarded pattern should be final or effectively final">mode</error> -> System.out.println();
       default -> {}
     }
+
+    switch (o) {
+      case (Integer i) && (i = <error descr="Variable used in guarded pattern should be final or effectively final">mode</error>) > 0 -> System.out.println();
+      default -> {}
+    }
     mode = 0;
   }
 
@@ -23,6 +27,10 @@ class Test {
           case default -> 1;
       }) == mode -> o = null;
         default -> {}
+    }
+    switch (o) {
+      case (Integer i) && (i = mode) > 0 -> System.out.println();
+      default -> {}
     }
   }
 
@@ -38,5 +46,11 @@ class Test {
       }) == mode -> System.out.println();
       default -> {}
     }
+  }
+
+  void testInstanceofPatterns(Object o, int mode) {
+    if (o instanceof Integer i && (i = mode) > 0) {
+    }
+    mode = 0;
   }
 }
