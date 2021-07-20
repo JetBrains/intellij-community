@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.ui.jcef.JBCefApp;
-import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -78,11 +77,8 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     else {
       boolean darkTheme = UIUtil.isUnderDarcula();
 
-      Url embeddedUrl = Urls.newFromEncoded(url).addParameters(Map.of("var", "embed"));
-      if (darkTheme) {
-        embeddedUrl = embeddedUrl.addParameters(Map.of("theme", "dark"));
-      }
-      String finalUrl = IdeUrlTrackingParametersProvider.getInstance().augmentUrl(embeddedUrl.toExternalForm());
+      Map<String, String> parameters = darkTheme ? Map.of("var", "embed", "theme", "dark") : Map.of("var", "embed");
+      String embeddedUrl = Urls.newFromEncoded(url).addParameters(parameters).toExternalForm();
 
       String timeoutContent = null;
       try (InputStream html = WhatsNewAction.class.getResourceAsStream("whatsNewTimeoutText.html")) {
@@ -99,7 +95,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
         Logger.getInstance(WhatsNewAction.class).error(e);
       }
 
-      HTMLEditorProvider.openEditor(project, title, finalUrl, timeoutContent);
+      HTMLEditorProvider.openEditor(project, title, embeddedUrl, timeoutContent);
     }
   }
 }
