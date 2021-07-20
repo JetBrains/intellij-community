@@ -827,6 +827,13 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       vmOptions.add("-D" + JavacMain.TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY + "=" + JavacMain.TRACK_AP_GENERATED_DEPENDENCIES);
       notifyMessage(context, BuildMessage.Kind.WARNING, "build.message.incremental.annotation.processing.disabled.0", true, JavacMain.TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY);
     }
+    if (compilerSdkVersion > 15) {
+      // enable javac-related reflection tricks in JPS
+      vmOptions.add("--add-opens");
+      vmOptions.add("jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED");
+      vmOptions.add("--add-opens");
+      vmOptions.add("jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED");
+    }
     final JpsProject project = context.getProjectDescriptor().getProject();
     final JpsJavaCompilerOptions compilerOptions = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).getCurrentCompilerOptions();
     if (compilerOptions.DEBUGGING_INFO) {
