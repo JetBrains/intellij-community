@@ -134,6 +134,10 @@ class BuildMessagesImpl implements BuildMessages {
     debugLogger.setOutputFile(new File(path))
   }
 
+  File getDebugLogFile() {
+    debugLogger.getOutputFile()
+  }
+
   @Override
   void error(String message) {
     throw new BuildException(message)

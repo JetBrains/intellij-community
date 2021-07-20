@@ -2,7 +2,11 @@
 package org.jetbrains.intellij.build.testFramework
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.TestLoggerFactory
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
+import kotlin.io.path.Path
+import kotlin.io.path.copyTo
 
 fun createBuildContext(homePath: String, productProperties: ProductProperties,
                        buildTools: ProprietaryBuildTools,
@@ -28,5 +32,14 @@ fun runTestBuild(homePath: String, productProperties: ProductProperties, buildTo
                  buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ) {
   val buildContext = createBuildContext(homePath, productProperties, buildTools, false, communityHomePath, buildOptionsCustomizer)
-  BuildTasks.create(buildContext).runTestBuild()
+  try {
+    BuildTasks.create(buildContext).runTestBuild()
+  }
+  catch (e: Throwable) {
+    val logFile = (buildContext.messages as BuildMessagesImpl).debugLogFile
+    val targetFile = Path(TestLoggerFactory.getTestLogDir(), "${productProperties.baseFileName}-test-build-debug.log")
+    buildContext.messages.info("Copying debug log to $targetFile")
+    logFile.toPath().copyTo(targetFile)
+    throw e
+  }
 }
