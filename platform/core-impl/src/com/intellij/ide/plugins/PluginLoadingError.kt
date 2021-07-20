@@ -3,7 +3,6 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
 
@@ -34,10 +33,9 @@ class PluginLoadingError internal constructor(val plugin: IdeaPluginDescriptor,
 
   companion object {
     fun formatErrorMessage(descriptor: IdeaPluginDescriptor, message: String): @NonNls String {
-      val path = descriptor.pluginPath.toString()
       val builder = StringBuilder()
       builder.append("The ").append(descriptor.name).append(" (id=").append(descriptor.pluginId).append(", path=")
-      builder.append(FileUtil.getLocationRelativeToUserHome(path, false))
+      builder.append(pluginPathToUserString(descriptor.pluginPath))
       val version = descriptor.version
       if (version != null && !descriptor.isBundled && version != PluginManagerCore.getBuildNumber().asString()) {
         builder.append(", version=").append(version)
