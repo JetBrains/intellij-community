@@ -2328,7 +2328,7 @@
     "id": "2K",
     "name": "intellij.ruby.plugin",
     "n": "i.ruby.plugin",
-    "package": null,
+    "package": "org.jetbrains.plugins.ruby",
     "sourceModule": "intellij.ruby.plugin",
     "descriptor": "ruby/pluginResources/META-INF/plugin.xml",
     "pluginId": "org.jetbrains.plugins.ruby",
@@ -2620,6 +2620,18 @@
     "package": "com.intellij.javascript.debugger.rails",
     "sourceModule": "intellij.ruby.javascriptDebugger",
     "descriptor": "ruby/ruby-javascript-debugger/resources/intellij.ruby.javascriptDebugger.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ug",
+    "name": "intellij.ruby.javascript",
+    "n": "i.ruby.javascript",
+    "package": "org.jetbrains.plugins.ruby.erb.js",
+    "sourceModule": "intellij.ruby.javascript",
+    "descriptor": "ruby/ruby-javascript/resources/intellij.ruby.javascript.xml",
     "parent": "c2K",
     "type": 0
   }
@@ -3162,7 +3174,7 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "ug",
+    "id": "ug1",
     "name": "intellij.spring.integration.core/diagram",
     "n": "i.spring.integration.core/diagram",
     "package": "com.intellij.spring.integration.diagram",
@@ -3933,6 +3945,17 @@
     "id": "43",
     "name": "com.intellij.modules.python",
     "n": "c.i.m.python",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "uy",
+    "name": "com.intellij.modules.ruby-capable",
+    "n": "c.i.m.ruby-capable",
     "package": null,
     "sourceModule": "",
     "descriptor": "",
@@ -5003,6 +5026,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "2K_ug",
+    "source": "2K",
+    "target": "ug",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "tR_Ha",
     "source": "tR",
     "target": "Ha",
@@ -5235,9 +5266,9 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "nQ_ug",
+    "id": "nQ_ug1",
     "source": "nQ",
-    "target": "ug",
+    "target": "ug1",
     "type": 1
   }
 }, {
@@ -7275,6 +7306,22 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "2K_cV",
+    "source": "2K",
+    "target": "cV",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "2K_uy",
+    "source": "2K",
+    "target": "uy",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "uu_xs",
     "source": "uu",
     "target": "xs",
@@ -7518,6 +7565,14 @@
     "id": "55_gg",
     "source": "55",
     "target": "gg",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ug_PN",
+    "source": "ug",
+    "target": "PN",
     "type": 0
   }
 }, {
@@ -8075,8 +8130,8 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "ug_Bv",
-    "source": "ug",
+    "id": "ug1_Bv",
+    "source": "ug1",
     "target": "Bv",
     "type": 0
   }
