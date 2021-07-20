@@ -55,19 +55,25 @@ internal class ReadAction<T>(
       val readJob = coroutineContext.job
       ProgressIndicatorUtils.runActionAndCancelBeforeWrite(application, readJob::cancel) {
         readJob.ensureActive()
-        application.tryRunReadAction {
-          val unsatisfiedConstraint = constraints.findUnsatisfiedConstraint()
-          result = if (unsatisfiedConstraint == null) {
-            ReadResult.Successful(action(JobProgress(readJob)))
-          }
-          else {
-            ReadResult.UnsatisfiedConstraint(waitForConstraint(rootScope, unsatisfiedConstraint))
-          }
-        }
+        result = tryReadAction(rootScope, readJob)
       }
     }.join()
     return result
            ?: ReadResult.WritePending
+  }
+
+  private fun tryReadAction(rootScope: CoroutineScope, readJob: Job): ReadResult<T>? {
+    var result: ReadResult<T>? = null
+    application.tryRunReadAction {
+      val unsatisfiedConstraint = constraints.findUnsatisfiedConstraint()
+      result = if (unsatisfiedConstraint == null) {
+        ReadResult.Successful(action(JobProgress(readJob)))
+      }
+      else {
+        ReadResult.UnsatisfiedConstraint(waitForConstraint(rootScope, unsatisfiedConstraint))
+      }
+    }
+    return result
   }
 }
 
