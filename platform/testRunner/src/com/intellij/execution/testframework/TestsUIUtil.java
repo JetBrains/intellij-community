@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.AppIconScheme;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AppIcon;
@@ -32,11 +31,6 @@ public final class TestsUIUtil {
 
   public static final Color PASSED_COLOR = new Color(0, 128, 0);
   private static final @NonNls String TESTS = "tests";
-
-  static {
-    //pre-register notification group for Run ToolWindow to show it in notifications settings
-    NotificationGroup.toolWindowGroup(getTestResultsNotificationDisplayId(ToolWindowId.RUN), ToolWindowId.RUN);
-  }
 
   private TestsUIUtil() {
   }
@@ -117,7 +111,7 @@ public final class TestsUIUtil {
       String displayId = getTestResultsNotificationDisplayId(windowId);
       NotificationGroup group = NotificationGroup.findRegisteredGroup(displayId);
       if (group == null) {
-        group = NotificationGroup.toolWindowGroup(displayId, windowId);
+        group = NotificationGroup.toolWindowGroup(displayId, windowId, false);
       }
       group.createNotification(balloonText, type).notify(project);
     }
