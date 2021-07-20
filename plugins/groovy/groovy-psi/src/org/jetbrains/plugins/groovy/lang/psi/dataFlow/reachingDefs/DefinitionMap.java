@@ -68,10 +68,13 @@ public final class DefinitionMap {
     myPreviousClosureContext = myPreviousClosureContext.prepend(map);
   }
 
-  public @NotNull DefinitionMap popClosureContext() {
+  public void popClosureContext() {
+    myPreviousClosureContext = myPreviousClosureContext.getTail();
+  }
+
+  public @NotNull DefinitionMap getHeadDefinitionMap() {
     var head = myPreviousClosureContext.getHead();
     assert head != null;
-    myPreviousClosureContext = myPreviousClosureContext.getTail();
     return head;
   }
 

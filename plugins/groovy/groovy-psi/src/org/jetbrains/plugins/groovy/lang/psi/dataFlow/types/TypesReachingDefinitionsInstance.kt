@@ -16,7 +16,7 @@ class TypesReachingDefinitionsInstance(
   varIndexes: Object2IntMap<VariableDescriptor>
 ) : ReachingDefinitionsDfaInstance(flow, varIndexes) {
 
-  override fun `fun`(m: DefinitionMap, instruction: Instruction) = when (instruction) {
+  override fun `fun`(m: DefinitionMap, instruction: Instruction) : Unit = when (instruction) {
     is MixinTypeInstruction -> registerDef(m, instruction, instruction.variableDescriptor)
     is ArgumentsInstruction -> {
       for (descriptor in instruction.variableDescriptors) {
@@ -24,7 +24,10 @@ class TypesReachingDefinitionsInstance(
       }
     }
     is FunctionalBlockBeginInstruction -> m.setClosureContext(m)
-    is FunctionalBlockEndInstruction -> m.mergeFrom(m.popClosureContext())
+    is FunctionalBlockEndInstruction -> with(m) {
+      mergeFrom(headDefinitionMap)
+      popClosureContext()
+    }
     else -> super.`fun`(m, instruction)
   }
 

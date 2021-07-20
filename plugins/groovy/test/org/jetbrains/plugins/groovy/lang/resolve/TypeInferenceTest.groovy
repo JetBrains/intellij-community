@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.util.RecursionManager
@@ -1583,7 +1583,7 @@ static def foo(x) {
 
   void 'test assignment inside unknown closure'() {
     doTest '''
-def foo(x) {
+def foo() {
   def x = (Number)1
   def cl = {
     x = (String)1
@@ -1767,7 +1767,8 @@ def foo() {
 }''', "A"
   }
 
-  void 'test assignment inside dangling closure affects unrelated flow'() {
+  // This behavior is not hard to implement, but it is unlikely to appear
+  void '_test assignment inside dangling closure affects unrelated flow'() {
     doTest '''
 class A {}
 class B extends A {}
@@ -1841,7 +1842,7 @@ def foo() {
   }
 
 
-  void 'test two assignments inside single dangling closure'() {
+  void '_test two assignments inside single dangling closure'() {
     doTest '''
 class A {}
 class D extends A{}
@@ -1859,7 +1860,7 @@ def foo() {
 }''', "A"
   }
 
-  void 'test assignment in nested dangling closure'() {
+  void '_test assignment in nested dangling closure'() {
     doTest '''
 class A {}
 class B extends A {}
@@ -1877,7 +1878,7 @@ def foo() {
 }''', "A"
   }
 
-  void 'test assignment in nested dangling closure 2'() {
+  void '_test assignment in nested dangling closure 2'() {
     doTest '''
 class A {}
 class B extends A {}
@@ -1912,7 +1913,7 @@ class A {
   }
 
   void 'test cyclic flow with closure'() {
-    allowNestedContext(2, testRootDisposable)
+    allowNestedContext(3, testRootDisposable)
     doTest '''
 def x
 for (def i = 0; i < 10; i++) {
@@ -1926,7 +1927,7 @@ for (def i = 0; i < 10; i++) {
   }
 
   void 'test cycle with unknown closure'() {
-    allowNestedContext(2, testRootDisposable)
+    allowNestedContext(1, testRootDisposable)
     doTest '''
 static  bar(Closure cl) {}
 
@@ -1967,7 +1968,6 @@ private void foo(String expected) {
   }
 
   void 'test cache consistency for closures in cycle 2'() {
-    allowNestedContext(4, testRootDisposable)
     doTest '''
 interface J {}
 interface R extends J {}

@@ -127,7 +127,7 @@ class TypeDfaState {
   void putType(VariableDescriptor descriptor, @Nullable DFAType type) {
     myVarTypes.put(descriptor, type);
     if (type != null && !myPreviousClosureState.isEmpty()) {
-      var topFrame = getTopClosureFrame();
+      var topFrame = myPreviousClosureState.getHead();
       assert topFrame != null;
       if (topFrame.getStartState().containsVariable(descriptor)) {
         topFrame.addReassignment(descriptor, type);
@@ -139,12 +139,10 @@ class TypeDfaState {
     myPreviousClosureState = myPreviousClosureState.prepend(new ClosureFrame(state));
   }
 
-  @Nullable ClosureFrame getTopClosureFrame() {
-    return myPreviousClosureState.getHead();
-  }
-
-  void popClosureState() {
+  @Nullable ClosureFrame popTopClosureFrame() {
+    var head = myPreviousClosureState.getHead();
     myPreviousClosureState = myPreviousClosureState.getTail();
+    return head;
   }
 
   @Override

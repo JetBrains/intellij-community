@@ -73,43 +73,44 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
   private void handleFunctionalExpression(@NotNull TypeDfaState state, @NotNull FunctionalBlockEndInstruction instruction) {
     GrFunctionalExpression block = instruction.getElement();
-    ClosureFrame currentClosureFrame = state.getTopClosureFrame();
+    ClosureFrame currentClosureFrame = state.popTopClosureFrame();
     assert currentClosureFrame != null : "Encountered end of closure without closure start";
+    if (currentClosureFrame.getStartState().contentsEqual(state)) {
+      return;
+    }
+    // todo: more accurate handling of flushing type
+    InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
+    if (kind.equals(InvocationKind.IN_PLACE_ONCE)) {
+      return;
+    }
     for (var newDescriptor : state.getVarTypes().keySet()) {
       if (!currentClosureFrame.getStartState().containsVariable(newDescriptor)) {
         state.removeBinding(newDescriptor);
       }
     }
-    if (!currentClosureFrame.getStartState().contentsEqual(state)) {
-      // actually, condition above is not correct: suppose the code below
-      // def x = 1; unknownFunction { x = ""; x = 1 }; x<caret>
-      // It is incorrect to say that x has type Integer after the call.
-      // However, I find the scenario where it may affect the user extremely unlikely,
-      // so I'll leave this condition just to gain more performance.
-      InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
-      switch (kind) {
-        case IN_PLACE_ONCE:
-          break;
-        case IN_PLACE_UNKNOWN:
-          state.joinState(currentClosureFrame.getStartState(), myManager);
-          break;
-        case UNKNOWN:
-          var reassignments = currentClosureFrame.getReassignments();
-          for (var newBinding : reassignments.entrySet()) {
-            VariableDescriptor descriptor = newBinding.getKey();
-            List<DFAType> assignments = newBinding.getValue();
-            PsiType upperBoundByWrites =
-              TypesUtil.getLeastUpperBound(assignments.stream().map(dfaType -> dfaType.getResultType(myManager)).toArray(PsiType[]::new), myManager);
-            DFAType existingType = state.getVariableType(descriptor);
-            if (existingType == null) existingType = DFAType.create(null);
-            DFAType flushedType = existingType.addFlushingType(upperBoundByWrites, myManager);
-            state.putType(descriptor, flushedType);
-          }
-          break;
-      }
+    switch (kind) {
+      case IN_PLACE_UNKNOWN:
+        state.joinState(currentClosureFrame.getStartState(), myManager);
+        break;
+      case UNKNOWN:
+        var reassignments = currentClosureFrame.getReassignments();
+        TypeDfaState initialState = currentClosureFrame.getStartState();
+        for (var newBinding : reassignments.entrySet()) {
+          VariableDescriptor descriptor = newBinding.getKey();
+          List<DFAType> assignments = newBinding.getValue();
+          PsiType upperBoundByWrites =
+            TypesUtil
+              .getLeastUpperBound(assignments.stream().map(dfaType -> dfaType.getResultType(myManager)).toArray(PsiType[]::new),
+                                  myManager);
+          DFAType existingType = initialState.getVariableType(descriptor);
+          if (existingType == null) existingType = DFAType.create(null);
+          DFAType flushedType = existingType.addFlushingType(upperBoundByWrites, myManager);
+          state.putType(descriptor, flushedType);
+        }
+        break;
     }
-    state.popClosureState();
   }
+
 
   private void handleMixin(@NotNull final TypeDfaState state, @NotNull final MixinTypeInstruction instruction) {
     final VariableDescriptor descriptor = instruction.getVariableDescriptor();
