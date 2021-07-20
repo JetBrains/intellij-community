@@ -30,11 +30,6 @@ class UnimplementedKotlinInterfaceMemberAnnotator : Annotator {
 
         if (element.isInterface || element.hasModifierProperty(PsiModifier.ABSTRACT)) return
 
-        val jvmDefaultMode = element.languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode)
-        if (jvmDefaultMode == JvmDefaultMode.ALL_COMPATIBILITY || jvmDefaultMode == JvmDefaultMode.ALL_INCOMPATIBLE) {
-            return
-        }
-
         if (getAnyMethodToImplement(element) != null) return // reported by java default annotator
 
         findUnimplementedMethod(element)?.let {
@@ -73,6 +68,11 @@ class UnimplementedKotlinInterfaceMemberAnnotator : Annotator {
         }
 
         if (hasJvmDefaultOrJvmStatic) return false
+
+        val jvmDefaultMode = psiMethod.languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode)
+        if (jvmDefaultMode == JvmDefaultMode.ALL_COMPATIBILITY || jvmDefaultMode == JvmDefaultMode.ALL_INCOMPATIBLE) {
+            return false
+        }
 
         return true
     }
