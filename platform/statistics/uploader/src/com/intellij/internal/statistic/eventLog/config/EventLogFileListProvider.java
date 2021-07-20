@@ -2,17 +2,14 @@
 package com.intellij.internal.statistic.eventLog.config;
 
 import com.intellij.internal.statistic.eventLog.EventLogFile;
-import com.intellij.internal.statistic.eventLog.EventLogFilesProvider;
+import com.intellij.internal.statistic.eventLog.FilesToSendProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class EventLogFileListProvider extends EventLogFilesProvider {
+public class EventLogFileListProvider implements FilesToSendProvider {
   private final List<EventLogFile> myFiles;
 
   public EventLogFileListProvider(@NotNull List<String> paths) {
@@ -25,13 +22,7 @@ public class EventLogFileListProvider extends EventLogFilesProvider {
 
   @NotNull
   @Override
-  public List<EventLogFile> getLogFiles() {
+  public List<EventLogFile> getFilesToSend() {
     return myFiles;
-  }
-
-  @Nullable
-  @Override
-  public Path getLogFilesDir() {
-    return myFiles.isEmpty() ? null : Paths.get(myFiles.get(0).getFile().getParent());
   }
 }
