@@ -328,4 +328,8 @@
   <action id="GoGenerateFileAction"/>
   <action id="MethodUp"/>
   <action id="MethodDown"/>
+  <action id="ResizeToolWindowLeft"/>
+  <action id="ResizeToolWindowRight"/>
+  <action id="ResizeToolWindowUp"/>
+  <action id="ResizeToolWindowDown"/>
 </keymap>
