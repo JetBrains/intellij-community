@@ -179,6 +179,30 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     """.trimIndent())
   }
   
+  fun testNewLineInInjectedYamlCaretMoved() {
+    myFixture.configureByText("test.yaml", """
+      |myyaml: |
+      |  boo:
+      |    - 1
+      |<caret>
+      |    - 2
+      |      
+      |  """.trimMargin())
+
+    myInjectionFixture.assertInjectedLangAtCaret("yaml")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    myFixture.checkResult("""
+      |myyaml: |
+      |  boo:
+      |    - 1
+      |
+      |<caret>
+      |    - 2
+      |      
+      |  """.trimMargin())
+    myInjectionFixture.assertInjectedContent("boo:\n  - 1\n\n\n  - 2\n    \n")
+  }
+  
   fun testNewLineInInjectedXMLinNested() {
     myFixture.configureByText("test.yaml", """
       long:
