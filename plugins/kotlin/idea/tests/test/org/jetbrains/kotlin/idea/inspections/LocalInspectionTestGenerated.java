@@ -7435,6 +7435,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/simple.kt");
         }
 
+        @TestMetadata("withBlockComment.kt")
+        public void testWithBlockComment() throws Exception {
+            runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/withBlockComment.kt");
+        }
+
         @TestMetadata("withComment.kt")
         public void testWithComment() throws Exception {
             runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/withComment.kt");
@@ -7453,6 +7458,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("withComment4.kt")
         public void testWithComment4() throws Exception {
             runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/withComment4.kt");
+        }
+
+        @TestMetadata("withDocComment.kt")
+        public void testWithDocComment() throws Exception {
+            runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/withDocComment.kt");
         }
 
         @TestMetadata("withNewLine.kt")
