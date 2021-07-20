@@ -122,6 +122,11 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return resolveToPsiMethod(ktElement)
     }
 
+    override fun isResolvedToExtension(ktCallElement: KtCallElement): Boolean {
+        val resolvedCall = ktCallElement.getResolvedCall(ktCallElement.analyze()) ?: return false
+        return resolvedCall.extensionReceiver != null
+    }
+
     override fun resolvedFunctionName(ktCallElement: KtCallElement): String? {
         val resolvedCall = ktCallElement.getResolvedCall(ktCallElement.analyze()) ?: return null
         return resolvedCall.resultingDescriptor.name.asString()

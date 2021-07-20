@@ -5,8 +5,6 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.kotlin.internal.TypedResolveResult
@@ -16,9 +14,6 @@ class KotlinUFunctionCallExpression(
     override val sourcePsi: KtCallElement,
     givenParent: UElement?,
 ) : KotlinAbstractUExpression(givenParent), UCallExpression, KotlinUElementWithType, UMultiResolvable {
-
-    private val resolvedCall: ResolvedCall<*>?
-        get() = sourcePsi.getResolvedCall(sourcePsi.analyze())
 
     override val receiverType by lz {
         baseResolveProviderService.getReceiverType(sourcePsi, this)
@@ -74,9 +69,9 @@ class KotlinUFunctionCallExpression(
     }
 
     override fun getArgumentForParameter(i: Int): UExpression? {
-        val resolvedCall = resolvedCall
+        val resolvedCall = baseResolveProviderService.resolveCall(sourcePsi)
         if (resolvedCall != null) {
-            val actualParamIndex = if (resolvedCall.extensionReceiver == null) i else i - 1
+            val actualParamIndex = if (baseResolveProviderService.isResolvedToExtension(sourcePsi)) i - 1 else i
             if (actualParamIndex == -1) return receiver
             return baseResolveProviderService.getArgumentForParameter(sourcePsi, actualParamIndex, this)
         }
