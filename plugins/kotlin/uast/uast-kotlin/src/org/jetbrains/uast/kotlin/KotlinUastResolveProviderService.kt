@@ -10,9 +10,12 @@ import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ParameterDescriptor
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.CompileTimeConstantUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsResultOfLambda
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.callUtil.getType
@@ -28,6 +31,7 @@ import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UastCallKind
 import org.jetbrains.uast.UastSpecialExpressionKind
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 
@@ -116,6 +120,30 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
     override fun resolveCall(ktElement: KtElement): PsiMethod? {
         return resolveToPsiMethod(ktElement)
+    }
+
+    override fun callKind(ktCallElement: KtCallElement): UastCallKind {
+        val resolvedCall = ktCallElement.getResolvedCall(ktCallElement.analyze()) ?: return UastCallKind.METHOD_CALL
+        return when {
+            resolvedCall.resultingDescriptor is ConstructorDescriptor -> UastCallKind.CONSTRUCTOR_CALL
+            isAnnotationArgumentArrayInitializer(ktCallElement, resolvedCall) -> UastCallKind.NESTED_ARRAY_INITIALIZER
+            else -> UastCallKind.METHOD_CALL
+        }
+    }
+
+    private fun isAnnotationArgumentArrayInitializer(
+        ktCallElement: KtCallElement,
+        resolvedCall: ResolvedCall<out CallableDescriptor>
+    ): Boolean {
+        // KtAnnotationEntry (or KtCallExpression when annotation is nested) -> KtValueArgumentList -> KtValueArgument -> arrayOf call
+        val isAnnotationArgument = when (val elementAt2 = ktCallElement.parents.elementAtOrNull(2)) {
+            is KtAnnotationEntry -> true
+            is KtCallExpression -> elementAt2.getParentOfType<KtAnnotationEntry>(true, KtDeclaration::class.java) != null
+            else -> false
+        }
+        if (!isAnnotationArgument) return false
+
+        return CompileTimeConstantUtils.isArrayFunctionCall(resolvedCall)
     }
 
     override fun resolveToClassIfConstructorCall(ktCallElement: KtCallElement, source: UElement): PsiElement? {

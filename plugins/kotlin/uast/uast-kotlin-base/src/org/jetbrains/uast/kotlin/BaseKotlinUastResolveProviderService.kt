@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UastCallKind
 
 interface BaseKotlinUastResolveProviderService {
     fun isJvmElement(psiElement: PsiElement): Boolean
@@ -43,6 +44,8 @@ interface BaseKotlinUastResolveProviderService {
     fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement>
 
     fun resolveCall(ktElement: KtElement): PsiMethod?
+
+    fun callKind(ktCallElement: KtCallElement): UastCallKind
 
     fun resolveToClassIfConstructorCall(ktCallElement: KtCallElement, source: UElement): PsiElement?
 

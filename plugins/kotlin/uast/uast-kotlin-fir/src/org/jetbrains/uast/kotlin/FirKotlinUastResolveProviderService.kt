@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UastCallKind
 import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.kotlin.internal.toPsiMethod
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
@@ -95,6 +96,18 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             }
             else ->
                 return null
+        }
+    }
+
+    override fun callKind(ktCallElement: KtCallElement): UastCallKind {
+        analyseForUast(ktCallElement) {
+            val resolvedFunctionLikeSymbol =
+                ktCallElement.resolveCall()?.targetFunction?.candidates?.singleOrNull() ?: return UastCallKind.METHOD_CALL
+            return when (resolvedFunctionLikeSymbol) {
+                is KtConstructorSymbol -> UastCallKind.CONSTRUCTOR_CALL
+                // TODO: NESTED_ARRAY_INITIALIZER
+                else -> UastCallKind.METHOD_CALL
+            }
         }
     }
 
