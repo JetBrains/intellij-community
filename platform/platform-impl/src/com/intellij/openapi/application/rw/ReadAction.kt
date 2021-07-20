@@ -50,8 +50,8 @@ internal class ReadAction<T>(
   }
 
   private suspend fun tryReadAction(rootScope: CoroutineScope): ReadResult<T> {
-    lateinit var result: ReadResult<T>
-    val readJob = rootScope.launch(CoroutineName("read action")) {
+    var result: ReadResult<T>? = null
+    rootScope.launch(CoroutineName("read action")) {
       val readJob = coroutineContext.job
       ProgressIndicatorUtils.runActionAndCancelBeforeWrite(application, readJob::cancel) {
         readJob.ensureActive()
@@ -65,14 +65,9 @@ internal class ReadAction<T>(
           }
         }
       }
-    }
-    readJob.join()
-    return if (readJob.isCancelled) {
-      ReadResult.WritePending
-    }
-    else {
-      result
-    }
+    }.join()
+    return result
+           ?: ReadResult.WritePending
   }
 }
 
