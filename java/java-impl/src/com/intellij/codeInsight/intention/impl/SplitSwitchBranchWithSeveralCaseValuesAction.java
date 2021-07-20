@@ -86,7 +86,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
   }
 
   /**
-   * Handle the case where the caret is at the right side of the element we're interested in
+   * Handle the case where the caret is on the right side of the element we're interested in
    */
   @Nullable
   private static PsiElement getPreviousElement(@NotNull Editor editor, @NotNull PsiElement element) {
