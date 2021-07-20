@@ -47,6 +47,23 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
     assertEquals("removed:aaa;", listener.clearMessages());
   }
 
+  public void testRemoveArtifactWithExistingModifiableArtifact() {
+    Artifact artifact = addArtifact("aaa");
+    assertSame(artifact, assertOneElement(getArtifacts()));
+
+    final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+
+    // Just create an instance of modifiable artifact
+    model.getOrCreateModifiableArtifact(artifact);
+
+    model.removeArtifact(artifact);
+    final MyArtifactListener listener = subscribe();
+    commit(model);
+
+    assertEmpty(getArtifacts());
+    assertEquals("removed:aaa;", listener.clearMessages());
+  }
+
   public void testChangeAndRemoveArtifact() {
     doTestChangeAndRemove(false);
   }

@@ -38,12 +38,8 @@ open class ArtifactBridge(
         event.getChanges(ArtifactEntity::class.java).filterIsInstance<EntityChange.Removed<ArtifactEntity>>().forEach {
           if (it.entity.persistentId() != artifactId) return@forEach
 
-          val currentStore = entityStorage.current
-          val storage = if (currentStore is WorkspaceEntityStorageBuilder) currentStore.toStorage() else currentStore
-          entityStorage = VersionedEntityStorageOnStorage(storage)
-          assert(entityStorage.current.resolve(artifactId) != null) {
-            "Cannot resolve artifact $artifactId. Current store: $currentStore"
-          }
+          entityStorage = VersionedEntityStorageOnStorage(event.storageBefore)
+          assert(entityStorage.current.resolve(artifactId) != null) { "Cannot resolve artifact $artifactId." }
         }
       }
     })
