@@ -5,6 +5,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum;
+import com.intellij.idea.Main;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -308,6 +309,10 @@ public final class PluginManagerMain {
   }
 
   public static boolean checkThirdPartyPluginsAllowed(Iterable<? extends IdeaPluginDescriptor> descriptors) {
+    if (Main.isHeadless()) {
+      return true;
+    }
+
     UpdateSettings updateSettings = UpdateSettings.getInstance();
 
     if (updateSettings.isThirdPartyPluginsAllowed()) {
