@@ -321,7 +321,13 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
         }
       }
       else if (caseElement instanceof PsiPattern) {
-        out.append(createIfCondition((PsiPattern)caseElement, expressionText, commentTracker));
+        String patternCondition = createIfCondition((PsiPattern)caseElement, expressionText, commentTracker);
+        if (patternCondition != null) {
+          out.append(patternCondition);
+        } else {
+          //incomplete/red code
+          out.append(caseElement.getText());
+        }
       }
     }
     out.append(')');
@@ -337,18 +343,19 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
       PsiPattern primaryPattern = JavaPsiPatternUtil.skipParenthesizedPatternDown(guardedPattern.getPrimaryPattern());
       if (!(primaryPattern instanceof PsiTypeTestPattern)) return null;
       String primaryCondition = createIfCondition((PsiTypeTestPattern)primaryPattern, expressionText, commentTracker);
-      String guardExpression = commentTracker.textWithComments(guardedPattern.getGuardingExpression());
-      return primaryCondition + "&&" + guardExpression;
+      PsiExpression guardingExpression = guardedPattern.getGuardingExpression();
+      if (guardingExpression == null) return null;
+      return primaryCondition + "&&" + commentTracker.textWithComments(guardingExpression);
     }
     return null;
   }
 
-  @Nullable
-  private static String createIfCondition(PsiTypeTestPattern normalizedPattern, String expressionText, CommentTracker commentTracker) {
-    PsiTypeTestPattern typeTestPattern = normalizedPattern;
+  private static @Nullable String createIfCondition(PsiTypeTestPattern typeTestPattern, String expressionText, CommentTracker commentTracker) {
     PsiTypeElement checkType = typeTestPattern.getCheckType();
+    if (checkType == null) return null;
     String typeText = commentTracker.textWithComments(checkType);
     PsiPatternVariable variable = typeTestPattern.getPatternVariable();
+    if (variable == null) return null;
     PsiElement context = PsiTreeUtil.getParentOfType(variable, PsiSwitchStatement.class);
     boolean isUsedPatternVariable = context != null && VariableAccessUtils.variableIsUsed(variable, context);
     PsiIdentifier identifier = variable.getNameIdentifier();
@@ -375,9 +382,9 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
     if (aClass == null) {
       return commentTracker.text(value);
     }
-    String qualifiedName = aClass.getQualifiedName();
-    String className = qualifiedName != null ? qualifiedName : aClass.getName();
-    return className + '.' + commentTracker.text(referenceExpression);
+
+    String qualifiedName = ObjectUtils.notNull(aClass.getQualifiedName(), Objects.requireNonNull(aClass.getName()));
+    return qualifiedName + '.' + commentTracker.text(referenceExpression);
   }
 
   private static void dumpBody(SwitchStatementBranch branch, @NonNls StringBuilder out, CommentTracker commentTracker) {
