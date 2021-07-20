@@ -98,7 +98,6 @@ import java.util.stream.Collectors;
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
 import static com.intellij.find.actions.ShowUsagesActionHandler.getSecondInvocationHint;
 import static com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode.USAGES_WITH_DEFAULT_OPTIONS;
-import static com.intellij.util.ui.UIUtil.runWhenHidden;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public class ShowUsagesAction extends AnAction implements PopupAction, HintManagerImpl.ActionToIgnore {
@@ -1231,7 +1230,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       ShowUsagesActionState state = getState(project);
       state.continuation = showUsagesInMaximalScopeRunnable(parameters, actionHandler);
       Runnable clearContinuation = () -> state.continuation = null;
-      runWhenHidden(label, clearContinuation);
 
       if (editor == null || editor.isDisposed() || !UIUtil.isShowing(editor.getContentComponent())) {
         int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
