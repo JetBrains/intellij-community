@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
-import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
@@ -477,7 +476,7 @@ class KotlinFunctionCallUsage(
         return newElement
     }
 
-    private fun isObjectReceiver(dispatchReceiver: ReceiverValue) = dispatchReceiver.castSafelyTo<ClassValueReceiver>()?.classQualifier?.descriptor?.kind == ClassKind.OBJECT
+    private fun isObjectReceiver(dispatchReceiver: ReceiverValue) = dispatchReceiver.safeAs<ClassValueReceiver>()?.classQualifier?.descriptor?.kind == ClassKind.OBJECT
 
     private fun changeArgumentNames(changeInfo: KotlinChangeInfo, element: KtCallElement) {
         for (argument in element.valueArguments) {
