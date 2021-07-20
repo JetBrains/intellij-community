@@ -10,15 +10,26 @@ UFile (package = ) [import java.io.Closeable...]
                             UClass (name = null) [final class null : java.lang.Runnable {...}]
                                 UMethod (name = run) [public fun run() : void {...}]
                                     UBlockExpression [{...}] : PsiType:Unit
-                UQualifiedReferenceExpression [runnable.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:Unit
+                UQualifiedReferenceExpression [runnable.run()] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = runnable) [runnable] : PsiType:Object
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UDeclarationsExpression [var runnable2: java.lang.Runnable = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    ULocalVariable (name = runnable2) [var runnable2: java.lang.Runnable = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                UQualifiedReferenceExpression [runnable2.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:Unit
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [run()] : PsiType:Unit
+                        UIdentifier (Identifier (run)) [UIdentifier (Identifier (run))]
+                        USimpleNameReferenceExpression (identifier = run, resolvesTo = null) [run] : PsiType:Unit
+                UDeclarationsExpression [var runnable2: java.lang.Runnable = Runnable({ ...})]
+                    ULocalVariable (name = runnable2) [var runnable2: java.lang.Runnable = Runnable({ ...})]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [Runnable({ ...})] : PsiType:Runnable
+                            UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
+                            USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = null) [Runnable] : PsiType:Runnable
+                            ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
+                                UBlockExpression [{...}] : PsiType:Unit
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [println()] : PsiType:Unit
+                                        UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
+                                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:Unit
+                UQualifiedReferenceExpression [runnable2.run()] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = runnable2) [runnable2] : PsiType:Runnable
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [run()] : PsiType:Unit
+                        UIdentifier (Identifier (run)) [UIdentifier (Identifier (run))]
+                        USimpleNameReferenceExpression (identifier = run, resolvesTo = null) [run] : PsiType:Unit
                 UDeclarationsExpression [var closeableRunnable: java.lang.Object = anonymous object : Runnable, Closeable { override fun close() {} override fun run() {} }]
                     ULocalVariable (name = closeableRunnable) [var closeableRunnable: java.lang.Object = anonymous object : Runnable, Closeable { override fun close() {} override fun run() {} }]
                         UObjectLiteralExpression [anonymous object : Runnable, Closeable { override fun close() {} override fun run() {} }] : PsiType:Runnable

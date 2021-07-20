@@ -79,18 +79,52 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                     UBinaryExpression (operator = +) ["a" + a] = Undetermined
                                         ULiteralExpression (value = "a") ["a"] = "a"
                                         USimpleNameReferenceExpression (identifier = a) [a] = external a()
-                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar({ var it: <ErrorType> ->...})] = external bar({ var it: <ErrorType> ->
+
+    if (it > 5) return
+    var b: int = 1
+    return it + b
+})(Undetermined)
+                    UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
+                    USimpleNameReferenceExpression (identifier = bar, resolvesTo = null) [bar] = external bar({ var it: <ErrorType> ->
+
+    if (it > 5) return
+    var b: int = 1
+    return it + b
+})(Undetermined)
+                    ULambdaExpression [{ var it: <ErrorType> ->...}] = Undetermined
+                        UParameter (name = it) [var it: <ErrorType>]
+                        UBlockExpression [{...}] = Nothing
+                            UIfExpression [if (it > 5) return] = Undetermined
+                                UBinaryExpression (operator = >) [it > 5] = Undetermined
+                                    USimpleNameReferenceExpression (identifier = it) [it] = external it()
+                                    ULiteralExpression (value = 5) [5] = (long)5
+                                UReturnExpression [return] = Nothing
+                            UDeclarationsExpression [var b: int = 1] = Nothing
+                                ULocalVariable (name = b) [var b: int = 1]
+                                    ULiteralExpression (value = 1) [1] = (long)1
+                            UReturnExpression [return it + b] = Nothing
+                                UBinaryExpression (operator = +) [it + b] = Undetermined (depending on: (var b = (long)1))
+                                    USimpleNameReferenceExpression (identifier = it) [it] = external it()
+                                    USimpleNameReferenceExpression (identifier = b) [b] = (var b = (long)1)
                 UDeclarationsExpression [var x: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}] = Nothing
                     ULocalVariable (name = x) [var x: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                         ULambdaExpression [{ ...}] = Undetermined
                             UBlockExpression [{...}] = Undetermined
-                                UDeclarationsExpression [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Nothing
-                                    ULocalVariable (name = vardbcd0724) [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                                UDeclarationsExpression [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)] = Nothing
+                                    ULocalVariable (name = vardbcd0724) [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [listOf(1, 2)] = external listOf(1, 2)((long)1, (long)2)
+                                            UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
+                                            USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf(1, 2)((long)1, (long)2)
+                                            ULiteralExpression (value = 1) [1] = (long)1
+                                            ULiteralExpression (value = 2) [2] = (long)2
                 UDeclarationsExpression [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}] = Nothing
                     ULocalVariable (name = y) [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                         ULambdaExpression [{ ...}] = Undetermined
                             UBlockExpression [{...}] = Nothing
-                                UReturnExpression [return [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Nothing
-                                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                                UReturnExpression [return listOf(1)] = Nothing
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(1)] = external listOf(1)((long)1)
+                                        UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
+                                        USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf(1)((long)1)
+                                        ULiteralExpression (value = 1) [1] = (long)1

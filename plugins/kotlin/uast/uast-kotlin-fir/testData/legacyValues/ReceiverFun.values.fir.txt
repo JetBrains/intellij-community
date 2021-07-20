@@ -14,8 +14,10 @@ UFile (package = ) [public final class ReceiverFunKt {...]
                 UAnnotation (fqName = not-implemented-annotation) [@not-implemented-annotation]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Nothing
-                UReturnExpression [return [!] UnknownKotlinExpression (CALL_EXPRESSION)] = Nothing
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                UReturnExpression [return toRegex()] = Nothing
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toRegex()] = external toRegex()()
+                        UIdentifier (Identifier (toRegex)) [UIdentifier (Identifier (toRegex))]
+                        USimpleNameReferenceExpression (identifier = toRegex, resolvesTo = null) [toRegex] = external toRegex()()
     UClass (name = MyReceiverAnnotation) [public abstract annotation MyReceiverAnnotation {...}]
         UAnnotationMethod (name = name) [public abstract fun name() : java.lang.String = UastEmptyExpression]
             ULiteralExpression (value = "") [""] = ""

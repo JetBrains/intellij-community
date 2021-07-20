@@ -5,5 +5,15 @@ UFile (package = ) [public final class PropertyDelegateKt {...]
             UBlockExpression [{...}] = Undetermined
                 UDeclarationsExpression [var sdCardPathLocal: java.lang.String] = Undetermined
                     ULocalVariable (name = sdCardPathLocal) [var sdCardPathLocal: java.lang.String]
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [lazy({ ...})] = external lazy({
+    return "/sdcard"
+})(Undetermined)
+                            UIdentifier (Identifier (lazy)) [UIdentifier (Identifier (lazy))]
+                            USimpleNameReferenceExpression (identifier = lazy, resolvesTo = null) [lazy] = external lazy({
+    return "/sdcard"
+})(Undetermined)
+                            ULambdaExpression [{ ...}] = Undetermined
+                                UBlockExpression [{...}] = Nothing
+                                    UReturnExpression [return "/sdcard"] = Nothing
+                                        ULiteralExpression (value = "/sdcard") ["/sdcard"] = "/sdcard"
         UMethod (name = getAnnotatedDelegate) [public static final fun getAnnotatedDelegate() : int = UastEmptyExpression]

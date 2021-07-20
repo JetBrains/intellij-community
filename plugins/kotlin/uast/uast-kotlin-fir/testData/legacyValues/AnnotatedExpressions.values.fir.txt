@@ -37,11 +37,13 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                                 UExpressionList (when_entry) [{...] = Undetermined
                                     UYieldExpression [yield null] = UYieldResult(null)
                                         ULiteralExpression (value = null) [null] = null
-                            USwitchClauseExpressionWithBody [str.[!] UnknownKotlinExpression (CALL_EXPRESSION) != null -> {...] = Undetermined
-                                UBinaryExpression (operator = !=) [str.[!] UnknownKotlinExpression (CALL_EXPRESSION) != null] = Undetermined
-                                    UQualifiedReferenceExpression [str.[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                            USwitchClauseExpressionWithBody [str.isNotEmpty() != null -> {...] = Undetermined
+                                UBinaryExpression (operator = !=) [str.isNotEmpty() != null] = Undetermined
+                                    UQualifiedReferenceExpression [str.isNotEmpty()] = external isNotEmpty()()
                                         USimpleNameReferenceExpression (identifier = str) [str] = Undetermined
-                                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)] = Undetermined
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [isNotEmpty()] = external isNotEmpty()()
+                                            UIdentifier (Identifier (isNotEmpty)) [UIdentifier (Identifier (isNotEmpty))]
+                                            USimpleNameReferenceExpression (identifier = isNotEmpty, resolvesTo = null) [isNotEmpty] = external isNotEmpty()()
                                     ULiteralExpression (value = null) [null] = null
                                 UExpressionList (when_entry) [{...] = Undetermined
                                     UYieldExpression [yield null] = UYieldResult(null)

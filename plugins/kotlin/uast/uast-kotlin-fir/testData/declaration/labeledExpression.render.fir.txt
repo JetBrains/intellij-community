@@ -14,9 +14,13 @@ public final class Foo : I, Base {
     public fun Foo() = UastEmptyExpression
     public final fun getP() : java.lang.String = UastEmptyExpression
     public final fun bar(@org.jetbrains.annotations.NotNull other: I) : int {
-        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        with(other, {
+            return super.foo()
+        })
     }
     public final fun baz(@org.jetbrains.annotations.NotNull other: I) : java.lang.String {
-        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        with(other, {
+            return this.p
+        })
     }
 }

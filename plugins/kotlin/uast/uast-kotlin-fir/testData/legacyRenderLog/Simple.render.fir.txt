@@ -2,7 +2,7 @@ public final class Simple {
     @org.jetbrains.annotations.NotNull private final var property: java.lang.String = "Mary"
     public fun Simple() = UastEmptyExpression
     public final fun method() : void {
-        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        println("Hello, world!")
     }
     public final fun getProperty() : java.lang.String = UastEmptyExpression
 }

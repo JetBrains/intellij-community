@@ -3,15 +3,20 @@ UFile (package = ) [public final class PropertyTest {...]
         UMethod (name = PropertyTest) [public fun PropertyTest() = UastEmptyExpression]
         UMethod (name = getStringRepresentation) [public final fun getStringRepresentation() : java.lang.String {...}]
             UBlockExpression [{...}]
-                UReturnExpression [return this.[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    UQualifiedReferenceExpression [this.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:String
+                UReturnExpression [return this.toString()]
+                    UQualifiedReferenceExpression [this.toString()] : PsiType:String
                         UThisExpression (label = null) [this] : PsiType:PropertyTest
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : PsiType:String
+                            UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
+                            USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] : PsiType:String
         UMethod (name = setStringRepresentation) [public final fun setStringRepresentation(@org.jetbrains.annotations.NotNull value: java.lang.String) : void {...}]
             UParameter (name = value) [@org.jetbrains.annotations.NotNull var value: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:Unit
-                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [setDataFromString(value)] : PsiType:Unit
+                    UIdentifier (Identifier (setDataFromString)) [UIdentifier (Identifier (setDataFromString))]
+                    USimpleNameReferenceExpression (identifier = setDataFromString, resolvesTo = null) [setDataFromString] : PsiType:Unit
+                    USimpleNameReferenceExpression (identifier = value) [value] : PsiType:String
         UMethod (name = setDataFromString) [public final fun setDataFromString(@org.jetbrains.annotations.NotNull data: java.lang.String) : void {...}]
             UParameter (name = data) [@org.jetbrains.annotations.NotNull var data: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]

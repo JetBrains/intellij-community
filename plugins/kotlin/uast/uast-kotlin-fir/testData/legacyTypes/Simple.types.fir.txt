@@ -6,5 +6,8 @@ UFile (package = ) [public final class Simple {...]
         UMethod (name = Simple) [public fun Simple() = UastEmptyExpression]
         UMethod (name = method) [public final fun method() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
-                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("Hello, world!")] : PsiType:Unit
+                    UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
+                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:Unit
+                    ULiteralExpression (value = "Hello, world!") ["Hello, world!"] : PsiType:String
         UMethod (name = getProperty) [public final fun getProperty() : java.lang.String = UastEmptyExpression]

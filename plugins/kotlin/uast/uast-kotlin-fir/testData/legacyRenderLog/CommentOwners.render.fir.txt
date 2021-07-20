@@ -2,17 +2,17 @@ public final class CommentOwnersKt {
     @org.jetbrains.annotations.NotNull private static final var topLevelProperty: int = 42
     public static final fun getTopLevelProperty() : int = UastEmptyExpression
     public static final fun topLevelFun() : void {
-        return [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        return TODO()
     }
     public static final fun funPlainCall(@org.jetbrains.annotations.NotNull a: int) : void {
-        return [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        return TODO()
     }
     public static final fun funNamedArgumentsCall(@org.jetbrains.annotations.NotNull a: int) : void {
-        return [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        return TODO()
     }
     public static final fun func(@org.jetbrains.annotations.NotNull a: int) : void {
-        [!] UnknownKotlinExpression (CALL_EXPRESSION)
-        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        funPlainCall(42)
+        funNamedArgumentsCall(42)
         while (true) {
             break
         }
@@ -26,11 +26,11 @@ public final class CommentOwnersKt {
 public final class TopLevelClass {
     @org.jetbrains.annotations.NotNull private final var classLevelProperty: int = 42
     public fun TopLevelClass(@org.jetbrains.annotations.NotNull t: int) {
-        UastEmptyExpression
+        <anonymous class>()
     }
     public final fun getClassLevelProperty() : int = UastEmptyExpression
     public final fun classLevelMethod() : void {
-        return [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        return TODO()
     }
     public static final class NestedClass {
         public fun NestedClass() = UastEmptyExpression

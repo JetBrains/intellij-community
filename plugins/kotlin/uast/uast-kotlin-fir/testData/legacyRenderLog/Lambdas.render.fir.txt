@@ -2,17 +2,20 @@ import java.util.stream.Stream
 
 public final class LambdasKt {
     public static final fun foo() : void {
-        Stream.[!] UnknownKotlinExpression (CALL_EXPRESSION).[!] UnknownKotlinExpression (CALL_EXPRESSION)
+        Stream.empty().filter({ var it: <ErrorType> ->
+
+            return it.isEmpty()
+        })
     }
     public static final fun doSelectItem(@org.jetbrains.annotations.NotNull selectItemFunction: kotlin.jvm.functions.Function0<? extends kotlin.Unit>) : void {
-        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        invoke()
         var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {
-                [!] UnknownKotlinExpression (CALL_EXPRESSION)
+                <anonymous class>()
         }
-        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        invoke()
     }
     public static final fun lambdaInPlaceCall() : void {
-        while ([!] UnknownKotlinExpression (CALL_EXPRESSION)) {
+        while (invoke()) {
         }
     }
 }

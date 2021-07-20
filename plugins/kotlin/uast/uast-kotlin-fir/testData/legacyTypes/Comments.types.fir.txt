@@ -16,12 +16,15 @@ UFile (package = ) [public abstract interface Pizza {...]
         UMethod (name = getSize) [public fun getSize() : int = UastEmptyExpression]
         UMethod (name = getName) [public fun getName() : java.lang.String {...}]
             UBlockExpression [{...}]
-                UReturnExpression [return java.lang.[!] UnknownKotlinExpression (CALL_EXPRESSION)]
-                    UQualifiedReferenceExpression [java.lang.[!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:String
+                UReturnExpression [return java.lang.<anonymous class>("Margherita")]
+                    UQualifiedReferenceExpression [java.lang.<anonymous class>("Margherita")] : PsiType:String
                         UQualifiedReferenceExpression [java.lang] : PsiType:Unit
                             USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Unit
                             USimpleNameReferenceExpression (identifier = lang) [lang] : PsiType:Unit
-                        [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<anonymous class>("Margherita")] : PsiType:String
+                            UIdentifier (Identifier (String)) [UIdentifier (Identifier (String))]
+                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:String
+                            ULiteralExpression (value = "Margherita") ["Margherita"] : PsiType:String
         UMethod (name = contains) [public fun contains(@org.jetbrains.annotations.NotNull ingredient: Pizza.Ingredient) : boolean {...}]
             UParameter (name = ingredient) [@org.jetbrains.annotations.NotNull var ingredient: Pizza.Ingredient]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]

@@ -4,8 +4,11 @@ UFile (package = ) [public final class ConstructorDelegateKt {...]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:Void
-                UReturnExpression [return [!] UnknownKotlinExpression (CALL_EXPRESSION)] : PsiType:Void
-                    [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UReturnExpression [return <anonymous class>(i)] : PsiType:Void
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<anonymous class>(i)] : PsiType:BaseImpl
+                        UIdentifier (Identifier (BaseImpl)) [UIdentifier (Identifier (BaseImpl))]
+                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:BaseImpl
+                        USimpleNameReferenceExpression (identifier = i) [i] : PsiType:int
     UClass (name = Base) [public abstract interface Base {...}]
         UMethod (name = print) [public abstract fun print() : void = UastEmptyExpression]
     UClass (name = BaseImpl) [public final class BaseImpl : Base {...}]
@@ -17,11 +20,17 @@ UFile (package = ) [public final class ConstructorDelegateKt {...]
         UMethod (name = getX) [public final fun getX() : int = UastEmptyExpression]
         UMethod (name = print) [public fun print() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
-                [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [print(x)] : PsiType:Unit
+                    UIdentifier (Identifier (print)) [UIdentifier (Identifier (print))]
+                    USimpleNameReferenceExpression (identifier = print, resolvesTo = null) [print] : PsiType:Unit
+                    USimpleNameReferenceExpression (identifier = x) [x] : PsiType:int
     UClass (name = Derived) [public final class Derived : Base, java.lang.CharSequence {...}]
-        UExpressionList (super_delegation) [super_delegation Base : [!] UnknownKotlinExpression (CALL_EXPRESSION)]
+        UExpressionList (super_delegation) [super_delegation Base : createBase(10)]
             UTypeReferenceExpression (name = Base) [Base]
-            [!] UnknownKotlinExpression (CALL_EXPRESSION) [[!] UnknownKotlinExpression (CALL_EXPRESSION)]
+            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [createBase(10)] : PsiType:Base
+                UIdentifier (Identifier (createBase)) [UIdentifier (Identifier (createBase))]
+                USimpleNameReferenceExpression (identifier = createBase, resolvesTo = null) [createBase] : PsiType:Base
+                ULiteralExpression (value = 10) [10] : PsiType:int
         UExpressionList (super_delegation) [super_delegation java.lang.CharSequence : "abc"]
             UTypeReferenceExpression (name = java.lang.CharSequence) [java.lang.CharSequence]
             ULiteralExpression (value = "abc") ["abc"] : PsiType:String

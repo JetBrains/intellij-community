@@ -21,7 +21,7 @@ KotlinUFile(
         )
         KotlinUField(
         )
-        FirKotlinConstructorUMethod(
+        KotlinConstructorUMethod(
         )
         FirKotlinUMethod(
         )

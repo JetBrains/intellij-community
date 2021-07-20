@@ -10,7 +10,9 @@ public final class SAMKt {
     @org.jetbrains.annotations.NotNull private static var foo: java.lang.Runnable = {
 
     }
-    @org.jetbrains.annotations.NotNull private static final var baz: java.lang.Runnable = java.lang.[!] UnknownKotlinExpression (CALL_EXPRESSION)
+    @org.jetbrains.annotations.NotNull private static final var baz: java.lang.Runnable = java.lang.Runnable({
+
+    })
     public static final fun getNotSam() : kotlin.jvm.functions.Function0<? extends kotlin.Unit> = UastEmptyExpression
     public static final fun getFoo() : java.lang.Runnable = UastEmptyExpression
     public static final fun setFoo(@org.jetbrains.annotations.NotNull value: java.lang.Runnable) : void = UastEmptyExpression
@@ -21,29 +23,39 @@ public final class SAMKt {
         var a: java.lang.Runnable = {
 
         } as java.lang.Runnable
-        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        runRunnable({
+
+        })
         return {
 
         }
     }
     public static final fun getBaz() : java.lang.Runnable = UastEmptyExpression
     public static final fun runRunnable(@org.jetbrains.annotations.NotNull r: java.lang.Runnable) : error.NonExistentClass {
-        return [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        return <anonymous class>()
     }
     public static final fun test1() : void {
-        var thread1: java.lang.Thread = [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        var thread1: java.lang.Thread = <anonymous class>({
+            println("hello1")
+        })
     }
     public static final fun test2() : void {
-        var thread2: java.lang.Thread = [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        var thread2: java.lang.Thread = <anonymous class>(Runnable({
+            println("hello2")
+        }))
     }
     public static final fun test3() : void {
-        [!] UnknownKotlinExpression (CALL_EXPRESSION)
-        [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        ambiguousSamAcceptor(Supplier({
+            return "Supplier"
+        }))
+        ambiguousSamAcceptor(Callable({
+            return "Callable"
+        }))
     }
     public static final fun ambiguousSamAcceptor(@org.jetbrains.annotations.NotNull s: java.util.function.Supplier<java.lang.String>) : java.lang.String {
-        return [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        return TODO()
     }
     public static final fun ambiguousSamAcceptor(@org.jetbrains.annotations.NotNull s: java.util.concurrent.Callable<java.lang.String>) : java.lang.String {
-        return [!] UnknownKotlinExpression (CALL_EXPRESSION)
+        return TODO()
     }
 }
