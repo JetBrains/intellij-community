@@ -196,7 +196,7 @@ public final class PluginDownloader {
     if (myFile == null) return null;
 
     // The null check is required for cases when plugins are requested during initial IDE setup (e.g. in Rider initial setup wizard).
-    if (ApplicationManager.getApplication() != null && (isFromMarketplace() || Registry.is("marketplace.certificate.signature.check"))) {
+    if (requiresSignatureCheck()) {
       boolean certified = PluginSignatureChecker.verify(myDescriptor, myFile, showMessageOnError);
       if (!certified) {
         myShownErrors = true;
@@ -235,6 +235,18 @@ public final class PluginDownloader {
     }
 
     return actualDescriptor;
+  }
+
+  private boolean requiresSignatureCheck() {
+    if (ApplicationManager.getApplication() == null) {
+      return false;
+    }
+    if (isFromMarketplace()) {
+      return Registry.is("marketplace.certificate.signature.check");
+    }
+    else {
+      return Registry.is("custom-repository.certificate.signature.check");
+    }
   }
 
   private boolean isPluginFromBuiltinRepo() {

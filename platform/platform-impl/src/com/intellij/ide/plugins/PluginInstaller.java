@@ -283,7 +283,7 @@ public final class PluginInstaller {
                                                             InstallationSourceEnum.FROM_DISK,
                                                             installedPlugin != null ? installedPlugin.getVersion() : null);
 
-      if (Registry.is("marketplace.certificate.signature.check")) {
+      if (Registry.is("custom-repository.certificate.signature.check")) {
         if (!PluginSignatureChecker.verify(pluginDescriptor, file, true)) {
           return false;
         }
