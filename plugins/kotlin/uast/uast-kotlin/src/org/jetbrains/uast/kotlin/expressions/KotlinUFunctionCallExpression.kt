@@ -15,13 +15,10 @@ import org.jetbrains.uast.visitor.UastVisitor
 class KotlinUFunctionCallExpression(
     override val sourcePsi: KtCallElement,
     givenParent: UElement?,
-    private val _resolvedCall: ResolvedCall<*>?
 ) : KotlinAbstractUExpression(givenParent), UCallExpression, KotlinUElementWithType, UMultiResolvable {
 
-    constructor(psi: KtCallElement, uastParent: UElement?) : this(psi, uastParent, null)
-
-    private val resolvedCall
-        get() = _resolvedCall ?: sourcePsi.getResolvedCall(sourcePsi.analyze())
+    private val resolvedCall: ResolvedCall<*>?
+        get() = sourcePsi.getResolvedCall(sourcePsi.analyze())
 
     override val receiverType by lz {
         val resolvedCall = this.resolvedCall ?: return@lz null
