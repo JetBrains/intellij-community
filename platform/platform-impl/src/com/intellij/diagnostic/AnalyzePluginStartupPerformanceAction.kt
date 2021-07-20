@@ -49,32 +49,31 @@ private class PluginStartupCostDialog(private val project: Project) : DialogWrap
   }
 
   override fun createCenterPanel(): JComponent {
-    val pluginCostMap = StartUpPerformanceService.getInstance().pluginCostMap
-    val tableData = pluginCostMap
-      .mapNotNull { (pluginId, costMap) ->
-        if (!ApplicationManager.getApplication().isInternal &&
-            (ApplicationInfoEx.getInstanceEx()).isEssentialPlugin(pluginId)) {
-          return@mapNotNull null
-        }
-
-        val name = PluginManagerCore.getPlugin(PluginId.getId(pluginId))?.name ?: return@mapNotNull null
-
-        var totalCost = 0L
-        val iterator = costMap.values.iterator()
-        while (iterator.hasNext()) {
-          totalCost += iterator.nextLong()
-        }
-
-        val ids = costMap.keys.toMutableList()
-        ids.sort()
-        val costDetails = StringBuilder()
-        for (id in ids) {
-          costDetails.append(id).append(": ").append(TimeUnit.NANOSECONDS.toMillis(costMap.getLong(id)))
-          costDetails.append('\n')
-        }
-
-        PluginStartupCostEntry(pluginId, name, totalCost, costDetails.toString())
+    val pluginCostMap = StartUpPerformanceService.getInstance().getPluginCostMap()
+    val tableData = pluginCostMap.mapNotNull { (pluginId, costMap) ->
+      if (!ApplicationManager.getApplication().isInternal &&
+          (ApplicationInfoEx.getInstanceEx()).isEssentialPlugin(pluginId)) {
+        return@mapNotNull null
       }
+
+      val name = PluginManagerCore.getPlugin(PluginId.getId(pluginId))?.name ?: return@mapNotNull null
+
+      var totalCost = 0L
+      val iterator = costMap.values.iterator()
+      while (iterator.hasNext()) {
+        totalCost += iterator.nextLong()
+      }
+
+      val ids = costMap.keys.toMutableList()
+      ids.sort()
+      val costDetails = StringBuilder()
+      for (id in ids) {
+        costDetails.append(id).append(": ").append(TimeUnit.NANOSECONDS.toMillis(costMap.getLong(id)))
+        costDetails.append('\n')
+      }
+
+      PluginStartupCostEntry(pluginId, name, totalCost, costDetails.toString())
+    }
       .sortedByDescending { it.cost }
 
     val pluginColumn = object : ColumnInfo<PluginStartupCostEntry, String>(IdeBundle.message("column.name.plugin")) {
