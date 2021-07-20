@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.java
 
 import com.intellij.codeInsight.ClassUtil.getAnyMethodToImplement
 import com.intellij.codeInsight.daemon.JavaErrorBundle
-import com.intellij.codeInsight.daemon.JavaErrorMessages
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil.getClassDeclarationTextRange
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
@@ -54,14 +53,28 @@ class UnimplementedKotlinInterfaceMemberAnnotator : Annotator {
         val kotlinSuperClass = generateSequence(psiClass) { it.superClass }.firstOrNull { it is KtLightClassForSourceDeclaration }
 
         val signaturesVisibleThroughKotlinSuperClass = kotlinSuperClass?.visibleSignatures ?: emptyList()
-        return signaturesFromKotlinInterfaces.firstOrNull {
-            it !in signaturesVisibleThroughKotlinSuperClass &&
-                    !it.method.isBinaryOrigin &&
-                    it.method.modifierList.annotations.none { annotation ->
-                        val qualifiedName = annotation.qualifiedName
-                        qualifiedName == JVM_DEFAULT_FQ_NAME.asString() || qualifiedName == JVM_STATIC_ANNOTATION_FQ_NAME.asString()
-                    }
-        }?.method as? KtLightMethod
+        return signaturesFromKotlinInterfaces
+            .firstOrNull { shouldBeImplemented(it, signaturesVisibleThroughKotlinSuperClass) }
+            ?.method as? KtLightMethod
+    }
+
+    private fun shouldBeImplemented(
+        method: HierarchicalMethodSignature,
+        signaturesVisibleThroughKotlinSuperClass: Collection<HierarchicalMethodSignature>
+    ): Boolean {
+        if (method in signaturesVisibleThroughKotlinSuperClass) return false
+
+        val psiMethod = method.method
+        if (psiMethod.isBinaryOrigin) return false
+
+        val hasJvmDefaultOrJvmStatic = psiMethod.modifierList.annotations.any { annotation ->
+            val qualifiedName = annotation.qualifiedName
+            qualifiedName == JVM_DEFAULT_FQ_NAME.asString() || qualifiedName == JVM_STATIC_ANNOTATION_FQ_NAME.asString()
+        }
+
+        if (hasJvmDefaultOrJvmStatic) return false
+
+        return true
     }
 
     private val PsiMethod.isBinaryOrigin get() = (containingClass as? KtLightClassMarker)?.originKind == LightClassOriginKind.BINARY
