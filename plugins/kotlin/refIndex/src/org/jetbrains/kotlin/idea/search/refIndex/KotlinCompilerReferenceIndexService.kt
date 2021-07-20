@@ -140,8 +140,11 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         subscribeToCompilerEvents()
     }
 
+    private val projectIfNotDisposed: Project?
+        get() = project.takeUnless(Project::isDisposed)
+
     private fun subscribeToCompilerEvents() {
-        val connection = project.messageBus.connect(this)
+        val connection = projectIfNotDisposed?.messageBus?.connect(this) ?: return
         connection.subscribe(BuildManagerListener.TOPIC, object : BuildManagerListener {
             override fun buildStarted(project: Project, sessionId: UUID, isAutomake: Boolean) {
                 if (project === this@KotlinCompilerReferenceIndexService.project) {
@@ -169,7 +172,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
 
     private fun compilationFinished() {
         val compilerModules = runReadAction {
-            project.takeUnless(Project::isDisposed)?.let {
+            projectIfNotDisposed?.let {
                 val manager = ModuleManager.getInstance(it)
                 dirtyScopeHolder.compilationAffectedModules.map(manager::findModuleByName)
             }
@@ -198,7 +201,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
             ?.firstOrNull()
 
     private fun openStorage() {
-        val basePath = project.basePath ?: return
+        val basePath = runReadAction { projectIfNotDisposed?.basePath } ?: return
         val pathConverter = RelativeFileToPathConverter(File(basePath))
         val targetDataDir = kotlinDataContainer?.toFile() ?: run {
             LOG.warn("try to open storage without index directory")
@@ -218,10 +221,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
     }
 
     private fun markAsOutdated() {
-        val modules = runReadAction {
-            project.takeUnless(Project::isDisposed)?.let { ModuleManager.getInstance(it).modules }
-        } ?: return
-
+        val modules = runReadAction { projectIfNotDisposed?.let { ModuleManager.getInstance(it).modules } } ?: return
         withDirtyScopeUnderWriteLock { upToDateCheckFinished(modules) }
     }
 
