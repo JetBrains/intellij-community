@@ -147,6 +147,14 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
+    override fun getReceiverType(ktCallElement: KtCallElement, source: UElement): PsiType? {
+        analyseForUast(ktCallElement) {
+            val ktType = ktCallElement.resolveCall()?.targetFunction?.candidates?.singleOrNull()?.receiverType?.type ?: return null
+            if (ktType is KtClassErrorType) return null
+            return ktType.asPsiType(ktCallElement, TypeMappingMode.DEFAULT_UAST)
+        }
+    }
+
     override fun getDoubleColonReceiverType(ktDoubleColonExpression: KtDoubleColonExpression, source: UElement): PsiType? {
         analyseForUast(ktDoubleColonExpression) {
             return ktDoubleColonExpression.getReceiverKtType()?.asPsiType(ktDoubleColonExpression, TypeMappingMode.DEFAULT_UAST)
