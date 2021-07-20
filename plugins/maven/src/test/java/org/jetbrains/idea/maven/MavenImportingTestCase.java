@@ -407,9 +407,14 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void doImportProjects(final List<VirtualFile> files, boolean failOnReadingError, String... profiles) {
+    doImportProjects(files, failOnReadingError, Collections.emptyList(), profiles);
+  }
+
+  protected void doImportProjects(final List<VirtualFile> files, boolean failOnReadingError,
+                                  List<String> disabledProfiles, String... profiles) {
     initProjectsManager(false);
 
-    readProjects(files, profiles);
+    readProjects(files, disabledProfiles, profiles);
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
       myProjectsManager.waitForResolvingCompletion();
@@ -425,7 +430,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void readProjects(List<VirtualFile> files, String... profiles) {
-    myProjectsManager.resetManagedFilesAndProfilesInTests(files, new MavenExplicitProfiles(Arrays.asList(profiles)));
+    readProjects(files, Collections.emptyList(), profiles);
+  }
+
+  protected void readProjects(List<VirtualFile> files, List<String> disabledProfiles, String... profiles) {
+    myProjectsManager.resetManagedFilesAndProfilesInTests(files, new MavenExplicitProfiles(Arrays.asList(profiles), disabledProfiles));
     waitForReadingCompletion();
   }
 
