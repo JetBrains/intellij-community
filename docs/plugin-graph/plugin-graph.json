@@ -7323,14 +7323,6 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "Pz1_Jp",
-    "source": "Pz1",
-    "target": "Jp",
-    "type": 0
-  }
-}, {
-  "group": "edges",
-  "data": {
     "id": "Pz1_oO",
     "source": "Pz1",
     "target": "oO",
@@ -7339,9 +7331,9 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "Pz1_S9",
+    "id": "Pz1_Jp",
     "source": "Pz1",
-    "target": "S9",
+    "target": "Jp",
     "type": 0
   }
 }, {
