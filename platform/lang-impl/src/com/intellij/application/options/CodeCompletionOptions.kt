@@ -26,7 +26,6 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.layout.*
-import javax.swing.JComponent
 import javax.swing.JTextField
 import kotlin.math.max
 
@@ -104,29 +103,9 @@ class CodeCompletionOptions : BoundCompositeConfigurable<UnnamedConfigurable>(
     return result || caseSensitive != codeInsightSettings.completionCaseSensitive
   }
 
-  private fun getOptionSectionAddons(): Pair<List<UnnamedConfigurable>, List<UnnamedConfigurable>> {
-    val optionAddons: MutableList<UnnamedConfigurable> = mutableListOf()
-    val sectionAddons: MutableList<UnnamedConfigurable> = mutableListOf()
-    for (configurable in configurables) {
-      if (configurable is CodeCompletionOptionsCustomSection) {
-        sectionAddons.add(configurable)
-      }
-      else {
-        optionAddons.add(configurable)
-      }
-    }
-
-    sectionAddons.sortWith(Comparator.comparing { c ->
-      (if (c is Configurable) c.displayName else null) ?: ""
-    })
-
-    return Pair(optionAddons, sectionAddons)
-  }
-
   override fun createPanel(): DialogPanel {
     val actionManager = ActionManager.getInstance()
     val settings = CodeInsightSettings.getInstance()
-    val (optionAddons, sectionAddons) = getOptionSectionAddons()
 
     return panel {
       buttonGroup {
@@ -192,7 +171,7 @@ class CodeCompletionOptions : BoundCompositeConfigurable<UnnamedConfigurable>(
       }
 
       fullRow {
-        val cbAutopopupJavaDoc = checkBox(ApplicationBundle.message("editbox.autopopup.javadoc.in"), settings.AUTO_POPUP_JAVADOC_INFO)
+        val cbAutopopupJavaDoc = checkBox(ApplicationBundle.message("editbox.autopopup.javadoc.in"), prop = settings::AUTO_POPUP_JAVADOC_INFO)
         intTextField(prop = settings::JAVADOC_INFO_DELAY,
                      columns = 4,
                      range = CodeInsightSettings.JAVADOC_INFO_DELAY_RANGE.asRange(),
@@ -201,7 +180,7 @@ class CodeCompletionOptions : BoundCompositeConfigurable<UnnamedConfigurable>(
         label(ApplicationBundle.message("editbox.ms"))
       }
 
-      addExtensions(optionAddons)
+      addOptions()
 
       titledRow(ApplicationBundle.message("title.parameter.info")) {
         if (OptionsApplicabilityFilter.isApplicable(OptionId.SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION)) {
@@ -226,7 +205,7 @@ class CodeCompletionOptions : BoundCompositeConfigurable<UnnamedConfigurable>(
         }
       }
 
-      addExtensions(sectionAddons)
+      addSections()
     }
   }
 
@@ -248,14 +227,16 @@ class CodeCompletionOptions : BoundCompositeConfigurable<UnnamedConfigurable>(
     }
   }
 
-  private fun RowBuilder.addExtensions(addons: List<UnnamedConfigurable>) {
-    for (addon in addons) {
-      val component: JComponent? = addon.createComponent()
-      component?.let {
-        row {
-          component(it)
-        }
-      }
-    }
+  private fun RowBuilder.addOptions() {
+    configurables.filter { !(it is CodeCompletionOptionsCustomSection) }
+      .forEach { appendDslConfigurableRow(it) }
+  }
+
+  private fun RowBuilder.addSections() {
+    configurables.filter { it is CodeCompletionOptionsCustomSection }
+      .sortedWith(Comparator.comparing { c ->
+        (if (c is Configurable) c.displayName else null) ?: ""
+      })
+      .forEach { appendDslConfigurableRow(it) }
   }
 }
