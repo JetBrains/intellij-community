@@ -197,7 +197,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public boolean analyze(@NotNull PsiFile file, boolean updateWholeFile, @NotNull HighlightInfoHolder holder, @NotNull Runnable highlight) {
-    boolean success = true;
     try {
       prepare(Holder.CHECK_ELEMENT_LEVEL ? new CheckLevelHighlightInfoHolder(file, holder) : holder, file);
       if (updateWholeFile) {
@@ -210,13 +209,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         RefCountHolder refCountHolder = RefCountHolder.get(file, dirtyScope.equals(file.getTextRange()));
         myRefCountHolder = refCountHolder;
 
-        success = refCountHolder.analyze(() -> {
-          highlight.run();
-          ProgressManager.checkCanceled();
-          if (document != null) {
-            new PostHighlightingVisitor(file, document, refCountHolder).collectHighlights(holder, progress);
-          }
-        });
+        highlight.run();
+        ProgressManager.checkCanceled();
+        if (document != null) {
+          new PostHighlightingVisitor(file, document, refCountHolder).collectHighlights(holder, progress);
+        }
 
         refCountHolder.storeReadyHolder(file);
       }
@@ -242,7 +239,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myInsideConstructorOfClassCache.clear();
     }
 
-    return success;
+    return true;
   }
 
   protected void prepareToRunAsInspection(@NotNull HighlightInfoHolder holder) {
