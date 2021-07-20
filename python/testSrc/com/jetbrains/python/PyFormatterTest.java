@@ -1208,6 +1208,7 @@ public class PyFormatterTest extends PyTestCase {
 
   // PY-48009
   public void testSpacesAroundEqualSignsInKeywordPatterns() {
+    getPythonCodeStyleSettings().SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT = true;
     doTest();
   }
 }

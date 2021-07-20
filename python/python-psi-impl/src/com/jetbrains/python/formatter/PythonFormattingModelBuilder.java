@@ -125,6 +125,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       .aroundInside(EQ, ASSIGNMENT_STATEMENT).spaceIf(commonSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS)
       .aroundInside(EQ, NAMED_PARAMETER).spaceIf(pySettings.SPACE_AROUND_EQ_IN_NAMED_PARAMETER)
       .aroundInside(EQ, KEYWORD_ARGUMENT_EXPRESSION).spaceIf(pySettings.SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT)
+      .aroundInside(EQ, KEYWORD_PATTERN).spaceIf(pySettings.SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT)
       .around(COLONEQ).spaceIf(commonSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS)
       .around(AUG_ASSIGN_OPERATIONS).spaceIf(commonSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS)
       .aroundInside(ADDITIVE_OPERATIONS, BINARY_EXPRESSION).spaceIf(commonSettings.SPACE_AROUND_ADDITIVE_OPERATORS)
