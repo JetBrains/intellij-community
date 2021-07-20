@@ -26,8 +26,6 @@ interface BaseKotlinUastResolveProviderService {
 
     fun convertParent(uElement: UElement, parent: PsiElement?): UElement?
 
-    fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement>
-
     fun getArgumentForParameter(ktCallElement: KtCallElement, index: Int, parent: UElement): UExpression?
 
     fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression?
@@ -41,6 +39,8 @@ interface BaseKotlinUastResolveProviderService {
     // ----------
     // Resolution
     // ----------
+
+    fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement>
 
     fun resolveCall(ktElement: KtElement): PsiMethod?
 
