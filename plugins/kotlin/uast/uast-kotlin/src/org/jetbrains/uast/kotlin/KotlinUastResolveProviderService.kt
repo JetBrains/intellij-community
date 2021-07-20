@@ -122,6 +122,11 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return resolveToPsiMethod(ktElement)
     }
 
+    override fun resolvedFunctionName(ktCallElement: KtCallElement): String? {
+        val resolvedCall = ktCallElement.getResolvedCall(ktCallElement.analyze()) ?: return null
+        return resolvedCall.resultingDescriptor.name.asString()
+    }
+
     override fun callKind(ktCallElement: KtCallElement): UastCallKind {
         val resolvedCall = ktCallElement.getResolvedCall(ktCallElement.analyze()) ?: return UastCallKind.METHOD_CALL
         return when {
