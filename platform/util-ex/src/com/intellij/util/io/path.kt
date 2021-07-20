@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.openapi.util.io.NioFiles
@@ -210,7 +210,8 @@ inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Bo
   return null
 }
 
-private val illegalChars = HashSet(listOf('/', '\\', '?', '<', '>', ':', '*', '|', '"', ':'))
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+private val illegalChars = HashSet(java.util.List.of('/', '\\', '?', '<', '>', ':', '*', '|', '"', ':'))
 
 // https://github.com/parshap/node-sanitize-filename/blob/master/index.js
 fun sanitizeFileName(name: String, replacement: String? = "_", truncateIfNeeded: Boolean = true, extraIllegalChars: Predicate<Char>? = null): String {
