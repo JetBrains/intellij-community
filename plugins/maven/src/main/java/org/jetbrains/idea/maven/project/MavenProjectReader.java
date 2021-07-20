@@ -53,8 +53,8 @@ public final class MavenProjectReader {
     Pair<RawModelReadResult, MavenExplicitProfiles> readResult =
       doReadProjectModel(generalSettings, basedir, file, explicitProfiles, new HashSet<>(), locator);
 
-    MavenModel model = MavenServerManager.getInstance().getConnector(myProject, basedir.getPath())
-      .interpolateAndAlignModel(readResult.first.model, basedir);
+
+    MavenModel model = MavenServerManager.getInstance().getConnector(myProject, basedir.getPath()).interpolateAndAlignModel(readResult.first.model, basedir);
 
     Map<String, String> modelMap = new HashMap<>();
     modelMap.put("groupId", model.getMavenId().getGroupId());
@@ -417,8 +417,7 @@ public final class MavenProjectReader {
                                                  File basedir,
                                                  MavenExplicitProfiles explicitProfiles,
                                                  Collection<String> alwaysOnProfiles) {
-    return MavenServerManager.getInstance().getConnector(myProject, projectPomDir.getAbsolutePath())
-      .applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
+    return MavenServerManager.getInstance().getConnector(myProject, projectPomDir.getAbsolutePath()).applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
   }
 
   private MavenModel resolveInheritance(final MavenGeneralSettings generalSettings,

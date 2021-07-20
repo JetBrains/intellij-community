@@ -148,7 +148,7 @@ public class MavenDistributionsCache {
                                               .map(p -> p.getDirectory())
                                               .filter(rpDirectory -> FileUtil.isAncestor(rpDirectory, workingDirectory, false))
                                               .findFirst()
-                                              .orElseGet(() -> calculateMultimoduleDirUpToFileTree(workingDirectory)));
+                                              .orElse(calculateMultimoduleDirUpToFileTree(workingDirectory)));
   }
 
   private @NotNull String calculateMultimoduleDirUpToFileTree(String directory) {

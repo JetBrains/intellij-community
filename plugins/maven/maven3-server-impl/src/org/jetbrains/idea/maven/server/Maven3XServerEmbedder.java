@@ -10,7 +10,6 @@ import com.intellij.util.ReflectionUtilRt;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.DefaultMaven;
 import org.apache.maven.Maven;
@@ -1026,7 +1025,9 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       }
       result.setUserProperties(userProperties);
 
-      result.setActiveProfiles(collectActiveProfiles(result.getActiveProfiles(), activeProfiles, inactiveProfiles));
+      if (activeProfiles != null) {
+        result.setActiveProfiles(activeProfiles);
+      }
       if (inactiveProfiles != null) {
         result.setInactiveProfiles(inactiveProfiles);
       }
@@ -1053,31 +1054,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     catch (MavenExecutionRequestPopulationException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  private static List<String> collectActiveProfiles(@Nullable List<String> defaultActiveProfiles,
-                                                    @Nullable List<String> explicitActiveProfiles,
-                                                    @Nullable List<String> explicitInactiveProfiles) {
-    if (defaultActiveProfiles == null || defaultActiveProfiles.isEmpty()) {
-      return ObjectUtils.defaultIfNull(explicitActiveProfiles, Collections.<String>emptyList());
-    }
-
-    Set<String> result = new HashSet<String>();
-    if (explicitInactiveProfiles != null && !explicitInactiveProfiles.isEmpty()) {
-      for (String profile : defaultActiveProfiles) {
-        if (!explicitInactiveProfiles.contains(profile)) {
-          result.add(profile);
-        }
-      }
-    } else {
-      result.addAll(defaultActiveProfiles);
-    }
-
-    if (explicitActiveProfiles != null) {
-      result.addAll(explicitActiveProfiles);
-    }
-
-    return new ArrayList<String>(result);
   }
 
   @NotNull
