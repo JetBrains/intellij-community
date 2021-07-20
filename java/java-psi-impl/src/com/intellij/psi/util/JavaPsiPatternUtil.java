@@ -78,6 +78,25 @@ public final class JavaPsiPatternUtil {
 
   /**
    * @param pattern
+   * @return extracted pattern variable or null if the pattern is incomplete or unknown
+   */
+  @Contract(value = "null -> null", pure = true)
+  @Nullable
+  public static PsiPatternVariable getPatternVariable(@Nullable PsiPattern pattern) {
+    if (pattern instanceof PsiGuardedPattern) {
+      return getPatternVariable(((PsiGuardedPattern)pattern).getPrimaryPattern());
+    }
+    if (pattern instanceof PsiParenthesizedPattern) {
+      return getPatternVariable(((PsiParenthesizedPattern)pattern).getPattern());
+    }
+    if (pattern instanceof PsiTypeTestPattern) {
+      return ((PsiTypeTestPattern)pattern).getPatternVariable();
+    }
+    return null;
+  }
+
+  /**
+   * @param pattern
    * @return type of variable in pattern, or null if pattern is incomplete
    */
   @Contract(value = "null -> null", pure = true)
