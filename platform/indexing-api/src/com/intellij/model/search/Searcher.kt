@@ -2,6 +2,7 @@
 package com.intellij.model.search
 
 import com.intellij.util.Query
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Example:
@@ -19,7 +20,8 @@ import com.intellij.util.Query
 interface Searcher<P : SearchParameters<R>, R : Any> {
 
   /**
-   * @return read-only collection of queries to be executed when the search is run with `parameters`
+   * @return read-only collection of queries to be executed when the search is run with [parameters]
    */
+  @RequiresReadLock
   fun collectSearchRequests(parameters: P): Collection<@JvmWildcard Query<out R>>
 }
