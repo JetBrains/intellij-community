@@ -13,15 +13,13 @@ import com.intellij.psi.PsiTarget
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
-import com.intellij.util.ArrayQuery
-import com.intellij.util.Query
 
 class PsiElementDeclarationSearcher : PsiSymbolDeclarationSearcher {
 
-  override fun collectSearchRequest(parameters: PsiSymbolDeclarationSearchParameters): Query<out PsiSymbolDeclaration>? {
-    val psi = PsiSymbolService.getInstance().extractElementFromSymbol(parameters.symbol) ?: return null
-    val declaration = getDeclaration(psi, parameters.searchScope) ?: return null
-    return ArrayQuery(declaration)
+  override fun collectImmediateResults(parameters: PsiSymbolDeclarationSearchParameters): Collection<PsiSymbolDeclaration> {
+    val psi = PsiSymbolService.getInstance().extractElementFromSymbol(parameters.symbol) ?: return emptyList()
+    val declaration = getDeclaration(psi, parameters.searchScope) ?: return emptyList()
+    return listOf(declaration)
   }
 
   private fun getDeclaration(psi: PsiElement, searchScope: SearchScope): PsiSymbolDeclaration? {

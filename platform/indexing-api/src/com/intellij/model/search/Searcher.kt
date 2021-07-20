@@ -21,6 +21,15 @@ import org.jetbrains.annotations.ApiStatus.OverrideOnly
 interface Searcher<P : SearchParameters<R>, R : Any> {
 
   /**
+   * @return read-only collection of results, which can be obtained from [parameters],
+   * meaning they don't require indexes or otherwise long-running computations
+   */
+  @RequiresReadLock
+  fun collectImmediateResults(parameters: P): Collection<@JvmWildcard R> {
+    return emptyList()
+  }
+
+  /**
    * @return read-only collection of queries to be executed when the search is run with [parameters]
    * @see collectSearchRequest
    */
