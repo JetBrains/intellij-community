@@ -649,7 +649,9 @@ public class MavenProject {
                                                                          getFile(),
                                                                          getActivatedProfilesIds(),
                                                                          console);
-    if (result == null || !MavenProjectReaderResult.shouldResetDependenciesAndFolders(result)) return Pair.create(false, MavenProjectChanges.NONE);
+    if (result == null || !MavenProjectReaderResult.shouldResetDependenciesAndFolders(result)) {
+      return Pair.create(false, MavenProjectChanges.NONE);
+    }
     MavenProjectChanges changes = setFolders(result);
     return Pair.create(true, changes);
   }

@@ -29,6 +29,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -1321,5 +1322,59 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
                           "</dependencies>");
 
     doImportProjects(Collections.singletonList(myProjectPom), false, "profile-test");
+  }
+
+  @Test
+  public void testProjectWithActiveProfilesFromSettingsXml() throws IOException {
+    updateSettingsXml("<activeProfiles>\n" +
+                      "  <activeProfile>one</activeProfile>\n" +
+                      "</activeProfiles>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>${projectName}</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <properties>" +
+                     "      <projectName>project-one</projectName>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    importProject();
+    assertModules("project-one");
+  }
+
+  @Test
+  public void testProjectWithActiveProfilesAndinnactiveFromSettingsXml() throws IOException {
+    updateSettingsXml("<activeProfiles>\n" +
+                      "  <activeProfile>one</activeProfile>\n" +
+                      "  <activeProfile>two</activeProfile>\n" +
+                      "</activeProfiles>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>${projectName}</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <properties>" +
+                     "      <projectName>project-one</projectName>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <properties>" +
+                     "      <projectName>project-two</projectName>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    List<String> disabledProfiles = Collections.singletonList("one");
+    doImportProjects(Collections.singletonList(myProjectPom), true, disabledProfiles);
+    assertModules("project-two");
   }
 }
