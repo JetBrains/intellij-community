@@ -36,7 +36,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
-import com.intellij.psi.impl.source.tree.injected.changesHandler.range
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
@@ -46,8 +45,7 @@ import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.refactoring.suggested.range
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.GotItTooltip
 import com.intellij.util.SmartList
@@ -55,6 +53,7 @@ import org.jetbrains.annotations.NonNls
 import java.awt.Point
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.util.concurrent.CompletableFuture
 
 class InplaceMethodExtractor(private val editor: Editor,
                              private val context: ExtractParameters,
@@ -88,8 +87,6 @@ class InplaceMethodExtractor(private val editor: Editor,
 
   private lateinit var methodCallExpressionRange: RangeMarker
 
-  private var gotItBalloon: Balloon? = null
-
   private val disposable = Disposer.newDisposable()
 
   fun prepareCodeForTemplate() {
@@ -100,20 +97,20 @@ class InplaceMethodExtractor(private val editor: Editor,
 
     val (method, callExpression) = extractMethod(extractor, context)
 
-    val highlighting = createMethodHighlighting(method)
+    val highlighting = createInsertedHighlighting(editor, method.textRange)
     Disposer.register(disposable, highlighting)
 
     methodCallExpressionRange = document.createGreedyRangeMarker(callExpression.methodExpression.textRange)
     Disposer.register(disposable, { methodCallExpressionRange.dispose() })
     methodNameRange = document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
     Disposer.register(disposable, { methodNameRange.dispose() })
-    editor.caretModel.moveToOffset(methodCallExpressionRange.range.startOffset)
+    editor.caretModel.moveToOffset(methodCallExpressionRange.range!!.startOffset)
     setElementToRename(method)
 
     val preview = EditorCodePreview.create(editor)
     Disposer.register(disposable, preview)
 
-    val callLines = findLines(document, rangeToExtract.range)
+    val callLines = findLines(document, rangeToExtract.range!!)
     val file = method.containingFile.virtualFile
     preview.addPreview(callLines) { navigate(project, file, methodCallExpressionRange.endOffset)}
 
@@ -121,11 +118,11 @@ class InplaceMethodExtractor(private val editor: Editor,
     preview.addPreview(methodLines) { navigate(project, file, methodNameRange.endOffset) }
   }
 
-  private fun createMethodHighlighting(method: PsiMethod): Disposable {
-    val project = method.project
+  fun createInsertedHighlighting(editor: Editor, range: TextRange): Disposable {
+    val project = editor.project ?: return Disposable {}
     val highlighters = SmartList<RangeHighlighter>()
     val manager = HighlightManager.getInstance(project)
-    manager.addOccurrenceHighlight(editor, method.startOffset, method.endOffset, DiffColors.DIFF_INSERTED, 0, highlighters)
+    manager.addOccurrenceHighlight(editor, range.startOffset, range.endOffset, DiffColors.DIFF_INSERTED, 0, highlighters)
     return Disposable {
       highlighters.forEach { highlighter -> manager.removeSegmentHighlighter(editor, highlighter) }
     }
@@ -147,7 +144,7 @@ class InplaceMethodExtractor(private val editor: Editor,
     return Pair(methodPointer.element!!, callPointer.element!!)
   }
 
-  private fun createChangeBasedDisposable(editor: Editor): Disposable {
+  fun createChangeBasedDisposable(editor: Editor): Disposable {
     val disposable = Disposer.newDisposable()
     EditorUtil.disposeWithEditor(editor, disposable)
     val changeListener = object: DocumentListener {
@@ -160,13 +157,15 @@ class InplaceMethodExtractor(private val editor: Editor,
   }
 
   private fun installGotItTooltips(){
-    showNavigationGotIt(editor, methodCallExpressionRange.range)
+    val parentDisposable = Disposer.newDisposable().also { EditorUtil.disposeWithEditor(editor, it) }
+    val previousBalloonFuture = createNavigationGotIt(parentDisposable)?.showInEditor(editor, methodCallExpressionRange.range!!)
+    val nameRange = methodNameRange.range ?: return
     val disposable = createChangeBasedDisposable(editor)
-    val nameRange = methodNameRange.range
     val caretListener = object: CaretListener {
       override fun caretPositionChanged(event: CaretEvent) {
         if (editor.logicalPositionToOffset(event.newPosition) in nameRange) {
-          showChangeSignatureGotIt(editor, nameRange)
+          previousBalloonFuture?.thenAccept { balloon -> balloon.hide(true) }
+          createChangeSignatureGotIt(parentDisposable)?.showInEditor(editor, nameRange)
           Disposer.dispose(disposable)
         }
       }
@@ -174,57 +173,53 @@ class InplaceMethodExtractor(private val editor: Editor,
     editor.caretModel.addCaretListener(caretListener, disposable)
   }
 
-  private fun showNavigationGotIt(editor: Editor, range: TextRange){
+  fun createNavigationGotIt(parent: Disposable): GotItTooltip? {
     val gotoKeyboardShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_GOTO_DECLARATION)
     val gotoMouseShortcut = KeymapUtil.getFirstMouseShortcutText(IdeActions.ACTION_GOTO_DECLARATION)
-    if (gotoKeyboardShortcut.isEmpty() || gotoMouseShortcut.isEmpty()) return
+    if (gotoKeyboardShortcut.isEmpty() || gotoMouseShortcut.isEmpty()) return null
     val header = JavaRefactoringBundle.message("extract.method.gotit.navigation.header")
     val message = JavaRefactoringBundle.message("extract.method.gotit.navigation.message", gotoMouseShortcut, gotoKeyboardShortcut)
-    val disposable = Disposer.newDisposable()
-    EditorUtil.disposeWithEditor(editor, disposable)
-    GotItTooltip("extract.method.gotit.navigate", message, disposable)
-      .withHeader(header)
-      .showInEditor(editor, range) { gotItBalloon = it }
+    return GotItTooltip("extract.method.gotit.navigate", message, parent).withHeader(header)
   }
 
-  private fun showChangeSignatureGotIt(editor: Editor, range: TextRange){
-    gotItBalloon?.hide(true)
-    val disposable = Disposer.newDisposable()
-    EditorUtil.disposeWithEditor(editor, disposable)
+  fun createChangeSignatureGotIt(parent: Disposable): GotItTooltip? {
     val moveLeftShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.MOVE_ELEMENT_LEFT)
     val moveRightShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.MOVE_ELEMENT_RIGHT)
+    if (moveLeftShortcut.isEmpty() || moveRightShortcut.isEmpty()) return null
     val contextActionShortcut = KeymapUtil.getFirstKeyboardShortcutText("ShowIntentionActions")
     val header = JavaRefactoringBundle.message("extract.method.gotit.signature.header")
     val message = JavaRefactoringBundle.message("extract.method.gotit.signature.message", contextActionShortcut, moveLeftShortcut, moveRightShortcut)
-    GotItTooltip("extract.method.signature.change", message, disposable)
+    return GotItTooltip("extract.method.signature.change", message, parent)
       .withIcon(AllIcons.Gutter.SuggestedRefactoringBulbDisabled)
       .withHeader(header)
-      .showInEditor(editor, range)
   }
 
-  private fun GotItTooltip.showInEditor(editor: Editor, range: TextRange, balloonCreated: (Balloon) -> Unit = {}) {
+  fun GotItTooltip.showInEditor(editor: Editor, range: TextRange): CompletableFuture<Balloon> {
     val offset = minOf(range.startOffset + 3, range.endOffset)
     fun getPosition(): Point = editor.offsetToXY(offset)
     fun isVisible(): Boolean = editor.scrollingModel.visibleArea.contains(getPosition())
+    fun updateBalloon(balloon: Balloon) {
+      if (isVisible()) {
+        balloon.revalidate()
+      } else {
+        balloon.hide(true)
+        GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
+      }
+    }
 
     withMaxWidth(250)
     withPosition(Balloon.Position.above)
 
+    val balloonFuture = CompletableFuture<Balloon>()
     if (isVisible()) {
-      setOnBalloonCreated { balloon -> editor.scrollingModel.addVisibleAreaListener({
-          if (isVisible()) {
-            balloon.revalidate()
-          } else {
-            balloon.hide(true)
-            GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
-          }
-        }, balloon)
-
-        balloonCreated(balloon)
+      setOnBalloonCreated { balloon ->
+        editor.scrollingModel.addVisibleAreaListener({ updateBalloon(balloon) }, balloon)
+        balloonFuture.complete(balloon)
       }
-
-      show(editor.contentComponent) {_, _-> getPosition() }
+      show(editor.contentComponent, pointProvider = { _, _-> getPosition() })
     }
+
+    return balloonFuture
   }
 
   override fun performInplaceRefactoring(nameSuggestions: LinkedHashSet<String>?): Boolean {
