@@ -875,18 +875,18 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     final VirtualFile testFile = myFixture.addFileToProject(fileName, "test").getVirtualFile()
 
     assertEquals("file: $fileName; " +
-                 "operation: UPDATE-REMOVE UPDATE ADD", listener.indexingOperation(testFile))
+                 "operation: UPDATE ADD", listener.indexingOperation(testFile))
 
     FileContentUtilCore.reparseFiles(Collections.singletonList(testFile))
 
     assertEquals("file: $fileName; " +
-                 "operation: REMOVE ADD", listener.indexingOperation(testFile))
+                 "operation: ADD", listener.indexingOperation(testFile))
 
     WriteAction.run { VfsUtil.saveText(testFile, "foo") }
     WriteAction.run { VfsUtil.saveText(testFile, "bar") }
 
     assertEquals("file: $fileName; " +
-                 "operation: UPDATE-REMOVE UPDATE", listener.indexingOperation(testFile))
+                 "operation: UPDATE", listener.indexingOperation(testFile))
 
     WriteAction.run { VfsUtil.saveText(testFile, "baz") }
     WriteAction.run { testFile.delete(null) }

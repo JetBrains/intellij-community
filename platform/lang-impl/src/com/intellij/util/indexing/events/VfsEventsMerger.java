@@ -27,7 +27,6 @@ import java.util.stream.Stream;
 
 public final class VfsEventsMerger {
   private static final boolean DEBUG = FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE || SystemProperties.is("log.index.vfs.events");
-  @Nullable
   public static final Logger LOG = MyLoggerFactory.getLoggerInstance();
 
   void recordFileEvent(@NotNull VirtualFile file, boolean contentChange) {
@@ -35,9 +34,9 @@ public final class VfsEventsMerger {
     updateChange(file, contentChange ? FILE_CONTENT_CHANGED : FILE_ADDED);
   }
 
-  void recordBeforeFileEvent(@NotNull VirtualFile file, boolean contentChanged) {
-    if (LOG != null) LOG.info("Request invalidate indices for file:" + file.getPath() + ", contentChange:" + contentChanged);
-    updateChange(file, contentChanged ? BEFORE_FILE_CONTENT_CHANGED : FILE_REMOVED);
+  void recordFileRemovedEvent(@NotNull VirtualFile file) {
+    //if (LOG != null) LOG.info("Request invalidate indices for file:" + file.getPath() + ", deletion");
+    updateChange(file, FILE_REMOVED);
   }
 
   void recordTransientStateChangeEvent(@NotNull VirtualFile file) {
@@ -66,12 +65,6 @@ public final class VfsEventsMerger {
         myPublishedEventIndex.incrementAndGet();
         break;
       }
-    }
-  }
-
-  void applyMergedEvents(@NotNull VfsEventsMerger merger) {
-    for(ChangeInfo info:merger.myChangeInfos.values()) {
-      updateChange(info.getFileId(), info.file, info.eventMask);
     }
   }
 
