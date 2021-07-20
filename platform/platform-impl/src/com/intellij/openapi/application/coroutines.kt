@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:ApiStatus.Experimental
 
 package com.intellij.openapi.application
@@ -17,34 +17,23 @@ import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 
 /**
- * Runs given [action] under [read lock][com.intellij.openapi.application.Application.runReadAction]
- * except it doesn't affect any write actions.
- *
- * The function suspends if at the moment of calling it's not possible to acquire the read lock.
- * If the write action happens while the [action] is running, then the [action] is canceled,
- * and the function suspends until its possible to acquire the read lock, and then the [action] is tried again.
- *
- * Since the [action] might me executed several times, it must be idempotent.
- * The function returns when given [action] was completed fully.
- * [Progress] passed to the action must be used to check for cancellation inside the [action].
+ * Suspends until it's possible to obtain the read lock and then
+ * runs the [action] holding the lock **without** preventing write actions.
+ * See [constrainedReadAction] for semantic details.
  */
 suspend fun <T> readAction(action: (progress: Progress) -> T): T {
   return constrainedReadAction(ReadConstraints.unconstrained(), action)
 }
 
 /**
- * Suspends until it's possible to obtain the read lock in smart mode and then runs the [action] holding the lock.
- * @see readAction
+ * Suspends until it's possible to obtain the read lock in smart mode and then
+ * runs the [action] holding the lock **without** preventing write actions.
+ * See [constrainedReadAction] for semantic details.
  */
 suspend fun <T> smartReadAction(project: Project, action: (progress: Progress) -> T): T {
   return constrainedReadAction(ReadConstraints.inSmartMode(project), action)
 }
 
-/**
- * Suspends until it's possible to obtain the read lock with all [constraints] [satisfied][ContextConstraint.isCorrectContext]
- * and then runs the [action] holding the lock.
- * @see readAction
- */
 suspend fun <T> constrainedReadAction(constraints: ReadConstraints, action: (progress: Progress) -> T): T {
   val application: ApplicationEx = ApplicationManager.getApplication() as ApplicationEx
   check(!application.isDispatchThread) {
