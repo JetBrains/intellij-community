@@ -53,7 +53,7 @@ private fun findPathVariants(mappings: Iterable<PathMapping>,
   }
 }
 
-internal fun joinTargetPaths(basePath: String, relativePath: String, fileSeparator: Char): String {
+fun joinTargetPaths(basePath: String, relativePath: String, fileSeparator: Char): String {
   val normalizedBasePathForJoining = basePath
     .normalizeFileSeparatorCharacter(fileSeparator)
     .removeRepetitiveFileSeparators(fileSeparator)
