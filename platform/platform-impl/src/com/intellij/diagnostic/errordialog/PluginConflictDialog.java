@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.errordialog;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.diagnostic.DiagnosticBundle;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -212,15 +212,14 @@ public class PluginConflictDialog extends DialogWrapper {
     myOKAction = new DisableAction();
   }
 
-  @NotNull
   @Override
-  protected DisableAction getOKAction() {
+  protected @NotNull DisableAction getOKAction() {
     return ((DisableAction)myOKAction);
   }
 
   private class DisableAction extends DialogWrapperAction {
     protected DisableAction() {
-      super(IdeBundle.message("button.disable"));
+      super(CoreBundle.message("plugins.configurable.disable"));
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
 
@@ -229,8 +228,7 @@ public class PluginConflictDialog extends DialogWrapper {
       repaint();
     }
 
-    @NotNull
-    private @NlsContexts.Button String getButtonText() {
+    private @NotNull @NlsContexts.Button String getButtonText() {
       if (myIsConflictWithPlatform) {
         return DiagnosticBundle.message("error.dialog.disable.plugin.action.disableAndRestart");
       }

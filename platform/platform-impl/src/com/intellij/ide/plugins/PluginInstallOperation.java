@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.intellij.core.CoreBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
@@ -317,7 +318,7 @@ public final class PluginInstallOperation {
       boolean choice = MessageDialogBuilder
         .yesNo(pluginReplacement.getReplacementMessage(oldPlugin, pluginNode),
                IdeBundle.message("plugin.manager.obsolete.plugins.detected.title"))
-        .yesText(IdeBundle.message("button.disable"))
+        .yesText(CoreBundle.message("plugins.configurable.disable"))
         .noText(Messages.getNoButton())
         .icon(Messages.getWarningIcon())
         .guessWindowAndAsk();

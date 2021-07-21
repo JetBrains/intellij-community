@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.core.CoreBundle;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 public enum PluginEnableDisableAction {
 
-  ENABLE_GLOBALLY("plugins.configurable.enable.for.all.projects",
+  ENABLE_GLOBALLY(PluginEnabler.isPerProjectEnabled() ? "plugins.configurable.enable.for.all.projects" : "plugins.configurable.enable",
                   PluginEnabledState.ENABLED,
                   true) {
     @Override
@@ -22,7 +22,7 @@ public enum PluginEnableDisableAction {
                      true) {
     @Override
     public boolean isApplicable(@NotNull PluginEnabledState state) {
-      return !state.isEnabled();
+      return PluginEnabler.isPerProjectEnabled() && !state.isEnabled();
     }
   },
   ENABLE_FOR_PROJECT_DISABLE_GLOBALLY("plugins.configurable.enable.for.current.project.only",
@@ -30,10 +30,10 @@ public enum PluginEnableDisableAction {
                                       false) {
     @Override
     public boolean isApplicable(@NotNull PluginEnabledState state) {
-      return state == PluginEnabledState.ENABLED;
+      return PluginEnabler.isPerProjectEnabled() && state == PluginEnabledState.ENABLED;
     }
   },
-  DISABLE_GLOBALLY("plugins.configurable.disable.for.all.projects",
+  DISABLE_GLOBALLY(PluginEnabler.isPerProjectEnabled() ? "plugins.configurable.disable.for.all.projects" : "plugins.configurable.disable",
                    PluginEnabledState.DISABLED,
                    false) {
     @Override
@@ -46,7 +46,7 @@ public enum PluginEnableDisableAction {
                       false) {
     @Override
     public boolean isApplicable(@NotNull PluginEnabledState state) {
-      return state.isEnabled();
+      return PluginEnabler.isPerProjectEnabled() && state.isEnabled();
     }
   },
   DISABLE_FOR_PROJECT_ENABLE_GLOBALLY("plugins.configurable.disable.for.current.project.only",

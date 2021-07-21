@@ -8,13 +8,13 @@ import org.jetbrains.annotations.PropertyKey;
 
 public enum PluginEnabledState {
 
-  ENABLED("plugins.configurable.enabled.for.all.projects",
+  ENABLED(PluginEnabler.isPerProjectEnabled() ? "plugins.configurable.enabled.for.all.projects" : "plugins.configurable.enabled",
           true,
           false),
   ENABLED_FOR_PROJECT("plugins.configurable.enabled.for.current.project",
                       true,
                       true),
-  DISABLED("plugins.configurable.disabled.for.all.projects",
+  DISABLED(PluginEnabler.isPerProjectEnabled() ? "plugins.configurable.disabled.for.all.projects" : "plugins.configurable.disabled",
            false,
            false),
   DISABLED_FOR_PROJECT("plugins.configurable.disabled.for.current.project",
