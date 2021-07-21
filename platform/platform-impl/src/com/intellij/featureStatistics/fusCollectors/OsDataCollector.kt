@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields.String
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByRegexp
 import com.intellij.internal.statistic.eventLog.events.EventFields.Version
-import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.util.SystemInfo
 import java.io.IOException
@@ -31,22 +30,21 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
     "parrot", "pop", "pureos", "raspbian", "rhel", "rocky", "rosa", "sabayon", "slackware", "solus", "ubuntu", "void", "zorin",
     "other", "unknown")
 
-  private data class TimezoneField(override val name: String) : StringEventField(name) {
-    override val validationRule: List<String>
-      get() = listOf("{regexp#time_zone}", "{enum:Z}")
-  }
-
-  private val GROUP = EventLogGroup("system.os", 10)
-  private val NAME = GROUP.registerEvent("os.name", String("name", OS_NAMES), Version, String("locale", LOCALES))
-  private val TIMEZONE = GROUP.registerEvent("os.timezone", TimezoneField("value"))
+  private val GROUP = EventLogGroup("system.os", 11)
+  private val OS_NAME = String("name", OS_NAMES)
+  private val OS_LANG = String("locale", LOCALES)
+  private val OS_TZ = StringValidatedByRegexp("value", "time_zone")
+  private val OS = GROUP.registerVarargEvent("os.name", OS_NAME, Version, OS_LANG, OS_TZ)
+  private val TIMEZONE = GROUP.registerEvent("os.timezone", OS_TZ)  // for backward compatibility, keep until 2024.1
   private val LINUX = GROUP.registerEvent("linux", String("distro", DISTROS), StringValidatedByRegexp("release", "version"))
 
   override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(): Set<MetricEvent> {
+    val tz = getTimeZone()
     val metrics = mutableSetOf(
-      NAME.metric(getOSName(), SystemInfo.OS_VERSION, Locale.getDefault().language),
-      TIMEZONE.metric((OffsetDateTime.now().offset.toString())))
+      OS.metric(OS_NAME.with(getOSName()), Version.with(SystemInfo.OS_VERSION), OS_LANG.with(getLanguage()), OS_TZ.with(tz)),
+      TIMEZONE.metric(tz))
     if (SystemInfo.isLinux) {
       val (distro, release) = getReleaseData()
       metrics += LINUX.metric(distro, release)
@@ -63,6 +61,10 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
       SystemInfo.isSolaris -> "Solaris"
       else -> "Other"
     }
+
+  private fun getLanguage(): String = Locale.getDefault().language
+
+  private fun getTimeZone(): String = OffsetDateTime.now().offset.toString()
 
   // https://www.freedesktop.org/software/systemd/man/os-release.html
   private fun getReleaseData(): Pair<String, String?> =
