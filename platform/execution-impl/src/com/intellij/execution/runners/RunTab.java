@@ -22,8 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier;
+import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tabs.JBTabs;
@@ -70,7 +70,7 @@ public abstract class RunTab implements DataProvider, Disposable {
 
   protected RunTab(@NotNull ExecutionEnvironment environment, @NotNull String runnerType) {
     this(environment.getProject(),
-         GlobalSearchScopes.executionScope(environment.getProject(), environment.getRunProfile()),
+         ExecutionSearchScopes.executionScope(environment.getProject(), environment.getRunProfile()),
          runnerType,
          environment.getExecutor().getId(),
          environment.getRunProfile().getName());
