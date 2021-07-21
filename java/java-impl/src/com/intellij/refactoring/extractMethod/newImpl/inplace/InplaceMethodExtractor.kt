@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
-import com.intellij.codeInsight.template.Template
-import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.ide.util.PropertiesComponent
@@ -24,6 +22,7 @@ import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
 import com.intellij.refactoring.extractMethod.newImpl.ExtractSelector
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.addTemplateFinishedListener
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createChangeBasedDisposable
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createChangeSignatureGotIt
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createInsertedHighlighting
@@ -39,7 +38,7 @@ import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
 import com.intellij.refactoring.suggested.range
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.Nls
 
 class InplaceMethodExtractor(private val editor: Editor,
                              private val context: ExtractParameters,
@@ -72,8 +71,6 @@ class InplaceMethodExtractor(private val editor: Editor,
   private lateinit var method: SmartPsiElementPointer<PsiMethod>
 
   private lateinit var methodCall: SmartPsiElementPointer<PsiMethodCallExpression>
-
-  fun getExtractedMethod(): PsiMethod? = method.element
 
   private val disposable = Disposer.newDisposable()
 
@@ -173,11 +170,12 @@ class InplaceMethodExtractor(private val editor: Editor,
   }
 
   override fun afterTemplateStart() {
-    super.afterTemplateStart()
     val templateState = TemplateManagerImpl.getTemplateState(myEditor) ?: return
+    Disposer.register(templateState) { SuggestedRefactoringProvider.getInstance(myProject).reset() }
+    Disposer.register(templateState, disposable)
+    super.afterTemplateStart()
     popupProvider.setChangeListener { restartInplace(getEditedTemplateText(templateState)) }
     popupProvider.setShowDialogAction { actionEvent -> restartInDialog(actionEvent == null) }
-    Disposer.register(templateState, disposable)
     val editor = templateState.editor as? EditorImpl ?: return
     val presentation = TemplateInlayUtil.createSettingsPresentation(editor) { onClickEvent -> logStatisticsOnShow(editor, onClickEvent) }
     val templateElement = object : TemplateInlayUtil.SelectableTemplateElement(presentation) {
@@ -191,20 +189,30 @@ class InplaceMethodExtractor(private val editor: Editor,
                                                                       templateElement) { logStatisticsOnHide(myProject, popupProvider) }
     setActiveExtractor(editor, this)
 
-    Disposer.register(templateState) { SuggestedRefactoringProvider.getInstance(myProject).reset() }
-
-    templateState.addTemplateStateListener(object: TemplateEditingAdapter() {
-      override fun templateFinished(template: Template, brokenOff: Boolean) {
-        afterTemplateFinished(brokenOff)
-      }
-    })
-    installMethodNameValidation(templateState)
+    addTemplateFinishedListener(templateState, ::afterTemplateFinished)
   }
 
-  private fun afterTemplateFinished(brokenOff: Boolean) {
-    if (! brokenOff && validationPassed) {
+  private fun getIdentifierError(methodName: String, methodCall: PsiMethodCallExpression?): @Nls String? {
+    return if (! PsiNameHelper.getInstance(myProject).isIdentifier(methodName)) {
+      JavaRefactoringBundle.message("extract.method.error.invalid.name")
+    } else if (methodCall?.resolveMethod() == null) {
+      JavaRefactoringBundle.message("extract.method.error.method.conflict")
+    } else {
+      null
+    }
+  }
+
+  private fun afterTemplateFinished(templateEditedText: String?) {
+    val methodName = templateEditedText ?: return
+    val errorMessage = getIdentifierError(methodName, methodCall.element)
+    if (errorMessage != null) {
+      ApplicationManager.getApplication().invokeLater {
+        restartInplace(methodName)
+        CommonRefactoringUtil.showErrorHint(myProject, editor, errorMessage, ExtractMethodHandler.getRefactoringName(), null)
+      }
+    } else {
       val extractedMethod = method.element ?: return
-      InplaceExtractMethodCollector.executed.log(context.methodName != getMethodName())
+      InplaceExtractMethodCollector.executed.log(context.methodName != methodName)
       installGotItTooltips()
       PsiDocumentManager.getInstance(myProject).commitAllDocuments()
       MethodExtractor.sendRefactoringDoneEvent(extractedMethod)
@@ -222,58 +230,9 @@ class InplaceMethodExtractor(private val editor: Editor,
     manager.commitDocument(editor.document)
   }
 
-  fun getMethodName(): String? = method.element?.name
-
-  var validationPassed = false
-
-  private fun installMethodNameValidation(templateState: TemplateState) {
-    templateState.addTemplateStateListener(object: TemplateEditingAdapter() {
-
-      var errorMethodName: String? = null
-      var errorMessage: @NonNls String? = null
-
-      override fun beforeTemplateFinished(state: TemplateState, template: Template?) {
-        val methodName = getEditedTemplateText(state)
-        fun isValidName(): Boolean = PsiNameHelper.getInstance(myProject).isIdentifier(methodName)
-        fun hasSingleResolve(): Boolean {
-          return methodCall.element?.resolveMethod() != null
-        }
-        errorMessage = when {
-          ! isValidName() -> JavaRefactoringBundle.message("extract.method.error.invalid.name")
-          ! hasSingleResolve() -> JavaRefactoringBundle.message("extract.method.error.method.conflict")
-          else -> null
-        }
-        if (errorMessage != null) {
-          errorMethodName = methodName
-        } else {
-          validationPassed = true
-        }
-      }
-
-      override fun templateFinished(template: Template, brokenOff: Boolean) {
-        if (! brokenOff) restartWithInvalidName()
-      }
-
-      override fun templateCancelled(template: Template?) {
-        restartWithInvalidName()
-      }
-
-      private fun restartWithInvalidName(){
-        ApplicationManager.getApplication().invokeLater {
-          val message = errorMessage
-          val methodName = errorMethodName
-          if (message != null && methodName != null) {
-            restartInplace(methodName)
-            CommonRefactoringUtil.showErrorHint(myProject, editor, message, ExtractMethodHandler.getRefactoringName(), null)
-          }
-        }
-      }
-    })
-  }
-
   fun restartInDialog(isLinkUsed: Boolean = false) {
     InplaceExtractMethodCollector.openExtractDialog.log(myProject, isLinkUsed)
-    val updatedContext = context.update(getMethodName() ?: context.methodName, popupProvider.annotate, popupProvider.makeStatic)
+    val updatedContext = context.update(method.element?.name ?: context.methodName, popupProvider.annotate, popupProvider.makeStatic)
     performCleanup()
     val elements = ExtractSelector().suggestElementsToExtract(updatedContext.targetClass.containingFile, updatedContext.range)
     extractor.extractInDialog(updatedContext.targetClass, elements, updatedContext.methodName, updatedContext.static)

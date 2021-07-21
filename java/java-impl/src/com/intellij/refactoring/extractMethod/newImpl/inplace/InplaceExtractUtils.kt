@@ -2,6 +2,8 @@
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.codeInsight.highlighting.HighlightManager
+import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.icons.AllIcons
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
@@ -154,5 +156,21 @@ object InplaceExtractUtils {
   fun getEditedTemplateText(state: TemplateState): String? {
     val textRange = state.currentVariableRange ?: return null
     return state.editor.document.getText(textRange)
+  }
+
+  fun addTemplateFinishedListener(templateState: TemplateState, listener: (editedText: String?) -> Unit){
+    templateState.addTemplateStateListener(object : TemplateEditingAdapter() {
+      var editedTemplateText: String? = null
+
+      override fun beforeTemplateFinished(state: TemplateState, template: Template?) {
+        editedTemplateText = getEditedTemplateText(state)
+      }
+
+      override fun templateFinished(template: Template, brokenOff: Boolean) {
+        if (!brokenOff) {
+          listener(editedTemplateText)
+        }
+      }
+    })
   }
 }
