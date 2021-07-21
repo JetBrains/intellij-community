@@ -126,6 +126,24 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
     assertTrue(getModificationCount() > count);
   }
 
+  public void testReplaceArtifact() {
+    // This test checks if the recreation of the artifact with the same name doesn't replace the new artifact with the new one
+    Artifact artifact = addArtifact("aaa");
+    assertSame(artifact, assertOneElement(getArtifacts()));
+
+    final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+
+    // Just create a modifiable artifact
+    model.getOrCreateModifiableArtifact(artifact);
+
+    model.removeArtifact(artifact);
+
+    ModifiableArtifact newModifiableArtifact = model.addArtifact("aaa", PlainArtifactType.getInstance());
+    newModifiableArtifact.setBuildOnMake(true);
+    commit(model);
+
+    assertTrue(newModifiableArtifact.isBuildOnMake());
+  }
 
   private Artifact[] getArtifacts() {
     return getArtifactManager().getArtifacts();
