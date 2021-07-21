@@ -81,7 +81,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   private final AbstractWelcomeScreen myScreen;
   private WelcomeBalloonLayoutImpl myBalloonLayout;
   private boolean myDisposed;
-  private final DefaultFrameHeader myHeader;
+  private DefaultFrameHeader myHeader;
 
   public FlatWelcomeFrame() {
     SplashManager.hideBeforeShow(this);
@@ -89,9 +89,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     JRootPane rootPane = getRootPane();
     myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8));
     myScreen = USE_TABBED_WELCOME_SCREEN ? new TabbedWelcomeScreen() : new FlatWelcomeScreen();
-    myHeader = new DefaultFrameHeader(this);
 
     if (IdeFrameDecorator.isCustomDecorationActive()) {
+      myHeader = new DefaultFrameHeader(this);
       JComponent holder = CustomFrameDialogContent
         .getCustomContentHolder(this, myScreen.getWelcomePanel(), myHeader);
       setContentPane(holder);
