@@ -36,10 +36,15 @@ fun runTestBuild(homePath: String, productProperties: ProductProperties, buildTo
     BuildTasks.create(buildContext).runTestBuild()
   }
   catch (e: Throwable) {
-    val logFile = (buildContext.messages as BuildMessagesImpl).debugLogFile
-    val targetFile = Path(TestLoggerFactory.getTestLogDir(), "${productProperties.baseFileName}-test-build-debug.log")
-    buildContext.messages.info("Copying debug log to $targetFile")
-    logFile.toPath().copyTo(targetFile)
+    try {
+      val logFile = (buildContext.messages as BuildMessagesImpl).debugLogFile
+      val targetFile = Path(TestLoggerFactory.getTestLogDir(), "${productProperties.baseFileName}-test-build-debug.log")
+      logFile.toPath().copyTo(targetFile)
+      buildContext.messages.info("Debug log copied to $targetFile")
+    }
+    catch (copyingException: Throwable) {
+      buildContext.messages.info("Failed to copy debug log: ${e.message}")
+    }
     throw e
   }
 }
