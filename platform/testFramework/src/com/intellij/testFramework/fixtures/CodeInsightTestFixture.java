@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.completion.CompletionType;
@@ -163,6 +163,15 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return the PSI file created from the specified text.
    */
   PsiFile configureByText(@NotNull String fileName, @NotNull String text);
+
+  /**
+   * Creates a file with specified name and text content.
+   *
+   * @param fileName the name of the file (which is used to determine the file type based on the registered filename patterns)
+   * @param text     the text to write into the file
+   * @return the virtual file created from the specified text
+   */
+  VirtualFile createFile(@NotNull String fileName, @NotNull String text);
 
   /**
    * Loads the specified file from the test project directory into the in-memory editor.
