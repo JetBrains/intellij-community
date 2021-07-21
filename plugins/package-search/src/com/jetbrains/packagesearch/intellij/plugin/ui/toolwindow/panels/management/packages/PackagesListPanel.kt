@@ -1,12 +1,12 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
-import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
@@ -35,14 +35,14 @@ import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import com.jetbrains.packagesearch.intellij.plugin.util.lookAndFeelFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.miginfocom.swing.MigLayout
 import java.awt.BorderLayout
@@ -85,6 +85,10 @@ internal class PackagesListPanel(
                 PackageSearchEventsLogger.logSearchQueryClear()
             }
         }
+
+    private val textChangedListener = SearchTextFieldTextChangedListener {
+        project.lifecycleScope.launch(Dispatchers.AppUI) { searchClient.setSearchQuery(searchTextField.text) }
+    }
 
     private val packagesPanel = PackageSearchUI.borderPanel {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
@@ -178,20 +182,10 @@ internal class PackagesListPanel(
 
         registerForUiEvents()
 
-        callbackFlow {
-            val conn = project.messageBus.simpleConnect()
-            conn.subscribe(
-                LafManagerListener.TOPIC,
-                LafManagerListener { trySend(Unit) }
-            )
-            awaitClose { conn.disconnect() }
-        }.onEach {
-            withContext(Dispatchers.AppUI) {
-                updateLaf()
-            }
-        }.launchIn(project.lifecycleScope)
+        project.lookAndFeelFlow.onEach { updateLaf() }
+            .launchIn(project.lifecycleScope)
 
-        updateLaf()
+        project.lifecycleScope.launch { updateLaf() }
     }
 
     fun setIsBusy(isBusy: Boolean) {
@@ -232,11 +226,13 @@ internal class PackagesListPanel(
         val knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
         val allKnownRepositories: KnownRepositories.All,
         val tableData: List<PackagesTableItem<*>>,
-        val traceInfo: TraceInfo
+        val traceInfo: TraceInfo,
+        val searchQuery: String
     )
 
     override suspend fun display(viewModel: ViewModel) = withContext(Dispatchers.AppUI) {
 
+        searchTextField.setTextWithoutFiringListeners(viewModel.searchQuery)
         onlyStableCheckBox.isSelected = viewModel.filterOptions.onlyStable
         onlyKotlinMpCheckBox.isSelected = viewModel.filterOptions.onlyKotlinMultiplatform
 
@@ -265,8 +261,8 @@ internal class PackagesListPanel(
         )
 
         tableScrollPane.isVisible = viewModel.packageModels.isNotEmpty()
-        listPanel.updateAndRepaint()
 
+        listPanel.updateAndRepaint()
         packagesTable.updateAndRepaint()
         packagesPanel.updateAndRepaint()
     }
@@ -276,11 +272,7 @@ internal class PackagesListPanel(
             IdeFocusManager.getInstance(project).requestFocus(searchTextField, false)
         }
 
-        searchTextField.addDocumentListener(object : DocumentAdapter() {
-            override fun textChanged(e: DocumentEvent) {
-                AppUIExecutor.onUiThread().execute { searchClient.setSearchQuery(searchTextField.text) }
-            }
-        })
+        searchTextField.addDocumentListener(textChangedListener)
 
         onlyStableCheckBox.addItemListener { e ->
             val selected = e.stateChange == ItemEvent.SELECTED
@@ -295,7 +287,7 @@ internal class PackagesListPanel(
         }
     }
 
-    private fun updateLaf() {
+    private suspend fun updateLaf() = withContext(Dispatchers.AppUI) {
         @Suppress("MagicNumber") // Dimension constants
         with(searchTextField) {
             textEditor.putClientProperty("JTextField.Search.Gap", 6.scaled())
@@ -314,4 +306,16 @@ internal class PackagesListPanel(
         @Suppress("MagicNumber") // Dimension constants
         minimumSize = Dimension(200.scaled(), minimumSize.height)
     }
+
+    private fun PackagesSmartSearchField.setTextWithoutFiringListeners(searchQuery: String) {
+        removeDocumentListener(textChangedListener)
+        text = searchQuery
+        addDocumentListener(textChangedListener)
+    }
 }
+
+@Suppress("FunctionName")
+fun SearchTextFieldTextChangedListener(action: (DocumentEvent) -> Unit) =
+    object : DocumentAdapter() {
+        override fun textChanged(e: DocumentEvent) = action(e)
+    }
