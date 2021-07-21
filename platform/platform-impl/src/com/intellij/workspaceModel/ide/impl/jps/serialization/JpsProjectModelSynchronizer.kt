@@ -89,8 +89,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       runWriteAction {
         WorkspaceModel.getInstance(project).updateProjectModel { updater ->
           val storage = builder.toStorage()
-          updater.replaceBySource({ it in changedSources || (it is JpsImportedEntitySource && !it.storedExternally && it.internalFile in changedSources) },
-                                  storage)
+          updater.replaceBySource({ it in changedSources || (it is JpsImportedEntitySource && !it.storedExternally && it.internalFile in changedSources)
+                                    || it is DummyParentEntitySource }, storage)
           runAutomaticModuleUnloader(updater)
         }
         sourcesToSave.removeAll(changedSources)
