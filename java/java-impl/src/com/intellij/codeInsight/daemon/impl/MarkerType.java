@@ -128,9 +128,10 @@ public class MarkerType {
     StringBuilder sb = new StringBuilder(prefix);
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
     boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
-    sb.append(JavaBundle.message(isSuperAbstract && !isAbstract ? "tooltip.implements.method" : "tooltip.overrides.method")).append(" ");
-    if (isSameSignature(method, superMethod)) sb.append(JavaBundle.message("tooltip.in")).append(" ");
-    return sb.toString();
+    String key = isSameSignature(method, superMethod)
+                 ? (isSuperAbstract && !isAbstract ? "tooltip.implements.method.in" : "tooltip.overrides.method.in")
+                 : (isSuperAbstract && !isAbstract ? "tooltip.implements.method" : "tooltip.overrides.method");
+    return sb.append(JavaBundle.message(key)).append(" ").toString();
   }
 
   private static boolean isSameSignature(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
