@@ -281,6 +281,7 @@ object FrontendApplicationProjectTemplate : ProjectTemplate() {
                     "browser",
                     BrowserJsSinglePlatformModuleConfigurator,
                     template = SimpleJsClientTemplate(),
+                    permittedTemplateIds = setOf(SimpleJsClientTemplate().id),
                     sourceSets = SourcesetType.ALL.map { type ->
                         Sourceset(type, dependencies = emptyList())
                     },
@@ -306,6 +307,7 @@ object ReactApplicationProjectTemplate : ProjectTemplate() {
                     "react",
                     BrowserJsSinglePlatformModuleConfigurator,
                     template = ReactJsClientTemplate(),
+                    permittedTemplateIds = setOf(ReactJsClientTemplate().id),
                     sourceSets = SourcesetType.ALL.map { type ->
                         Sourceset(type, dependencies = emptyList())
                     },
@@ -431,6 +433,7 @@ object NodeJsApplicationProjectTemplate : ProjectTemplate() {
                     "nodejs",
                     NodeJsSinglePlatformModuleConfigurator,
                     template = SimpleNodeJsTemplate(),
+                    permittedTemplateIds = setOf(SimpleNodeJsTemplate().id),
                     sourceSets = SourcesetType.ALL.map { type ->
                         Sourceset(type, dependencies = emptyList())
                     },
