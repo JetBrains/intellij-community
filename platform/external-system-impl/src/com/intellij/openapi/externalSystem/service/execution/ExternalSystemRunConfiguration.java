@@ -44,8 +44,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -233,7 +233,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       if (file != null) {
         Module module = DirectoryIndex.getInstance(getProject()).getInfoForFile(file).getModule();
         if (module != null) {
-          scope = GlobalSearchScopes.executionScope(Collections.singleton(module));
+          scope = ExecutionSearchScopes.executionScope(Collections.singleton(module));
         }
       }
     }

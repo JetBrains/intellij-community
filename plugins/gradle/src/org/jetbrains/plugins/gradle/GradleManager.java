@@ -40,8 +40,8 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.util.Function;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
@@ -320,7 +320,7 @@ public final class GradleManager
       List<Module> modules = JBIterable.of(ModuleManager.getInstance(project).getModules())
         .filter(module -> StringUtil.equals(projectPath, ExternalSystemApiUtil.getExternalProjectPath(module)))
         .toList();
-      return modules.isEmpty() ? null : GlobalSearchScopes.executionScope(modules);
+      return modules.isEmpty() ? null : ExecutionSearchScopes.executionScope(modules);
     }
   }
 
