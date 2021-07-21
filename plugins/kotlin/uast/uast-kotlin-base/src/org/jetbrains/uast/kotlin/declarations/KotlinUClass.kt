@@ -5,6 +5,7 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForScript
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -13,11 +14,11 @@ import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.uast.*
 
-abstract class BaseKotlinUClass(
+class KotlinUClass(
     psi: KtLightClass,
     givenParent: UElement?
 ) : AbstractKotlinUClass(givenParent), PsiClass by psi {
-    final override val ktClass = psi.kotlinOrigin
+    override val ktClass = psi.kotlinOrigin
 
     override val javaPsi: KtLightClass = psi
 
@@ -29,9 +30,9 @@ abstract class BaseKotlinUClass(
 
     override fun getOriginalElement(): PsiElement? = super.getOriginalElement()
 
-    override fun getNameIdentifier(): PsiIdentifier? = UastLightIdentifier(psi, ktClass)
+    override fun getNameIdentifier(): PsiIdentifier = UastLightIdentifier(psi, ktClass)
 
-    override fun getContainingFile(): PsiFile? = unwrapFakeFileForLightClass(psi.containingFile)
+    override fun getContainingFile(): PsiFile = unwrapFakeFileForLightClass(psi.containingFile)
 
     override val uastAnchor by lazy { getIdentifierSourcePsi()?.let { KotlinUIdentifier(nameIdentifier, it, this) } }
 
@@ -60,12 +61,11 @@ abstract class BaseKotlinUClass(
         var secondaryConstructorsCount = 0
 
         fun createUMethod(psiMethod: PsiMethod): UMethod {
-            return if (psiMethod is KtLightMethod &&
-                psiMethod.isConstructor) {
+            return if (psiMethod is KtLightMethod && psiMethod.isConstructor) {
                 if (!hasPrimaryConstructor && secondaryConstructorsCount++ == 0)
-                    buildSecondaryConstructorUMethod(ktClass, psiMethod, this)
+                    KotlinSecondaryConstructorWithInitializersUMethod(ktClass, psiMethod, this)
                 else
-                    buildPrimaryConstructorUMethod(ktClass, psiMethod, this)
+                    KotlinConstructorUMethod(ktClass, psiMethod, this)
             } else {
                 languagePlugin?.convertOpt(psiMethod, this) ?: reportConvertFailure(psiMethod)
             }
@@ -103,6 +103,11 @@ abstract class BaseKotlinUClass(
         return result.toTypedArray()
     }
 
-    abstract fun buildPrimaryConstructorUMethod(ktClass: KtClassOrObject?, psi: KtLightMethod, givenParent: UElement?) : UMethod
-    abstract fun buildSecondaryConstructorUMethod(ktClass: KtClassOrObject?, psi: KtLightMethod, givenParent: UElement?) : UMethod
+    companion object {
+        fun create(psi: KtLightClass, containingElement: UElement?): UClass = when (psi) {
+            is PsiAnonymousClass -> KotlinUAnonymousClass(psi, containingElement)
+            is KtLightClassForScript -> KotlinScriptUClass(psi, containingElement)
+            else -> KotlinUClass(psi, containingElement)
+        }
+    }
 }
