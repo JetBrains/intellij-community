@@ -91,7 +91,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
 
   private void fillExtGroups() {
     for (String id : myExtGroupIds) {
-      myIdToActionGroup.remove(id);
+      myIdToName.remove(id);
     }
     myExtGroupIds.clear();
 
