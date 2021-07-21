@@ -140,13 +140,14 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
 
   @NotNull
   private static Set<Object> getLabelConstants(@NotNull PsiSwitchLabelStatementBase label) {
-    final PsiExpressionList list = label.getCaseValues();
+    final PsiCaseLabelElementList list = label.getCaseLabelElementList();
     if (list == null) {
       return Collections.emptySet();
     }
     Set<Object> constants = new HashSet<>();
-    for (PsiExpression value : list.getExpressions()) {
-      Object constant = ExpressionUtils.computeConstantExpression(value);
+    for (PsiCaseLabelElement caseLabelElement : list.getElements()) {
+      PsiExpression expression = ObjectUtils.tryCast(caseLabelElement, PsiExpression.class);
+      Object constant = ExpressionUtils.computeConstantExpression(expression);
       if (constant instanceof Byte || constant instanceof Short) {
         constants.add(((Number)constant).intValue());
       }
