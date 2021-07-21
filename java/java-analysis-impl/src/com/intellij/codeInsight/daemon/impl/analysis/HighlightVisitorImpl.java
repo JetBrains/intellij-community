@@ -206,7 +206,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         Document document = PsiDocumentManager.getInstance(project).getDocument(file);
         TextRange dirtyScope = document == null ? null : DaemonCodeAnalyzerEx.getInstanceEx(project).getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
         if (dirtyScope == null) dirtyScope = file.getTextRange();
-        RefCountHolder refCountHolder = RefCountHolder.get(file, dirtyScope.equals(file.getTextRange()));
+        RefCountHolder refCountHolder = RefCountHolder.get(file, dirtyScope);
+        if (refCountHolder == null) {
+          // RefCountHolder was GCed and queried again for some inner code block
+          // "highlight.run()" can't fill it again because it runs for only a subset of elements,
+          // so we have to restart the daemon for the whole file
+          return false;
+        }
         myRefCountHolder = refCountHolder;
 
         highlight.run();

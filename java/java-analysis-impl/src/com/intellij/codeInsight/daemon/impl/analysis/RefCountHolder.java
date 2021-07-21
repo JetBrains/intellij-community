@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMatcherImpl;
@@ -39,11 +40,16 @@ final class RefCountHolder {
 
   private static final Key<Reference<RefCountHolder>> REF_COUNT_HOLDER_IN_FILE_KEY = Key.create("REF_COUNT_HOLDER_IN_FILE_KEY");
   private volatile boolean ready; // true when analysis completed and inner maps can be queried
-  @NotNull
-  static RefCountHolder get(@NotNull PsiFile file, boolean alwaysNew) {
+
+  static RefCountHolder get(@NotNull PsiFile file, @NotNull TextRange dirtyScope) {
     Reference<RefCountHolder> ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
     RefCountHolder storedHolder = com.intellij.reference.SoftReference.dereference(ref);
-    return storedHolder == null || alwaysNew ?
+    boolean wholeFile = dirtyScope.equals(file.getTextRange());
+    if (storedHolder == null && !wholeFile) {
+      // RefCountHolder was GCed and queried for subrange of the file, can't return anything meaningful
+      return null;
+    }
+    return storedHolder == null || wholeFile ?
            new RefCountHolder(file, MultiMap.createConcurrentSet(), ConcurrentCollectionFactory.createConcurrentSet(HashingStrategy.canonical()), ConcurrentCollectionFactory.createConcurrentMap())
            : storedHolder.removeInvalidRefs();
   }
