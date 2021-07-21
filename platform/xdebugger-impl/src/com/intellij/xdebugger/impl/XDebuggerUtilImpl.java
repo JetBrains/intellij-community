@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.CommonBundle;
@@ -658,5 +658,41 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return breakpoint.getSuspendPolicy() == SuspendPolicy.NONE
            ? AllIcons.Debugger.Db_verified_no_suspend_breakpoint
            : AllIcons.Debugger.Db_verified_breakpoint;
+  }
+
+  public static Navigatable createNavigatable(Project project, XSourcePosition position) {
+    return new XSourcePositionNavigatable(project, position);
+  }
+
+  private static class XSourcePositionNavigatable implements Navigatable {
+    private final Project myProject;
+    private final XSourcePosition myPosition;
+
+    private XSourcePositionNavigatable(Project project, XSourcePosition position) {
+      myProject = project;
+      myPosition = position;
+    }
+
+    @Override
+    public void navigate(boolean requestFocus) {
+      createOpenFileDescriptor(myProject, myPosition).navigate(requestFocus);
+    }
+
+    @Override
+    public boolean canNavigate() {
+      return myPosition.getFile().isValid();
+    }
+
+    @Override
+    public boolean canNavigateToSource() {
+      return canNavigate();
+    }
+  }
+
+  @NotNull
+  public static OpenFileDescriptor createOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
+    return position.getOffset() != -1
+           ? new OpenFileDescriptor(project, position.getFile(), position.getOffset())
+           : new OpenFileDescriptor(project, position.getFile(), position.getLine(), 0);
   }
 }

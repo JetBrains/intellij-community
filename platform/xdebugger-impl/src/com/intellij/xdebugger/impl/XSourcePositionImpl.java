@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -173,25 +172,7 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
   @Override
   @NotNull
   public Navigatable createNavigatable(@NotNull Project project) {
-    return doCreateOpenFileDescriptor(project, this);
-  }
-
-  @NotNull
-  public static OpenFileDescriptor createOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
-    Navigatable navigatable = position.createNavigatable(project);
-    if (navigatable instanceof OpenFileDescriptor) {
-      return (OpenFileDescriptor)navigatable;
-    }
-    else {
-      return doCreateOpenFileDescriptor(project, position);
-    }
-  }
-
-  @NotNull
-  public static OpenFileDescriptor doCreateOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
-    return position.getOffset() != -1
-           ? new OpenFileDescriptor(project, position.getFile(), position.getOffset())
-           : new OpenFileDescriptor(project, position.getFile(), position.getLine(), 0);
+    return XDebuggerUtilImpl.createNavigatable(project, this);
   }
 
   @Override
