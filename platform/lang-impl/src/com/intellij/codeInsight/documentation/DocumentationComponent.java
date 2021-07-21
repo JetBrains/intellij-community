@@ -588,6 +588,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule("table p { padding-bottom: 0}");
     editorKit.getStyleSheet().addRule("td { margin: 4px 0 0 0; padding: 0 0 0 0; }");
     editorKit.getStyleSheet().addRule("th { text-align: left; }");
+    editorKit.getStyleSheet().addRule("td pre { padding: 1px 0 0 0; margin: 0 0 0 0 }");
     editorKit.getStyleSheet().addRule(".section { color: " + ColorUtil.toHtmlColor(SECTION_COLOR) + "; padding-right: 4px; white-space:nowrap;}");
   }
 
