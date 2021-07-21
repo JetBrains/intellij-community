@@ -361,6 +361,7 @@ class TestingTasksImpl extends TestingTasks {
       "idea.system.path"                                  : "$tempDir/system".toString(),
       "intellij.build.compiled.classes.archives.metadata" : System.getProperty("intellij.build.compiled.classes.archives.metadata"),
       "intellij.build.compiled.classes.archive"           : System.getProperty("intellij.build.compiled.classes.archive"),
+      (BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY): "$context.projectOutputDirectory".toString(),
       "idea.coverage.enabled.build"                       : System.getProperty("idea.coverage.enabled.build"),
       "teamcity.buildConfName"                            : System.getProperty("teamcity.buildConfName"),
       "java.io.tmpdir"                                    : tempDir,
@@ -380,8 +381,6 @@ class TestingTasksImpl extends TestingTasks {
     }
 
     if (PortableCompilationCache.CAN_BE_USED) {
-      def compiledClassesDir = "$context.projectOutputDirectory"
-      systemProperties[BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY] = compiledClassesDir.toString()
       systemProperties[BuildOptions.USE_COMPILED_CLASSES_PROPERTY] = "true"
     }
 

@@ -19,10 +19,7 @@ fun createBuildContext(homePath: String, productProperties: ProductProperties,
   options.isIsTestBuild = true
   options.buildStepsToSkip.add(BuildOptions.getTEAMCITY_ARTIFACTS_PUBLICATION())
   options.outputRootPath = FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, true).absolutePath
-  if (options.pathToCompiledClassesArchive == null && options.pathToCompiledClassesArchivesMetadata == null && options.isIsInDevelopmentMode) {
-    //skip compilation when running tests locally
-    options.isUseCompiledClassesFromProjectOutput = true
-  }
+  options.isUseCompiledClassesFromProjectOutput = true
   buildOptionsCustomizer(options)
   return BuildContext.createContext(communityHomePath, homePath, productProperties, buildTools, options)
 }
