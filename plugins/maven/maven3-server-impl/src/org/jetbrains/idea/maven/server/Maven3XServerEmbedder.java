@@ -1061,15 +1061,9 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       return explicitActiveProfiles != null ? explicitActiveProfiles : Collections.<String>emptyList();
     }
 
-    Set<String> result = new HashSet<String>();
+    Set<String> result = new HashSet<String>(defaultActiveProfiles);
     if (explicitInactiveProfiles != null && !explicitInactiveProfiles.isEmpty()) {
-      for (String profile : defaultActiveProfiles) {
-        if (!explicitInactiveProfiles.contains(profile)) {
-          result.add(profile);
-        }
-      }
-    } else {
-      result.addAll(defaultActiveProfiles);
+      result.removeAll(explicitInactiveProfiles);
     }
 
     if (explicitActiveProfiles != null) {
