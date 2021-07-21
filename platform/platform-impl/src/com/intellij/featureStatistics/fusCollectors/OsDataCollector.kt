@@ -35,7 +35,7 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
   private val OS_LANG = String("locale", LOCALES)
   private val OS_TZ = StringValidatedByRegexp("time_zone", "time_zone")
   private val OS = GROUP.registerVarargEvent("os.name", OS_NAME, Version, OS_LANG, OS_TZ)
-  private val TIMEZONE = GROUP.registerEvent("os.timezone", OS_TZ)  // for backward compatibility, keep until 2024.1
+  private val TIMEZONE = GROUP.registerEvent("os.timezone", StringValidatedByRegexp("value", "time_zone"))  // for backward compatibility, keep until 2024.1
   private val LINUX = GROUP.registerEvent("linux", String("distro", DISTROS), StringValidatedByRegexp("release", "version"))
 
   override fun getGroup(): EventLogGroup = GROUP
