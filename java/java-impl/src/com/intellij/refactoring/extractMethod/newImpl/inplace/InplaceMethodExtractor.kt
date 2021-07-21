@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -20,7 +19,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
@@ -30,6 +28,8 @@ import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtil
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createChangeSignatureGotIt
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createInsertedHighlighting
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createNavigationGotIt
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.getEditedTemplateText
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.getNameIdentifier
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.logStatisticsOnHide
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.logStatisticsOnShow
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.navigateToFileOffset
@@ -69,9 +69,11 @@ class InplaceMethodExtractor(private val editor: Editor,
 
   private val textToRevert: String = editor.document.text
 
-  private lateinit var methodNameRange: RangeMarker
+  private lateinit var method: SmartPsiElementPointer<PsiMethod>
 
-  private lateinit var methodCallExpressionRange: RangeMarker
+  private lateinit var methodCall: SmartPsiElementPointer<PsiMethodCallExpression>
+
+  fun getExtractedMethod(): PsiMethod? = method.element
 
   private val disposable = Disposer.newDisposable()
 
@@ -79,29 +81,31 @@ class InplaceMethodExtractor(private val editor: Editor,
     val project = myProject
     val document = editor.document
 
-    val rangeToExtract = document.createGreedyRangeMarker(context.range)
+    val extractedRange = document.createRangeMarker(context.range).also {
+      it.isGreedyToLeft = true
+      it.isGreedyToRight = true
+    }
 
     val (method, callExpression) = extractMethod(extractor, context)
+
+    this.method = SmartPointerManager.createPointer(method)
+    this.methodCall = SmartPointerManager.createPointer(callExpression)
+
+    editor.caretModel.moveToOffset(callExpression.textRange.startOffset)
+    setElementToRename(method)
 
     val highlighting = createInsertedHighlighting(editor, method.textRange)
     Disposer.register(disposable, highlighting)
 
-    methodCallExpressionRange = document.createGreedyRangeMarker(callExpression.methodExpression.textRange)
-    Disposer.register(disposable) { methodCallExpressionRange.dispose() }
-    methodNameRange = document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
-    Disposer.register(disposable) { methodNameRange.dispose() }
-    editor.caretModel.moveToOffset(methodCallExpressionRange.range!!.startOffset)
-    setElementToRename(method)
-
     val preview = EditorCodePreview.create(editor)
     Disposer.register(disposable, preview)
 
-    val callLines = findLines(document, rangeToExtract.range!!)
+    val callLines = findLines(document, extractedRange.range!!)
     val file = method.containingFile.virtualFile
-    preview.addPreview(callLines) { navigateToFileOffset(project, file, methodCallExpressionRange.endOffset)}
+    preview.addPreview(callLines) { navigateToFileOffset(project, file, getNameIdentifier(this.methodCall.element)?.textRange?.endOffset) }
 
     val methodLines = findLines(document, method.textRange).trimToLength(4)
-    preview.addPreview(methodLines) { navigateToFileOffset(project, file, methodNameRange.endOffset) }
+    preview.addPreview(methodLines) { navigateToFileOffset(project, file, this.method.element?.nameIdentifier?.textRange?.endOffset) }
   }
 
   fun extractMethod(extractor: InplaceExtractMethodProvider, parameters: ExtractParameters): Pair<PsiMethod, PsiMethodCallExpression> {
@@ -121,15 +125,16 @@ class InplaceMethodExtractor(private val editor: Editor,
   }
 
   private fun installGotItTooltips(){
+    val navigationGotItRange = getNameIdentifier(methodCall.element)?.textRange ?: return
+    val changeSignatureGotItRange = method.element?.nameIdentifier?.textRange ?: return
     val parentDisposable = Disposer.newDisposable().also { EditorUtil.disposeWithEditor(editor, it) }
-    val previousBalloonFuture = createNavigationGotIt(parentDisposable)?.showInEditor(editor, methodCallExpressionRange.range!!)
-    val nameRange = methodNameRange.range ?: return
+    val previousBalloonFuture = createNavigationGotIt(parentDisposable)?.showInEditor(editor, navigationGotItRange)
     val disposable = createChangeBasedDisposable(editor)
     val caretListener = object: CaretListener {
       override fun caretPositionChanged(event: CaretEvent) {
-        if (editor.logicalPositionToOffset(event.newPosition) in nameRange) {
+        if (editor.logicalPositionToOffset(event.newPosition) in changeSignatureGotItRange) {
           previousBalloonFuture?.thenAccept { balloon -> balloon.hide(true) }
-          createChangeSignatureGotIt(parentDisposable)?.showInEditor(editor, nameRange)
+          createChangeSignatureGotIt(parentDisposable)?.showInEditor(editor, changeSignatureGotItRange)
           Disposer.dispose(disposable)
         }
       }
@@ -210,16 +215,20 @@ class InplaceMethodExtractor(private val editor: Editor,
   }
 
   private fun findExtractedMethod(): PsiMethod? {
-    val file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.document) ?: return null
-    return PsiTreeUtil.findElementOfClassAtOffset(file, methodNameRange.startOffset, PsiMethod::class.java, false)
+    return method.element
   }
 
   private fun setMethodName(methodName: String) {
-    editor.document.replaceString(methodCallExpressionRange.startOffset, methodCallExpressionRange.endOffset, methodName)
+    val manager = PsiDocumentManager.getInstance(myProject)
+    val callNameRange = getNameIdentifier(methodCall.element)?.textRange ?: return
+    editor.document.replaceString(callNameRange.startOffset, callNameRange.endOffset, methodName)
+    manager.commitDocument(editor.document)
+    val methodNameRange = method.element?.nameIdentifier?.textRange ?: return
     editor.document.replaceString(methodNameRange.startOffset, methodNameRange.endOffset, methodName)
+    manager.commitDocument(editor.document)
   }
 
-  private fun getMethodName() = editor.document.getText(TextRange(methodNameRange.startOffset, methodNameRange.endOffset))
+  fun getMethodName(): String? = method.element?.name
 
   var validationPassed = false
 
@@ -230,12 +239,10 @@ class InplaceMethodExtractor(private val editor: Editor,
       var errorMessage: @NonNls String? = null
 
       override fun beforeTemplateFinished(state: TemplateState, template: Template?) {
-        val methodName = getMethodName()
+        val methodName = getEditedTemplateText(state)
         fun isValidName(): Boolean = PsiNameHelper.getInstance(myProject).isIdentifier(methodName)
         fun hasSingleResolve(): Boolean {
-          val file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.document) ?: return false
-          val methodCall = PsiTreeUtil.findElementOfClassAtOffset(file, methodCallExpressionRange.startOffset, PsiMethodCallExpression::class.java, true)
-          return methodCall?.resolveMethod() != null
+          return methodCall.element?.resolveMethod() != null
         }
         errorMessage = when {
           ! isValidName() -> JavaRefactoringBundle.message("extract.method.error.invalid.name")
@@ -243,7 +250,7 @@ class InplaceMethodExtractor(private val editor: Editor,
           else -> null
         }
         if (errorMessage != null) {
-          errorMethodName = getMethodName()
+          errorMethodName = methodName
           performCleanup()
         } else {
           validationPassed = true
@@ -277,7 +284,7 @@ class InplaceMethodExtractor(private val editor: Editor,
 
   fun restartInDialog(isLinkUsed: Boolean = false) {
     InplaceExtractMethodCollector.openExtractDialog.log(myProject, isLinkUsed)
-    val updatedContext = context.update(getMethodName(), popupProvider.annotate, popupProvider.makeStatic)
+    val updatedContext = context.update(getMethodName() ?: "extracted", popupProvider.annotate, popupProvider.makeStatic)
     performCleanup()
     val elements = ExtractSelector().suggestElementsToExtract(updatedContext.targetClass.containingFile, updatedContext.range)
     extractor.extractInDialog(updatedContext.targetClass, elements, updatedContext.methodName, updatedContext.static)
@@ -299,7 +306,7 @@ class InplaceMethodExtractor(private val editor: Editor,
   }
 
   private fun restartInplace() {
-    val updatedContext = context.update(getMethodName(), popupProvider.annotate, popupProvider.makeStatic)
+    val updatedContext = context.update(getMethodName() ?: "extracted", popupProvider.annotate, popupProvider.makeStatic)
     performCleanup()
     WriteCommandAction.runWriteCommandAction(myProject) {
       InplaceMethodExtractor(editor, updatedContext, extractor, popupProvider).performInplaceRefactoring(linkedSetOf())
@@ -317,13 +324,6 @@ class InplaceMethodExtractor(private val editor: Editor,
   override fun shouldSelectAll(): Boolean = false
 
   override fun getCommandName(): String = ExtractMethodHandler.getRefactoringName()
-
-  private fun Document.createGreedyRangeMarker(range: TextRange): RangeMarker {
-    return createRangeMarker(range).also {
-      it.isGreedyToLeft = true
-      it.isGreedyToRight = true
-    }
-  }
 
   private fun IntRange.trimToLength(maxLength: Int) = first until first + minOf(maxLength, last - first + 1)
 

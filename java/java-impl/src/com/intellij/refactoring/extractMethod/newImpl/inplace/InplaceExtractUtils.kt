@@ -2,6 +2,7 @@
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.codeInsight.highlighting.HighlightManager
+import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.icons.AllIcons
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
@@ -22,6 +23,10 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.GotItTooltip
 import com.intellij.util.SmartList
 import java.awt.Point
@@ -132,10 +137,22 @@ object InplaceExtractUtils {
     }
   }
 
-  fun navigateToFileOffset(project: Project, file: VirtualFile, offset: Int) {
+  fun navigateToFileOffset(project: Project, file: VirtualFile, offset: Int?) {
+    if (offset == null) return
     val descriptor = OpenFileDescriptor(project, file, offset)
     descriptor.navigate(true)
     descriptor.dispose()
   }
 
+  fun textRangeOf(smartPointer: SmartPsiElementPointer<*>): TextRange? {
+    val segment = smartPointer.range ?: return null
+    return TextRange.create(segment)
+  }
+
+  fun getNameIdentifier(call: PsiMethodCallExpression?): PsiIdentifier? = PsiTreeUtil.getChildOfType(call?.methodExpression, PsiIdentifier::class.java)
+
+  fun getEditedTemplateText(state: TemplateState): String? {
+    val textRange = state.currentVariableRange ?: return null
+    return state.editor.document.getText(textRange)
+  }
 }
