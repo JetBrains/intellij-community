@@ -614,7 +614,8 @@ public class SwitchBlockHighlightingModel {
           if (isConstantLabelElement(next)) {
             PsiExpression constExpr = ObjectUtils.tryCast(next, PsiExpression.class);
             assert constExpr != null;
-            if (JavaPsiPatternUtil.dominates(currPattern, constExpr.getType())) {
+            if (JavaPsiPatternUtil.isTotalForType(currPattern, mySelectorType) &&
+                JavaPsiPatternUtil.dominates(currPattern, constExpr.getType())) {
               alreadyDominatedLabels.put(next, currPattern);
             }
             continue;

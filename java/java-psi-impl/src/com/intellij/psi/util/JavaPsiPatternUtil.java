@@ -2,7 +2,6 @@
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
@@ -195,8 +194,7 @@ public final class JavaPsiPatternUtil {
     if (overWhom instanceof PsiPrimitiveType) {
       overWhomType = ((PsiPrimitiveType)overWhom).getBoxedType(who);
     }
-    // not sure about immediate type such as enums
-    else if (overWhom instanceof PsiClassReferenceType) {
+    else if (overWhom instanceof PsiClassType) {
       overWhomType = overWhom;
     }
     return overWhomType != null && TypeConversionUtil.areTypesConvertible(overWhomType, whoType);

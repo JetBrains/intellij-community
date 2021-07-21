@@ -457,7 +457,7 @@ class Main {
     };
   }
 
-  void dominance(Object o, Integer ii, String s) {
+  void dominance(Object o, Integer ii, String s, Day d) {
     // A switch label that has a pattern case label element p dominates another switch label that has a pattern case label element q if p dominates q
     switch (o) {
       case List n:
@@ -660,6 +660,23 @@ class Main {
       case String sss -> "s";
       case <error descr="Label is dominated by a preceding case label 'String sss'">"1"</error>, <error descr="Label is dominated by a preceding case label 'String sss'">"2"</error> -> "1";
     };
+
+    // !!! here are some contradictory examples with spec, but javac still compiles them. To be discussed in the mailing list
+    // at least for now it's look quite logical if we have a total pattern in a switch label, and following constant switch label,
+    // then the first switch label dominates the second one.
+    switch (d) {
+      case Day dd: break;
+      case <error descr="Label is dominated by a preceding case label 'Day dd'">MONDAY</error>: break;
+    }
+    str = switch (ii) {
+      case Integer in && in != null -> "";
+      case 1 -> "";
+      case default -> "";
+    };
+    switch (d) {
+      case (Day dd && true): break;
+      case  <error descr="Label is dominated by a preceding case label '(Day dd && true)'">MONDAY</error>: break;
+    }
   }
 
   void completeness(Day d, I i, I2 i2, I3 i3) {
