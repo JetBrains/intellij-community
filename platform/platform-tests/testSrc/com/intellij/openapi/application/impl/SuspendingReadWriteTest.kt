@@ -39,6 +39,19 @@ class SuspendingReadWriteTest : LightPlatformTestCase() {
     }
   }
 
+  fun `test exception is thrown`(): Unit = runBlocking(Dispatchers.Default) {
+    class MyException : Throwable()
+    try {
+      readAction {
+        throw MyException()
+      }
+      @Suppress("UNREACHABLE_CODE")
+      fail("exception must be thrown")
+    }
+    catch (ignored: MyException) {
+    }
+  }
+
   /**
    * @see NonBlockingReadActionTest.testSyncExecutionWorksInsideReadAction
    */
