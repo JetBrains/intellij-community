@@ -28,4 +28,9 @@ class FileHistoryManager(private val model: NGramIncrementalModelRunner) {
     }
     return FilePredictionNGramFeatures(result)
   }
+
+  fun calcNextFileProbability(fileUrl: String): Double {
+    val scorer = model.createScorer()
+    return scorer.score(fileUrl)
+  }
 }

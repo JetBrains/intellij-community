@@ -31,6 +31,10 @@ class FileHistoryManagerWrapper(private val project: Project) : Disposable {
     return manager.calcNGramFeatures(candidates.map { it.url })
   }
 
+  fun calcNextFileProbability(file: VirtualFile): Double {
+    return manager.calcNextFileProbability(file.url)
+  }
+
   private fun onFileOpened(file: VirtualFile) {
     if (ProjectManagerImpl.isLight(project)) {
       return

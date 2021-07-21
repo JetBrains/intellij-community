@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
+import com.intellij.filePrediction.features.history.FileHistoryManagerWrapper
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.favoritesTreeView.FavoritesManager
 import com.intellij.internal.statistic.local.FileTypeUsageLocalSummary
@@ -21,6 +22,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     private const val IS_FAVORITE_DATA_KEY = "isFavorite"
     private const val IS_OPENED_DATA_KEY = "isOpened"
     private const val RECENT_INDEX_DATA_KEY = "recentFilesIndex"
+    private const val PREDICTION_SCORE_DATA_KEY = "predictionScore"
 
     private const val FILETYPE_USAGE_RATIO_DATA_KEY = "fileTypeUsageRatio"
     private const val TIME_SINCE_LAST_FILETYPE_USAGE = "timeSinceLastFileTypeUsage"
@@ -62,6 +64,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     data[IS_OPENED_DATA_KEY] = isOpened(virtualFile, project)
     data[FILETYPE_DATA_KEY] = virtualFile.fileType
     data[RECENT_INDEX_DATA_KEY] = getRecentFilesIndex(virtualFile, project)
+    data[PREDICTION_SCORE_DATA_KEY] = getPredictionScore(virtualFile, project)
     data.putAll(getModificationTimeStats(virtualFile, currentTime))
     data.putAll(getFileTypeStats(virtualFile, currentTime))
 
@@ -123,5 +126,10 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
       FILETYPE_USED_IN_LAST_DAY_DATA_KEY to (timeSinceLastUsage <= DAY),
       FILETYPE_USED_IN_LAST_MONTH_DATA_KEY to (timeSinceLastUsage <= (4 * WEEK.toLong()))
     )
+  }
+
+  private fun getPredictionScore(virtualFile: VirtualFile, project: Project): Double {
+    val historyManagerWrapper = FileHistoryManagerWrapper.getInstance(project)
+    return historyManagerWrapper.calcNextFileProbability(virtualFile)
   }
 }
