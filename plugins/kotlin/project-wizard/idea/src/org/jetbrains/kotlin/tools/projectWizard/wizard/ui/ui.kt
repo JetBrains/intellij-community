@@ -102,7 +102,7 @@ val ModuleKind.icon: Icon
 
 val ModuleConfigurator.icon: Icon
     get() = when (this) {
-        is JsBrowserTargetConfigurator -> KotlinIcons.Wizard.WEB
+        is JsBrowserTargetConfigurator, MppLibJsBrowserTargetConfigurator -> KotlinIcons.Wizard.WEB
         is JsNodeTargetConfigurator -> KotlinIcons.Wizard.NODE_JS
         is IOSSinglePlatformModuleConfigurator -> KotlinIcons.Wizard.IOS
         is SimpleTargetConfigurator -> moduleSubType.icon

@@ -30,7 +30,7 @@ abstract class JsClientTemplate : Template() {
         reader: Reader,
         module: Module
     ): Boolean = when (module.configurator) {
-        JsBrowserTargetConfigurator -> true
+        JsBrowserTargetConfigurator, MppLibJsBrowserTargetConfigurator -> true
         BrowserJsSinglePlatformModuleConfigurator -> {
             with(reader) {
                 inContextOfModuleConfigurator(module, module.configurator) {

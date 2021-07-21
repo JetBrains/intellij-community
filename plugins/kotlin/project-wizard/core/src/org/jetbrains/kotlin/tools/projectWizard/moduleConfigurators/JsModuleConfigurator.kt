@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleIRLi
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.BrowserJsSinglePlatformModuleConfigurator.settingsValue
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.isApplication
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.jsCompilerParam
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.irOrLegacyCompiler
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsBrowserBasedConfigurator.Companion.browserSubTarget
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsNodeBasedConfigurator.Companion.nodejsSubTarget
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
@@ -44,7 +44,7 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
             )
 
     override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> =
-        super.getConfiguratorSettings() + kind + compiler
+        super.getConfiguratorSettings() + kind + useJsIrCompiler
 
     companion object : ModuleConfiguratorSettings() {
         val kind by enumSetting<JsTargetKind>(
@@ -80,10 +80,20 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
             }
         }
 
-        internal fun Reader.jsCompilerParam(
-            module: Module
-        ): String? =
-            settingValue(module, compiler)?.text
+        internal fun Reader.jsCompilerParam(module: Module): String? = settingValue(module, compiler)?.text
+
+        val useJsIrCompiler by booleanSetting(
+            KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.use.js.ir.title"),
+            GenerationPhase.PROJECT_GENERATION
+        ) {
+            defaultValue = value(false)
+            description = KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.use.js.ir.description")
+        }
+
+        internal fun Reader.irOrLegacyCompiler(module: Module): String {
+            fun Reader.useJsIrCompiler(module: Module): Boolean = settingValue(module, useJsIrCompiler) ?: false
+            return if (useJsIrCompiler(module)) JsCompiler.IR.text else JsCompiler.LEGACY.text
+        }
 
         fun Reader.isApplication(module: Module): Boolean =
             settingsValue(module, kind) == JsTargetKind.APPLICATION
@@ -122,7 +132,8 @@ abstract class JsSinglePlatformModuleConfigurator :
     JSConfigurator,
     ModuleConfiguratorWithTests,
     SinglePlatformModuleConfigurator,
-    ModuleConfiguratorWithSettings {
+    ModuleConfiguratorWithSettings
+{
     override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> =
         super<ModuleConfiguratorWithTests>.getConfiguratorSettings() +
                 super<JSConfigurator>.getConfiguratorSettings()
@@ -143,10 +154,7 @@ abstract class JsSinglePlatformModuleConfigurator :
         module: Module
     ): List<BuildSystemIR> = irsList {
         "kotlin" {
-            val param = reader.jsCompilerParam(module)
-                ?.let { "($it)" } ?: ""
-
-            "js${param}" {
+            "js(${reader.irOrLegacyCompiler(module)})" {
                 subTarget(module, reader)
             }
         }
