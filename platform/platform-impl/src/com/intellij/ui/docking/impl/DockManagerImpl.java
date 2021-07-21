@@ -598,6 +598,9 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
     public void dispose() {
       super.dispose();
       containerToWindow.remove(myContainer);
+      if (myContainer instanceof Disposable) {
+        Disposer.dispose((Disposable)myContainer);
+      }
       for (IdeRootPaneNorthExtension each : myNorthExtensions.values()) {
         if (each instanceof Disposable) {
           Disposer.dispose((Disposable)each);

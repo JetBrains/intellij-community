@@ -62,7 +62,6 @@ public final class DockableEditorContainerFactory implements DockContainerFactor
     if (!loadingState) {
       splitters.createCurrentWindow();
     }
-    Disposer.register(myProject, splitters);
 
     DockableEditorTabbedContainer container = new DockableEditorTabbedContainer(myProject, splitters, true);
     containerRef.set(container);

@@ -390,10 +390,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         result = mySplitters;
         if (result == null) {
           result = new EditorsSplitters(this);
-          Disposer.register(this, result);
-
           DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myProject, result, false);
           DockManager.getInstance(myProject).register(dockable, this);
+          Disposer.register(this, dockable);
 
           mySplitters = result;
         }

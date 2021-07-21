@@ -41,7 +41,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import static com.intellij.ide.actions.DragEditorTabsFusEventFields.SAME_WINDOW;
 import static javax.swing.SwingConstants.*;
 
-public final class DockableEditorTabbedContainer implements DockContainer.Persistent, Activatable {
+public final class DockableEditorTabbedContainer implements DockContainer.Persistent, Activatable, Disposable {
   private final EditorsSplitters mySplitters;
   private final Project myProject;
 
@@ -61,6 +61,11 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     myProject = project;
     mySplitters = splitters;
     myDisposeWhenEmpty = disposeWhenEmpty;
+  }
+
+  @Override
+  public void dispose() {
+    Disposer.dispose(mySplitters);
   }
 
   @Override
@@ -256,7 +261,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     if (myCurrentPainter == null) {
       myCurrentPainter = new MyDropAreaPainter();
       myGlassPaneListenersDisposable = Disposer.newDisposable("GlassPaneListeners");
-      Disposer.register(mySplitters, myGlassPaneListenersDisposable);
+      Disposer.register(this, myGlassPaneListenersDisposable);
       IdeGlassPaneUtil.find(myCurrentOver.getComponent())
         .addPainter(myCurrentOver.getComponent(), myCurrentPainter, myGlassPaneListenersDisposable);
     }
