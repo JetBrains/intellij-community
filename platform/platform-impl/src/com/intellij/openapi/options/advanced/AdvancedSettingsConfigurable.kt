@@ -51,13 +51,11 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
   }
 
   override fun RowBuilder.createComponentRow() {
-    row {
-      cell {
-        searchField(CCFlags.growX)
-        checkBox(ApplicationBundle.message("checkbox.advanced.settings.modified")) { _, component ->
-          onlyShowModified = component.isSelected
-          updateSearch()
-        }
+    fullRow {
+      searchField(CCFlags.growX)
+      checkBox(ApplicationBundle.message("checkbox.advanced.settings.modified")) { _, component ->
+        onlyShowModified = component.isSelected
+        updateSearch()
       }
     }
 
@@ -70,13 +68,13 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
       val groupPanel = nestedPanel {
         titledRow(group) {
           for (extension in extensions) {
-            row {
-              val labelCellBuilder = if (extension.type() == AdvancedSettingType.Bool)
-                null
-              else
-                label(extension.title() + ":")
+            val label = if (extension.type() == AdvancedSettingType.Bool)
+              null
+            else
+              JLabel(extension.title() + ":")
+            lateinit var component: CellBuilder<JComponent>
 
-              lateinit var component: CellBuilder<JComponent>
+            row(label) {
               cell(isFullWidth = true) {
                 val (c, isDefaultPredicate, reset) = control(extension)
                 component = c
@@ -93,16 +91,25 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
 
                 label("").constraints(pushX)
 
-                val textComponent = labelCellBuilder?.component ?: component.component
                 val row = SettingsRow(
-                  this@row, textComponent, extension.id, labelCellBuilder?.component?.text ?: extension.title(),
+                  this@row, label ?: component.component, extension.id, label?.text ?: extension.title(),
                   isDefaultPredicate
                 )
                 settingsRows.add(row)
                 settingsRowsInGroup.add(row)
               }
 
-              extension.description()?.let { description -> component.comment(description) }
+            }
+
+            extension.description()?.let {
+              if (label == null) {
+                component.comment(it)
+              }
+              else {
+                row {
+                  comment(it, MAX_COMMENT_WIDTH)
+                }
+              }
             }
           }
         }

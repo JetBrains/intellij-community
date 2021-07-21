@@ -44,6 +44,8 @@ import javax.swing.text.JTextComponent
 import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KMutableProperty0
 
+const val MAX_COMMENT_WIDTH = 70
+
 @DslMarker
 annotation class CellMarker
 
@@ -103,7 +105,7 @@ class ValidationInfoBuilder(val component: JComponent) {
 interface CellBuilder<out T : JComponent> {
   val component: T
 
-  fun comment(@DetailedDescription text: String, maxLineLength: Int = 70, forComponent: Boolean = false): CellBuilder<T>
+  fun comment(@DetailedDescription text: String, maxLineLength: Int = MAX_COMMENT_WIDTH, forComponent: Boolean = false): CellBuilder<T>
   fun commentComponent(component: JComponent, forComponent: Boolean = false): CellBuilder<T>
   fun focused(): CellBuilder<T>
   fun withValidationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T>
