@@ -7,20 +7,27 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.PsiParameter
+import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.elements.isGetter
 import org.jetbrains.kotlin.asJava.elements.isSetter
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 
-abstract class BaseKotlinUMethod(
+open class KotlinUMethod(
     psi: PsiMethod,
     final override val sourcePsi: KtDeclaration?,
     givenParent: UElement?
 ) : KotlinAbstractUElement(givenParent), UMethod, UAnchorOwner, PsiMethod by psi {
+    constructor(
+        psi: KtLightMethod,
+        givenParent: UElement?
+    ) : this(psi, getKotlinMemberOrigin(psi), givenParent)
 
     override val uastParameters: List<UParameter> by lz {
 
@@ -96,6 +103,37 @@ abstract class BaseKotlinUMethod(
     override val returnTypeReference: UTypeReferenceExpression? by lz {
         (sourcePsi as? KtCallableDeclaration)?.typeReference?.let {
             KotlinUTypeReferenceExpression(it, this) { javaPsi.returnType ?: UastErrorType }
+        }
+    }
+
+    companion object {
+        fun create(
+            psi: KtLightMethod,
+            givenParent: UElement?
+        ): UMethod {
+            val kotlinOrigin = psi.kotlinOrigin
+            return when {
+                kotlinOrigin is KtConstructor<*> ->
+                    KotlinConstructorUMethod(kotlinOrigin.containingClassOrObject, psi, givenParent)
+                kotlinOrigin is KtParameter && kotlinOrigin.getParentOfType<KtClass>(true)?.isAnnotation() == true ->
+                    KotlinUAnnotationMethod(psi, givenParent)
+                else ->
+                    KotlinUMethod(psi, givenParent)
+            }
+        }
+
+        fun create(
+            sourcePsi: KtDeclaration?,
+            givenParent: UElement?
+        ): UMethod? {
+            val javaPsi = when (sourcePsi) {
+                is KtPropertyAccessor ->
+                    LightClassUtil.getLightClassAccessorMethod(sourcePsi)
+                is KtFunction ->
+                    LightClassUtil.getLightClassMethod(sourcePsi)
+                else -> null
+            } as? KtLightMethod ?: return null
+            return create(javaPsi, givenParent)
         }
     }
 }
