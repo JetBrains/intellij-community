@@ -54,7 +54,7 @@ class KotlinScriptUClass(
         script: KtScript,
         override val psi: KtLightMethod,
         givenParent: UElement?
-    ) : BaseKotlinUMethod(psi, psi.kotlinOrigin, givenParent) {
+    ) : KotlinUMethod(psi, psi.kotlinOrigin, givenParent) {
         override val uastBody: UExpression? by lz {
             val initializers = script.declarations.filterIsInstance<KtScriptInitializer>()
             KotlinLazyUBlockExpression.create(initializers, this)
