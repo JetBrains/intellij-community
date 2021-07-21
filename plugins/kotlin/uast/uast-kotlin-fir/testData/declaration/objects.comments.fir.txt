@@ -4,14 +4,14 @@ KotlinUFile(
         KotlinUField(
             UComment(// Single-line comment bound to top-level property)
             KotlinUAnonymousClass(
-                FirKotlinUMethod(
+                KotlinUMethod(
                 )
             )
         )
-        FirKotlinUMethod(
+        KotlinUMethod(
             UComment(// Single-line comment bound to top-level property)
         )
-        FirKotlinUMethod(
+        KotlinUMethod(
         )
     )
     KotlinUClass(
@@ -23,13 +23,13 @@ KotlinUFile(
         )
         KotlinConstructorUMethod(
         )
-        FirKotlinUMethod(
+        KotlinUMethod(
         )
-        FirKotlinUMethod(
+        KotlinUMethod(
             KotlinUParameter(
             )
         )
-        FirKotlinUMethod(
+        KotlinUMethod(
         )
     )
 )

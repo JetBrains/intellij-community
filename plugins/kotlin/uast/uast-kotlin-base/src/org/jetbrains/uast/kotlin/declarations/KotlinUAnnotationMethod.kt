@@ -9,7 +9,7 @@ import org.jetbrains.uast.*
 class KotlinUAnnotationMethod(
     psi: KtLightMethod,
     givenParent: UElement?
-) : BaseKotlinUMethod(psi, psi.kotlinOrigin, givenParent), UAnnotationMethod {
+) : KotlinUMethod(psi, psi.kotlinOrigin, givenParent), UAnnotationMethod {
     override val psi: KtLightMethod = unwrap<UMethod, KtLightMethod>(psi)
 
     override val uastDefaultValue: UExpression? by lz {
