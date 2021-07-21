@@ -13,7 +13,8 @@ internal data class RootDataModel(
     val knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
     val selectedPackage: SelectedPackageModel<*>?,
     val filterOptions: FilterOptions,
-    val traceInfo: TraceInfo
+    val traceInfo: TraceInfo,
+    val searchQuery: String
 ) {
 
     companion object {
@@ -28,7 +29,8 @@ internal data class RootDataModel(
             knownRepositoriesInTargetModules = KnownRepositories.InTargetModules.EMPTY,
             selectedPackage = null,
             filterOptions = FilterOptions(),
-            traceInfo = TraceInfo.EMPTY
+            traceInfo = TraceInfo.EMPTY,
+            searchQuery = ""
         )
     }
 }

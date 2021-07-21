@@ -241,7 +241,8 @@ internal class PackageSearchDataService(
             targetModules = targetModules,
             selectedPackage = selectedPackageModel,
             filterOptions = filterOptions,
-            traceInfo = traceInfo
+            traceInfo = traceInfo,
+            searchQuery = searchQuery
         )
 
         logDebug(traceInfo, "PKGSDataService#onDataChanged()") { "Sending data changes through" }
@@ -333,7 +334,7 @@ internal class PackageSearchDataService(
 
         val queryTokens = query.split("\\b".toRegex())
             .filter { it.isNotBlank() }
-            .map { it.toLowerCase(Locale.ROOT) }
+            .map { it.lowercase(Locale.ROOT) }
 
         return queryTokens.any { searchableInfo.contains(it) }
     }
@@ -440,7 +441,7 @@ internal class PackageSearchDataService(
         val moduleNames = if (selectedModules.size == 1) {
             selectedModules.first().projectModule.name
         } else {
-            PackageSearchBundle.message("packagesearch.ui.toolwindow.allModules").toLowerCase()
+            PackageSearchBundle.message("packagesearch.ui.toolwindow.allModules").lowercase()
         }
 
         val title = if (isSearching) {

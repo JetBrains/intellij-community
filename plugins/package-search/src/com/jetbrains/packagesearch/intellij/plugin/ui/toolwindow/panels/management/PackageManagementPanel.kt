@@ -24,12 +24,10 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.computePackagesTableItems
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.filter
@@ -37,7 +35,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.awt.Dimension
 import javax.swing.BorderFactory
 import javax.swing.JScrollPane
@@ -155,7 +152,8 @@ internal class PackageManagementPanel(
                     allKnownRepositories = data.allKnownRepositories,
                     filterOptions = data.filterOptions,
                     tableData = tableData,
-                    traceInfo = data.traceInfo
+                    traceInfo = data.traceInfo,
+                    searchQuery = data.searchQuery
                 )
             )
 
