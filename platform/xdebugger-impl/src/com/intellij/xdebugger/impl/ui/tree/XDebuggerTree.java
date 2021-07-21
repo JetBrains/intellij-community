@@ -256,7 +256,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
 
   public boolean isUnderRemoteDebug() {
     DataContext context = DataManager.getInstance().getDataContext(this);
-    ExecutionEnvironment env = LangDataKeys.EXECUTION_ENVIRONMENT.getData(context);
+    ExecutionEnvironment env = ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(context);
     if (env != null && env.getRunProfile() instanceof RemoteRunProfile) {
       return true;
     }

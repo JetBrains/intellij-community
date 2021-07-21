@@ -13,7 +13,7 @@ import com.intellij.execution.testframework.*;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -123,7 +123,7 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction implements
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    ExecutionEnvironment environment = e.getData(LangDataKeys.EXECUTION_ENVIRONMENT);
+    ExecutionEnvironment environment = e.getData(ExecutionDataKeys.EXECUTION_ENVIRONMENT);
     if (environment == null) {
       return;
     }

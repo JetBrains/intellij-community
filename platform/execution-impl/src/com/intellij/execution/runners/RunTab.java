@@ -99,7 +99,7 @@ public abstract class RunTab implements DataProvider, Disposable {
     if (LangDataKeys.RUN_PROFILE.is(dataId)) {
       return myEnvironment == null ? null : myEnvironment.getRunProfile();
     }
-    else if (LangDataKeys.EXECUTION_ENVIRONMENT.is(dataId)) {
+    else if (ExecutionDataKeys.EXECUTION_ENVIRONMENT.is(dataId)) {
       return myEnvironment;
     }
     else if (LangDataKeys.RUN_CONTENT_DESCRIPTOR.is(dataId)) {

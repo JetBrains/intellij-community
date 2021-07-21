@@ -16,7 +16,7 @@ import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -1002,12 +1002,12 @@ public class SMTestProxy extends AbstractTestProxy {
         ExecutionEnvironment executionEnvironment = null;
         if (myConsole != null) {
           DataContext consoleContext = DataManager.getInstance().getDataContext(myConsole);
-          executionEnvironment = LangDataKeys.EXECUTION_ENVIRONMENT.getData(consoleContext);
+          executionEnvironment = ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(consoleContext);
           if (executionEnvironment == null) {
             ViewContext viewContext = ViewContext.CONTEXT_KEY.getData(consoleContext);
             if (viewContext != null) {
               JComponent tabsComponent = viewContext.getContentManager().getComponent();
-              executionEnvironment = LangDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(tabsComponent));
+              executionEnvironment = ExecutionDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(tabsComponent));
             }
           }
         }
