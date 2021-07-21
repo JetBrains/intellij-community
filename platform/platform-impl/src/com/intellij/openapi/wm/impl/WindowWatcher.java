@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -218,6 +219,12 @@ public final class WindowWatcher implements PropertyChangeListener {
     synchronized (myLock) {
       Window window = getFocusedWindowForProject(project);
       if (window == null) {
+        if (project == null) {
+          Project[] projects = ProjectManager.getInstance().getOpenProjects();
+          if (projects.length == 1) {
+            project = projects[0];
+          }
+        }
         if (project == null) {
           return null;
         }
