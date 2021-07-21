@@ -17,6 +17,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -79,12 +80,16 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -1488,7 +1493,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   public void testPasteInAnonymousCodeBlock() {
     configureByText(JavaFileType.INSTANCE, "class X{ void f() {" +
-                                       "     int x=0;\n" +
+                                       "     int x=0;x++;\n" +
                                        "    Runnable r = new Runnable() { public void run() {\n" +
                                        " <caret>\n" +
                                        "    }};\n" +
@@ -1500,7 +1505,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     getEditor().getSelectionModel().removeSelection();
     PlatformTestUtil.invokeNamedAction(IdeActions.ACTION_EDITOR_PASTE);
     List<HighlightInfo> errors = highlightErrors();
-    assertEquals(1, errors.size());
+    assertEquals(getEditor().getDocument().getText(), 1, errors.size());
   }
 
   public void testPostHighlightingPassRunsOnEveryPsiModification() throws Exception {
@@ -1639,6 +1644,66 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       return;
     }
     fail("PCE must have been thrown");
+  }
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+  }
+
+  @Override
+  protected @NotNull LanguageLevel getProjectLanguageLevel() {
+    return LanguageLevel.JDK_11;
+  }
+
+  public void testTypingInsideCodeBlockDoesntLeadToCatastrophicUnusedEverything_Stress() throws Throwable {
+    InspectionProfileImpl profile = InspectionProfileManager.getInstance(getProject()).getCurrentProfile();
+    profile.disableAllTools(getProject());
+    @NonNls String filePath = "/psi/resolve/Thinlet.java";
+    configureByFile(filePath);
+
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+    PsiFile file = getFile();
+    Project project = file.getProject();
+    CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
+    List<HighlightInfo> errors = doHighlighting(HighlightSeverity.ERROR);
+    assertEmpty(errors);
+    List<HighlightInfo> initialWarnings = doHighlighting(HighlightSeverity.WARNING);
+    assertEmpty(initialWarnings);
+    int N_BLOCKS = codeBlocks(file).size();
+    assertTrue("codeblocks :"+N_BLOCKS, N_BLOCKS > 1000);
+    Random random = new Random();
+    int N = 50;
+    // try with both serialized and not-serialized passes
+    myDaemonCodeAnalyzer.serializeCodeInsightPasses(false);
+    for (int i=0; i<N*2; i++) {
+      PsiCodeBlock block = codeBlocks(file).get(random.nextInt(N_BLOCKS));
+      getEditor().getCaretModel().moveToOffset(block.getLBrace().getTextOffset() + 1);
+      type("\n/*xxx*/");
+      List<HighlightInfo> warnings = doHighlighting(HighlightSeverity.WARNING);
+      if (!warnings.isEmpty()) {
+        System.out.println("\n-----\n"+getEditor().getDocument().getText()+"\n--------\n");
+      }
+      assertEmpty(warnings);
+      if (i == N) {
+        // repeat the same steps with serialized passes
+        myDaemonCodeAnalyzer.serializeCodeInsightPasses(true);
+      }
+    }
+  }
+
+  @NotNull
+  private List<PsiCodeBlock> codeBlocks(@NotNull PsiFile file) {
+    List<PsiCodeBlock> blocks = new ArrayList<>();
+    file.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitCodeBlock(PsiCodeBlock block) {
+        blocks.add(block);
+        super.visitCodeBlock(block);
+      }
+    });
+    return blocks;
   }
 
   public void testCodeFoldingInSplittedWindowAppliesToAllEditors() {
