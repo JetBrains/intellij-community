@@ -317,7 +317,7 @@ public class InstalledPluginsTableModel {
     return MessageDialogBuilder
       .okCancel(IdeBundle.message(enabled ? "dialog.title.enable.required.plugins" : "dialog.title.disable.dependent.plugins"),
                 IdeBundle.message(key, dependenciesText))
-      .yesText(IdeBundle.message(enabled ? "button.enable" : "button.disable"))
+      .yesText(IdeBundle.message(enabled ? "plugins.configurable.enable" : "plugins.configurable.disable"))
       .noText(Messages.getCancelButton());
   }
   protected void handleBeforeChangeEnableState(@NotNull IdeaPluginDescriptor descriptor,
