@@ -12979,6 +12979,54 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/replaceWithImportAlias")
+    public static class ReplaceWithImportAlias extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("class.kt")
+        public void testClass() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithImportAlias/class.kt");
+        }
+
+        @TestMetadata("extension.kt")
+        public void testExtension() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithImportAlias/extension.kt");
+        }
+
+        @TestMetadata("function.kt")
+        public void testFunction() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithImportAlias/function.kt");
+        }
+
+        @TestMetadata("inImport.kt")
+        public void testInImport() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithImportAlias/inImport.kt");
+        }
+
+        @TestMetadata("multipleAliases.kt")
+        public void testMultipleAliases() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithImportAlias/multipleAliases.kt");
+        }
+
+        @TestMetadata("notQualifed.kt")
+        public void testNotQualifed() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithImportAlias/notQualifed.kt");
+        }
+
+        @TestMetadata("property.kt")
+        public void testProperty() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithImportAlias/property.kt");
+        }
+
+        @TestMetadata("type.kt")
+        public void testType() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithImportAlias/type.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceWithOperatorAssignment")
     public static class ReplaceWithOperatorAssignment extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

@@ -6,5 +6,5 @@ fun foo() {}
 
 fun main() {
     bar()
-    bar()
+    foo.foo()
 }

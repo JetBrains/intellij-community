@@ -4,7 +4,4 @@ import foo.Foo as Bar
 
 class Foo
 
-fun main() {
-    Bar()
-    Bar()
-}
+fun test(): foo.<caret>Foo? = null

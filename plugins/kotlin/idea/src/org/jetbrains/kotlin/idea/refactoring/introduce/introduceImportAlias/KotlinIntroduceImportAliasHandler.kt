@@ -48,7 +48,18 @@ object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
     fun doRefactoring(project: Project, editor: Editor, element: KtNameReferenceExpression) {
         val fqName = element.resolveMainReferenceToDescriptors().firstOrNull()?.importableFqName ?: return
         val file = element.containingKtFile
-        val usages = file.findUsages(fqName)
+        val declarationDescriptors = file.resolveImportReference(fqName)
+
+        val fileSearchScope = file.fileScope()
+        val resolveScope = file.resolveScope
+        val usages = declarationDescriptors.flatMap { descriptor ->
+            val isExtension = descriptor.isExtension
+            descriptor.findPsiDeclarations(project, resolveScope).flatMap {
+                ReferencesSearch.search(it, fileSearchScope)
+                    .findAll()
+                    .map { reference -> UsageContext(reference.element.createSmartPointer(), isExtension = isExtension) }
+            }
+        }
 
         val elementInImportDirective = element.isInImportDirective()
 
@@ -89,11 +100,6 @@ object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
         invokeRename(project, editor, newDirective.alias, suggestionsName)
     }
 
-    fun replaceUsages(file: KtFile, fqName: FqName, newName: String) {
-        val usages = file.findUsages(fqName)
-        replaceUsages(usages, newName)
-    }
-
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {
         if (file !is KtFile) return
         selectElement(editor, file, listOf(CodeInsightUtils.ElementKind.EXPRESSION)) {
@@ -107,20 +113,6 @@ object KotlinIntroduceImportAliasHandler : RefactoringActionHandler {
 }
 
 private data class UsageContext(val pointer: SmartPsiElementPointer<PsiElement>, val isExtension: Boolean)
-
-private fun KtFile.findUsages(fqName: FqName): List<UsageContext> {
-    val declarationDescriptors = this.resolveImportReference(fqName)
-    val fileSearchScope = this.fileScope()
-    val resolveScope = this.resolveScope
-    return declarationDescriptors.flatMap { descriptor ->
-        val isExtension = descriptor.isExtension
-        descriptor.findPsiDeclarations(project, resolveScope).flatMap {
-            ReferencesSearch.search(it, fileSearchScope)
-                .findAll()
-                .map { reference -> UsageContext(reference.element.createSmartPointer(), isExtension = isExtension) }
-        }
-    }
-}
 
 private fun cleanImport(file: KtFile, fqName: FqName) {
     file.importDirectives.find { it.alias == null && fqName == it.importedFqName }?.delete()
