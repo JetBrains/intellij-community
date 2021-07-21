@@ -14,6 +14,7 @@ import kotlin.coroutines.resume
 
 internal class ReadAction<T>(
   private val constraints: ReadConstraints,
+  private val blocking: Boolean,
   private val action: (Progress) -> T
 ) {
 
@@ -50,6 +51,10 @@ internal class ReadAction<T>(
   }
 
   private suspend fun tryReadAction(rootScope: CoroutineScope): ReadResult<T> {
+    if (blocking) {
+      return tryReadAction(rootScope, rootScope.coroutineContext.job)
+             ?: ReadResult.WritePending
+    }
     var result: ReadResult<T>? = null
     rootScope.launch(CoroutineName("read action")) {
       val readJob = coroutineContext.job

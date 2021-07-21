@@ -15,12 +15,12 @@ import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.Continuation
 
-class SuspendingReadWriteTest : LightPlatformTestCase() {
+abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
 
   fun `test read action`(): Unit = runBlocking(Dispatchers.Default) {
     val application = ApplicationManager.getApplication()
     application.assertReadAccessNotAllowed()
-    val result = readAction {
+    val result = cra {
       application.assertReadAccessAllowed()
       42
     }
@@ -30,7 +30,7 @@ class SuspendingReadWriteTest : LightPlatformTestCase() {
   fun `test exception is thrown`(): Unit = runBlocking(Dispatchers.Default) {
     class MyException : Throwable()
     try {
-      readAction {
+      cra {
         throw MyException()
       }
       @Suppress("UNREACHABLE_CODE")
@@ -57,7 +57,7 @@ class SuspendingReadWriteTest : LightPlatformTestCase() {
     }
     val job = launch(Dispatchers.Default) {
       assertFalse(constraint.isCorrectContext())
-      constrainedReadAction(ReadConstraints.unconstrained().withConstraint(constraint)) {
+      cra(ReadConstraints.unconstrained().withConstraint(constraint)) {
         assertTrue(constraint.isCorrectContext())
       }
     }
@@ -70,7 +70,7 @@ class SuspendingReadWriteTest : LightPlatformTestCase() {
   fun `test read action is cancellable`(): Unit = runBlocking {
     val inRead = Semaphore(1)
     val job = launch(Dispatchers.Default) {
-      readAction { progress ->
+      cra { progress ->
         inRead.up()
         while (true) {
           progress.checkCancelled()
@@ -94,7 +94,7 @@ class SuspendingReadWriteTest : LightPlatformTestCase() {
       }
     }
     val job = launch(Dispatchers.Default) {
-      constrainedReadAction(ReadConstraints.unconstrained().withConstraint(unsatisfiableConstraint)) {
+      cra(ReadConstraints.unconstrained().withConstraint(unsatisfiableConstraint)) {
         fail("must not be called")
       }
     }
@@ -110,7 +110,7 @@ class SuspendingReadWriteTest : LightPlatformTestCase() {
     launch(Dispatchers.Default) {
       runReadAction { // blocking variant
         runBlocking {
-          assertEquals(42, readAction { 42 })
+          assertEquals(42, cra { 42 })
         }
       }
     }.waitTimeout()
@@ -128,7 +128,7 @@ class SuspendingReadWriteTest : LightPlatformTestCase() {
     runReadAction {
       runBlocking {
         try {
-          constrainedReadAction(ReadConstraints.unconstrained().withConstraint(unsatisfiableConstraint)) {
+          cra(ReadConstraints.unconstrained().withConstraint(unsatisfiableConstraint)) {
             fail("must not be called")
           }
           fail("exception must be thrown")
@@ -137,6 +137,15 @@ class SuspendingReadWriteTest : LightPlatformTestCase() {
         }
       }
     }
+  }
+
+  protected abstract suspend fun <T> cra(constraints: ReadConstraints = ReadConstraints.unconstrained(), action: (Progress) -> T): T
+}
+
+class NonBlocking : SuspendingReadWriteTest() {
+
+  override suspend fun <T> cra(constraints: ReadConstraints, action: (Progress) -> T): T {
+    return constrainedReadAction(constraints, action)
   }
 
   fun `test read action is cancelled by write but not restarted because finished`(): Unit = runBlocking {
@@ -221,6 +230,33 @@ class SuspendingReadWriteTest : LightPlatformTestCase() {
       UIUtil.dispatchAllInvocationEvents()
       delay(10)
     }
+    job.waitTimeout()
+  }
+}
+
+class Blocking : SuspendingReadWriteTest() {
+
+  override suspend fun <T> cra(constraints: ReadConstraints, action: (Progress) -> T): T {
+    return constrainedReadActionBlocking(constraints, action)
+  }
+
+  fun `test blocking read action is not cancelled by write`(): Unit = runBlocking {
+    val application = ApplicationManager.getApplication()
+    val inRead = Semaphore(1)
+    val beforeWrite = beforeWrite()
+    val job = launch(Dispatchers.Default) {
+      var attempt = false
+      cra { progress ->
+        assertFalse(attempt)
+        attempt = true
+        inRead.up()
+        beforeWrite.waitTimeout()
+        assertFalse(progress.isCancelled)
+        progress.checkCancelled()
+      }
+    }
+    inRead.waitFor()
+    application.runWriteAction {}
     job.waitTimeout()
   }
 }

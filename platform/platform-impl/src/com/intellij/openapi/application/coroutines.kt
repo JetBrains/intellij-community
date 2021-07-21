@@ -18,6 +18,8 @@ import kotlin.coroutines.CoroutineContext
  * Suspends until it's possible to obtain the read lock and then
  * runs the [action] holding the lock **without** preventing write actions.
  * See [constrainedReadAction] for semantic details.
+ *
+ * @see readActionBlocking
  */
 suspend fun <T> readAction(action: (progress: Progress) -> T): T {
   return constrainedReadAction(ReadConstraints.unconstrained(), action)
@@ -27,6 +29,8 @@ suspend fun <T> readAction(action: (progress: Progress) -> T): T {
  * Suspends until it's possible to obtain the read lock in smart mode and then
  * runs the [action] holding the lock **without** preventing write actions.
  * See [constrainedReadAction] for semantic details.
+ *
+ * @see smartReadActionBlocking
  */
 suspend fun <T> smartReadAction(project: Project, action: (progress: Progress) -> T): T {
   return constrainedReadAction(ReadConstraints.inSmartMode(project), action)
@@ -44,9 +48,51 @@ suspend fun <T> smartReadAction(project: Project, action: (progress: Progress) -
  * Since the [action] might me executed several times, it must be idempotent.
  * The function returns when given [action] was completed fully.
  * [Progress] passed to the action must be used to check for cancellation inside the [action].
+ *
+ * @see constrainedReadActionBlocking
  */
 suspend fun <T> constrainedReadAction(constraints: ReadConstraints, action: (progress: Progress) -> T): T {
-  return ReadAction(constraints, action).runReadAction()
+  return ReadAction(constraints, blocking = false, action).runReadAction()
+}
+
+/**
+ * Suspends until it's possible to obtain the read lock and then
+ * runs the [action] holding the lock and **preventing** write actions.
+ * See [constrainedReadActionBlocking] for semantic details.
+ *
+ * @see readAction
+ */
+suspend fun <T> readActionBlocking(action: (progress: Progress) -> T): T {
+  return constrainedReadActionBlocking(ReadConstraints.unconstrained(), action)
+}
+
+/**
+ * Suspends until it's possible to obtain the read lock in smart mode and then
+ * runs the [action] holding the lock and **preventing** write actions.
+ * See [constrainedReadActionBlocking] for semantic details.
+ *
+ * @see smartReadAction
+ */
+suspend fun <T> smartReadActionBlocking(project: Project, action: (progress: Progress) -> T): T {
+  return constrainedReadActionBlocking(ReadConstraints.inSmartMode(project), action)
+}
+
+/**
+ * Runs given [action] under [read lock][com.intellij.openapi.application.Application.runReadAction]
+ * **preventing** write actions.
+ *
+ * The function suspends if at the moment of calling it's not possible to acquire the read lock,
+ * or if [constraints] are not [satisfied][ContextConstraint.isCorrectContext].
+ * If the write action happens while the [action] is running, then the [action] is **not** canceled,
+ * meaning the [action] will block pending write actions until finished.
+ *
+ * The function returns when given [action] was completed fully.
+ * [Progress] passed to the action must be used to check for cancellation inside the [action].
+ *
+ * @see constrainedReadAction
+ */
+suspend fun <T> constrainedReadActionBlocking(constraints: ReadConstraints, action: (progress: Progress) -> T): T {
+  return ReadAction(constraints, blocking = true, action).runReadAction()
 }
 
 /**
