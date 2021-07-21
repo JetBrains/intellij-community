@@ -3,40 +3,9 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
-import org.jetbrains.kotlin.asJava.elements.*
-import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.psi.UastFakeLightMethod
-
-open class KotlinUMethod(
-    psi: PsiMethod,
-    sourcePsi: KtDeclaration?,
-    givenParent: UElement?
-) : BaseKotlinUMethod(psi, sourcePsi, givenParent) {
-    constructor(
-        psi: KtLightMethod,
-        givenParent: UElement?
-    ) : this(psi, getKotlinMemberOrigin(psi), givenParent)
-
-    companion object {
-        fun create(psi: KtLightMethod, containingElement: UElement?): UMethod {
-            val kotlinOrigin = psi.kotlinOrigin
-            return if (kotlinOrigin is KtConstructor<*>) {
-                KotlinConstructorUMethod(
-                    kotlinOrigin.containingClassOrObject,
-                    psi,
-                    containingElement
-                )
-            } else if (kotlinOrigin is KtParameter && kotlinOrigin.getParentOfType<KtClass>(true)?.isAnnotation() == true)
-                KotlinUAnnotationMethod(psi, containingElement)
-            else
-                KotlinUMethod(psi, containingElement)
-        }
-    }
-}
 
 class KotlinUMethodWithFakeLightDelegate internal constructor(
     val original: KtFunction,
