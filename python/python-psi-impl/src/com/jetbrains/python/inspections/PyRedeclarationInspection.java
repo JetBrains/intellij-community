@@ -149,6 +149,10 @@ public class PyRedeclarationInspection extends PyInspection {
         });
         final PsiElement writeElement = writeElementRef.get();
         if (writeElement != null && readElementRef.get() == null) {
+          // Repeated patterns are reported as syntactic errors in an annotator
+          if (PsiTreeUtil.findCommonParent(writeElement, element) instanceof PyPattern) {
+            return;
+          }
           final List<LocalQuickFix> quickFixes = new ArrayList<>();
           if (suggestRename(element, writeElement)) {
             LocalQuickFix quickFix = PythonUiService.getInstance().createPyRenameElementQuickFix(element);

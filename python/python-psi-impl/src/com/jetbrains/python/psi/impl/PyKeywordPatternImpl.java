@@ -39,4 +39,9 @@ public class PyKeywordPatternImpl extends PyElementImpl implements PyKeywordPatt
   public PsiReference getReference() {
     return new PyKeywordPatternReference(this);
   }
+
+  @Override
+  public boolean isIrrefutable() {
+    return false;
+  }
 }

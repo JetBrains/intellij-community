@@ -28,4 +28,9 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern 
   public @NotNull PyPatternArgumentList getArgumentList() {
     return Objects.requireNonNull(findChildByClass(PyPatternArgumentList.class));
   }
+
+  @Override
+  public boolean isIrrefutable() {
+    return false;
+  }
 }

@@ -500,6 +500,7 @@
     <pyAnnotator implementation="com.jetbrains.python.validation.StringLiteralQuotesAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.FStringsAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyHighlightingAnnotator"/>
+    <pyAnnotator implementation="com.jetbrains.python.validation.PyPatternAnnotator"/>
 
     <!--stdlib-->
     <documentationLinkProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider"/>
