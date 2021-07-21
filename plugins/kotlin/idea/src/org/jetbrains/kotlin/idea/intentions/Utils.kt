@@ -244,10 +244,11 @@ fun KtElement?.isSizeOrLength(): Boolean {
 
 private val COUNT_FUNCTIONS = listOf(FqName("kotlin.collections.count"), FqName("kotlin.text.count"))
 
-fun KtExpression.isCountCall(): Boolean {
+fun KtExpression.isCountCall(predicate: (KtCallExpression) -> Boolean = { true }): Boolean {
     val callExpression = this as? KtCallExpression
         ?: (this as? KtQualifiedExpression)?.callExpression
         ?: return false
+    if (!predicate(callExpression)) return false
     return callExpression.isCalling(COUNT_FUNCTIONS)
 }
 

@@ -15609,6 +15609,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/replaceSizeCheckWithIsNotEmpty/listCount.kt");
         }
 
+        @TestMetadata("listCountWithPredicate.kt")
+        public void testListCountWithPredicate() throws Exception {
+            runTest("testData/intentions/replaceSizeCheckWithIsNotEmpty/listCountWithPredicate.kt");
+        }
+
         @TestMetadata("lt.kt")
         public void testLt() throws Exception {
             runTest("testData/intentions/replaceSizeCheckWithIsNotEmpty/lt.kt");
@@ -15705,6 +15710,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("listCount.kt")
         public void testListCount() throws Exception {
             runTest("testData/intentions/replaceSizeZeroCheckWithIsEmpty/listCount.kt");
+        }
+
+        @TestMetadata("listCountWithPredicate.kt")
+        public void testListCountWithPredicate() throws Exception {
+            runTest("testData/intentions/replaceSizeZeroCheckWithIsEmpty/listCountWithPredicate.kt");
         }
 
         @TestMetadata("lt.kt")
