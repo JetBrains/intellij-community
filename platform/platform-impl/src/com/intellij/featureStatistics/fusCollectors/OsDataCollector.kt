@@ -36,7 +36,7 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
       get() = listOf("{regexp#time_zone}", "{enum:Z}")
   }
 
-  private val GROUP = EventLogGroup("system.os", 9)
+  private val GROUP = EventLogGroup("system.os", 10)
   private val NAME = GROUP.registerEvent("os.name", String("name", OS_NAMES), Version, String("locale", LOCALES))
   private val TIMEZONE = GROUP.registerEvent("os.timezone", TimezoneField("value"))
   private val LINUX = GROUP.registerEvent("linux", String("distro", DISTROS), StringValidatedByRegexp("release", "version"))
