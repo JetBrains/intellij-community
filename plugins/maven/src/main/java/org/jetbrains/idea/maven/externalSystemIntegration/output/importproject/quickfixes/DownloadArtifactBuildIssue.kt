@@ -24,12 +24,21 @@ object DownloadArtifactBuildIssue {
       override fun getNavigatable(project: Project): Navigatable? = null
     }
   }
+}
 
-  @JvmStatic
-  fun removeBadArtifact(file: File?) {
-    if (file == null) return
-    MavenLog.LOG.info("start deleting lastUpdate file from $file")
-    val files: Array<File> = file.listFiles { dir, name -> name.endsWith(".lastUpdated", true) } ?: return
+class CleanBrokenArtifactsAndReimportQuickFix(val unresolvedArtifactFiles: Collection<File>) : BuildIssueQuickFix {
+
+  override val id: String = ID
+
+  override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
+    unresolvedArtifactFiles.forEach { deleteLastUpdatedFiles(it) }
+    MavenProjectsManager.getInstance(project).forceUpdateProjects()
+    return CompletableFuture.completedFuture(null)
+  }
+
+  private fun deleteLastUpdatedFiles(unresolvedArtifactDirectory: File) {
+    MavenLog.LOG.info("start deleting lastUpdated file from $unresolvedArtifactDirectory")
+    val files: Array<File> = unresolvedArtifactDirectory.listFiles { dir, name -> name.endsWith(".lastUpdated", true) } ?: return
 
     for (childFiles in files) {
       val deleted = FileUtil.delete(childFiles)
@@ -38,19 +47,9 @@ object DownloadArtifactBuildIssue {
       }
     }
   }
-}
-
-class MavenReimportQuickFix() : BuildIssueQuickFix {
-
-  override val id: String = ID
-
-  override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-    MavenProjectsManager.getInstance(project).forceUpdateProjects()
-    return CompletableFuture.completedFuture(null)
-  }
 
   companion object {
-    const val ID = "maven_reimport_quick_fix"
+    const val ID = "clean_broken_artifacts_and_reimport_quick_fix"
   }
 }
 
