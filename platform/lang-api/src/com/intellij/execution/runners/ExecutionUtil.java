@@ -38,9 +38,9 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.util.function.Function;
 
-import static com.intellij.openapi.projectRoots.JdkUtil.PROPERTY_DYNAMIC_CLASSPATH;
-
 public final class ExecutionUtil {
+  public static final String PROPERTY_DYNAMIC_CLASSPATH = "dynamic.classpath";
+
   private static final Logger LOG = Logger.getInstance(ExecutionUtil.class);
 
   private static final NotificationGroup ourNotificationGroup = NotificationGroup.logOnlyGroup("Execution");

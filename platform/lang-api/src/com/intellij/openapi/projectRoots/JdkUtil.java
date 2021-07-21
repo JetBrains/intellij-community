@@ -26,6 +26,8 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.jar.Attributes;
 
+import static com.intellij.execution.runners.ExecutionUtil.PROPERTY_DYNAMIC_CLASSPATH;
+
 public final class JdkUtil {
   public static final Key<Map<String, String>> COMMAND_LINE_CONTENT = Key.create("command.line.content");
 
@@ -36,7 +38,6 @@ public final class JdkUtil {
    * see <a href="https://youtrack.jetbrains.com/issue/IDEA-126859#comment=27-778948">IDEA-126859</a> for additional details
    */
   public static final String PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL = "idea.do.not.escape.classpath.url";
-  public static final String PROPERTY_DYNAMIC_CLASSPATH = "dynamic.classpath";
 
   private JdkUtil() { }
 
