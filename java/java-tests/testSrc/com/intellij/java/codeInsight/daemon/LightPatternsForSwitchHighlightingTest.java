@@ -55,10 +55,6 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     doTest();
   }
 
-  public void testFallthroughPatternMatchingSwitch() {
-    doTest();
-  }
-
   public void testGuardedPatterns() {
     doTest();
   }
