@@ -9,9 +9,9 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.AppIconScheme;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AppIcon;
@@ -107,7 +107,8 @@ public final class TestsUIUtil {
     final String balloonText = testResultPresentation.getBalloonText();
     final MessageType type = testResultPresentation.getType();
 
-    if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), windowId)) {
+    ToolWindow toolWindow = toolWindowManager.getToolWindow(windowId);
+    if (toolWindow != null && !toolWindow.isVisible()) {
       String displayId = getTestResultsNotificationDisplayId(windowId);
       NotificationGroup group = NotificationGroup.findRegisteredGroup(displayId);
       if (group == null) {
