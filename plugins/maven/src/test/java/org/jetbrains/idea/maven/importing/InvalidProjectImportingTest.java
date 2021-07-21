@@ -601,27 +601,6 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
   }
 
   @Test
-  public void testUnresolvedExtensionsAfterImport() {
-    assumeVersionMoreThan("3.0.5");
-    importProjectWithErrors("<groupId>test</groupId>" +
-                            "<artifactId>project</artifactId>" +
-                            "<version>1</version>" +
-
-                            "<build>" +
-                            " <extensions>" +
-                            "   <extension>" +
-                            "     <groupId>xxx</groupId>" +
-                            "     <artifactId>yyy</artifactId>" +
-                            "     <version>1</version>" +
-                            "    </extension>" +
-                            "  </extensions>" +
-                            "</build>");
-
-    MavenProject root = getRootProjects().get(0);
-    assertContainsProblems(root, "Unresolveable build extension: Plugin xxx:yyy:1 or one of its dependencies could not be resolved: Failed to read artifact descriptor for xxx:yyy:jar:1");
-  }
-
-  @Test
   public void testUnresolvedExtensionsAfterResolve() {
     importProjectWithErrors("<groupId>test</groupId>" +
                             "<artifactId>project</artifactId>" +
