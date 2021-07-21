@@ -21,7 +21,7 @@ class NullUnsafe {
   }
 
   void unknown(String s) {
-    <warning descr="'if' statement can be replaced with 'switch' statement">if</warning> ("a".equals((s))) {
+    <warning descr="'if' statement replaceable with 'switch' statement">if</warning> ("a".equals((s))) {
       System.out.println(1);
     } else if ("b".equals(s)) {
       System.out.println(2);
@@ -33,7 +33,7 @@ class NullUnsafe {
   }
 
   void unknownPattern(Object o) {
-    <warning descr="'if' statement can be replaced with 'switch' statement">if</warning> (o instanceof String) {
+    <warning descr="'if' statement replaceable with 'switch' statement">if</warning> (o instanceof String) {
       System.out.println(1);
     } else if (o instanceof Integer) {
       System.out.println(2);

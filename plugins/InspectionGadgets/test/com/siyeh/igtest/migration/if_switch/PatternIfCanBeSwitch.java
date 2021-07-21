@@ -48,7 +48,7 @@ class PatternIfCanBeSwitch {
   }
 
   void guardedMatchingWithCustomOrder(@Nullable Object o, int x) {
-   <warning descr="'if' statement can be replaced with 'switch' statement">if</warning> (x > 0 && o instanceof Integer i) {
+   <warning descr="'if' statement replaceable with 'switch' statement">if</warning> (x > 0 && o instanceof Integer i) {
       // do this
     } else if (o instanceof String s) {
       // do that
