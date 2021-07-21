@@ -1,5 +1,5 @@
 KotlinUFile(
-    FirKotlinUClass(
+    KotlinUClass(
         FirKotlinUMethod(
             UComment(// Single-line comment bound to fun foo)
         )
