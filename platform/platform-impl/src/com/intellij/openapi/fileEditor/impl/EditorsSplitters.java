@@ -52,6 +52,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -124,7 +125,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     setTransferHandler(new MyTransferHandler());
     clear();
 
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
+    MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect(this);
+    busConnection.subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
       @Override
       public void activeKeymapChanged(@Nullable Keymap keymap) {
         invalidate();
@@ -133,7 +135,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     });
 
     colorScheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
-    ApplicationManager.getApplication().getMessageBus().connect(myManager).subscribe(LafManagerListener.TOPIC, laf -> {
+    busConnection.subscribe(LafManagerListener.TOPIC, laf -> {
       colorScheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
     });
   }
