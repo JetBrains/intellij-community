@@ -21,5 +21,8 @@
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.common" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-native" scope="TEST" />
   </component>
 </module>
