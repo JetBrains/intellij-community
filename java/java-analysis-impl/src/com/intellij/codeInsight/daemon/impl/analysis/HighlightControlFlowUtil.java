@@ -702,6 +702,9 @@ public final class HighlightControlFlowUtil {
       if (parent instanceof PsiParameterList && parent.getParent() == lambdaExpression) {
         return null;
       }
+      if (PsiTreeUtil.getParentOfType(context, PsiGuardedPattern.class, true, PsiLambdaExpression.class) != null) {
+        return null;
+      }
       if (!isEffectivelyFinal(variable, lambdaExpression, context)) {
         String text = JavaErrorBundle.message("lambda.variable.must.be.final");
         HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(text).create();
@@ -787,7 +790,7 @@ public final class HighlightControlFlowUtil {
       scope = new PsiElement[]{variable.getParent()};
     }
     if (scope.length < 1 || scope[0] == null || scope[0].getContainingFile() != context.getContainingFile()) return null;
-
+    boolean scopeContainsGuardedPattern = ContainerUtil.exists(scope, element -> element instanceof PsiGuardedPattern);
     PsiElement parent = context.getParent();
     PsiElement prevParent = context;
     outer:
@@ -800,6 +803,31 @@ public final class HighlightControlFlowUtil {
       }
       if (parent instanceof PsiLambdaExpression) {
         return parent;
+      }
+      if (scopeContainsGuardedPattern) {
+        if (parent instanceof PsiCodeBlock && parent.getParent() instanceof PsiSwitchBlock) {
+          PsiCaseLabelElementList list = null;
+          if (prevParent instanceof PsiSwitchLabeledRuleStatement) {
+            list = ((PsiSwitchLabeledRuleStatement)prevParent).getCaseLabelElementList();
+          }
+          else {
+            // to get only the previous label element is enough
+            // even if the switch label contains several label elements like case <guarded pattern>: case <something else>
+            // it will be a compilation error
+            PsiSwitchLabelStatement statement = PsiTreeUtil.getPrevSiblingOfType(prevParent, PsiSwitchLabelStatement.class);
+            if (statement != null) {
+              list = statement.getCaseLabelElementList();
+            }
+          }
+          if (list != null) {
+            for (PsiCaseLabelElement labelElement : list.getElements()) {
+              if (!(labelElement instanceof PsiGuardedPattern)) continue;
+              for (PsiElement scopeElement : scope) {
+                if (labelElement.equals(scopeElement)) break outer;
+              }
+            }
+          }
+        }
       }
       prevParent = parent;
       parent = parent.getParent();
