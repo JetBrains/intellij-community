@@ -7,10 +7,12 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -20,28 +22,30 @@ class ReplaceWithImportAliasInspection : AbstractKotlinInspection() {
         if (expression !is KtNameReferenceExpression || expression.getIdentifier() == null || expression.isInImportDirective()) return
         val qualifiedElement = expression.getQualifiedElement()
         if (qualifiedElement !is KtDotQualifiedExpression && qualifiedElement !is KtUserType) return
-        val aliasName = expression.aliasNameIdentifier()?.text ?: return
+        val aliasNameIdentifier = expression.aliasNameIdentifier() ?: return
         holder.registerProblem(
             expression,
             KotlinBundle.message("replace.with.import.alias"),
-            ReplaceWithImportAliasFix(aliasName)
+            ReplaceWithImportAliasFix(aliasNameIdentifier.createSmartPointer(), aliasNameIdentifier.text)
         )
     })
 
-    private class ReplaceWithImportAliasFix(private val aliasName: String): LocalQuickFix {
+    private fun KtNameReferenceExpression.aliasNameIdentifier(): PsiElement? {
+        val fqName = resolveMainReferenceToDescriptors().firstOrNull()?.importableFqName ?: return null
+        return containingKtFile.findAliasByFqName(fqName)?.nameIdentifier
+    }
+
+    private class ReplaceWithImportAliasFix(
+        private val aliasNameIdentifierPointer: SmartPsiElementPointer<PsiElement>,
+        private val aliasName: String
+    ): LocalQuickFix {
         override fun getName() = KotlinBundle.message("replace.with.0", aliasName)
         override fun getFamilyName() = name
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val expression = descriptor.psiElement as? KtNameReferenceExpression ?: return
-            val aliasNameIdentifier = expression.aliasNameIdentifier() ?: return
-
+            val aliasNameIdentifier = aliasNameIdentifierPointer.element ?: return
             expression.getIdentifier()?.replace(aliasNameIdentifier.copy())
             expression.getQualifiedElement().replace(expression.parent.safeAs<KtCallExpression>() ?: expression)
         }
     }
-}
-
-private fun KtNameReferenceExpression.aliasNameIdentifier(): PsiElement? {
-    val fqName = resolveMainReferenceToDescriptors().firstOrNull()?.importableFqName ?: return null
-    return containingKtFile.findAliasByFqName(fqName)?.nameIdentifier
 }
