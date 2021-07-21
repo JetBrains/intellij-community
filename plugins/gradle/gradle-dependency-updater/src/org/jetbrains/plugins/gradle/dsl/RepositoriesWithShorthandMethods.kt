@@ -32,7 +32,7 @@ enum class RepositoriesWithShorthandMethods(
     private fun URI.isEquivalentLenientTo(url: String?): Boolean {
       if (url == null) return false
       val firstUri = URI(url.trim().trimEnd('/', '?', '#'))
-      return this == firstUri.normalize()
+      return this.normalize() == firstUri.normalize()
     }
   }
 }
