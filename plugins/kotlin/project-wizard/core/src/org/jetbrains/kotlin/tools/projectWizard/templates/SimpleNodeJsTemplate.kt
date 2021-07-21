@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 
 
-class SimpleNodeJsTemplate : Template() {
+object SimpleNodeJsTemplate : Template() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.simple.nodejs.title")
 
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.simple.nodejs.description")

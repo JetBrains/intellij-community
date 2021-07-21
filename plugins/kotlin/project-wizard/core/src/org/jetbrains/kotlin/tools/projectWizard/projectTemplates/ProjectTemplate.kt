@@ -230,7 +230,7 @@ object FullStackWebApplicationProjectTemplate : ProjectTemplate() {
                         }
                     },
                     ModuleType.js.createDefaultTarget().apply {
-                        withTemplate(ReactJsClientTemplate())
+                        withTemplate(ReactJsClientTemplate)
                     }
                 )
             )
@@ -280,8 +280,8 @@ object FrontendApplicationProjectTemplate : ProjectTemplate() {
                 Module(
                     "browser",
                     BrowserJsSinglePlatformModuleConfigurator,
-                    template = SimpleJsClientTemplate(),
-                    permittedTemplateIds = setOf(SimpleJsClientTemplate().id),
+                    template = SimpleJsClientTemplate,
+                    permittedTemplateIds = setOf(SimpleJsClientTemplate.id),
                     sourceSets = SourcesetType.ALL.map { type ->
                         Sourceset(type, dependencies = emptyList())
                     },
@@ -306,8 +306,8 @@ object ReactApplicationProjectTemplate : ProjectTemplate() {
                 Module(
                     "react",
                     BrowserJsSinglePlatformModuleConfigurator,
-                    template = ReactJsClientTemplate(),
-                    permittedTemplateIds = setOf(ReactJsClientTemplate().id),
+                    template = ReactJsClientTemplate,
+                    permittedTemplateIds = setOf(ReactJsClientTemplate.id),
                     sourceSets = SourcesetType.ALL.map { type ->
                         Sourceset(type, dependencies = emptyList())
                     },
@@ -432,8 +432,8 @@ object NodeJsApplicationProjectTemplate : ProjectTemplate() {
                 Module(
                     "nodejs",
                     NodeJsSinglePlatformModuleConfigurator,
-                    template = SimpleNodeJsTemplate(),
-                    permittedTemplateIds = setOf(SimpleNodeJsTemplate().id),
+                    template = SimpleNodeJsTemplate,
+                    permittedTemplateIds = setOf(SimpleNodeJsTemplate.id),
                     sourceSets = SourcesetType.ALL.map { type ->
                         Sourceset(type, dependencies = emptyList())
                     },
