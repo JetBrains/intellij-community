@@ -261,7 +261,6 @@ final class DistributionJARsBuilder {
                                      Map<String, Object> systemProperties = Collections.emptyMap()) {
     ProductModulesLayout productLayout = buildContext.productProperties.productLayout
     List<String> modulesToIndex = productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish
-    modulesToIndex -= "intellij.clion.plugin" // TODO [AK] temporary solution to fix CLion build
     modulesToIndex -= "intellij.ruby.lsp"
     Path targetDirectory = JarPackager.getSearchableOptionsDir(buildContext)
     buildContext.messages.progress("Building searchable options for ${modulesToIndex.size()} modules")
