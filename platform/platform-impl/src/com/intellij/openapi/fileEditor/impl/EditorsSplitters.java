@@ -42,7 +42,6 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
@@ -101,7 +100,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private final UIBuilder myUIBuilder = new UIBuilder();
   private EditorColorsScheme colorScheme;
 
-  EditorsSplitters(@NotNull FileEditorManagerImpl manager, boolean createOwnDockableContainer, @NotNull Disposable parentDisposable) {
+  EditorsSplitters(@NotNull FileEditorManagerImpl manager, @NotNull Disposable parentDisposable) {
     super(new BorderLayout());
 
     myIconUpdaterAlarm = new Alarm(parentDisposable);
@@ -126,11 +125,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
     setTransferHandler(new MyTransferHandler());
     clear();
-
-    if (createOwnDockableContainer) {
-      DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myManager.getProject(), this, false);
-      DockManager.getInstance(manager.getProject()).register(dockable, parentDisposable);
-    }
 
     ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
       @Override

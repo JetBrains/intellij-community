@@ -36,7 +36,7 @@ public final class DockableEditorContainerFactory implements DockContainerFactor
 
   private DockContainer createContainer(boolean loadingState) {
     Ref<DockableEditorTabbedContainer> containerRef = new Ref<>();
-    EditorsSplitters splitters = new EditorsSplitters(myFileEditorManager, false, myProject) {
+    EditorsSplitters splitters = new EditorsSplitters(myFileEditorManager, myProject) {
       @Override
       protected void afterFileClosed(@NotNull VirtualFile file) {
         containerRef.get().fireContentClosed(file);
