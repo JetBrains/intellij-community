@@ -174,9 +174,9 @@ class InplaceMethodExtractor(private val editor: Editor,
 
   override fun afterTemplateStart() {
     super.afterTemplateStart()
-    popupProvider.setChangeListener { restartInplace() }
-    popupProvider.setShowDialogAction { actionEvent -> restartInDialog(actionEvent == null) }
     val templateState = TemplateManagerImpl.getTemplateState(myEditor) ?: return
+    popupProvider.setChangeListener { restartInplace(getEditedTemplateText(templateState)) }
+    popupProvider.setShowDialogAction { actionEvent -> restartInDialog(actionEvent == null) }
     Disposer.register(templateState, disposable)
     val editor = templateState.editor as? EditorImpl ?: return
     val presentation = TemplateInlayUtil.createSettingsPresentation(editor) { onClickEvent -> logStatisticsOnShow(editor, onClickEvent) }
@@ -202,20 +202,14 @@ class InplaceMethodExtractor(private val editor: Editor,
   }
 
   private fun afterTemplateFinished(brokenOff: Boolean) {
-    if (! brokenOff && validationPassed){
+    if (! brokenOff && validationPassed) {
+      val extractedMethod = method.element ?: return
       InplaceExtractMethodCollector.executed.log(context.methodName != getMethodName())
       installGotItTooltips()
       PsiDocumentManager.getInstance(myProject).commitAllDocuments()
-      val extractedMethod = findExtractedMethod()
-      if (extractedMethod != null) {
-        MethodExtractor.sendRefactoringDoneEvent(extractedMethod)
-        extractor.postprocess(editor, extractedMethod)
-      }
+      MethodExtractor.sendRefactoringDoneEvent(extractedMethod)
+      extractor.postprocess(editor, extractedMethod)
     }
-  }
-
-  private fun findExtractedMethod(): PsiMethod? {
-    return method.element
   }
 
   private fun setMethodName(methodName: String) {
@@ -251,7 +245,6 @@ class InplaceMethodExtractor(private val editor: Editor,
         }
         if (errorMessage != null) {
           errorMethodName = methodName
-          performCleanup()
         } else {
           validationPassed = true
         }
@@ -270,12 +263,8 @@ class InplaceMethodExtractor(private val editor: Editor,
           val message = errorMessage
           val methodName = errorMethodName
           if (message != null && methodName != null) {
-            WriteCommandAction.runWriteCommandAction(myProject) {
-              val extractor = InplaceMethodExtractor(editor, context.copy(methodName = "extracted"), extractor, popupProvider)
-              extractor.performInplaceRefactoring(linkedSetOf())
-              extractor.setMethodName(methodName)
-              CommonRefactoringUtil.showErrorHint(myProject, editor, message, ExtractMethodHandler.getRefactoringName(), null)
-            }
+            restartInplace(methodName)
+            CommonRefactoringUtil.showErrorHint(myProject, editor, message, ExtractMethodHandler.getRefactoringName(), null)
           }
         }
       }
@@ -284,7 +273,7 @@ class InplaceMethodExtractor(private val editor: Editor,
 
   fun restartInDialog(isLinkUsed: Boolean = false) {
     InplaceExtractMethodCollector.openExtractDialog.log(myProject, isLinkUsed)
-    val updatedContext = context.update(getMethodName() ?: "extracted", popupProvider.annotate, popupProvider.makeStatic)
+    val updatedContext = context.update(getMethodName() ?: context.methodName, popupProvider.annotate, popupProvider.makeStatic)
     performCleanup()
     val elements = ExtractSelector().suggestElementsToExtract(updatedContext.targetClass.containingFile, updatedContext.range)
     extractor.extractInDialog(updatedContext.targetClass, elements, updatedContext.methodName, updatedContext.static)
@@ -305,11 +294,15 @@ class InplaceMethodExtractor(private val editor: Editor,
     return context
   }
 
-  private fun restartInplace() {
-    val updatedContext = context.update(getMethodName() ?: "extracted", popupProvider.annotate, popupProvider.makeStatic)
+  private fun restartInplace(methodName: String?) {
+    val updatedContext = context.update(context.methodName, popupProvider.annotate, popupProvider.makeStatic)
     performCleanup()
     WriteCommandAction.runWriteCommandAction(myProject) {
-      InplaceMethodExtractor(editor, updatedContext, extractor, popupProvider).performInplaceRefactoring(linkedSetOf())
+      val inplaceExtractor = InplaceMethodExtractor(editor, updatedContext, extractor, popupProvider)
+      inplaceExtractor.performInplaceRefactoring(linkedSetOf())
+      if (methodName != null) {
+        inplaceExtractor.setMethodName(methodName)
+      }
     }
   }
 
