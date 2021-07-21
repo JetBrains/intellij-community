@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ReplaceWithImportAliasInspection : AbstractKotlinInspection() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = simpleNameExpressionVisitor (fun(expression) {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = simpleNameExpressionVisitor(fun(expression) {
         if (expression !is KtNameReferenceExpression || expression.getIdentifier() == null || expression.isInImportDirective()) return
         val qualifiedElement = expression.getQualifiedElement()
         if (qualifiedElement !is KtDotQualifiedExpression && qualifiedElement !is KtUserType) return
@@ -31,14 +31,19 @@ class ReplaceWithImportAliasInspection : AbstractKotlinInspection() {
     })
 
     private fun KtNameReferenceExpression.aliasNameIdentifier(): PsiElement? {
+        val name = getIdentifier()?.text ?: return null
+        val imports = containingKtFile.importDirectives.filter {
+            !it.isAllUnder && it.alias != null && it.importedFqName?.shortName()?.asString() == name
+        }.ifEmpty { return null }
+
         val fqName = resolveMainReferenceToDescriptors().firstOrNull()?.importableFqName ?: return null
-        return containingKtFile.findAliasByFqName(fqName)?.nameIdentifier
+        return imports.find { it.importedFqName == fqName }?.alias?.nameIdentifier
     }
 
     private class ReplaceWithImportAliasFix(
         private val aliasNameIdentifierPointer: SmartPsiElementPointer<PsiElement>,
         private val aliasName: String
-    ): LocalQuickFix {
+    ) : LocalQuickFix {
         override fun getName() = KotlinBundle.message("replace.with.0", aliasName)
         override fun getFamilyName() = name
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
