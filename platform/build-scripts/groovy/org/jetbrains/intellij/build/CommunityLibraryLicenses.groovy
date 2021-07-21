@@ -552,6 +552,8 @@ final class CommunityLibraryLicenses {
                        url: "https://plexus.codehaus.org/plexus-utils").apache(),
     new LibraryLicense(name: "pockets", attachedTo: "intellij.python.helpers", version: "0.3.2",
                        url: "https://pockets.readthedocs.org/").newBsd(),
+    new LibraryLicense(name: "protobuf-java-util", libraryName: "google.protobuf.java.util",
+                       url: "https://developers.google.com/protocol-buffers").newBsd(),
     new LibraryLicense(name: "Protocol Buffers", libraryName: "protobuf", url: "https://developers.google.com/protocol-buffers",
                        licenseUrl: "https://github.com/google/protobuf/blob/master/LICENSE").newBsd(),
     new LibraryLicense(name: "Protocol Buffers", libraryName: "protobuf-java6", url: "https://developers.google.com/protocol-buffers",
