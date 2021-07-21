@@ -13,11 +13,14 @@ import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.diff.DiffColors
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
@@ -26,9 +29,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.ui.GotItTooltip
 import com.intellij.util.SmartList
 import java.awt.Point
@@ -151,7 +156,6 @@ object InplaceExtractUtils {
     return TextRange.create(segment)
   }
 
-  fun getNameIdentifier(call: PsiMethodCallExpression?): PsiIdentifier? = PsiTreeUtil.getChildOfType(call?.methodExpression, PsiIdentifier::class.java)
 
   fun getEditedTemplateText(state: TemplateState): String? {
     val textRange = state.currentVariableRange ?: return null
@@ -173,4 +177,54 @@ object InplaceExtractUtils {
       }
     })
   }
+
+  fun addInlaySettingsElement(templateState: TemplateState, settingsPopup: ExtractMethodPopupProvider){
+    val editor = templateState.editor as? EditorImpl ?: return
+    val project = editor.project ?: return
+    val offset = templateState.currentVariableRange?.endOffset ?: return
+    val presentation = TemplateInlayUtil.createSettingsPresentation(editor) { onClickEvent -> logStatisticsOnShow(editor, onClickEvent) }
+
+    val templateElement = object : TemplateInlayUtil.SelectableTemplateElement(presentation) {
+      override fun onSelect(templateState: TemplateState) {
+        super.onSelect(templateState)
+        logStatisticsOnShow(editor)
+      }
+    }
+    TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, offset, presentation, settingsPopup.panel,templateElement) {
+      logStatisticsOnHide(project, settingsPopup)
+    }
+  }
+
+  fun getNameIdentifier(call: PsiMethodCallExpression?): PsiIdentifier? {
+    return PsiTreeUtil.getChildOfType(call?.methodExpression, PsiIdentifier::class.java)
+  }
+
+  fun createCodePreview(editor: Editor,
+                        extractedRange: TextRange?,
+                        method: SmartPsiElementPointer<PsiMethod>,
+                        call: SmartPsiElementPointer<PsiMethodCallExpression>): EditorCodePreview {
+    val preview = EditorCodePreview.create(editor)
+    val project = editor.project ?: return preview
+    val document = editor.document
+    val file = FileDocumentManager.getInstance().getFile(document) ?: return preview
+
+    if (extractedRange != null) {
+      val callLines = findLines(document, extractedRange)
+      preview.addPreview(callLines) { navigateToFileOffset(project, file, getNameIdentifier(call.element)?.textRange?.endOffset) }
+    }
+    val methodRange = method.element?.textRange
+    if (methodRange != null) {
+      val methodLines = findLines(document, methodRange).trimToLength(4)
+      preview.addPreview(methodLines) { navigateToFileOffset(project, file, method.element?.nameIdentifier?.textRange?.endOffset) }
+    }
+
+    return preview
+  }
+
+  private fun IntRange.trimToLength(maxLength: Int) = first until first + minOf(maxLength, last - first + 1)
+
+  private fun findLines(document: Document, range: TextRange): IntRange {
+    return document.getLineNumber(range.startOffset)..document.getLineNumber(range.endOffset)
+  }
+
 }

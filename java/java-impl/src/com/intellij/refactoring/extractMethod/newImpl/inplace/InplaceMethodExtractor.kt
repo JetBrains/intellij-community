@@ -2,17 +2,14 @@
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
@@ -22,19 +19,17 @@ import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
 import com.intellij.refactoring.extractMethod.newImpl.ExtractSelector
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.addInlaySettingsElement
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.addTemplateFinishedListener
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createChangeBasedDisposable
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createChangeSignatureGotIt
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createCodePreview
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createInsertedHighlighting
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.createNavigationGotIt
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.getEditedTemplateText
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.getNameIdentifier
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.logStatisticsOnHide
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.logStatisticsOnShow
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.navigateToFileOffset
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.showInEditor
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
-import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
 import com.intellij.refactoring.suggested.range
 import com.intellij.refactoring.util.CommonRefactoringUtil
@@ -75,7 +70,6 @@ class InplaceMethodExtractor(private val editor: Editor,
   private val disposable = Disposer.newDisposable()
 
   fun prepareCodeForTemplate() {
-    val project = myProject
     val document = editor.document
 
     val extractedRange = document.createRangeMarker(context.range).also {
@@ -94,15 +88,8 @@ class InplaceMethodExtractor(private val editor: Editor,
     val highlighting = createInsertedHighlighting(editor, method.textRange)
     Disposer.register(disposable, highlighting)
 
-    val preview = EditorCodePreview.create(editor)
-    Disposer.register(disposable, preview)
-
-    val callLines = findLines(document, extractedRange.range!!)
-    val file = method.containingFile.virtualFile
-    preview.addPreview(callLines) { navigateToFileOffset(project, file, getNameIdentifier(this.methodCall.element)?.textRange?.endOffset) }
-
-    val methodLines = findLines(document, method.textRange).trimToLength(4)
-    preview.addPreview(methodLines) { navigateToFileOffset(project, file, this.method.element?.nameIdentifier?.textRange?.endOffset) }
+    val codePreview = createCodePreview(editor, extractedRange.range, this.method, this.methodCall)
+    Disposer.register(disposable, codePreview)
   }
 
   fun extractMethod(extractor: InplaceExtractMethodProvider, parameters: ExtractParameters): Pair<PsiMethod, PsiMethodCallExpression> {
@@ -170,26 +157,15 @@ class InplaceMethodExtractor(private val editor: Editor,
   }
 
   override fun afterTemplateStart() {
+    setActiveExtractor(editor, this)
     val templateState = TemplateManagerImpl.getTemplateState(myEditor) ?: return
     Disposer.register(templateState) { SuggestedRefactoringProvider.getInstance(myProject).reset() }
     Disposer.register(templateState, disposable)
     super.afterTemplateStart()
+    addTemplateFinishedListener(templateState, ::afterTemplateFinished)
     popupProvider.setChangeListener { restartInplace(getEditedTemplateText(templateState)) }
     popupProvider.setShowDialogAction { actionEvent -> restartInDialog(actionEvent == null) }
-    val editor = templateState.editor as? EditorImpl ?: return
-    val presentation = TemplateInlayUtil.createSettingsPresentation(editor) { onClickEvent -> logStatisticsOnShow(editor, onClickEvent) }
-    val templateElement = object : TemplateInlayUtil.SelectableTemplateElement(presentation) {
-      override fun onSelect(templateState: TemplateState) {
-        super.onSelect(templateState)
-        logStatisticsOnShow(editor)
-      }
-    }
-    val offset = templateState.currentVariableRange?.endOffset ?: return
-    TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, offset, presentation, popupProvider.panel,
-                                                                      templateElement) { logStatisticsOnHide(myProject, popupProvider) }
-    setActiveExtractor(editor, this)
-
-    addTemplateFinishedListener(templateState, ::afterTemplateFinished)
+    addInlaySettingsElement(templateState, popupProvider)
   }
 
   private fun getIdentifierError(methodName: String, methodCall: PsiMethodCallExpression?): @Nls String? {
@@ -277,9 +253,4 @@ class InplaceMethodExtractor(private val editor: Editor,
 
   override fun getCommandName(): String = ExtractMethodHandler.getRefactoringName()
 
-  private fun IntRange.trimToLength(maxLength: Int) = first until first + minOf(maxLength, last - first + 1)
-
-  private fun findLines(document: Document, range: TextRange): IntRange {
-    return document.getLineNumber(range.startOffset)..document.getLineNumber(range.endOffset)
-  }
 }
