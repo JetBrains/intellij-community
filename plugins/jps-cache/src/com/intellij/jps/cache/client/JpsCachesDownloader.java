@@ -24,6 +24,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.jps.cache.JpsCachesPluginUtil.EXECUTOR_SERVICE;
+import static com.intellij.jps.cache.statistics.JpsCacheUsagesCollector.DOWNLOAD_SIZE_EVENT_ID;
 
 class JpsCachesDownloader {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.JpsOutputsDownloader");
@@ -107,6 +108,7 @@ class JpsCachesDownloader {
         }
       }
       long duration = System.currentTimeMillis() - start;
+      DOWNLOAD_SIZE_EVENT_ID.log(totalSize.get());
       LOG.info("Downloaded " + StringUtil.formatFileSize(totalSize.get()) + " in " + StringUtil.formatDuration(duration) +
                "(" + duration + "ms). Percentage of CDN cache hits: " + (hitsCount * 100/myFilesDescriptions.size()) + "%");
 

@@ -44,6 +44,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
+import static com.intellij.jps.cache.statistics.JpsCacheUsagesCollector.DOWNLOAD_DURATION_EVENT_ID;
 import static com.intellij.jps.cache.ui.JpsLoaderNotifications.*;
 import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.OUTPUT_TAG;
 import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.URL_ATTRIBUTE;
@@ -303,12 +304,13 @@ public class JpsOutputLoaderManager implements Disposable {
 
     PropertiesComponent.getInstance().setValue(LATEST_COMMIT_ID, commitId);
     BuildManager.getInstance().clearState(myProject);
-    long endTime = (System.currentTimeMillis() - startTime) / 1000;
+    long endTime = System.currentTimeMillis() - startTime;
     ApplicationManager.getApplication().invokeLater(() -> {
       STANDARD
-        .createNotification(JpsCacheBundle.message("notification.title.compiler.caches.loader"), JpsCacheBundle.message("notification.content.update.compiler.caches.completed.successfully.in.s", endTime), NotificationType.INFORMATION)
+        .createNotification(JpsCacheBundle.message("notification.title.compiler.caches.loader"), JpsCacheBundle.message("notification.content.update.compiler.caches.completed.successfully.in.s", endTime / 1000), NotificationType.INFORMATION)
         .notify(myProject);
     });
+    DOWNLOAD_DURATION_EVENT_ID.log(endTime);
     myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(true);
     LOG.info("Loading finished");
   }
