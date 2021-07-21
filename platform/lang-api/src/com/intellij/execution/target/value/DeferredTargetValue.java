@@ -2,7 +2,6 @@
 package com.intellij.execution.target.value;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.lang.LangBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -34,7 +33,7 @@ public class DeferredTargetValue<T> implements TargetValue<T> {
     if (myTargetPromise.isDone()) {
       throw new IllegalStateException("Target value is already resolved to '" + myTargetPromise.get() + "'");
     }
-    myTargetPromise.setError(LangBundle.message("error.message.should.not.proceed.further"));
+    myTargetPromise.setError(ExecutionBundle.message("error.message.should.not.proceed.further"));
   }
 
   @Override

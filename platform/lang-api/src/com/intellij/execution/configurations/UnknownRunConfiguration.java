@@ -9,7 +9,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.plugins.PluginFeatureService;
 import com.intellij.ide.plugins.PluginManagerConfigurableService;
 import com.intellij.ide.plugins.advertiser.FeaturePluginData;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -118,7 +117,7 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
                                                                                         typeId);
       if (plugin != null) {
         RuntimeConfigurationError err = new RuntimeConfigurationError(
-          LangBundle.message("dialog.message.broken.configuration.missing.plugin", plugin.getDisplayName()));
+          ExecutionBundle.message("dialog.message.broken.configuration.missing.plugin", plugin.getDisplayName()));
         err.setQuickFix(() -> {
           PluginManagerConfigurableService.getInstance().showPluginConfigurableAndEnable(null,
                                                                                          plugin.getPluginData().getPluginIdString());
@@ -126,7 +125,7 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
         throw err;
       }
     }
-    throw new RuntimeConfigurationException(LangBundle.message("dialog.message.broken.configuration"));
+    throw new RuntimeConfigurationException(ExecutionBundle.message("dialog.message.broken.configuration"));
   }
 
   @Override

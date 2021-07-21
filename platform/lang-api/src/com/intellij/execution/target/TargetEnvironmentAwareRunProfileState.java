@@ -1,12 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -52,7 +52,7 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
 
     return preparationTasks.thenAsync((Object o) -> {
       AsyncPromise<@Nullable T> promise = new AsyncPromise<>();
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, LangBundle.message("progress.title.starting.run.configuration", runProfile.getName())) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, ExecutionBundle.message("progress.title.starting.run.configuration", runProfile.getName())) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {

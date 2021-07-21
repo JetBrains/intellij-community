@@ -2,6 +2,7 @@
 package com.intellij.execution.target;
 
 import com.intellij.execution.CommandLineUtil;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.target.value.TargetValue;
@@ -15,8 +16,6 @@ import org.jetbrains.concurrency.Promises;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
-
-import static com.intellij.lang.LangBundle.message;
 
 /**
  * Command line that can be executed on any {@link TargetEnvironment}.
@@ -54,7 +53,7 @@ public final class TargetedCommandLine {
   public String getCommandPresentation(@NotNull TargetEnvironment target) throws ExecutionException {
     String exePath = resolvePromise(myExePath.getTargetValue(), "exe path");
     if (exePath == null) {
-      throw new ExecutionException(message("targeted.command.line.exe.path.not.set"));
+      throw new ExecutionException(ExecutionBundle.message("targeted.command.line.exe.path.not.set"));
     }
     List<String> parameters = new ArrayList<>();
     for (TargetValue<String> parameter : myParameters) {
@@ -69,7 +68,7 @@ public final class TargetedCommandLine {
       return collectCommands().blockingGet(0);
     }
     catch (java.util.concurrent.ExecutionException | TimeoutException e) {
-      throw new ExecutionException(message("targeted.command.line.collector.failed"), e);
+      throw new ExecutionException(ExecutionBundle.message("targeted.command.line.collector.failed"), e);
     }
   }
 
@@ -118,7 +117,7 @@ public final class TargetedCommandLine {
       return promise.blockingGet(0);
     }
     catch (java.util.concurrent.ExecutionException | TimeoutException e) {
-      throw new ExecutionException(message("targeted.command.line.resolver.failed.for", debugName), e);
+      throw new ExecutionException(ExecutionBundle.message("targeted.command.line.resolver.failed.for", debugName), e);
     }
   }
 }
