@@ -13,12 +13,14 @@ import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockableContent;
-import com.intellij.ui.tabs.*;
+import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.JBTabsEx;
+import com.intellij.ui.tabs.JBTabsPosition;
+import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -55,11 +57,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
 
   private boolean myWasEverShown;
 
-  DockableEditorTabbedContainer(Project project) {
-    this(project, null, true);
-  }
-
-  DockableEditorTabbedContainer(Project project, @Nullable EditorsSplitters splitters, boolean disposeWhenEmpty) {
+  DockableEditorTabbedContainer(Project project, @NotNull EditorsSplitters splitters, boolean disposeWhenEmpty) {
     myProject = project;
     mySplitters = splitters;
     myDisposeWhenEmpty = disposeWhenEmpty;
@@ -204,14 +202,25 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
   private void recordDragStats(int dropSide, boolean sameWindow) {
     String actionId = null;
     switch (dropSide) {
-      case -1: actionId = "OpenElementInNewWindow";break;
-      case TOP: actionId = "SplitVertically";break;
-      case LEFT: actionId = "SplitHorizontally"; break;
-      case BOTTOM: actionId = "MoveTabDown"; break;
-      case RIGHT: actionId = "MoveTabRight";break;
-      case CENTER: return;// This drag-n-drop gesture cannot be mapped to any action (drop to some exact tab index)
+      case -1:
+        actionId = "OpenElementInNewWindow";
+        break;
+      case TOP:
+        actionId = "SplitVertically";
+        break;
+      case LEFT:
+        actionId = "SplitHorizontally";
+        break;
+      case BOTTOM:
+        actionId = "MoveTabDown";
+        break;
+      case RIGHT:
+        actionId = "MoveTabRight";
+        break;
+      case CENTER:
+        return;// This drag-n-drop gesture cannot be mapped to any action (drop to some exact tab index)
     }
-    if (actionId != null && mySplitters != null) {
+    if (actionId != null) {
       AnActionEvent event = AnActionEvent.createFromInputEvent(
         new MouseEvent(mySplitters, MouseEvent.MOUSE_DRAGGED, System.currentTimeMillis(), 0, 0, 0, 0, false,
                        MouseEvent.BUTTON1), ActionPlaces.EDITOR_TAB, null, DataContext.EMPTY_CONTEXT);
@@ -248,7 +257,8 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
       myCurrentPainter = new MyDropAreaPainter();
       myGlassPaneListenersDisposable = Disposer.newDisposable("GlassPaneListeners");
       Disposer.register(mySplitters.parentDisposable, myGlassPaneListenersDisposable);
-      IdeGlassPaneUtil.find(myCurrentOver.getComponent()).addPainter(myCurrentOver.getComponent(), myCurrentPainter, myGlassPaneListenersDisposable);
+      IdeGlassPaneUtil.find(myCurrentOver.getComponent())
+        .addPainter(myCurrentOver.getComponent(), myCurrentPainter, myGlassPaneListenersDisposable);
     }
     if (myCurrentPainter instanceof MyDropAreaPainter) {
       ((MyDropAreaPainter)myCurrentPainter).processDropOver();
