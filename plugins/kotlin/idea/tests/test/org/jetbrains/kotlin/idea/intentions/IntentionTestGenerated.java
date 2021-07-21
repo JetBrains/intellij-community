@@ -6053,6 +6053,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertOrdinaryPropertyToLazy/basic.kt");
         }
 
+        @TestMetadata("const.kt")
+        public void testConst() throws Exception {
+            runTest("testData/intentions/convertOrdinaryPropertyToLazy/const.kt");
+        }
+
         @TestMetadata("noInitializer.kt")
         public void testNoInitializer() throws Exception {
             runTest("testData/intentions/convertOrdinaryPropertyToLazy/noInitializer.kt");
@@ -6440,6 +6445,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("const.kt")
+        public void testConst() throws Exception {
+            runTest("testData/intentions/convertPropertyInitializerToGetter/const.kt");
+        }
+
         @TestMetadata("errorType.kt")
         public void testErrorType() throws Exception {
             runTest("testData/intentions/convertPropertyInitializerToGetter/errorType.kt");
@@ -6526,6 +6536,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("blockBody.kt")
         public void testBlockBody() throws Exception {
             runTest("testData/intentions/convertPropertyToFunction/blockBody.kt");
+        }
+
+        @TestMetadata("const.kt")
+        public void testConst() throws Exception {
+            runTest("testData/intentions/convertPropertyToFunction/const.kt");
         }
 
         @TestMetadata("delegatingProperty.kt")
