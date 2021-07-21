@@ -83,13 +83,12 @@ public class GeneratedLocation implements Location {
     GeneratedLocation location = (GeneratedLocation)other;
     return myLineNumber == location.myLineNumber &&
            myReferenceType.equals(location.myReferenceType) &&
-           myMethodName.equals(location.myMethodName) &&
-           Objects.equals(virtualMachine(), location.virtualMachine());
+           myMethodName.equals(location.myMethodName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myMethodName, myLineNumber);
+    return Objects.hash(myReferenceType, myMethodName, myLineNumber);
   }
 
   // Same as in LocationImpl
