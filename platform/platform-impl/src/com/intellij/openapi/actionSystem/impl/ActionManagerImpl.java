@@ -259,9 +259,15 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
-  private static @NlsActions.ActionDescription String computeDescription(@NotNull ResourceBundle bundle, String id, String elementType, String descriptionValue) {
-    String key = elementType + "." + id + ".description";
-    return AbstractBundle.messageOrDefault(bundle, key, Strings.notNullize(descriptionValue));
+  private static @NlsActions.ActionDescription String computeDescription(@Nullable ResourceBundle bundle,
+                                                                         String id,
+                                                                         String elementType,
+                                                                         String descriptionValue,
+                                                                         @NotNull ClassLoader classLoader) {
+    if (bundle != null && DefaultBundleService.isDefaultBundle()) {
+      bundle = DynamicBundle.INSTANCE.getResourceBundle(bundle.getBaseBundleName(), classLoader);
+    }
+    return AbstractBundle.messageOrDefault(bundle, elementType + "." + id + "." + DESCRIPTION, Strings.notNullize(descriptionValue));
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -639,7 +645,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
         presentation.setDescription(descriptionValue);
       }
       else {
-        presentation.setDescription(() -> computeDescription(bundle, id, ACTION_ELEMENT_NAME, descriptionValue));
+        presentation.setDescription(() -> computeDescription(bundle, id, ACTION_ELEMENT_NAME, descriptionValue, classLoader));
       }
       return presentation;
     });
@@ -795,7 +801,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
         }
       }
       else {
-        Supplier<String> descriptionSupplier = () -> computeDescription(bundle, finalId, GROUP_ELEMENT_NAME, description);
+        Supplier<String> descriptionSupplier = () -> computeDescription(bundle, finalId, GROUP_ELEMENT_NAME, description, classLoader);
         // don't override value which was set in API with empty value from xml descriptor
         if (!Strings.isEmpty(descriptionSupplier.get()) || presentation.getDescription() == null) {
           presentation.setDescription(descriptionSupplier);
