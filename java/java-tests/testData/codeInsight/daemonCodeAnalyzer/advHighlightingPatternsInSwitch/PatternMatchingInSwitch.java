@@ -711,7 +711,7 @@ class Main {
     switch (d) {
       case <error descr="'switch' has both a total pattern and a default label">((Day dd && true))</error>:
         System.out.println("ok");
-      <error descr="'switch' has both a total pattern and a default label">default:</error>
+      <error descr="'switch' has both a total pattern and a default label">default</error>: // blah blah blah
         System.out.println("mon");
     };
     switch (d) {

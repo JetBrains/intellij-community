@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiSwitchLabelStatementBaseImpl;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
@@ -733,10 +734,11 @@ public class SwitchBlockHighlightingModel {
       PsiCodeBlock body = myBlock.getBody();
       if (body == null) return null;
       for (PsiStatement statement : body.getStatements()) {
-        if (!(statement instanceof PsiSwitchLabelStatementBase)) continue;
-        PsiSwitchLabelStatementBase switchLabel = (PsiSwitchLabelStatementBase)statement;
-        if (switchLabel.isDefaultCase()) {
-          return switchLabel;
+        if (!(statement instanceof PsiSwitchLabelStatementBaseImpl)) continue;
+        PsiSwitchLabelStatementBaseImpl switchLabel = (PsiSwitchLabelStatementBaseImpl)statement;
+        PsiElement defaultKeyword = switchLabel.findPsiChildByType(JavaTokenType.DEFAULT_KEYWORD);
+        if (defaultKeyword != null) {
+          return defaultKeyword;
         }
         PsiCaseLabelElementList labelElementList = switchLabel.getCaseLabelElementList();
         if (labelElementList == null) continue;
