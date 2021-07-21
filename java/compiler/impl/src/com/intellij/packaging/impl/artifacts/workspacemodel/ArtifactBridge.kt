@@ -38,6 +38,12 @@ open class ArtifactBridge(
         event.getChanges(ArtifactEntity::class.java).filterIsInstance<EntityChange.Removed<ArtifactEntity>>().forEach {
           if (it.entity.persistentId() != artifactId) return@forEach
 
+          // Artifact may be "re-added" with the same id
+          // In this case two artifact bridges exists with the same ArtifactId: one for removed artifact and one for newly created
+          // We should make sure that we "disable" removed artifact bridge
+          if (event.storageAfter.resolve(artifactId) != null
+              && event.storageBefore.artifactsMap.getDataByEntity(it.entity) != this@ArtifactBridge) return@forEach
+
           entityStorage = VersionedEntityStorageOnStorage(event.storageBefore)
           assert(entityStorage.current.resolve(artifactId) != null) { "Cannot resolve artifact $artifactId." }
         }
