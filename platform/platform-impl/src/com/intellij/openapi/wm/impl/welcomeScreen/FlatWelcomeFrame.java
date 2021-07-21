@@ -90,9 +90,18 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8));
     myScreen = USE_TABBED_WELCOME_SCREEN ? new TabbedWelcomeScreen() : new FlatWelcomeScreen();
     myHeader = new DefaultFrameHeader(this);
-    JComponent holder = CustomFrameDialogContent
-      .getCustomContentHolder(this, myScreen.getWelcomePanel(), myHeader);
-    setContentPane(holder);
+
+    if (IdeFrameDecorator.isCustomDecorationActive()) {
+      JComponent holder = CustomFrameDialogContent
+        .getCustomContentHolder(this, myScreen.getWelcomePanel(), myHeader);
+      setContentPane(holder);
+    }
+    else {
+      if (USE_TABBED_WELCOME_SCREEN && SystemInfoRt.isMac) {
+        rootPane.setJMenuBar(new WelcomeFrameMenuBar());
+      }
+      setContentPane(myScreen.getWelcomePanel());
+    }
 
     IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane) {
       @Override
