@@ -30,11 +30,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.remote.ExceptionFix;
 import com.intellij.remote.VagrantNotStartedException;
+import com.intellij.remote.ext.CredentialsManager;
 import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PySdkBundle;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.remote.PyCredentialsContribution;
@@ -81,8 +85,9 @@ public final class PythonSdkType extends SdkType {
   /**
    * Note that <i>\w+.*</i> pattern is not sufficient because we need also the
    * hyphen sign (<i>-</i>) for <i>docker-compose:</i> scheme.
+   * For WSL we use <code>\\wsl.local\</code> or <code>\\wsl$\</code>
    */
-  private static final Pattern CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN = Pattern.compile("[-a-zA-Z_0-9]{2,}:.*");
+  private static final Pattern CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN = Pattern.compile("^([-a-zA-Z_0-9]{2,}:|\\\\\\\\wsl).+");
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -292,6 +297,7 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, @NotNull final Element additional) {
+    CredentialsManager.fixWslPrefix(currentSdk);
     String homePath = currentSdk.getHomePath();
     if (homePath != null && isCustomPythonSdkHomePath(homePath)) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
