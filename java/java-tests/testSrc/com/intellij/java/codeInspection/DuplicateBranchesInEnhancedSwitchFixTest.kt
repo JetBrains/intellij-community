@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase
 import com.intellij.codeInspection.DuplicateBranchesInSwitchInspection
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
  * @author Pavel.Dolgov
@@ -14,4 +15,5 @@ class DuplicateBranchesInEnhancedSwitchFixTest : LightQuickFixParameterizedTestC
 
   override fun getBasePath() = "/inspection/duplicateBranchesInEnhancedSwitchFix"
 
+  override fun getProjectDescriptor() = LightJavaCodeInsightFixtureTestCase.JAVA_17
 }
