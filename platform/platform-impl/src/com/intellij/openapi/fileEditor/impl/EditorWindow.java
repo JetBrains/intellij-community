@@ -605,7 +605,7 @@ public final class EditorWindow {
 
       Splitter splitter = new OnePixelSplitter(orientation == JSplitPane.VERTICAL_SPLIT, 0.5f, 0.1f, 0.9f);
       splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, Boolean.TRUE);
-      EditorWindow res = new EditorWindow(myOwner, myOwner.parentDisposable);
+      EditorWindow res = new EditorWindow(myOwner, myOwner);
       EditorWithProviderComposite selectedEditor = getSelectedEditor();
       panel.remove(myTabbedPane.getComponent());
       panel.add(splitter, BorderLayout.CENTER);

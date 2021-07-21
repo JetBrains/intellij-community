@@ -256,7 +256,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     if (myCurrentPainter == null) {
       myCurrentPainter = new MyDropAreaPainter();
       myGlassPaneListenersDisposable = Disposer.newDisposable("GlassPaneListeners");
-      Disposer.register(mySplitters.parentDisposable, myGlassPaneListenersDisposable);
+      Disposer.register(mySplitters, myGlassPaneListenersDisposable);
       IdeGlassPaneUtil.find(myCurrentOver.getComponent())
         .addPainter(myCurrentOver.getComponent(), myCurrentPainter, myGlassPaneListenersDisposable);
     }

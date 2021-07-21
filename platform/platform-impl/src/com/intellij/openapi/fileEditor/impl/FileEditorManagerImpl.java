@@ -389,8 +389,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       synchronized (myInitLock) {
         result = mySplitters;
         if (result == null) {
-          result = new EditorsSplitters(this, this);
-          
+          result = new EditorsSplitters(this);
+          Disposer.register(this, result);
+
           DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myProject, result, false);
           DockManager.getInstance(myProject).register(dockable, this);
 
