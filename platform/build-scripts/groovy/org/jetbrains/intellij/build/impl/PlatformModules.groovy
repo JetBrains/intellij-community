@@ -46,6 +46,7 @@ final class PlatformModules {
     "intellij.platform.vcs",
     "intellij.platform.vcs.log",
     "intellij.platform.vcs.log.graph",
+    "intellij.platform.execution",
     "intellij.platform.debugger",
     "intellij.xml.analysis",
     "intellij.xml",
