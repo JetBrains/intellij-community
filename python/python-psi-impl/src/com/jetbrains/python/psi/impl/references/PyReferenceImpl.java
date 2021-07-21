@@ -455,14 +455,14 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
-    ASTNode nameElement = myElement.getNameElement();
-    PsiReference reference = myElement.getReference();
-    PsiElement resolved = reference != null ? reference.resolve() : null;
-    if (resolved instanceof PyFile && newElementName.endsWith(PyNames.DOT_PY)) {
-      newElementName = StringUtil.trimEnd(newElementName, PyNames.DOT_PY);
-    }
-    else if (resolved instanceof PyiFile && newElementName.endsWith(PyNames.DOT_PYI)) {
-      newElementName = StringUtil.trimEnd(newElementName, PyNames.DOT_PYI);
+    final ASTNode nameElement = myElement.getNameElement();
+    for (PsiElement resolved : PyUtil.multiResolveTopPriority(myElement, myContext)) {
+      if (resolved instanceof PyFile && newElementName.endsWith(PyNames.DOT_PY)) {
+        newElementName = StringUtil.trimEnd(newElementName, PyNames.DOT_PY);
+      }
+      else if (resolved instanceof PyiFile && newElementName.endsWith(PyNames.DOT_PYI)) {
+        newElementName = StringUtil.trimEnd(newElementName, PyNames.DOT_PYI);
+      }
     }
     if (nameElement != null && PyNames.isIdentifier(newElementName)) {
       final ASTNode newNameElement = PyUtil.createNewName(myElement, newElementName);
