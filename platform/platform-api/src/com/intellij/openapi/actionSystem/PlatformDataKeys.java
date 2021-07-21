@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -128,4 +129,6 @@ public class PlatformDataKeys extends CommonDataKeys {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final DataKey<Comparator<? super AnAction>> ACTIONS_SORTER = DataKey.create("actionsSorter");
+
+  public static final DataKey<Module> MODULE = DataKey.create("module");
 }

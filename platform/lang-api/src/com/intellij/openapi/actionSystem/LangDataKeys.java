@@ -31,8 +31,6 @@ import com.intellij.psi.PsiElement;
 
 public class LangDataKeys extends PlatformDataKeys {
 
-  public static final DataKey<Module> MODULE = DataKey.create("module");
-
   /**
    * Returns current/selected module.
    */
