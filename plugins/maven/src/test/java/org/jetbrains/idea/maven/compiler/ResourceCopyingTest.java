@@ -591,52 +591,6 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     });
   }
 
-  @Test
-  public void testWebResources() throws Exception {
-    if (ignore()) return;
-
-    createProjectSubFile("res/dir/file.properties");
-    createProjectSubFile("res/dir/file.xml");
-    createProjectSubFile("res/file.properties");
-    createProjectSubFile("res/file.xml");
-    createProjectSubFile("res/file.txt");
-
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>war</packaging>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-war-plugin</artifactId>" +
-                  "      <configuration>" +
-                  "        <webResources>" +
-                  "          <directory>res</directory>" +
-                  "          <includes>" +
-                  "            <include>**/*.properties</include>" +
-                  "            <include>**/*.xml</include>" +
-                  "          </includes>" +
-                  "          <excludes>" +
-                  "            <exclude>*.properties</exclude>" +
-                  "            <exclude>dir/*.xml</exclude>" +
-                  "          </excludes>" +
-                  "        </webResources>" +
-                  "      </configuration>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-
-    compileModules("project");
-
-    assertCopied("target/classes/dir/file.properties");
-    assertNotCopied("target/classes/dir/file.xml");
-    assertNotCopied("target/classes/file.properties");
-    assertCopied("target/classes/file.xml");
-    assertNotCopied("target/classes/file.txt");
-  }
-
   @Bombed(year = 2021, month = Calendar.JULY, day = 16, user = "gmyasoedov",
     description = "addResourceFilePattern(\"!*.xxx\") not worked https://youtrack.jetbrains.com/issue/IDEA-273879")
   @Test
