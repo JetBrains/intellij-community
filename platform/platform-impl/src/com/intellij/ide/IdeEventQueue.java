@@ -860,7 +860,7 @@ public final class IdeEventQueue extends EventQueue {
       return;
     }
 
-    WindowManagerEx windowManager = ApplicationManager.getApplication().getServiceIfCreated(WindowManagerEx.class);
+    WindowManagerEx windowManager = (WindowManagerEx)ApplicationManager.getApplication().getServiceIfCreated(WindowManager.class);
     if (windowManager == null) {
       return;
     }
