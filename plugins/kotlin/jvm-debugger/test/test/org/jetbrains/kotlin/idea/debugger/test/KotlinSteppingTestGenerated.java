@@ -392,6 +392,21 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/stepOver/inlineCallInForRangeExpression.kt");
         }
 
+        @TestMetadata("inlineCallWithDefaultLambda.kt")
+        public void testInlineCallWithDefaultLambda() throws Exception {
+            runTest("testData/stepping/stepOver/inlineCallWithDefaultLambda.kt");
+        }
+
+        @TestMetadata("inlineCallWithDefaultParameters.kt")
+        public void testInlineCallWithDefaultParameters() throws Exception {
+            runTest("testData/stepping/stepOver/inlineCallWithDefaultParameters.kt");
+        }
+
+        @TestMetadata("inlineCallWithDefaultParametersAndReceiver.kt")
+        public void testInlineCallWithDefaultParametersAndReceiver() throws Exception {
+            runTest("testData/stepping/stepOver/inlineCallWithDefaultParametersAndReceiver.kt");
+        }
+
         @TestMetadata("inlineFunInClassInitializer.kt")
         public void testInlineFunInClassInitializer() throws Exception {
             runTest("testData/stepping/stepOver/inlineFunInClassInitializer.kt");
