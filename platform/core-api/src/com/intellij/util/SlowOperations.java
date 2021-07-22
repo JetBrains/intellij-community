@@ -25,10 +25,6 @@ public final class SlowOperations {
   public static final String GENERIC = "generic";
   public static final String FAST_TRACK = "  fast track  ";
 
-  private static final String[] misbehavingFrames = {
-    "org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler",
-    "com.intellij.apiwatcher.plugin.presentation.bytecode.UsageHighlighter",
-  };
   private static int ourAlwaysAllow = -1;
   private static @NotNull FList<@NotNull String> ourStack = FList.emptyList();
 
@@ -98,12 +94,6 @@ public final class SlowOperations {
     Throwable throwable = new Throwable();
     if (ThrowableInterner.intern(throwable) != throwable) {
       return;
-    }
-    String stackTrace = ExceptionUtil.currentStackTrace();
-    for (String t : misbehavingFrames) {
-      if (stackTrace.contains(t)) {
-        return;
-      }
     }
     LOG.error("Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.");
   }
