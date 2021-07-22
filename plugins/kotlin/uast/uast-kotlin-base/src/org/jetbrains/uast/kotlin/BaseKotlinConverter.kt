@@ -4,6 +4,9 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEnumConstant
+import org.jetbrains.kotlin.asJava.LightClassUtil
+import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightParameterList
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
@@ -44,6 +47,16 @@ interface BaseKotlinConverter {
         requiredTypes: Array<out Class<out UElement>>
     ): UElement?
 
+    fun convertEnumEntry(original: KtEnumEntry, givenParent: UElement?): UElement? {
+        return LightClassUtil.getLightClassBackingField(original)?.let { psiField ->
+            if (psiField is KtLightField && psiField is PsiEnumConstant) {
+                KotlinUEnumConstant(psiField, psiField.kotlinOrigin, givenParent)
+            } else {
+                null
+            }
+        }
+    }
+
     fun convertReceiverParameter(receiver: KtTypeReference): UParameter? {
         val call = (receiver.parent as? KtCallableDeclaration) ?: return null
         if (call.receiverTypeReference != receiver) return null
@@ -56,7 +69,7 @@ interface BaseKotlinConverter {
         requiredTypes: Array<out Class<out UElement>>
     ): UExpression?
 
-    fun convertEntry(
+    fun convertStringTemplateEntry(
         entry: KtStringTemplateEntry,
         givenParent: UElement?,
         requiredTypes: Array<out Class<out UElement>>
@@ -138,7 +151,6 @@ interface BaseKotlinConverter {
             }
         }
     }
-
 
     fun convertPsiElement(
         element: PsiElement?,
