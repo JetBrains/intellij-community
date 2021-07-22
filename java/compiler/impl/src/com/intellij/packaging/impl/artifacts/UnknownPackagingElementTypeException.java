@@ -25,4 +25,11 @@ public class UnknownPackagingElementTypeException extends Exception {
   public String getTypeId() {
     return myTypeId;
   }
+
+  @Override
+  public String toString() {
+    return "UnknownPackagingElementTypeException{" +
+           "myTypeId='" + myTypeId + '\'' +
+           '}';
+  }
 }
