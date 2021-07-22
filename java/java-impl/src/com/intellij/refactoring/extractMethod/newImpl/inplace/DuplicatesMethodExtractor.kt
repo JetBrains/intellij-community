@@ -5,6 +5,7 @@ import com.intellij.codeInsight.PsiEquivalenceUtil
 import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.find.FindManager
 import com.intellij.java.refactoring.JavaRefactoringBundle
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -88,8 +89,12 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     val oldMethodCall = PsiTreeUtil.findChildOfType(calls.first(), PsiMethodCallExpression::class.java)
     val newMethodCall = PsiTreeUtil.findChildOfType(elementsToReplace.callElements.first(), PsiMethodCallExpression::class.java)
     val parametrizedDuplicatesNumber = duplicates.size - exactDuplicates.size
+    fun confirmChangeSignature(): Boolean {
+      val dialog = SignatureSuggesterPreviewDialog(method, elementsToReplace.method, oldMethodCall, newMethodCall, parametrizedDuplicatesNumber)
+      return dialog.showAndGet()
+    }
     if (parametrizedDuplicatesNumber > 0){
-      val changeSignature = SignatureSuggesterPreviewDialog(method, elementsToReplace.method, oldMethodCall, newMethodCall, parametrizedDuplicatesNumber).showAndGet()
+      val changeSignature = isSilentMode || confirmChangeSignature()
       if (!changeSignature) {
         duplicates = exactDuplicates
       }
@@ -122,7 +127,10 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     }
   }
 
+  private val isSilentMode = ApplicationManager.getApplication().isUnitTestMode
+
   private fun confirmDuplicates(project: Project, editor: Editor, duplicates: List<Duplicate>): List<Duplicate> {
+    if (isSilentMode) return duplicates
     val confirmedDuplicates = mutableListOf<Duplicate>()
     duplicates.forEach { duplicate ->
       val highlighters = ArrayList<RangeHighlighter>()

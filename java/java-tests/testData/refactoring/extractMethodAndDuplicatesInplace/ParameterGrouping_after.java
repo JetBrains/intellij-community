@@ -3,9 +3,9 @@ class Test {
         extracted("string", "string");
     }
 
-    private void extracted(String string, String string2) {
+    private void extracted(String string, String string1) {
         System.out.println(string);
-        System.out.println(string2);
+        System.out.println(string1);
     }
 
     void test2(){
