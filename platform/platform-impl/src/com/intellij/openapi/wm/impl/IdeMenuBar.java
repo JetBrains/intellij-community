@@ -64,7 +64,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   private List<AnAction> myVisibleActions = new ArrayList<>();
-  private final MenuItemPresentationFactory myPresentationFactory = new MenuItemPresentationFactory(true);
+  private final MenuItemPresentationFactory myPresentationFactory = new MenuItemPresentationFactory();
   private final TimerListener myTimerListener = new MyTimerListener();
   private final WeakTimerListener myWeakTimerListener = new WeakTimerListener(myTimerListener);
   protected final Disposable myDisposable = Disposer.newDisposable();
