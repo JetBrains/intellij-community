@@ -115,6 +115,9 @@ public class KotlinFunctionBreakpointType
         if (Registry.is("debugger.emulate.method.breakpoints")) {
             properties.EMULATED = true; // create all new emulated
         }
+        if (Registry.is("debugger.method.breakpoints.entry.default")) {
+            properties.WATCH_EXIT = false;
+        }
         return properties;
     }
 
