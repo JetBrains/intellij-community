@@ -2197,6 +2197,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/for/overMapEntries.java");
         }
 
+        @TestMetadata("withBinaryOperatorCondition.java")
+        public void testWithBinaryOperatorCondition() throws Exception {
+            runTest("testData/newJ2k/for/withBinaryOperatorCondition.java");
+        }
+
         @TestMetadata("withContinue1.java")
         public void testWithContinue1() throws Exception {
             runTest("testData/newJ2k/for/withContinue1.java");
@@ -2215,6 +2220,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("withContinueAndLabels.java")
         public void testWithContinueAndLabels() throws Exception {
             runTest("testData/newJ2k/for/withContinueAndLabels.java");
+        }
+
+        @TestMetadata("withInfixCallCondition.java")
+        public void testWithInfixCallCondition() throws Exception {
+            runTest("testData/newJ2k/for/withInfixCallCondition.java");
         }
     }
 
