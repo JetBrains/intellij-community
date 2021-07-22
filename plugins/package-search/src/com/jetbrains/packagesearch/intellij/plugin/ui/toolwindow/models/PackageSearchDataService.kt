@@ -28,6 +28,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operatio
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesHeaderData
 import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
+import com.jetbrains.packagesearch.intellij.plugin.util.ReadActions
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.combine
 import com.jetbrains.packagesearch.intellij.plugin.util.launchLoop
@@ -250,12 +251,11 @@ internal class PackageSearchDataService(
         return newData
     }
 
-    private fun fetchProjectModuleModels(targetModules: TargetModules, traceInfo: TraceInfo, projectModules: List<ProjectModule>): List<ModuleModel> {
+    private suspend fun fetchProjectModuleModels(targetModules: TargetModules, traceInfo: TraceInfo, projectModules: List<ProjectModule>): List<ModuleModel> {
         // Refresh project modules, this will cascade into updating the rest of the data
 
-        val moduleModels = runReadAction {
-            projectModules.map { ModuleModel(it) }
-        }
+        val moduleModels = withContext(Dispatchers.ReadActions) { projectModules.map { ModuleModel(it) } }
+
         if (targetModules is TargetModules.One && projectModules.none { it == targetModules.module.projectModule }) {
             logDebug(traceInfo, "PKGSDataService#fetchProjectModuleModels()") { "Target module doesn't exist anymore, resetting to 'All'" }
             setTargetModules(TargetModules.all(moduleModels))

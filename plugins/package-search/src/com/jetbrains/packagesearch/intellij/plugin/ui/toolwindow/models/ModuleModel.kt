@@ -9,16 +9,14 @@ internal data class ModuleModel(
     val declaredRepositories: List<RepositoryDeclaration>,
 ) {
 
-    constructor(projectModule: ProjectModule) : this(
-        projectModule,
-        declaredRepositories(projectModule),
-    )
-}
+    companion object {
 
-private fun declaredRepositories(module: ProjectModule): List<RepositoryDeclaration> {
-    return ProjectModuleOperationProvider.forProjectModuleType(module.moduleType)
-        ?.listRepositoriesInModule(module)
-        ?.map { repository ->
-            RepositoryDeclaration(repository.id, repository.name, repository.url, module)
-        } ?: emptyList()
+        operator fun invoke(projectModule: ProjectModule) = ModuleModel(
+            projectModule = projectModule,
+            declaredRepositories = ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType)
+                ?.listRepositoriesInModule(projectModule)
+                ?.map { RepositoryDeclaration(it.id, it.name, it.url, projectModule) }
+                ?: emptyList()
+        )
+    }
 }
