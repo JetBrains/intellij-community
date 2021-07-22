@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils
 
 import java.text.SimpleDateFormat
 import java.time.ZoneOffset
 import java.util.*
+import kotlin.math.abs
 
 object StatisticsUtil {
   private const val kilo = 1000
@@ -28,6 +29,7 @@ object StatisticsUtil {
    * See `com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector`
    */
   @JvmStatic
+  @Deprecated(message = "Use roundToPowerOfTwo instead", replaceWith = ReplaceWith("roundToPowerOfTwo"))
   fun getNextPowerOfTwo(value: Int): Int = if (value <= 1) 1 else Integer.highestOneBit(value - 1) shl 1
 
   /**
@@ -35,7 +37,48 @@ object StatisticsUtil {
    * See `com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector`
    */
   @JvmStatic
+  @Deprecated(message = "Use roundToPowerOfTwo instead", replaceWith = ReplaceWith("roundToPowerOfTwo"))
   fun getNextPowerOfTwo(value: Long): Long = if (value <= 1) 1 else java.lang.Long.highestOneBit(value - 1) shl 1
+
+
+  /**
+   * Anonymizes sensitive project properties by rounding it to the next power of two.
+   *
+   * Special cases:
+   *  - returns the same value if it is a power of two;
+   *  - returns `-roundToPowerOfTwo(abs(value))` if value is negative;
+   *  - returns 0 in case of 0;
+   *  - returns Int.MAX_VALUE if next power of two is bigger than Int.MAX_VALUE;
+   *  - returns Int.MIN_VALUE if next power of two is smaller than Int.MIN_VALUE.
+   */
+  @JvmStatic
+  fun roundToPowerOfTwo(value: Int): Int {
+    if (value == 0) return 0
+    val abs = abs(value)
+    if (abs == 1) return value
+    val nextPowerOfTwo = Integer.highestOneBit(abs - 1) shl 1
+    if (nextPowerOfTwo < 0) {
+      //overflow
+      if (value > 0) return Int.MAX_VALUE else return Int.MIN_VALUE
+    }
+    return Integer.signum(value) * nextPowerOfTwo
+  }
+
+  /**
+   * @see com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo(int)
+   */
+  @JvmStatic
+  fun roundToPowerOfTwo(value: Long): Long {
+    if (value == 0L) return 0
+    val abs = abs(value)
+    if (abs == 1L) return value
+    val nextPowerOfTwo = java.lang.Long.highestOneBit(abs - 1) shl 1
+    if (nextPowerOfTwo < 0) {
+      //overflow
+      if (value > 0) return Long.MAX_VALUE else return Long.MIN_VALUE
+    }
+    return java.lang.Long.signum(value) * nextPowerOfTwo
+  }
 
   /**
    * Anonymizes value by finding upper bound in provided bounds.
