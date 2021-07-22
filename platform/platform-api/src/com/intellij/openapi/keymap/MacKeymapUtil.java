@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap;
 
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -68,7 +69,7 @@ public final class MacKeymapUtil {
 
   @NotNull
   public static String getKeyText(int code) {
-    if (!Registry.is("ide.macos.disable.native.shortcut.symbols", false)) {
+    if (!AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols")) {
       switch (code) {
         case KeyEvent.VK_BACK_SPACE:     return get(BACKSPACE, "Backspace");
         case KeyEvent.VK_ESCAPE:         return get(ESCAPE, "Escape");
@@ -132,7 +133,7 @@ public final class MacKeymapUtil {
 
   @NotNull
   private static String get(@NotNull String value, @NotNull String replacement) {
-    if (Registry.is("ide.macos.disable.native.shortcut.symbols", false)) {
+    if (!AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols")) {
       return replacement;
     }
     Font font = UIUtil.getLabelFont();
