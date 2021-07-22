@@ -396,7 +396,7 @@ private class AAListCellRenderer(private val myUseEditorFont: Boolean) : SimpleL
 
     if (myUseEditorFont) {
       val scheme = EditorColorsManager.getInstance().globalScheme
-      font = Font(scheme.editorFontName, Font.PLAIN, scheme.editorFontSize)
+      font = UIUtil.getFontWithFallback(scheme.editorFontName, Font.PLAIN, scheme.editorFontSize)
     }
 
     text = value.presentableName
