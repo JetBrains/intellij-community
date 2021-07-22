@@ -81,4 +81,54 @@ class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {
       """.trimIndent())
     assertFalse(performRerunFailedTestsAction())
   }
+
+  @Test
+  fun `test return failed tests abstract superclass`() {
+    createProjectSubFile("src/test/java/org/example/TestCase.java", """
+      package org.example;
+      import $jUnitTestAnnotationClass;
+      public abstract class TestCase {
+        @Test public void test1() {}
+        @Test public void test2() { throw new RuntimeException(); }
+        @Test public void test3() {}
+        @Test public void test4() { throw new RuntimeException(); }
+        @Test public void test5() { throw new RuntimeException(); }
+        @Test public void test6() {}
+        @Test public void test7() {}
+      }
+    """.trimIndent())
+    createProjectSubFile("src/test/java/org/example/SubTestCase.java", """
+      package org.example;
+      public class SubTestCase extends TestCase {
+      }
+    """.trimIndent())
+    createProjectSubFile("build.gradle", buildscript {
+      withJUnit()
+      withJavaPlugin()
+    })
+    importProject()
+
+    execute(":test --tests org.example.SubTestCase")
+    assertThat(getJUnitTestsExecutionTree())
+      .isEqualTo("""
+        -[root]
+         -SubTestCase
+          test1
+          test2
+          test3
+          test4
+          test5
+          test6
+          test7
+      """.trimIndent())
+    assertTrue(performRerunFailedTestsAction())
+    assertThat(getJUnitTestsExecutionTree())
+      .isEqualTo("""
+        -[root]
+         -SubTestCase
+          test2
+          test4
+          test5
+      """.trimIndent())
+  }
 }
