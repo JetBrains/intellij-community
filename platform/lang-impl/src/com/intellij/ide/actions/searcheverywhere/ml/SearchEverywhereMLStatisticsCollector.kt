@@ -28,7 +28,8 @@ internal class SearchEverywhereMLStatisticsCollector {
       EXPERIMENT_GROUP to experimentGroup,
       ORDER_BY_ML_GROUP to orderByMl
     )
-    reportElements(project, SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, data, selectedIndices, elementsProvider)
+    reportElements(project, SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, data, selectedIndices,
+                   elementsProvider)
   }
 
   fun onSearchFinished(project: Project?, seSessionId: Int, searchIndex: Int,
@@ -42,7 +43,8 @@ internal class SearchEverywhereMLStatisticsCollector {
       EXPERIMENT_GROUP to experimentGroup,
       ORDER_BY_ML_GROUP to orderByMl
     )
-    reportElements(project, SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, additional, EMPTY_ARRAY, elementsProvider)
+    reportElements(project, SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, additional, EMPTY_ARRAY,
+                   elementsProvider)
   }
 
   fun onSearchRestarted(project: Project?, seSessionId: Int, searchIndex: Int,
@@ -50,7 +52,8 @@ internal class SearchEverywhereMLStatisticsCollector {
                         context: SearchEverywhereMLContextInfo,
                         cache: SearchEverywhereMlSearchState,
                         elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    reportElements(project, SEARCH_RESTARTED, seSessionId, searchIndex, elementIdProvider, context, cache, emptyList(), EMPTY_ARRAY, elementsProvider)
+    reportElements(project, SEARCH_RESTARTED, seSessionId, searchIndex, elementIdProvider, context, cache, emptyList(), EMPTY_ARRAY,
+                   elementsProvider)
   }
 
   private fun reportElements(project: Project?, eventId: String,
@@ -95,37 +98,41 @@ internal class SearchEverywhereMLStatisticsCollector {
           CONTRIBUTOR_ID_KEY to it.contributor.searchProviderId
         )
 
-        if (it.element is GotoActionModel.MatchedValue) {
-          val elementId = elementIdProvider.getId(it.element)
-          val itemInfo = state.getElementFeatures(elementId, it.element, it.contributor, state.queryLength)
-          if (itemInfo.features.isNotEmpty()) {
-            result[FEATURES_DATA_KEY] = itemInfo.features
-          }
-
-          state.getMLWeightIfDefined(elementId)?.let { score ->
-            result[ML_WEIGHT_KEY] = roundDouble(score)
-          }
-
-          itemInfo.id.let { id ->
-            result[ID_KEY] = id
-          }
-
-          if (it.element.value is GotoActionModel.ActionWrapper) {
-            val action = it.element.value.action
-            result[ACTION_ID_KEY] = actionManager.getId(action) ?: action.javaClass.name
-          }
-        }
-        else if (it.element is PSIPresentationBgRendererWrapper.PsiItemWithPresentation) {
-          val elementId = elementIdProvider.getId(it.element)
-          val itemInfo = state.getElementFeatures(elementId, it.element, it.contributor, state.queryLength)
-
-          // TODO: Add itemInfo to the result map
+        if (isMLSupportedElement(it.element)) {
+          addElementFeatures(elementIdProvider, it, state, result, actionManager)
         }
         result
       }
 
       loggerProvider.logger.logAsync(GROUP, eventId, data, false)
     }
+  }
+
+  private fun addElementFeatures(elementIdProvider: SearchEverywhereMlItemIdProvider,
+                                 elementInfo: SearchEverywhereFoundElementInfo,
+                                 state: SearchEverywhereMlSearchState,
+                                 result: HashMap<String, Any>,
+                                 actionManager: ActionManager) {
+    val elementId = elementIdProvider.getId(elementInfo.element)
+    val itemInfo = state.getElementFeatures(elementId, elementInfo.element, elementInfo.contributor, state.queryLength)
+    if (itemInfo.features.isNotEmpty()) {
+      result[FEATURES_DATA_KEY] = itemInfo.features
+    }
+
+    state.getMLWeightIfDefined(elementId)?.let { score ->
+      result[ML_WEIGHT_KEY] = roundDouble(score)
+    }
+
+    result[ID_KEY] = itemInfo.id
+
+    if (elementInfo.element is GotoActionModel.MatchedValue && elementInfo.element.value is GotoActionModel.ActionWrapper) {
+      val action = elementInfo.element.value.action
+      result[ACTION_ID_KEY] = actionManager.getId(action) ?: action.javaClass.name
+    }
+  }
+
+  private fun isMLSupportedElement(element: Any): Boolean {
+    return (element is GotoActionModel.MatchedValue) || (element is PSIPresentationBgRendererWrapper.PsiItemWithPresentation)
   }
 
   companion object {
