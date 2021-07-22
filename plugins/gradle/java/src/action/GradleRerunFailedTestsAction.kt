@@ -79,7 +79,13 @@ class GradleRerunFailedTestsAction(
     val location = testProxy.getLocation(project, projectScope)
     return when (val element = location?.psiElement) {
       is PsiClass -> TestLocationInfo(location, element, element)
-      is PsiMethod -> TestLocationInfo(location, element, element.containingClass, element)
+      is PsiMethod -> {
+        val parentLocation = testProxy.parent.getLocation(project, projectScope)
+        when (val parent = parentLocation?.psiElement) {
+          is PsiClass -> TestLocationInfo(location, element, parent, element)
+          else -> TestLocationInfo(location, element, element.containingClass, element)
+        }
+      }
       else -> TestLocationInfo(location)
     }
   }
