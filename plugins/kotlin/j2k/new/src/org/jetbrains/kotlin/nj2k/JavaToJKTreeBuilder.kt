@@ -714,7 +714,8 @@ class JavaToJKTreeBuilder constructor(
                             emptyList()
                         )
                     } ?: JKNoType
-                )
+                ),
+                annotationList(this),
             ).also {
                 symbolProvider.provideUniverseSymbol(this, it)
                 it.psi = this

@@ -268,6 +268,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitEnumConstantRaw(enumConstant: JKEnumConstant) {
+            enumConstant.annotationList.accept(this)
             enumConstant.name.accept(this)
             if (enumConstant.arguments.arguments.isNotEmpty()) {
                 printer.par {
