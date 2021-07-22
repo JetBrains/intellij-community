@@ -4,10 +4,8 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.diagnostic.Logger
 import groovy.transform.CompileStatic
-import org.jetbrains.intellij.build.BuildMessages
-import org.jetbrains.jps.gant.Log4jFileLoggerFactory
+import org.jetbrains.annotations.Nullable
 
 @CompileStatic
 final class JpsCompilationData {
@@ -15,19 +13,14 @@ final class JpsCompilationData {
   final Set<String> compiledModules = new HashSet<>()
   final Set<String> compiledModuleTests = new HashSet<>()
   final Set<String> builtArtifacts = new HashSet<>()
-  Logger.Factory fileLoggerFactory
   boolean statisticsReported
   boolean projectDependenciesResolved
+  final File buildLogFile
+  final String categoriesWithDebugLevel
 
-  JpsCompilationData(File dataStorageRoot, File buildLogFile, String categoriesWithDebugLevel, BuildMessages messages) {
+  JpsCompilationData(File dataStorageRoot, File buildLogFile, @Nullable String categoriesWithDebugLevel) {
+    this.buildLogFile = buildLogFile
     this.dataStorageRoot = dataStorageRoot
-    categoriesWithDebugLevel = categoriesWithDebugLevel ?: ""
-    try {
-      fileLoggerFactory = new Log4jFileLoggerFactory(buildLogFile, categoriesWithDebugLevel)
-      messages.info("Build log (${!categoriesWithDebugLevel.isEmpty() ? "debug level for $categoriesWithDebugLevel" : "info"}) will be written to $buildLogFile.absolutePath")
-    }
-    catch (Throwable t) {
-      messages.warning("Cannot setup additional logging to $buildLogFile.absolutePath: $t.message")
-    }
+    this.categoriesWithDebugLevel = categoriesWithDebugLevel ?: ""
   }
 }

@@ -201,7 +201,7 @@ final class CompilationContextImpl implements CompilationContext {
     Path logDir = Path.of(paths.buildOutputRoot, "log")
     NioFiles.deleteRecursively(logDir)
     compilationData = new JpsCompilationData(new File(paths.buildOutputRoot, ".jps-build-data"), logDir.resolve("compilation.log").toFile(),
-                                             System.getProperty("intellij.build.debug.logging.categories", ""), messages)
+                                             System.getProperty("intellij.build.debug.logging.categories", ""))
 
     def projectArtifactsDirName = "project-artifacts"
     overrideProjectOutputDirectory()
