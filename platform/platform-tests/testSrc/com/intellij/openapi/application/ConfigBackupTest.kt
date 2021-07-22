@@ -96,6 +96,8 @@ class ConfigBackupTest : ConfigImportHelperBaseTest() {
 
   @Test
   fun `create backup with index if there is already folder with current date`() {
+    // during the test this date can become not now, i.e. non-conflicting with the next backup, effectively making the test useless,
+    // however, it is ok if the test will be useful
     val now = LocalDateTime.now()
     val date1 = getDateFormattedForBackupDir(now)
     val date2 = getDateFormattedForBackupDir(now.plusMinutes(1))
