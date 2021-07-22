@@ -15,7 +15,7 @@ class KotlinUEnumConstant(
     psi: PsiEnumConstant,
     override val sourcePsi: KtElement?,
     givenParent: UElement?
-) : AbstractKotlinUVariable(givenParent), UEnumConstantExPlaceHolder, UCallExpressionEx, DelegatedMultiResolve, PsiEnumConstant by psi {
+) : AbstractKotlinUVariable(givenParent), UEnumConstantEx, UCallExpression, DelegatedMultiResolve, PsiEnumConstant by psi {
 
     override val initializingClass: UClass? by lz {
         (psi.initializingClass as? KtLightClass)?.let { initializingClass ->
@@ -53,7 +53,7 @@ class KotlinUEnumConstant(
     override val methodIdentifier: UIdentifier?
         get() = null
 
-    override val classReference: UReferenceExpression?
+    override val classReference: UReferenceExpression
         get() = KotlinEnumConstantClassReference(psi, sourcePsi, this)
 
     override val typeArgumentCount: Int
@@ -65,13 +65,15 @@ class KotlinUEnumConstant(
     override val valueArgumentCount: Int
         get() = psi.argumentList?.expressions?.size ?: 0
 
-    override val valueArguments by lz(fun(): List<UExpression> {
-        val ktEnumEntry = sourcePsi as? KtEnumEntry ?: return emptyList()
-        val ktSuperTypeCallEntry = ktEnumEntry.initializerList?.initializers?.firstOrNull() as? KtSuperTypeCallEntry ?: return emptyList()
-        return ktSuperTypeCallEntry.valueArguments.map {
-            it.getArgumentExpression()?.let { getLanguagePlugin().convertElement(it, this) } as? UExpression ?: UastEmptyExpression(this)
+    override val valueArguments: List<UExpression> by lz {
+        val ktEnumEntry = sourcePsi as? KtEnumEntry ?: return@lz emptyList()
+        val ktSuperTypeCallEntry =
+            ktEnumEntry.initializerList?.initializers?.firstOrNull() as? KtSuperTypeCallEntry ?: return@lz emptyList()
+        ktSuperTypeCallEntry.valueArguments.map { valueArgument ->
+            valueArgument.getArgumentExpression()?.let { languagePlugin?.convertElement(it, this) } as? UExpression
+                ?: UastEmptyExpression(this)
         }
-    })
+    }
 
     override val returnType: PsiType?
         get() = uastParent?.getAsJavaPsiElement(PsiClass::class.java)?.let { PsiTypesUtil.getClassType(it) }
@@ -86,7 +88,7 @@ class KotlinUEnumConstant(
         override val sourcePsi: KtElement?,
         givenParent: UElement?
     ) : KotlinAbstractUExpression(givenParent), USimpleNameReferenceExpression {
-        override val javaPsi: PsiElement?
+        override val javaPsi: PsiElement
             get() = psi
 
         override fun resolve() = psi.containingClass

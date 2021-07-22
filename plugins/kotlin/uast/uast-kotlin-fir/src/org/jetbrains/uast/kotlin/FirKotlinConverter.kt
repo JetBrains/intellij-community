@@ -4,6 +4,8 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiField
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -67,6 +69,12 @@ internal object FirKotlinConverter : BaseKotlinConverter {
             ctor(original as P, ktElement, givenParent)
         }
 
+        fun Array<out Class<out UElement>>.convertToUField(original: PsiField, kotlinOrigin: KtElement?): UElement? =
+            if (original is PsiEnumConstant)
+                el<UEnumConstant>(buildKtOpt(kotlinOrigin, ::KotlinUEnumConstant))
+            else
+                el<UField>(buildKtOpt(kotlinOrigin, ::KotlinUField))
+
         return with(requiredTypes) {
             when (original) {
                 is KtFile -> {
@@ -77,17 +85,28 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                 }
 
                 is KtLightClass -> {
-                    // TODO: differentiate enum entry
-                    el<UClass> { KotlinUClass.create(original, givenParent) }
+                    when (original.kotlinOrigin) {
+                        is KtEnumEntry -> el<UEnumConstant> {
+                            convertEnumEntry(original.kotlinOrigin as KtEnumEntry, givenParent)
+                        }
+                        else -> el<UClass> { KotlinUClass.create(original, givenParent) }
+                    }
                 }
                 is KtClassOrObject -> {
                     convertClassOrObject(original, givenParent, requiredTypes).firstOrNull()
                 }
-                // TODO: KtEnumEntry
+                is KtEnumEntry -> {
+                    el<UEnumConstant> {
+                        convertEnumEntry(original, givenParent)
+                    }
+                }
 
                 is KtLightField -> {
-                    // TODO: differentiate enum constant
-                    el<UField>(buildKtOpt(original.kotlinOrigin, ::KotlinUField))
+                    convertToUField(original, original.kotlinOrigin)
+                }
+                is KtLightFieldForSourceDeclarationSupport -> {
+                    // KtLightFieldForDecompiledDeclaration is not a KtLightField
+                    convertToUField(original, original.kotlinOrigin)
                 }
                 is UastKotlinPsiVariable -> {
                     el<ULocalVariable>(buildKt(original.ktElement, ::KotlinULocalVariable))
@@ -367,7 +386,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                             expr<ULiteralExpression> { KotlinStringULiteralExpression(expression, givenParent, "") }
                         }
                         expression.entries.size == 1 -> {
-                            convertEntry(expression.entries[0], givenParent, requiredTypes)
+                            convertStringTemplateEntry(expression.entries[0], givenParent, requiredTypes)
                         }
                         else -> {
                             expr<KotlinStringTemplateUPolyadicExpression> {

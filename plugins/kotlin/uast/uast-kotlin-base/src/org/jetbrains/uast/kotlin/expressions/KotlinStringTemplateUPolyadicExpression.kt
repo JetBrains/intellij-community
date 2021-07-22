@@ -17,7 +17,7 @@ class KotlinStringTemplateUPolyadicExpression(
     UInjectionHost {
     override val operands: List<UExpression> by lz {
         sourcePsi.entries.map {
-            baseResolveProviderService.baseKotlinConverter.convertEntry(
+            baseResolveProviderService.baseKotlinConverter.convertStringTemplateEntry(
                 it,
                 this,
                 DEFAULT_EXPRESSION_TYPES_LIST

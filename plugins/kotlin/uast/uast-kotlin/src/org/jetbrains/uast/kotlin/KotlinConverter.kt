@@ -151,16 +151,20 @@ object KotlinConverter : BaseKotlinConverter {
 
             is KtStringTemplateExpression -> {
                 when {
-                    forceUInjectionHost || requiredTypes.contains(UInjectionHost::class.java) ->
+                    forceUInjectionHost || requiredTypes.contains(UInjectionHost::class.java) -> {
                         expr<UInjectionHost> { KotlinStringTemplateUPolyadicExpression(expression, givenParent) }
+                    }
                     expression.entries.isEmpty() -> {
                         expr<ULiteralExpression> { KotlinStringULiteralExpression(expression, givenParent, "") }
                     }
-
-                    expression.entries.size == 1 -> convertEntry(expression.entries[0], givenParent, requiredTypes)
-
-                    else ->
-                        expr<KotlinStringTemplateUPolyadicExpression> { KotlinStringTemplateUPolyadicExpression(expression, givenParent) }
+                    expression.entries.size == 1 -> {
+                        convertStringTemplateEntry(expression.entries[0], givenParent, requiredTypes)
+                    }
+                    else -> {
+                        expr<KotlinStringTemplateUPolyadicExpression> {
+                            KotlinStringTemplateUPolyadicExpression(expression, givenParent)
+                        }
+                    }
                 }
             }
             is KtDestructuringDeclaration -> expr<UDeclarationsExpression> {
@@ -250,16 +254,6 @@ object KotlinConverter : BaseKotlinConverter {
 
             else -> expr<UExpression>(build(::UnknownKotlinExpression))
         }}
-    }
-
-    private fun convertEnumEntry(original: KtEnumEntry, givenParent: UElement?): UElement? {
-        return LightClassUtil.getLightClassBackingField(original)?.let { psiField ->
-            if (psiField is KtLightField && psiField is PsiEnumConstant) {
-                KotlinUEnumConstant(psiField, psiField.kotlinOrigin, givenParent)
-            } else {
-                null
-            }
-        }
     }
 
     override fun convertDeclaration(
