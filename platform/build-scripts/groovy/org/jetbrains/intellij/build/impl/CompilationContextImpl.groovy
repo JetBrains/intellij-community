@@ -200,6 +200,7 @@ final class CompilationContextImpl implements CompilationContext {
     checkCompilationOptions()
     Path logDir = Path.of(paths.buildOutputRoot, "log")
     NioFiles.deleteRecursively(logDir)
+    Files.createDirectories(logDir)
     compilationData = new JpsCompilationData(new File(paths.buildOutputRoot, ".jps-build-data"), logDir.resolve("compilation.log").toFile(),
                                              System.getProperty("intellij.build.debug.logging.categories", ""))
 
