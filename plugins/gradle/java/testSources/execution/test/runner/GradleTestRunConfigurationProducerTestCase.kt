@@ -87,7 +87,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
       assertTrue(producer.isConfigurationFromContext(configuration, context))
     }
     producer.onFirstRun(configurationFromContext, context, Runnable {})
-    assertEquals(expectedSettings, configuration.settings.toString().trim())
+    assertEquals(expectedSettings, configuration.settings.toString())
   }
 
   protected fun GradleTestRunConfigurationProducer.setTestTasksChooser(testTasksFilter: (TestName) -> Boolean) {

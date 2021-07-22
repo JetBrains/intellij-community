@@ -28,7 +28,7 @@ abstract class GradleConfigurationProducerTestCase : GradleImportingTestCase() {
     val configurations = getConfigurations(className, methodName, locationProvider)
     assertSize(1, configurations)
     val executionSettings = configurations.first().settings
-    assertEquals(testFilter, executionSettings.scriptParameters)
+    assertEquals(testFilter, executionSettings.toString())
   }
 
   protected fun assertParameterizedLocationTestFilter(className: String, methodName: String?, paramSetName: String, testFilter: String) {
@@ -36,7 +36,7 @@ abstract class GradleConfigurationProducerTestCase : GradleImportingTestCase() {
     val configurations = getConfigurations(className, methodName, locationProvider)
     assertSize(1, configurations)
     val executionSettings = configurations.first().settings
-    assertEquals(testFilter, executionSettings.scriptParameters)
+    assertEquals(testFilter, executionSettings.toString())
   }
 
   private fun getConfigurations(className: String,
@@ -65,6 +65,6 @@ abstract class GradleConfigurationProducerTestCase : GradleImportingTestCase() {
      */
     @Parameterized.Parameters(name = "with Gradle-{0}")
     @JvmStatic
-    fun tests(): Collection<Array<out String>> = arrayListOf(arrayOf(GradleImportingTestCase.BASE_GRADLE_VERSION))
+    fun tests(): Collection<Array<out String>> = arrayListOf(arrayOf(BASE_GRADLE_VERSION))
   }
 }
