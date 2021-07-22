@@ -662,6 +662,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         public void testBlocks() throws Exception {
             runTest("testData/newJ2k/blocks/Blocks.java");
         }
+
+        @TestMetadata("nestedBlocks.java")
+        public void testNestedBlocks() throws Exception {
+            runTest("testData/newJ2k/blocks/nestedBlocks.java");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
