@@ -204,8 +204,10 @@ public class GradleExecutionHelper {
                                       @NotNull ProjectConnection connection,
                                       @NotNull CancellationToken cancellationToken) {
     long ttlInMs = settings.getRemoteProcessIdleTtlInMs();
+    List<String> arguments = settings.getArguments();
     try {
       settings.setRemoteProcessIdleTtlInMs(100);
+      settings.setArguments(ContainerUtil.emptyList());
 
       if (ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings) == null) {
         String initScriptPath = setupWrapperTaskInInitScript(gradleVersion);
@@ -238,6 +240,7 @@ public class GradleExecutionHelper {
     }
     finally {
       settings.setRemoteProcessIdleTtlInMs(ttlInMs);
+      settings.setArguments(arguments);
     }
   }
 
