@@ -3,10 +3,14 @@ package com.intellij.util.indexing.diagnostic
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData
+import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.internal.statistic.utils.StatisticsUtil
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import java.util.concurrent.TimeUnit
+import kotlin.math.roundToLong
 
 class ProjectIndexingHistoryFusReporterListener : IndexDiagnosticDumper.ProjectIndexingHistoryListener {
   override fun onStartedIndexing(projectIndexingHistory: ProjectIndexingHistory) {
@@ -27,6 +31,17 @@ class ProjectIndexingHistoryFusReporterListener : IndexDiagnosticDumper.ProjectI
       projectIndexingHistory.providerStatistics.sumOf { it.totalNumberOfFilesFullyIndexedByExtensions }
     val numberOfFilesIndexedWithLoadingContent = projectIndexingHistory.providerStatistics.sumOf { it.totalNumberOfIndexedFiles }
 
+    val totalContentLoadingTime = projectIndexingHistory.totalStatsPerFileType.values.sumOf { it.totalContentLoadingTimeInAllThreads }
+    val totalContentData = projectIndexingHistory.totalStatsPerFileType.values.sumOf { it.totalBytes }
+    val averageContentLoadingSpeed = calculateReadSpeed(totalContentData, totalContentLoadingTime)
+
+    val contentLoadingSpeedByFileType = HashMap<FileType, Long>()
+    projectIndexingHistory.totalStatsPerFileType.forEach { (fileType, stats) ->
+      if (stats.totalContentLoadingTimeInAllThreads != 0L && stats.totalBytes != 0L) {
+        contentLoadingSpeedByFileType[FileTypeManager.getInstance().getStdFileType(fileType)] = calculateReadSpeed(stats.totalBytes, stats.totalContentLoadingTimeInAllThreads)
+      }
+    }
+
     ProjectIndexingHistoryFusReporter.reportIndexingFinished(
       projectIndexingHistory.project,
       projectIndexingHistory.indexingSessionId,
@@ -36,13 +51,29 @@ class ProjectIndexingHistoryFusReporterListener : IndexDiagnosticDumper.ProjectI
       numberOfScannedFiles,
       numberOfFilesIndexedByExtensionsDuringScan,
       numberOfFilesIndexedByExtensionsWithLoadingContent,
-      numberOfFilesIndexedWithLoadingContent
+      numberOfFilesIndexedWithLoadingContent,
+      averageContentLoadingSpeed,
+      contentLoadingSpeedByFileType
     )
+  }
+
+  /**
+   * @return speed as bytes per second
+  * */
+  private fun calculateReadSpeed(bytes : BytesNumber, loadingTime : TimeNano) : Long {
+    if (bytes == 0L || loadingTime == 0L) return 0L
+
+    val nanoSecondInOneSecond = TimeUnit.SECONDS.toNanos(1)
+    return if (bytes * nanoSecondInOneSecond > 0) // avoid hitting overflow; possible if loaded more then 9 223 372 037 bytes
+      // as `loadingTime` in nanoseconds tend to be much bigger value then `bytes` prefer to divide as second step
+      (bytes * nanoSecondInOneSecond) / loadingTime
+    else // do not use by default to avoid unnecessary conversions
+      ((bytes.toDouble() / loadingTime) * nanoSecondInOneSecond).roundToLong()
   }
 }
 
 object ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("indexing.statistics", 2)
+  private val GROUP = EventLogGroup("indexing.statistics", 3)
 
   override fun getGroup() = GROUP
 
@@ -60,6 +91,11 @@ object ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
   private val numberOfFilesIndexedWithLoadingContent =
     EventFields.Int("number_of_files_indexed_with_loading_content")
 
+  private val averageContentLoadingSpeed = EventFields.Long("average_content_loading_speed_bps")
+  private val contentLoadingSpeedForFileType = EventFields.Long("average_content_loading_speed_for_file_type_bps")
+  private val contentLoadingSpeedByFileType =
+    ObjectListEventField("average_content_loading_speeds_by_file_type", EventFields.FileType, contentLoadingSpeedForFileType)
+
   private val indexingStarted = GROUP.registerVarargEvent(
     "started",
     indexingSessionId
@@ -74,7 +110,9 @@ object ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
     numberOfScannedFiles,
     numberOfFilesIndexedByExtensionsDuringScan,
     numberOfFilesIndexedByExtensionsWithLoadingContent,
-    numberOfFilesIndexedWithLoadingContent
+    numberOfFilesIndexedWithLoadingContent,
+    averageContentLoadingSpeed,
+    contentLoadingSpeedByFileType
   )
 
   fun reportIndexingStarted(project: Project, indexingSessionId: Long) {
@@ -93,7 +131,10 @@ object ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
     numberOfScannedFiles: Int,
     numberOfFilesIndexedByExtensionsDuringScan: Int,
     numberOfFilesIndexedByExtensionsWithLoadingContent: Int,
-    numberOfFilesIndexedWithLoadingContent: Int
+    numberOfFilesIndexedWithLoadingContent: Int,
+    averageContentLoadingSpeed : Long,
+    contentLoadingSpeedByFileType : Map<FileType, Long>
+
   ) {
     indexingFinished.log(
       project,
@@ -105,6 +146,10 @@ object ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
       this.numberOfFilesIndexedByExtensionsDuringScan.with(numberOfFilesIndexedByExtensionsDuringScan),
       this.numberOfFilesIndexedByExtensionsWithLoadingContent.with(numberOfFilesIndexedByExtensionsWithLoadingContent),
       this.numberOfFilesIndexedWithLoadingContent.with(numberOfFilesIndexedWithLoadingContent),
+      this.averageContentLoadingSpeed.with(averageContentLoadingSpeed),
+      this.contentLoadingSpeedByFileType.with(contentLoadingSpeedByFileType.map { entry ->
+        ObjectEventData(EventFields.FileType.with(entry.key), contentLoadingSpeedForFileType.with(entry.value))
+      })
     )
   }
 
