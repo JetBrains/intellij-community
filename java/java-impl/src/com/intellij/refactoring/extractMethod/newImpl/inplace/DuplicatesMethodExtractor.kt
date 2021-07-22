@@ -88,9 +88,11 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     val oldMethodCall = PsiTreeUtil.findChildOfType(calls.first(), PsiMethodCallExpression::class.java)
     val newMethodCall = PsiTreeUtil.findChildOfType(elementsToReplace.callElements.first(), PsiMethodCallExpression::class.java)
     val parametrizedDuplicatesNumber = duplicates.size - exactDuplicates.size
-    val changeSignature = SignatureSuggesterPreviewDialog(method, elementsToReplace.method, oldMethodCall, newMethodCall, parametrizedDuplicatesNumber).showAndGet()
-    if (!changeSignature) {
-      duplicates = exactDuplicates
+    if (parametrizedDuplicatesNumber > 0){
+      val changeSignature = SignatureSuggesterPreviewDialog(method, elementsToReplace.method, oldMethodCall, newMethodCall, parametrizedDuplicatesNumber).showAndGet()
+      if (!changeSignature) {
+        duplicates = exactDuplicates
+      }
     }
 
     duplicates = confirmDuplicates(project, editor, duplicates)
