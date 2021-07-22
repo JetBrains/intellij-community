@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.autoimport.settings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import java.util.concurrent.Executor
@@ -12,16 +11,18 @@ import java.util.concurrent.Executor
 class ReadAsyncSupplier<R>(
   private val supplier: () -> R,
   private val shouldKeepTasksAsynchronous: () -> Boolean,
-  private val equality: Array<out Any>,
+  private val equality: Array<out Any>?,
   private val backgroundExecutor: Executor
 ) : AsyncSupplier<R> {
   override fun supply(consumer: (R) -> Unit, parentDisposable: Disposable) {
     if (shouldKeepTasksAsynchronous()) {
-      ReadAction.nonBlocking(supplier)
+      var readAction = ReadAction.nonBlocking(supplier)
         .expireWith(parentDisposable)
-        .coalesceBy(*equality)
         .finishOnUiThread(ModalityState.defaultModalityState(), consumer)
-        .submit(backgroundExecutor)
+      if (equality != null) {
+        readAction = readAction.coalesceBy(*equality)
+      }
+      readAction.submit(backgroundExecutor)
     }
     else {
       consumer(runReadAction(supplier))
@@ -32,7 +33,7 @@ class ReadAsyncSupplier<R>(
     private var shouldKeepTasksAsynchronous: () -> Boolean =
       CoreProgressManager::shouldKeepTasksAsynchronous
 
-    private var equality: Array<out Any> = emptyArray()
+    private var equality: Array<out Any>? = null
 
     fun shouldKeepTasksAsynchronous(provider: () -> Boolean) = apply {
       shouldKeepTasksAsynchronous = provider
