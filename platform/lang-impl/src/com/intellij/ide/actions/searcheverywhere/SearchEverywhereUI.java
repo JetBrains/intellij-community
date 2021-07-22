@@ -483,6 +483,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     myListModel.expireResults();
     contributors.forEach(contributor -> myListModel.setHasMore(contributor, false));
+
+    List<SearchEverywhereFoundElementInfo> completionElements = AutoCompletionProvider.getCompletionElements(contributors, mySearchField);
+    myListModel.addElements(completionElements);
+
     String commandPrefix = SearchTopHitProvider.getTopHitAccelerator();
     if (rawPattern.startsWith(commandPrefix)) {
       String typedCommand = rawPattern.split(" ")[0].substring(commandPrefix.length());

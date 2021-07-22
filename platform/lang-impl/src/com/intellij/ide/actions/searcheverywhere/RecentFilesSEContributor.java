@@ -19,13 +19,14 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.text.JTextComponent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
+public class RecentFilesSEContributor extends FileSearchEverywhereContributor implements AutoCompletionContributor {
 
   public RecentFilesSEContributor(@NotNull AnActionEvent event) {
     super(event);
@@ -89,6 +90,28 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
         ContainerUtil.process(res, consumer);
       }, progressIndicator);
+  }
+
+  @Override
+  public List<AutoCompletionCommand> getAutocompleteItems(String pattern, int caretPosition) {
+    return Arrays.asList(new MyCommand(pattern + ".java"), new MyCommand(pattern + ".kt"));
+  }
+
+  private static final class MyCommand implements AutoCompletionCommand {
+
+    private final String fileName;
+
+    private MyCommand(String name) { fileName = name; }
+
+    @Override
+    public void completeQuery(JTextComponent textComponent) {
+      textComponent.setText(fileName);
+    }
+
+    @Override
+    public String getPresentationString() {
+      return "search for " + fileName;
+    }
   }
 
   private static MinusculeMatcher createMatcher(String searchString, boolean preferStartMatches) {
