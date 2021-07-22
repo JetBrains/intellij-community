@@ -288,6 +288,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             myInspectTopicPublisher,
             toolWrapper,
             LOCAL_PRIORITY,
+            myProject,
             () -> runToolOnElements(toolWrapper, iManager, false, indicator, elements, session, init)
           );
         }
@@ -355,6 +356,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             myInspectTopicPublisher,
             context.tool,
             LOCAL,
+            myProject,
             () -> {
               AstLoadingFilter.disallowTreeLoading(() -> InspectionEngine.acceptElements(elements, context.visitor));
               return context.holder.getResults().size() - context.problemsSize;
