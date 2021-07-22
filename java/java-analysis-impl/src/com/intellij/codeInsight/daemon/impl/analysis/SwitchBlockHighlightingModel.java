@@ -774,10 +774,11 @@ public class SwitchBlockHighlightingModel {
 
     /**
      * @param switchBlock
-     * @return {@link CompletenessResult#UNEVALUATED}, if switch contains total pattern or switch is incomplete and it produces a compilation error
+     * @return {@link CompletenessResult#UNEVALUATED}, if switch is incomplete and it produces a compilation error
      * (this is already covered by highlighting)
      * <p>{@link CompletenessResult#INCOMPLETE}, if selector type is not enum or reference type(except boxing primitives and String) or switch is incomplete
-     * <p>{@link CompletenessResult#COMPLETE}, if switch is complete
+     * <p>{@link CompletenessResult#COMPLETE_WITH_TOTAL}, if switch is complete because a total pattern exists
+     * <p>{@link CompletenessResult#COMPLETE_WITHOUT_TOTAL}, if switch is complete and doesn't contain a total pattern
      */
     @NotNull
     public static CompletenessResult evaluateSwitchCompleteness(@NotNull PsiSwitchBlock switchBlock) {
@@ -803,7 +804,7 @@ public class SwitchBlockHighlightingModel {
       boolean needToCheckCompleteness = switchModel.needToCheckCompleteness(labelElements);
       boolean isEnumSelector = switchModel.getSwitchSelectorKind() == SelectorKind.ENUM;
       if (switchModel instanceof PatternsInSwitchBlockHighlightingModel) {
-        if (findTotalPatternForType(labelElements, switchModel.mySelectorType) != null) return UNEVALUATED;
+        if (findTotalPatternForType(labelElements, switchModel.mySelectorType) != null) return COMPLETE_WITH_TOTAL;
         if (!needToCheckCompleteness && !isEnumSelector) return INCOMPLETE;
         ((PatternsInSwitchBlockHighlightingModel)switchModel).checkCompleteness(labelElements, results);
       }
@@ -817,14 +818,15 @@ public class SwitchBlockHighlightingModel {
         switchModel.checkEnumCompleteness(selectorClass, enumConstants, results);
       }
       // if switch block is needed to check completeness and switch is incomplete, we let highlighting to inform about it as it's a compilation error
-      if (needToCheckCompleteness) return results.isEmpty() ? COMPLETE : UNEVALUATED;
-      return results.isEmpty() ? COMPLETE : INCOMPLETE;
+      if (needToCheckCompleteness) return results.isEmpty() ? COMPLETE_WITHOUT_TOTAL : UNEVALUATED;
+      return results.isEmpty() ? COMPLETE_WITHOUT_TOTAL : INCOMPLETE;
     }
 
     public enum CompletenessResult {
       UNEVALUATED,
       INCOMPLETE,
-      COMPLETE
+      COMPLETE_WITH_TOTAL,
+      COMPLETE_WITHOUT_TOTAL
     }
 
   }
