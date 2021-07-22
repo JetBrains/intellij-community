@@ -68,10 +68,9 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest(changedName = "renamed")
   }
 
-  //TODO fix parameter order
-  //fun testRenamedParametrizedDuplicate(){
-  //  doTest(changedName = "average")
-  //}
+  fun testRenamedParametrizedDuplicate(){
+    doTest(changedName = "average")
+  }
 
   fun testStaticMustBePlaced(){
     doTest()

@@ -77,9 +77,10 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     val changes = duplicates.flatMap { it.changedExpressions.map(ChangedExpression::pattern) }.toSet()
     fun isEquivalent(pattern: PsiElement, candidate: PsiElement) = pattern !in changes && finder.isEquivalent(pattern, candidate)
     duplicates = duplicates.mapNotNull { finder.createDuplicate(it.pattern, it.candidate, ::isEquivalent) }
-    val allParameters = duplicates
-      .fold(options.inputParameters) { parameters, duplicate ->  updateParameters(parameters, duplicate.changedExpressions)}
-    val elementsToReplace = MethodExtractor().prepareRefactoringElements(options.copy(inputParameters = allParameters, methodName = method.name))
+
+    val updatedParameters: List<InputParameter> = findNewParameters(options.inputParameters, duplicates)
+
+    val elementsToReplace = MethodExtractor().prepareRefactoringElements(options.copy(inputParameters = updatedParameters, methodName = method.name))
 
     //TODO clean up
     val initialParameters = options.inputParameters.flatMap(InputParameter::references).toSet()
@@ -111,7 +112,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     duplicates.forEach { duplicate ->
       val duplicateOptions = findExtractOptions(duplicate.candidate)
       val expressionMap = duplicate.changedExpressions.associate { (pattern, candidate) -> pattern to candidate }
-      val duplicateParameters = allParameters.map { parameter -> parameter.copy(references = parameter.references.map { expression -> expressionMap[expression]!! }) }
+      val duplicateParameters = updatedParameters.map { parameter -> parameter.copy(references = parameter.references.map { expression -> expressionMap[expression]!! }) }
 
       //TODO extract duplicate
       val builder = CallBuilder(duplicateOptions.project, duplicateOptions.elements.first())
@@ -128,6 +129,12 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
   }
 
   private val isSilentMode = ApplicationManager.getApplication().isUnitTestMode
+
+  private fun findNewParameters(parameters: List<InputParameter>, duplicates: List<Duplicate>): List<InputParameter> {
+    return duplicates
+      .fold(parameters) { updatedParameters, duplicate -> updateParameters(updatedParameters, duplicate.changedExpressions) }
+      .sortedBy { parameter -> parameter.references.minOf{ expression -> expression.textRange.startOffset } }
+  }
 
   private fun confirmDuplicates(project: Project, editor: Editor, duplicates: List<Duplicate>): List<Duplicate> {
     if (isSilentMode) return duplicates

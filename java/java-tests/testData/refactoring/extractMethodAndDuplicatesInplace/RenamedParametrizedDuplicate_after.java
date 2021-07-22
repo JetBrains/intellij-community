@@ -4,7 +4,7 @@ class Test {
         int avgB = average(100, 200);
     }
 
-    private int average(int i, int i2) {
-        return i + i2 / 2;
+    private int average(int x1, int x) {
+        return x1 + x / 2;
     }
 }
