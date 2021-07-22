@@ -75,7 +75,6 @@ import org.jetbrains.kotlin.idea.filters.AbstractKotlinExceptionFilterTest
 import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirClassLoadingTest
 import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirLightClassTest
 import org.jetbrains.kotlin.idea.fir.asJava.classes.AbstractFirLightFacadeClassTest
-import org.jetbrains.kotlin.idea.fir.checkers.AbstractFirKotlinHighlightingPassTest
 import org.jetbrains.kotlin.idea.fir.completion.AbstractFirKeywordCompletionTest
 import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelJvmBasicCompletionTest
 import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelMultiFileJvmBasicCompletionTest
@@ -1083,15 +1082,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractFirHighlightingMetaInfoTest> {
             model("highlighterMetaInfo")
-        }
-
-        testClass<AbstractFirKotlinHighlightingPassTest> {
-            model("checker", isRecursive = false, pattern = KT.withPrecondition(excludedFirPrecondition))
-            model("checker/regression", pattern = KT.withPrecondition(excludedFirPrecondition))
-            model("checker/recovery", pattern = KT.withPrecondition(excludedFirPrecondition))
-            model("checker/rendering", pattern = KT.withPrecondition(excludedFirPrecondition))
-            model("checker/infos", pattern = KT.withPrecondition(excludedFirPrecondition))
-            model("checker/diagnosticsMessage", pattern = KT.withPrecondition(excludedFirPrecondition))
         }
 
         testClass<AbstractHighLevelQuickFixTest> {
