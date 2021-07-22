@@ -34,6 +34,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
@@ -739,7 +740,7 @@ public final class IdeEventQueue extends EventQueue {
     if (e instanceof ComponentEvent &&
         ourAppIsLoaded &&
         !application.isHeadlessEnvironment()) {
-      WindowManagerEx windowManager = application.getServiceIfCreated(WindowManagerEx.class);
+      WindowManagerEx windowManager = (WindowManagerEx)application.getServiceIfCreated(WindowManager.class);
       if (windowManager != null) {
         windowManager.dispatchComponentEvent((ComponentEvent)e);
       }
