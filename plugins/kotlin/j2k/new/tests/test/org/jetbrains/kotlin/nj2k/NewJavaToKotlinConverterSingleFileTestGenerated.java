@@ -3606,6 +3606,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/methodCallExpression/systemOut.java");
         }
 
+        @TestMetadata("toRegexpWithBinaryReceiver.java")
+        public void testToRegexpWithBinaryReceiver() throws Exception {
+            runTest("testData/newJ2k/methodCallExpression/toRegexpWithBinaryReceiver.java");
+        }
+
         @TestMetadata("vararg1.java")
         public void testVararg1() throws Exception {
             runTest("testData/newJ2k/methodCallExpression/vararg1.java");
