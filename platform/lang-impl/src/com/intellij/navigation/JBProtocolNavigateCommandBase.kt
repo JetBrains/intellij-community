@@ -229,7 +229,14 @@ class PathNavigator(val project: Project, val parameters: Map<String, String>, v
 
   fun performEditorAction(textEditor: TextEditor, line: String?, column: String?) {
     val editor = textEditor.editor
-    editor.caretModel.moveToOffset(editor.logicalPositionToOffset(LogicalPosition(line?.toInt() ?: 0, column?.toInt() ?: 0)))
+
+    val position = LogicalPosition(line?.toInt() ?: 0, column?.toInt() ?: 0)
+    editor.caretModel.removeSecondaryCarets()
+    editor.caretModel.moveToLogicalPosition(position)
+    editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
+    editor.selectionModel.removeSelection()
+    IdeFocusManager.getGlobalInstance().requestFocus(editor.contentComponent, true)
+
     setSelections(parameters, project)
   }
 }
