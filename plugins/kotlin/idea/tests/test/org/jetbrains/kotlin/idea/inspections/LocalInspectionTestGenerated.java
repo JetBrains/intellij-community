@@ -2498,6 +2498,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/collections/uselessCallOnNotNull/NullOrEmpty.kt");
             }
 
+            @TestMetadata("NullOrEmptyAfterNullCheck.kt")
+            public void testNullOrEmptyAfterNullCheck() throws Exception {
+                runTest("testData/inspectionsLocal/collections/uselessCallOnNotNull/NullOrEmptyAfterNullCheck.kt");
+            }
+
             @TestMetadata("NullOrEmptyFake.kt")
             public void testNullOrEmptyFake() throws Exception {
                 runTest("testData/inspectionsLocal/collections/uselessCallOnNotNull/NullOrEmptyFake.kt");
@@ -2506,6 +2511,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("NullOrEmptySafe.kt")
             public void testNullOrEmptySafe() throws Exception {
                 runTest("testData/inspectionsLocal/collections/uselessCallOnNotNull/NullOrEmptySafe.kt");
+            }
+
+            @TestMetadata("OrEmptyAfterNullCheck.kt")
+            public void testOrEmptyAfterNullCheck() throws Exception {
+                runTest("testData/inspectionsLocal/collections/uselessCallOnNotNull/OrEmptyAfterNullCheck.kt");
             }
 
             @TestMetadata("OrEmptyFake.kt")
