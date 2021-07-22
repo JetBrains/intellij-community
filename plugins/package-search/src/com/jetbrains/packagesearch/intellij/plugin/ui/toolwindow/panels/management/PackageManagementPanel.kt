@@ -134,13 +134,13 @@ internal class PackageManagementPanel(
             .launchIn(this)
 
         rootDataModelProvider.dataModelFlow.onEach { data ->
-
-            val tableData = computePackagesTableItems(
-                project,
-                data.packageModels,
-                data.filterOptions.onlyStable,
-                data.targetModules,
-                data.traceInfo
+            val tableItems = computePackagesTableItems(
+                project = project,
+                packages = data.packageModels,
+                selectedPackageModel = data.selectedPackage,
+                onlyStable = data.filterOptions.onlyStable,
+                targetModules = data.targetModules,
+                traceInfo = data.traceInfo
             )
 
             packagesListPanel.display(
@@ -151,7 +151,7 @@ internal class PackageManagementPanel(
                     knownRepositoriesInTargetModules = data.knownRepositoriesInTargetModules,
                     allKnownRepositories = data.allKnownRepositories,
                     filterOptions = data.filterOptions,
-                    tableData = tableData,
+                    tableItems = tableItems,
                     traceInfo = data.traceInfo,
                     searchQuery = data.searchQuery
                 )
