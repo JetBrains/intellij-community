@@ -67,7 +67,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   protected final Map<Key<?>, GlobalInspectionContextExtension<?>> myExtensions = new HashMap<>();
 
-  final Map<String, Tools> myTools = new HashMap<>();
+  private final Map<String, Tools> myTools = new HashMap<>();
 
   @NonNls public static final String PROBLEMS_TAG_NAME = "problems";
   @NonNls public static final String LOCAL_TOOL_ATTRIBUTE = "is_local_tool";
@@ -459,7 +459,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   public static void assertUnderDaemonProgress() {
-    ProgressIndicator indicator = ProgressManager.getGlobalProgressIndicator();
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     ProgressIndicator original = indicator == null ? null : ProgressWrapper.unwrapAll(indicator);
     if (!(original instanceof DaemonProgressIndicator)) {
       throw new IllegalStateException("must be run under DaemonProgressIndicator, but got: " + (original == null ? "null" : ": " +original.getClass()) + ": "+ original);
