@@ -23,7 +23,7 @@ class WizardStatsService : CounterUsagesCollector() {
     companion object {
 
         // Collector ID
-        private val GROUP = EventLogGroup("kotlin.ide.new.project", 6)
+        private val GROUP = EventLogGroup("kotlin.ide.new.project", 7)
 
         // Whitelisted values for the events fields
         private val allowedProjectTemplates = listOf( // Modules
@@ -270,7 +270,6 @@ class WizardStatsService : CounterUsagesCollector() {
 
         private val jdkChangedEvent = GROUP.registerVarargEvent(
             "jdk_changed",
-            settingIdField,
             sessionIdField,
             EventFields.PluginInfo,
         )
