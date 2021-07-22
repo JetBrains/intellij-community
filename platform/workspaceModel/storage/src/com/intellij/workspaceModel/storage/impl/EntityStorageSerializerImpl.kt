@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.esotericsoftware.kryo.Kryo
+import com.esotericsoftware.kryo.KryoException
 import com.esotericsoftware.kryo.Serializer
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
@@ -366,7 +367,7 @@ class EntityStorageSerializerImpl(
       SerializationResult.Fail(e.message)
     }
     finally {
-      output.flush()
+      flush(output)
     }
   }
 
@@ -394,7 +395,7 @@ class EntityStorageSerializerImpl(
       kryo.writeClassAndObject(output, log.changeLog)
     }
     finally {
-      output.flush()
+      flush(output)
     }
   }
 
@@ -413,7 +414,18 @@ class EntityStorageSerializerImpl(
       kryo.writeClassAndObject(output, mapData)
     }
     finally {
+      flush(output)
+    }
+  }
+
+  private fun flush(output: Output) {
+    try {
       output.flush()
+    }
+    catch (e: KryoException) {
+      output.clear()
+      LOG.warn("Exception at project serialization", e)
+      SerializationResult.Fail(e.message)
     }
   }
 
