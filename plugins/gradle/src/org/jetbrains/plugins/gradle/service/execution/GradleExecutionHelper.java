@@ -195,8 +195,11 @@ public class GradleExecutionHelper {
       projectPath, id, settings, listener, cancellationToken,
       connection -> {
         long ttlInMs = settings.getRemoteProcessIdleTtlInMs();
+        List<String> arguments = settings.getArguments();
         try {
           settings.setRemoteProcessIdleTtlInMs(100);
+          settings.setArguments(ContainerUtil.emptyList());
+
           TargetEnvironmentConfigurationProvider configurationProvider =
             ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings);
           if (configurationProvider != null) {
@@ -263,6 +266,7 @@ public class GradleExecutionHelper {
         }
         finally {
           settings.setRemoteProcessIdleTtlInMs(ttlInMs);
+          settings.setArguments(arguments);
         }
         return null;
       }
