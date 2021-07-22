@@ -30,7 +30,7 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
     "parrot", "pop", "pureos", "raspbian", "rhel", "rocky", "rosa", "sabayon", "slackware", "solus", "ubuntu", "void", "zorin",
     "other", "unknown")
 
-  private val GROUP = EventLogGroup("system.os", 11)
+  private val GROUP = EventLogGroup("system.os", 12)
   private val OS_NAME = String("name", OS_NAMES)
   private val OS_LANG = String("locale", LOCALES)
   private val OS_TZ = StringValidatedByRegexp("time_zone", "time_zone")
