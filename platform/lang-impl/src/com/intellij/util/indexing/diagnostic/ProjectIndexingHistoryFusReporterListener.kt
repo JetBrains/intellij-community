@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
@@ -142,10 +143,10 @@ object ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
       this.indexingTime.with(indexingTime),
       this.scanningTime.with(scanningTime),
       this.numberOfFileProviders.with(numberOfFileProviders),
-      this.numberOfScannedFiles.with(StatisticsUtil.roundToPowerOfTwo(numberOfScannedFiles)),
-      this.numberOfFilesIndexedByExtensionsDuringScan.with(numberOfFilesIndexedByExtensionsDuringScan),
-      this.numberOfFilesIndexedByExtensionsWithLoadingContent.with(numberOfFilesIndexedByExtensionsWithLoadingContent),
-      this.numberOfFilesIndexedWithLoadingContent.with(numberOfFilesIndexedWithLoadingContent),
+      this.numberOfScannedFiles.with(StatisticsUtil.roundToHighestDigit(numberOfScannedFiles)),
+      this.numberOfFilesIndexedByExtensionsDuringScan.with(StatisticsUtil.roundToHighestDigit(numberOfFilesIndexedByExtensionsDuringScan)),
+      this.numberOfFilesIndexedByExtensionsWithLoadingContent.with(StatisticsUtil.roundToHighestDigit(numberOfFilesIndexedByExtensionsWithLoadingContent)),
+      this.numberOfFilesIndexedWithLoadingContent.with(StatisticsUtil.roundToHighestDigit(numberOfFilesIndexedWithLoadingContent)),
       this.averageContentLoadingSpeed.with(averageContentLoadingSpeed),
       this.contentLoadingSpeedByFileType.with(contentLoadingSpeedByFileType.map { entry ->
         ObjectEventData(EventFields.FileType.with(entry.key), contentLoadingSpeedForFileType.with(entry.value))
