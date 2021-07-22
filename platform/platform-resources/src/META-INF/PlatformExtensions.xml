@@ -312,8 +312,13 @@
     <applicationService serviceInterface="com.intellij.openapi.fileChooser.FileSystemTreeFactory"
                         serviceImplementation="com.intellij.openapi.fileChooser.ex.FileSystemTreeFactoryImpl"/>
     <applicationService serviceImplementation="com.intellij.ide.plugins.PluginManagerUISettings"/>
+
     <applicationService serviceInterface="com.intellij.codeInsight.hint.HintManager"
                         serviceImplementation="com.intellij.codeInsight.hint.HintManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.hint.ClientHintManager"
+                        serviceImplementation="com.intellij.codeInsight.hint.LocalHintManager"
+                        client="local"/>
+
     <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.EditorActionManager"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorActionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.TypedAction"
