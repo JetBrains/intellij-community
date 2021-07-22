@@ -76,6 +76,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     private MavenImportingSettings myImportingSettingsCache;
 
     private Path myImportRoot;
+    private VirtualFile myImportProjectFile;
     private List<VirtualFile> myFiles;
 
     private MavenProjectsTree myMavenProjectTree;
@@ -164,7 +165,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       ExternalStorageConfigurationManager.getInstance(project).setEnabled(true);
     }
 
-    if(ApplicationManager.getApplication().isDispatchThread()){
+    if (ApplicationManager.getApplication().isDispatchThread()) {
       FileDocumentManager.getInstance().saveAllDocuments();
     }
 
@@ -310,13 +311,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
           throw new MavenProcessCanceledException();
         }
 
-        Path file = getRootPath();
-        VirtualFile virtualFile = file == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString()));
-        if (virtualFile == null) {
-          throw new MavenProcessCanceledException();
-        }
-        getParameters().myFiles = FileFinder.findPomFiles(virtualFile.getChildren(), LookForNestedToggleAction.isSelected(), indicator);
-
+        getParameters().myFiles = getProjectFiles(indicator);
         readMavenProjectTree(indicator);
 
         indicator.setText("");
@@ -459,6 +454,10 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     getParameters().myImportRoot = Files.isDirectory(path) ? path : path.getParent();
   }
 
+  public void setProjectFileToImport(@Nullable VirtualFile projectFile) {
+    if (projectFile != null) getParameters().myImportProjectFile = projectFile;
+  }
+
   @Nullable
   @Override
   public Project createProject(String name, String path) {
@@ -469,5 +468,18 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   @Override
   public ProjectOpenProcessor getProjectOpenProcessor() {
     return ProjectOpenProcessor.EXTENSION_POINT_NAME.findExtensionOrFail(MavenProjectOpenProcessor.class);
+  }
+
+  private List<VirtualFile> getProjectFiles(@NotNull MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+    if (getParameters().myImportProjectFile != null) {
+      return Collections.singletonList(getParameters().myImportProjectFile);
+    }
+    Path file = getRootPath();
+    VirtualFile virtualFile = file == null ? null : LocalFileSystem.getInstance()
+      .refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString()));
+    if (virtualFile == null) {
+      throw new MavenProcessCanceledException();
+    }
+    return FileFinder.findPomFiles(virtualFile.getChildren(), LookForNestedToggleAction.isSelected(), indicator);
   }
 }

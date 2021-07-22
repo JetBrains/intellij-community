@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.open
 
-import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
@@ -20,11 +19,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants.BUILD_FILE_EXTENSIONS
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
-import org.jetbrains.plugins.gradle.util.setupGradleJvm
 import org.jetbrains.plugins.gradle.util.updateGradleJvm
 import org.jetbrains.plugins.gradle.util.validateJavaHome
 import java.nio.file.Path
@@ -36,7 +33,7 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
     return !file.isDirectory && BUILD_FILE_EXTENSIONS.any { file.name.endsWith(it) }
   }
 
-  override fun linkAndRefreshProject(projectDirectory: Path, project: Project) {
+  override fun linkAndRefreshProject(projectDirectory: Path, project: Project, projectFile: VirtualFile?) {
     val gradleProjectSettings = createLinkSettings(projectDirectory, project)
 
     attachGradleProjectAndRefresh(gradleProjectSettings, project)

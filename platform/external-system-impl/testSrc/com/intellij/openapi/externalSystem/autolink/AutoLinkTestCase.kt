@@ -51,7 +51,7 @@ abstract class AutoLinkTestCase : ExternalSystemTestCase() {
       override fun isProjectFile(file: VirtualFile): Boolean =
         unlinedProjectAware.isBuildFile(file)
 
-      override fun linkAndRefreshProject(projectDirectory: Path, project: Project) =
+      override fun linkAndRefreshProject(projectDirectory: Path, project: Project, projectFile: VirtualFile?) =
         unlinedProjectAware.linkAndLoadProject(project, projectDirectory.systemIndependentPath)
     }
     return object : ProjectOpenProcessor() {

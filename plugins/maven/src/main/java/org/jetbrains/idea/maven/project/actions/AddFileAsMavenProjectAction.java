@@ -40,7 +40,7 @@ public class AddFileAsMavenProjectAction extends MavenAction {
     if (project != null && file != null) {
       MavenUtil.isProjectTrustedEnoughToImport(project, true);
       MavenOpenProjectProvider openProjectProvider = new MavenOpenProjectProvider();
-      openProjectProvider.linkToExistingProject(file, project);
+      openProjectProvider.linkDirectlyFileToExistingProject(file, project);
     }
   }
 
