@@ -10,7 +10,10 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
@@ -24,8 +27,10 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.*;
+import com.intellij.ui.HintHint;
+import com.intellij.ui.HintListener;
+import com.intellij.ui.LightweightHint;
+import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
@@ -38,7 +43,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.EventObject;
@@ -64,34 +68,11 @@ public class LocalHintManager implements ClientHintManager {
   private final Alarm myHideAlarm = new Alarm();
   private boolean myRequestFocusForNextHint;
 
-  //private static int getPriority(QuestionAction action) {
-  //  return action instanceof PriorityQuestionAction ? ((PriorityQuestionAction)action).getPriority() : 0;
-  //}
-
   @Override
   public boolean canShowQuestionAction(QuestionAction action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myQuestionAction == null || HintManagerImpl.getPriority(myQuestionAction) <= HintManagerImpl.getPriority(action);
   }
-
-  //public interface ActionToIgnore {
-  //}
-
-  //private static final class HintInfo {
-  //  final LightweightHint hint;
-  //  @HintManager.HideFlags final int flags;
-  //  private final boolean reviveOnEditorChange;
-  //
-  //  private HintInfo(LightweightHint hint, @HintManager.HideFlags int flags, boolean reviveOnEditorChange) {
-  //    this.hint = hint;
-  //    this.flags = flags;
-  //    this.reviveOnEditorChange = reviveOnEditorChange;
-  //  }
-  //}
-
-  //public static HintManagerImpl getInstanceImpl() {
-  //  return (HintManagerImpl)ApplicationManager.getApplication().getService(HintManager.class);
-  //}
 
   public LocalHintManager() {
     myEditorManagerListener = new MyEditorManagerListener();
@@ -222,38 +203,6 @@ public class LocalHintManager implements ClientHintManager {
     }
     return false;
   }
-
-  //private static void updateScrollableHintPosition(VisibleAreaEvent e, LightweightHint hint, boolean hideIfOutOfEditor) {
-  //  if (hint.getComponent() instanceof ScrollAwareHint) {
-  //    ((ScrollAwareHint)hint.getComponent()).editorScrolled();
-  //  }
-  //
-  //  if (!hint.isVisible()) return;
-  //
-  //  Editor editor = e.getEditor();
-  //  if (!editor.getComponent().isShowing() || editor.isOneLineMode()) return;
-  //  Rectangle newRectangle = e.getOldRectangle();
-  //  Rectangle oldRectangle = e.getNewRectangle();
-  //
-  //  Point location = hint.getLocationOn(editor.getContentComponent());
-  //  Dimension size = hint.getSize();
-  //
-  //  int xOffset = location.x - oldRectangle.x;
-  //  int yOffset = location.y - oldRectangle.y;
-  //  location = new Point(newRectangle.x + xOffset, newRectangle.y + yOffset);
-  //
-  //  Rectangle newBounds = new Rectangle(location.x, location.y, size.width, size.height);
-  //  //in some rare cases lookup can appear just on the edge with the editor, so don't hide it on every typing
-  //  Rectangle newBoundsForIntersectionCheck = new Rectangle(location.x - 1, location.y - 1, size.width + 2, size.height + 2);
-  //
-  //  final boolean okToUpdateBounds = hideIfOutOfEditor ? oldRectangle.contains(newBounds) : oldRectangle.intersects(newBoundsForIntersectionCheck);
-  //  if (okToUpdateBounds || hint.vetoesHiding()) {
-  //    hint.setLocation(new RelativePoint(editor.getContentComponent(), location));
-  //  }
-  //  else {
-  //    hint.hide();
-  //  }
-  //}
 
   /**
    * In this method the point to show hint depends on current caret position.
@@ -398,57 +347,6 @@ public class LocalHintManager implements ClientHintManager {
     }
   }
 
-  //private static void doShowInGivenLocation(final LightweightHint hint, final Editor editor, Point p, HintHint hintInfo, boolean updateSize) {
-  //  if (ApplicationManager.getApplication().isUnitTestMode()) return;
-  //  JComponent externalComponent = getExternalComponent(editor);
-  //  Dimension size = updateSize ? hint.getComponent().getPreferredSize() : hint.getComponent().getSize();
-  //
-  //  if (hint.isRealPopup() || hintInfo.isPopupForced()) {
-  //    final Point point = new Point(p);
-  //    SwingUtilities.convertPointToScreen(point, externalComponent);
-  //    final Rectangle editorScreen = ScreenUtil.getScreenRectangle(point.x, point.y);
-  //
-  //    p = new Point(p);
-  //    if (hintInfo.getPreferredPosition() == Balloon.Position.atLeft) {
-  //      p.x -= size.width;
-  //    }
-  //    SwingUtilities.convertPointToScreen(p, externalComponent);
-  //    final Rectangle rectangle = new Rectangle(p, size);
-  //    ScreenUtil.moveToFit(rectangle, editorScreen, null);
-  //    p = rectangle.getLocation();
-  //    SwingUtilities.convertPointFromScreen(p, externalComponent);
-  //    if (hintInfo.getPreferredPosition() == Balloon.Position.atLeft) {
-  //      p.x += size.width;
-  //    }
-  //  }
-  //  else if (externalComponent.getWidth() < p.x + size.width && !hintInfo.isAwtTooltip()) {
-  //    p.x = Math.max(0, externalComponent.getWidth() - size.width);
-  //  }
-  //
-  //  if(hint.isShouldBeReopen()){
-  //    hint.hide(true);
-  //  }
-  //
-  //  if (hint.isVisible()) {
-  //    if (updateSize) {
-  //      hint.pack();
-  //    }
-  //    hint.updatePosition(hintInfo.getPreferredPosition());
-  //    hint.updateLocation(p.x, p.y);
-  //  }
-  //  else {
-  //    hint.show(externalComponent, p.x, p.y, editor.getContentComponent(), hintInfo);
-  //  }
-  //}
-
-  //public static void updateLocation(final LightweightHint hint, final Editor editor, Point p) {
-  //  doShowInGivenLocation(hint, editor, p, createHintHint(editor, p, hint, HintManager.UNDER), false);
-  //}
-
-  //public static void adjustEditorHintPosition(final LightweightHint hint, final Editor editor, final Point p, @HintManager.PositionFlags short constraint) {
-  //  doShowInGivenLocation(hint, editor, p, createHintHint(editor, p, hint, constraint), true);
-  //}
-
   @Override
   public void hideAllHints() {
     EDT.assertIsEdt();
@@ -526,70 +424,6 @@ public class LocalHintManager implements ClientHintManager {
 
     return HintManagerImpl.getHintPosition(hint, editor, pos, constraint);
   }
-
-  //private static Point getHintPositionRelativeTo(@NotNull final LightweightHint hint,
-  //                                               @NotNull final Editor editor,
-  //                                               @HintManager.PositionFlags short constraint,
-  //                                               @NotNull final Rectangle lookupBounds,
-  //                                               final LogicalPosition pos) {
-  //
-  //  JComponent externalComponent = getExternalComponent(editor);
-  //
-  //  IdeTooltip ideTooltip = hint.getCurrentIdeTooltip();
-  //  if (ideTooltip != null) {
-  //    Point point = ideTooltip.getPoint();
-  //    return SwingUtilities.convertPoint(ideTooltip.getComponent(), point, externalComponent);
-  //  }
-  //
-  //  Dimension hintSize = hint.getComponent().getPreferredSize();
-  //  int layeredPaneHeight = externalComponent.getHeight();
-  //
-  //  switch (constraint) {
-  //    case HintManager.LEFT: {
-  //      int y = lookupBounds.y;
-  //      if (y < 0) {
-  //        y = 0;
-  //      }
-  //      else if (y + hintSize.height >= layeredPaneHeight) {
-  //        y = layeredPaneHeight - hintSize.height;
-  //      }
-  //      return new Point(lookupBounds.x - hintSize.width, y);
-  //    }
-  //
-  //    case HintManager.RIGHT:
-  //      int y = lookupBounds.y;
-  //      if (y < 0) {
-  //        y = 0;
-  //      }
-  //      else if (y + hintSize.height >= layeredPaneHeight) {
-  //        y = layeredPaneHeight - hintSize.height;
-  //      }
-  //      return new Point(lookupBounds.x + lookupBounds.width, y);
-  //
-  //    case HintManager.ABOVE:
-  //      Point posAboveCaret = getHintPosition(hint, editor, pos, HintManager.ABOVE);
-  //      return new Point(lookupBounds.x, Math.min(posAboveCaret.y, lookupBounds.y - hintSize.height));
-  //
-  //    case HintManager.UNDER:
-  //      Point posUnderCaret = getHintPosition(hint, editor, pos, HintManager.UNDER);
-  //      return new Point(lookupBounds.x, Math.max(posUnderCaret.y, lookupBounds.y + lookupBounds.height));
-  //
-  //    default:
-  //      LOG.error("");
-  //      return null;
-  //  }
-  //}
-
-  /**
-   * @return position of hint in layered pane coordinate system
-   */
-  //public static Point getHintPosition(@NotNull LightweightHint hint,
-  //                                    @NotNull Editor editor,
-  //                                    @NotNull LogicalPosition pos,
-  //                                    @HintManager.PositionFlags short constraint) {
-  //  VisualPosition visualPos = editor.logicalToVisualPosition(pos);
-  //  return getHintPosition(hint, editor, visualPos, visualPos, constraint);
-  //}
 
   @Override
   public void showErrorHint(@NotNull Editor editor, @NotNull String text, short position) {
@@ -674,56 +508,6 @@ public class LocalHintManager implements ClientHintManager {
       myQuestionAction = null;
     }
   }
-
-  //public static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, @HintManager.PositionFlags short constraint) {
-  //  return createHintHint(editor, p, hint, constraint, false);
-  //}
-
-  //todo[nik,kirillk] perhaps 'createInEditorComponent' parameter should always be 'true'
-  //old 'createHintHint' method uses LayeredPane as original component for HintHint so IdeTooltipManager.eventDispatched()
-  //wasn't able to correctly hide tooltip after mouse move.
-  //public static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, @HintManager.PositionFlags short constraint, boolean createInEditorComponent) {
-  //  JRootPane rootPane = editor.getComponent().getRootPane();
-  //  if (rootPane == null) {
-  //    return new HintHint(editor, p);
-  //  }
-  //
-  //  JLayeredPane lp = rootPane.getLayeredPane();
-  //  HintHint hintInfo = new HintHint(editor, SwingUtilities.convertPoint(lp, p, editor.getContentComponent()));
-  //  boolean showByBalloon = Registry.is("editor.balloonHints");
-  //  if (showByBalloon) {
-  //    if (!createInEditorComponent) {
-  //      hintInfo = new HintHint(lp, p);
-  //    }
-  //    hintInfo.setAwtTooltip(true).setHighlighterType(true);
-  //  }
-  //
-  //
-  //  hintInfo.initStyleFrom(hint.getComponent());
-  //  if (showByBalloon) {
-  //    hintInfo.setBorderColor(new JBColor(Color.gray, Gray._140));
-  //    hintInfo.setFont(hintInfo.getTextFont().deriveFont(Font.PLAIN));
-  //    hintInfo.setCalloutShift((int)(editor.getLineHeight() * 0.1));
-  //  }
-  //  hintInfo.setPreferredPosition(Balloon.Position.above);
-  //  if (constraint == HintManager.UNDER || constraint == HintManager.RIGHT_UNDER) {
-  //    hintInfo.setPreferredPosition(Balloon.Position.below);
-  //  }
-  //  else if (constraint == HintManager.RIGHT) {
-  //    hintInfo.setPreferredPosition(Balloon.Position.atRight);
-  //  }
-  //  else if (constraint == HintManager.LEFT) {
-  //    hintInfo.setPreferredPosition(Balloon.Position.atLeft);
-  //  }
-  //
-  //  if (hint.isAwtTooltip()) {
-  //    hintInfo.setAwtTooltip(true);
-  //  }
-  //
-  //  hintInfo.setPositionChangeShift(0, editor.getLineHeight());
-  //
-  //  return hintInfo;
-  //}
 
   protected void updateLastEditor(final Editor editor) {
     if (myLastEditor != editor) {
@@ -853,18 +637,4 @@ public class LocalHintManager implements ClientHintManager {
     }
     return result;
   }
-
-  //private static final class EditorHintListenerHolder {
-  //  private static final EditorHintListener ourEditorHintPublisher =
-  //    ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorHintListener.TOPIC);
-  //
-  //  private EditorHintListenerHolder() {
-  //  }
-  //}
-
-  //private static EditorHintListener getPublisher() {
-  //  return HintManagerImpl.EditorHintListenerHolder.ourEditorHintPublisher;
-  //}
-
-
 }
