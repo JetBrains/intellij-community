@@ -26,7 +26,6 @@ import org.jetbrains.io.MessageDecoder;
 
 import java.awt.*;
 import java.io.*;
-import java.lang.management.ManagementFactory;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -41,7 +40,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 import static com.intellij.ide.SpecialConfigFiles.*;
 
@@ -58,7 +56,6 @@ public final class SocketLock {
   public static final String LAUNCHER_INITIAL_DIRECTORY_ENV_VAR = "IDEA_INITIAL_DIRECTORY";
 
   private static final String ACTIVATE_COMMAND = "activate ";
-  private static final String PID_COMMAND = "pid";
   private static final String OK_RESPONSE = "ok";
   private static final String PATHS_EOT_RESPONSE = "---";
 
@@ -153,11 +150,6 @@ public final class SocketLock {
           return status;
         }
       }
-    }
-
-    if (JetBrainsProtocolHandler.isShutdownCommand()) {
-      unlockPortFiles();
-      System.exit(0);
     }
 
     myBuiltinServerFuture = CompletableFuture.supplyAsync(() -> {
@@ -286,9 +278,6 @@ public final class SocketLock {
           List<String> response = readStringSequence(in);
           log("read: response=%s", String.join(";", response));
           if (!response.isEmpty() && OK_RESPONSE.equals(response.get(0))) {
-            if (JetBrainsProtocolHandler.isShutdownCommand()) {
-              printPID(portNumber);
-            }
             return new AbstractMap.SimpleEntry<>(ActivationStatus.ACTIVATED, mapResponseToCliResult(response));
           }
         }
@@ -307,31 +296,6 @@ public final class SocketLock {
     }
 
     return new AbstractMap.SimpleEntry<>(ActivationStatus.NO_INSTANCE, null);
-  }
-
-  @SuppressWarnings("ALL")
-  private static void printPID(int port) {
-    try {
-      Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);
-      socket.setSoTimeout(1000);
-      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-      out.writeUTF(PID_COMMAND);
-      DataInputStream in = new DataInputStream(socket.getInputStream());
-      int pid = 0;
-      while (true) {
-        try {
-          String s = in.readUTF();
-          if (Pattern.matches("[0-9]+@.*", s)) {
-            pid = Integer.parseInt(s.substring(0, s.indexOf('@')));
-            System.err.println(pid);
-          }
-        }
-        catch (IOException e) {
-          break;
-        }
-      }
-    }
-    catch (Exception ignore) { }
   }
 
   private static final class MyChannelInboundHandler extends MessageDecoder {
@@ -376,15 +340,6 @@ public final class SocketLock {
             CharSequence command = readChars(input);
             if (command == null) {
               return;
-            }
-
-            if (StringUtilRt.startsWith(command, PID_COMMAND)) {
-              ByteBuf buffer = context.alloc().ioBuffer();
-              try (ByteBufOutputStream out = new ByteBufOutputStream(buffer)) {
-                String name = ManagementFactory.getRuntimeMXBean().getName();
-                out.writeUTF(name);
-              }
-              context.writeAndFlush(buffer);
             }
 
             if (StringUtilRt.startsWith(command, ACTIVATE_COMMAND)) {
