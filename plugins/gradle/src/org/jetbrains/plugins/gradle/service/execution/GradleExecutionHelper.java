@@ -183,90 +183,92 @@ public class GradleExecutionHelper {
                                      @Nullable GradleVersion gradleVersion,
                                      @NotNull ExternalSystemTaskNotificationListener listener,
                                      @NotNull CancellationToken cancellationToken) {
-
-    if (!settings.getDistributionType().isWrapped()) return;
-
+    if (!settings.getDistributionType().isWrapped()) {
+      return;
+    }
     if (settings.getDistributionType() == DistributionType.DEFAULT_WRAPPED &&
         GradleUtil.findDefaultWrapperPropertiesFile(projectPath) != null) {
       return;
     }
+    withGradleConnection(projectPath, id, settings, listener, cancellationToken, connection -> {
+      ensureInstalledWrapper(id, projectPath, settings, gradleVersion, listener, connection, cancellationToken);
+      return null;
+    });
+  }
 
-    withGradleConnection(
-      projectPath, id, settings, listener, cancellationToken,
-      connection -> {
-        long ttlInMs = settings.getRemoteProcessIdleTtlInMs();
-        try {
-          settings.setRemoteProcessIdleTtlInMs(100);
-          TargetEnvironmentConfigurationProvider configurationProvider =
-            ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings);
-          if (configurationProvider != null) {
-            // todo add the support for org.jetbrains.plugins.gradle.settings.DistributionType.WRAPPED
-            BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
-            launcher.withCancellationToken(cancellationToken);
-            launcher.forTasks("wrapper");
-            launcher.run();
+  private void ensureInstalledWrapper(@NotNull ExternalSystemTaskId id,
+                                      @NotNull String projectPath,
+                                      @NotNull GradleExecutionSettings settings,
+                                      @Nullable GradleVersion gradleVersion,
+                                      @NotNull ExternalSystemTaskNotificationListener listener,
+                                      @NotNull ProjectConnection connection,
+                                      @NotNull CancellationToken cancellationToken) {
+    long ttlInMs = settings.getRemoteProcessIdleTtlInMs();
+    try {
+      settings.setRemoteProcessIdleTtlInMs(100);
 
-            Path wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath);
-            if (wrapperPropertiesFile != null) {
-              settings.setWrapperPropertyFile(wrapperPropertiesFile.toString());
-            }
-            return null;
-          }
-          try {
-            final File wrapperFilesLocation = FileUtil.createTempDirectory("wrap", "loc");
-            final String fileName = "gradle-wrapper";
-            final File jarFile = new File(wrapperFilesLocation, fileName + ".jar");
-            final File scriptFile = new File(wrapperFilesLocation, "gradlew");
-            final File pathToProperties = new File(wrapperFilesLocation, "path.tmp");
-
-            StringJoiner lines = new StringJoiner(System.lineSeparator());
-            lines.add("");
-            lines.add("gradle.projectsEvaluated { gr ->");
-            lines.add("  def wrapper = gr.rootProject.tasks[\"wrapper\"]");
-            lines.add("  if (wrapper != null) {");
-            lines.add("    if (wrapper.jarFile.exists()) {");
-            lines.add("      wrapper.jarFile = new File('" + StringUtil.escapeBackSlashes(jarFile.getCanonicalPath()) + "')");
-            lines.add("      wrapper.scriptFile = new File('" + StringUtil.escapeBackSlashes(scriptFile.getCanonicalPath()) + "')");
-            lines.add("    }");
-            if (gradleVersion != null) {
-              lines.add("    wrapper.gradleVersion = '" + gradleVersion.getVersion() + "'");
-            }
-            lines.add("    wrapper.doLast {");
-            lines.add("      new File('" +
-                      StringUtil.escapeBackSlashes(pathToProperties.getCanonicalPath()) +
-                      "').write wrapper.propertiesFile.getCanonicalPath()");
-            lines.add("    }");
-            lines.add("  }");
-            lines.add("}");
-            lines.add("");
-            final File tempFile = writeToFileGradleInitScript(lines.toString(), "wrapper_init");
-            settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
-            BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
-            launcher.withCancellationToken(cancellationToken);
-            launcher.forTasks("wrapper");
-            launcher.run();
-            settings.setWrapperPropertyFile(FileUtil.loadFile(pathToProperties));
-          }
-          catch (IOException e) {
-            LOG.warn("Can't update wrapper", e);
-          }
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          LOG.warn("Can't update wrapper", e);
-          Throwable rootCause = ExceptionUtil.getRootCause(e);
-          ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause));
-          externalSystemException.initCause(e);
-          throw externalSystemException;
-        }
-        finally {
-          settings.setRemoteProcessIdleTtlInMs(ttlInMs);
-        }
-        return null;
+      if (ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings) == null) {
+        String initScriptPath = setupWrapperTaskInInitScript(gradleVersion);
+        settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath);
       }
-    );
+
+      // todo add the support for org.jetbrains.plugins.gradle.settings.DistributionType.WRAPPED
+      BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
+      launcher.withCancellationToken(cancellationToken);
+      launcher.forTasks("wrapper");
+      launcher.run();
+
+      Path wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath);
+      if (wrapperPropertiesFile != null) {
+        settings.setWrapperPropertyFile(wrapperPropertiesFile.toString());
+      }
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (IOException e) {
+      LOG.warn("Can't update wrapper", e);
+    }
+    catch (Throwable e) {
+      LOG.warn("Can't update wrapper", e);
+      Throwable rootCause = ExceptionUtil.getRootCause(e);
+      ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause));
+      externalSystemException.initCause(e);
+      throw externalSystemException;
+    }
+    finally {
+      settings.setRemoteProcessIdleTtlInMs(ttlInMs);
+    }
+  }
+
+  private static @NotNull String setupWrapperTaskInInitScript(@Nullable GradleVersion gradleVersion) throws IOException {
+    String wrapperFilesLocationPath = FileUtil.createTempDirectory("wrap", "loc").getCanonicalPath();
+    String jarFile = FileUtil.join(wrapperFilesLocationPath, "gradle-wrapper.jar");
+    String scriptFile = FileUtil.join(wrapperFilesLocationPath, "gradlew");
+    String propertiesFile = FileUtil.join(wrapperFilesLocationPath, "path.tmp");
+
+    StringJoiner lines = new StringJoiner(System.lineSeparator());
+    lines.add("");
+    lines.add("gradle.projectsEvaluated { gr ->");
+    lines.add("  def wrapper = gr.rootProject.tasks[\"wrapper\"]");
+    lines.add("  if (wrapper != null) {");
+    lines.add("    if (wrapper.jarFile.exists()) {");
+    lines.add("      wrapper.jarFile = new File('" + StringUtil.escapeBackSlashes(jarFile) + "')");
+    lines.add("      wrapper.scriptFile = new File('" + StringUtil.escapeBackSlashes(scriptFile) + "')");
+    lines.add("    }");
+    if (gradleVersion != null) {
+      lines.add("    wrapper.gradleVersion = '" + gradleVersion.getVersion() + "'");
+    }
+    lines.add("    wrapper.doLast {");
+    lines.add("      def propertiesFile = new File('" + StringUtil.escapeBackSlashes(propertiesFile) + "')");
+    lines.add("      propertiesFile.write wrapper.propertiesFile.getCanonicalPath()");
+    lines.add("    }");
+    lines.add("  }");
+    lines.add("}");
+    lines.add("");
+
+    File initScriptFile = writeToFileGradleInitScript(lines.toString(), "wrapper_init");
+    return initScriptFile.getCanonicalPath();
   }
 
   @NotNull
