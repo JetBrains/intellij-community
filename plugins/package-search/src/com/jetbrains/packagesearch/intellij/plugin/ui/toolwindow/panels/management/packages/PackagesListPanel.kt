@@ -2,11 +2,9 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
@@ -225,13 +223,12 @@ internal class PackagesListPanel(
         val targetModules: TargetModules,
         val knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
         val allKnownRepositories: KnownRepositories.All,
-        val tableData: List<PackagesTableItem<*>>,
+        val tableItems: PackagesTable.ViewModel.TableItems,
         val traceInfo: TraceInfo,
         val searchQuery: String
     )
 
     override suspend fun display(viewModel: ViewModel) = withContext(Dispatchers.AppUI) {
-
         searchTextField.setTextWithoutFiringListeners(viewModel.searchQuery)
         onlyStableCheckBox.isSelected = viewModel.filterOptions.onlyStable
         onlyKotlinMpCheckBox.isSelected = viewModel.filterOptions.onlyKotlinMultiplatform
@@ -251,7 +248,7 @@ internal class PackagesListPanel(
 
         packagesTable.display(
             PackagesTable.ViewModel(
-                viewModel.tableData,
+                viewModel.tableItems,
                 viewModel.filterOptions.onlyStable,
                 viewModel.targetModules,
                 viewModel.knownRepositoriesInTargetModules,

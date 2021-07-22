@@ -13,17 +13,18 @@ import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 internal fun computePackagesTableItems(
     project: Project,
     packages: List<PackageModel>,
+    selectedPackageModel: SelectedPackageModel<*>?,
     onlyStable: Boolean,
     targetModules: TargetModules,
     traceInfo: TraceInfo
-): List<PackagesTableItem<*>> {
+): PackagesTable.ViewModel.TableItems {
     logDebug(traceInfo, "PackagesTable#computeDisplayItems()") { "Creating item models for ${packages.size} item(s)" }
 
     if (targetModules is TargetModules.None) {
         logDebug(traceInfo, "PackagesTable#computeDisplayItems()") {
             "Current target modules is None, no items models to compute"
         }
-        return emptyList()
+        return PackagesTable.ViewModel.TableItems.EMPTY
     }
     logDebug(traceInfo, "PackagesTable#computeDisplayItems()") {
         "Current target modules value: ${targetModules.javaClass.simpleName} " +
@@ -42,7 +43,7 @@ internal fun computePackagesTableItems(
         PackageScope.Missing
     }
 
-    return packages.map { packageModel ->
+    val items = packages.map { packageModel ->
         when (packageModel) {
             is PackageModel.Installed -> {
                 val installedScopes = packageModel.declaredScopes(modules)
@@ -55,6 +56,34 @@ internal fun computePackagesTableItems(
             }
         }
     }
+    val selectedItemIndex = findItemToSelect(items, selectedPackageModel)
+    return PackagesTable.ViewModel.TableItems(items, indexToSelect = selectedItemIndex)
+}
+
+private fun findItemToSelect(
+    items: List<PackagesTableItem<out PackageModel>>,
+    selectedPackageModel: SelectedPackageModel<*>?
+): Int? {
+    if (selectedPackageModel == null) return null
+
+    // Item index -> likelihood [0-10)
+    val selectionCandidates = mutableMapOf<Int, Int>()
+
+    for ((index, item) in items.withIndex()) {
+        when {
+            item.packageModel == selectedPackageModel.packageModel -> selectionCandidates += (index to 9)
+            item.packageModel.identifier == selectedPackageModel.packageModel.identifier
+                && item.selectedPackageModel.selectedScope == selectedPackageModel.selectedScope -> selectionCandidates += (index to 7)
+            item.packageModel.identifier == selectedPackageModel.packageModel.identifier
+                && item.selectedPackageModel.selectedVersion == selectedPackageModel.selectedVersion
+                && item.selectedPackageModel.selectedScope == selectedPackageModel.selectedScope -> selectionCandidates += (index to 7)
+            item.packageModel.identifier == selectedPackageModel.packageModel.identifier
+                && item.selectedPackageModel.selectedVersion == selectedPackageModel.selectedVersion -> selectionCandidates += (index to 7)
+            item.packageModel.identifier == selectedPackageModel.packageModel.identifier -> selectionCandidates += (index to 6)
+        }
+    }
+
+    return selectionCandidates.entries.maxByOrNull { it.value }?.key
 }
 
 private fun PackageModel.Installed.declaredScopes(modules: List<ModuleModel>): List<PackageScope> =

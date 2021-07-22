@@ -246,20 +246,32 @@ internal class PackagesTable(
         tableModel.columns[column].getEditor(tableModel.items[row])
 
     internal data class ViewModel(
-        val displayItems: List<PackagesTableItem<*>>,
+        val items: TableItems,
         val onlyStable: Boolean,
         val targetModules: TargetModules,
         val knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
         val allKnownRepositories: KnownRepositories.All,
         val traceInfo: TraceInfo
-    )
+    ) {
+
+        data class TableItems(
+            val items: List<PackagesTableItem<*>>,
+            val indexToSelect: Int?
+        ) : List<PackagesTableItem<*>> by items {
+
+            companion object {
+
+                val EMPTY = TableItems(items = emptyList(), indexToSelect = null)
+            }
+        }
+    }
 
     override suspend fun display(viewModel: ViewModel) = withContext(Dispatchers.AppUI) {
         knownRepositoriesInTargetModules = viewModel.knownRepositoriesInTargetModules
         allKnownRepositories = viewModel.allKnownRepositories
         targetModules = viewModel.targetModules
 
-        logDebug(viewModel.traceInfo, "PackagesTable#displayData()") { "Displaying ${viewModel.displayItems.size} item(s)" }
+        logDebug(viewModel.traceInfo, "PackagesTable#displayData()") { "Displaying ${viewModel.items.size} item(s)" }
 
         // We need to update those immediately before setting the items, on EDT, to avoid timing issues
         // where the target modules or only stable flags get updated after the items data change, thus
@@ -267,11 +279,11 @@ internal class PackagesTable(
         versionColumn.updateData(viewModel.onlyStable, viewModel.targetModules)
         actionsColumn.updateData(viewModel.onlyStable, viewModel.targetModules, knownRepositoriesInTargetModules, allKnownRepositories)
 
-        val previouslySelectedIdentifier = selectedPackage?.packageModel?.identifier
+        val previouslySelectedPackage = selectedPackage?.packageModel?.identifier
         selectionModel.removeListSelectionListener(listSelectionListener)
-        tableModel.items = viewModel.displayItems
+        tableModel.items = viewModel.items
 
-        if (viewModel.displayItems.isEmpty() || previouslySelectedIdentifier == null) {
+        if (viewModel.items.isEmpty() || previouslySelectedPackage == null) {
             selectionModel.addListSelectionListener(listSelectionListener)
             onItemSelectionChanged(null)
             return@withContext
@@ -279,19 +291,10 @@ internal class PackagesTable(
 
         autosizeColumnsAt(autosizingColumnsIndices)
 
-        var indexToSelect: Int? = null
-
-        // TODO factor out with a lambda
-        for ((index, item) in viewModel.displayItems.withIndex()) {
-            if (item.packageModel.identifier == previouslySelectedIdentifier) {
-                logDebug(viewModel.traceInfo, "PackagesTable#displayData()") { "Found previously selected package at index $index" }
-                indexToSelect = index
-            }
-        }
-
         selectionModel.addListSelectionListener(listSelectionListener)
-        if (indexToSelect != null) {
-            selectedIndex = indexToSelect
+
+        if (viewModel.items.indexToSelect != null) {
+            selectedIndex = viewModel.items.indexToSelect
         } else {
             logDebug(viewModel.traceInfo, "PackagesTable#displayData()") { "Previous selection not available anymore, clearing..." }
         }
