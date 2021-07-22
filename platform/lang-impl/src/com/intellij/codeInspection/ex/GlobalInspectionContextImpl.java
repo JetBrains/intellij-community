@@ -484,6 +484,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
             getEventPublisher(),
             toolWrapper,
             GLOBAL_SIMPLE,
+            getProject(),
             () -> {
               tool.checkFile(file, inspectionManager, holder, this, problemDescriptionProcessor);
               return -1;
@@ -616,6 +617,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
               reportWhenActivityFinished(
                 eventPublisher,
                 InspectListener.ActivityKind.REFERENCE_SEARCH,
+                getProject(),
                 () -> {
                   ((RefManagerImpl)getRefManager()).findAllDeclarations();
                 });
@@ -630,6 +632,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
               eventPublisher,
               toolWrapper,
               GLOBAL,
+              getProject(),
               () -> {
                 tool.runInspection(scopeForState, inspectionManager, this, toolPresentation);
                 return -1;
@@ -659,6 +662,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     reportWhenActivityFinished(
       eventPublisher,
       InspectListener.ActivityKind.GLOBAL_POST_RUN_ACTIVITIES,
+      getProject(),
       () -> {
         processPostRunActivities(needRepeatSearchRequest);
       });

@@ -2,11 +2,12 @@
 package com.intellij.codeInspection.ex
 
 import java.util.concurrent.Callable
-import java.util.concurrent.atomic.AtomicInteger
+import com.intellij.openapi.project.Project
 
 fun reportWhenInspectionFinished(inspectListener: InspectListener,
                                  toolWrapper: InspectionToolWrapper<*, *>,
                                  kind: InspectListener.InspectionKind,
+                                 project: Project,
                                  inspectAction: Callable<Int>) {
   val start = System.currentTimeMillis()
   var problemsCount = -1
@@ -14,16 +15,20 @@ fun reportWhenInspectionFinished(inspectListener: InspectListener,
     problemsCount = inspectAction.call()
   }
   finally {
-    inspectListener.inspectionFinished(System.currentTimeMillis() - start, Thread.currentThread().id, problemsCount, toolWrapper, kind)
+    inspectListener.inspectionFinished(System.currentTimeMillis() - start, Thread.currentThread().id, problemsCount, toolWrapper,
+                                       kind, project)
   }
 }
 
-fun reportWhenActivityFinished(inspectListener: InspectListener, activityKind: InspectListener.ActivityKind, activity: Runnable) {
+fun reportWhenActivityFinished(inspectListener: InspectListener,
+                               activityKind: InspectListener.ActivityKind,
+                               project: Project,
+                               activity: Runnable) {
   val start = System.currentTimeMillis()
   try {
     activity.run()
   }
   finally {
-    inspectListener.activityFinished(System.currentTimeMillis() - start, Thread.currentThread().id, activityKind)
+    inspectListener.activityFinished(System.currentTimeMillis() - start, Thread.currentThread().id, activityKind, project)
   }
 }
