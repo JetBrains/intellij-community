@@ -147,7 +147,7 @@ class ArtifactModifiableModelBridge(
     )
 
     val persistentId = artifactEntity.persistentId()
-    val modifiableArtifact = ArtifactBridge(persistentId, versionedOnBuilder, project, eventDispatcher)
+    val modifiableArtifact = ArtifactBridge(persistentId, versionedOnBuilder, project, eventDispatcher, null)
     modifiableToOriginal[modifiableArtifact] = modifiableArtifact
     diff.mutableArtifactsMap.addMapping(artifactEntity, modifiableArtifact)
 
@@ -185,7 +185,7 @@ class ArtifactModifiableModelBridge(
     val existingModifiableArtifact = modifiableToOriginal.getKeysByValue(artifact)?.singleOrNull()
     if (existingModifiableArtifact != null) return existingModifiableArtifact
 
-    val modifiableArtifact = ArtifactBridge(artifactId, versionedOnBuilder, project, eventDispatcher)
+    val modifiableArtifact = ArtifactBridge(artifactId, versionedOnBuilder, project, eventDispatcher, artifact)
     modifiableToOriginal[modifiableArtifact] = artifact
     eventDispatcher.multicaster.artifactChanged(modifiableArtifact, artifact.name)
     return modifiableArtifact

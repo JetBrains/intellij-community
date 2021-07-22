@@ -7,6 +7,7 @@ import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import org.jetbrains.annotations.NotNull;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertNotEquals;
 
 public class ArtifactsModelTest extends ArtifactsTestCase {
   public void testAddArtifact() {
@@ -143,6 +144,24 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
     commit(model);
 
     assertTrue(newModifiableArtifact.isBuildOnMake());
+  }
+
+  public void testReplaceArtifactWithCheckingModifiableArtifactData() {
+    // This test checks if the recreation of the artifact with the same name doesn't replace the new artifact with the new one
+    Artifact artifact = addArtifact("A");
+    assertSame(artifact, assertOneElement(getArtifacts()));
+    final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+    // Just create a modifiable artifact
+    ModifiableArtifact newArtifact = model.getOrCreateModifiableArtifact(artifact);
+    model.removeArtifact(artifact);
+    ModifiableArtifact newModifiableArtifact = model.addArtifact("A", PlainArtifactType.getInstance());
+    newModifiableArtifact.setBuildOnMake(true);
+    newModifiableArtifact.setOutputPath("B");
+    commit(model);
+    assertEquals("B", newModifiableArtifact.getOutputPath());
+    assertTrue(newModifiableArtifact.isBuildOnMake());
+    assertFalse(newArtifact.isBuildOnMake());
+    assertNotEquals("B", newArtifact.getOutputPath());
   }
 
   private Artifact[] getArtifacts() {

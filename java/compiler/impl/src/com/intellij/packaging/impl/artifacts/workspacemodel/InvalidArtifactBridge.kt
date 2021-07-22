@@ -17,6 +17,6 @@ class InvalidArtifactBridge(
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   private val _errorMessage: String,
-) : InvalidArtifact, ArtifactBridge(_artifactId, entityStorage, project, eventDispatcher) {
+) : InvalidArtifact, ArtifactBridge(_artifactId, entityStorage, project, eventDispatcher, null) {
   override fun getErrorMessage(): String = _errorMessage
 }

@@ -29,6 +29,7 @@ open class ArtifactBridge(
   var entityStorage: VersionedEntityStorage,
   val project: Project,
   val eventDispatcher: EventDispatcher<ArtifactListener>?,
+  val originalArtifact: ArtifactBridge?,
 ) : ModifiableArtifact, UserDataHolderBase() {
 
   init {
@@ -42,7 +43,10 @@ open class ArtifactBridge(
           // In this case two artifact bridges exists with the same ArtifactId: one for removed artifact and one for newly created
           // We should make sure that we "disable" removed artifact bridge
           if (event.storageAfter.resolve(artifactId) != null
-              && event.storageBefore.artifactsMap.getDataByEntity(it.entity) != this@ArtifactBridge) return@forEach
+              && event.storageBefore.artifactsMap.getDataByEntity(it.entity) != this@ArtifactBridge
+              && event.storageBefore.artifactsMap.getDataByEntity(it.entity) != originalArtifact) {
+            return@forEach
+          }
 
           entityStorage = VersionedEntityStorageOnStorage(event.storageBefore)
           assert(entityStorage.current.resolve(artifactId) != null) { "Cannot resolve artifact $artifactId." }
