@@ -71,6 +71,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/annotations/annotationsFromPropertyAccessors.java");
         }
 
+        @TestMetadata("annotationsOnAnnotationMethod.java")
+        public void testAnnotationsOnAnnotationMethod() throws Exception {
+            runTest("testData/newJ2k/annotations/annotationsOnAnnotationMethod.java");
+        }
+
         @TestMetadata("java9Deprecated.java")
         public void testJava9Deprecated() throws Exception {
             runTest("testData/newJ2k/annotations/java9Deprecated.java");
@@ -109,6 +114,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("modifiersToAnnotationsFromPropertyAccessors.java")
         public void testModifiersToAnnotationsFromPropertyAccessors() throws Exception {
             runTest("testData/newJ2k/annotations/modifiersToAnnotationsFromPropertyAccessors.java");
+        }
+
+        @TestMetadata("nullabilityAnnotationOnAnnotationMethod.java")
+        public void testNullabilityAnnotationOnAnnotationMethod() throws Exception {
+            runTest("testData/newJ2k/annotations/nullabilityAnnotationOnAnnotationMethod.java");
         }
 
         @TestMetadata("primaryConstructorAnnotation.java")

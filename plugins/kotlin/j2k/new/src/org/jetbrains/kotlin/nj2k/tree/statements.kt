@@ -170,6 +170,7 @@ class JKJavaAnnotationMethod(
     returnType: JKTypeElement,
     name: JKNameIdentifier,
     defaultValue: JKAnnotationMemberValue,
+    annotationList: JKAnnotationList,
     otherModifierElements: List<JKOtherModifierElement>,
     visibilityElement: JKVisibilityModifierElement,
     modalityElement: JKModalityModifierElement
@@ -180,7 +181,7 @@ class JKJavaAnnotationMethod(
     var defaultValue: JKAnnotationMemberValue by child(defaultValue)
     override var block: JKBlock by child(JKBodyStub)
     override var typeParameterList: JKTypeParameterList by child(JKTypeParameterList())
-    override var annotationList: JKAnnotationList by child(JKAnnotationList())
+    override var annotationList: JKAnnotationList by child(annotationList)
     override var otherModifierElements by children(otherModifierElements)
     override var visibilityElement by child(visibilityElement)
     override var modalityElement by child(modalityElement)

@@ -833,6 +833,7 @@ class JavaToJKTreeBuilder constructor(
                         ?: JKNoType),
                 nameIdentifier.toJK(),
                 defaultValue?.toJK() ?: JKStubExpression(),
+                annotationList(this),
                 otherModifiers(),
                 visibility(),
                 modality()

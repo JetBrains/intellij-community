@@ -52,7 +52,8 @@ class AnnotationClassConversion(context: NewJ2kConverterContext) : RecursiveAppl
                 && initializer !is JKStubExpression
             ) {
                 JKKtAnnotationArrayInitializerExpression(initializer)
-            } else initializer
+            } else initializer,
+            annotationList = this::annotationList.detached(),
         ).also { parameter ->
             if (trailingComments.any { it is JKComment }) {
                 parameter.trailingComments += trailingComments
