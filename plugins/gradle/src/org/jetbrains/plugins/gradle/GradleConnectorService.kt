@@ -245,7 +245,7 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
       }
       // do not spawn gradle daemons during test execution
       val app = ApplicationManager.getApplication()
-      val ttl = if (app != null && app.isUnitTestMode) 10000 else connectorParams.ttlMs ?: -1
+      val ttl = if (app != null && app.isUnitTestMode) 100_000 else connectorParams.ttlMs ?: -1
       if (ttl > 0 && connector is DefaultGradleConnector) {
         connector.daemonMaxIdleTime(ttl, TimeUnit.MILLISECONDS)
       }
