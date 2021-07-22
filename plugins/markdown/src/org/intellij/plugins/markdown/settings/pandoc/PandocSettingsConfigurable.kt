@@ -101,7 +101,13 @@ class PandocSettingsConfigurable :
 
     pandocVersionField.text = when {
       isCanceled -> MarkdownBundle.message("markdown.settings.pandoc.executable.cancel.msg")
-      foundVersion && isExecExist -> MarkdownBundle.message("markdown.settings.pandoc.executable.success.msg", pandocVersion)
+      foundVersion && isExecExist -> {
+        if (pandocPath.textField.text.isEmpty()) {
+          pandocPath.textField.text = executable
+        }
+
+        MarkdownBundle.message("markdown.settings.pandoc.executable.success.msg", pandocVersion)
+      }
       foundVersion && !isExecExist -> MarkdownBundle.message("markdown.settings.pandoc.executable.default.success.msg", pandocVersion)
       !foundVersion && isExecExist -> MarkdownBundle.message("markdown.settings.pandoc.executable.error.msg", executable)
       else -> MarkdownBundle.message("markdown.settings.pandoc.executable.default.error.msg")
