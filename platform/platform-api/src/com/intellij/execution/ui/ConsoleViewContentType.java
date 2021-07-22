@@ -28,7 +28,7 @@ public class ConsoleViewContentType {
   private final TextAttributes myTextAttributes;
   private final TextAttributesKey myTextAttributesKey;
 
-  private static final Map<Key, ConsoleViewContentType> ourRegisteredTypes = new HashMap<>();
+  private static final Map<Key<?>, ConsoleViewContentType> ourRegisteredTypes = new HashMap<>();
 
   public static final ColorKey CONSOLE_BACKGROUND_KEY = ColorKey.createColorKey("CONSOLE_BACKGROUND_KEY");
 
@@ -101,18 +101,18 @@ public class ConsoleViewContentType {
   }
 
   @NotNull
-  public static ConsoleViewContentType registerNewConsoleViewType(@NotNull Key key, @NotNull TextAttributesKey attributesKey) {
+  public static ConsoleViewContentType registerNewConsoleViewType(@NotNull Key<?> key, @NotNull TextAttributesKey attributesKey) {
     ConsoleViewContentType type = new ConsoleViewContentType(key.toString(), attributesKey);
     registerNewConsoleViewType(key, type);
     return type;
   }
 
-  public static synchronized void registerNewConsoleViewType(@NotNull Key processOutputType, @NotNull ConsoleViewContentType attributes) {
+  public static synchronized void registerNewConsoleViewType(@NotNull Key<?> processOutputType, @NotNull ConsoleViewContentType attributes) {
     ourRegisteredTypes.put(processOutputType, attributes);
   }
 
   @NotNull
-  public static synchronized ConsoleViewContentType getConsoleViewType(@NotNull Key processOutputType) {
+  public static synchronized ConsoleViewContentType getConsoleViewType(@NotNull Key<?> processOutputType) {
     ConsoleViewContentType type = ourRegisteredTypes.get(processOutputType);
     if (type != null) {
       return type;
