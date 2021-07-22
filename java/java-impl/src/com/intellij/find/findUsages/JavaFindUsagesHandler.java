@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
@@ -86,7 +86,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
     elementsToSearch.add(parameter);
     int idx = ReadAction.compute(() -> method.getParameterList().getParameterIndex(parameter));
     for (PsiMethod override : overrides) {
-      final PsiParameter[] parameters = override.getParameterList().getParameters();
+      final PsiParameter[] parameters = ReadAction.compute(() -> override.getParameterList().getParameters());
       if (idx < parameters.length) {
         elementsToSearch.add(parameters[idx]);
       }
