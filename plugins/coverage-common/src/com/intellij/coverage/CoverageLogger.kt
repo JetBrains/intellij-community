@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -13,7 +13,7 @@ enum class RunnerType {
 
 class CoverageLogger : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("coverage", 3)
+    private val GROUP = EventLogGroup("coverage", 4)
 
     private val RUNNER_NAME = EventFields.String("runner", listOf("emma", "jacoco", "idea"))
 
@@ -55,7 +55,7 @@ class CoverageLogger : CounterUsagesCollector() {
     fun logReportBuilding(project: Project?, timeMs: Long, annotatedClasses: Int, loadedClasses: Int) =
       REPORT_BUILDING.log(project, timeMs, roundClasses(annotatedClasses), roundClasses(loadedClasses))
 
-    private fun roundClasses(classes: Int) = if (classes == 0) 0 else StatisticsUtil.getNextPowerOfTwo(classes)
+    private fun roundClasses(classes: Int) = StatisticsUtil.roundToPowerOfTwo(classes)
   }
 
   override fun getGroup() = GROUP

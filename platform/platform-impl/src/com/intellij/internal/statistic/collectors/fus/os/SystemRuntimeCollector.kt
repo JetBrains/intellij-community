@@ -38,13 +38,13 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
 
     var totalSwapSize = (osMxBean.totalSwapSpaceSize.toDouble() / (1 shl 30)).roundToInt()
     totalSwapSize = min(totalSwapSize, totalPhysicalMemory)
-    result.add(SWAP_SIZE.metric(if (totalSwapSize > 0) StatisticsUtil.getNextPowerOfTwo(totalSwapSize) else 0))
+    result.add(SWAP_SIZE.metric(StatisticsUtil.roundToPowerOfTwo(totalSwapSize)))
 
     try {
       val totalSpace = PathManager.getIndexRoot().toFile().totalSpace
       if (totalSpace > 0L) {
         val indexDirPartitionSize = min(1 shl 14, // currently max available consumer hard drive size is around 16 Tb
-                                        StatisticsUtil.getNextPowerOfTwo((totalSpace shr 30).toInt()))
+                                        StatisticsUtil.roundToPowerOfTwo((totalSpace shr 30).toInt()))
         val indexDirPartitionFreeSpace =
           ((PathManager.getIndexRoot().toFile().usableSpace.toDouble() / totalSpace) * 100).toInt()
         result.add(DISK_SIZE.metric(indexDirPartitionSize, indexDirPartitionFreeSpace))
@@ -111,7 +111,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       "splash", "nosplash"
     )
 
-    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 12)
+    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 13)
     private val DEBUG_AGENT: EventId1<Boolean> = GROUP.registerEvent("debug.agent", EventFields.Enabled)
     private val CORES: EventId1<Int> = GROUP.registerEvent("cores", EventFields.Int("value"))
     private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent("memory.size", EventFields.Int("gigabytes"))

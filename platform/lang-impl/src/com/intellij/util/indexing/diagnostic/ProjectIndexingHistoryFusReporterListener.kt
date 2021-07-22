@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -42,7 +42,7 @@ class ProjectIndexingHistoryFusReporterListener : IndexDiagnosticDumper.ProjectI
 }
 
 object ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("indexing.statistics", 1)
+  private val GROUP = EventLogGroup("indexing.statistics", 2)
 
   override fun getGroup() = GROUP
 
@@ -101,7 +101,7 @@ object ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
       this.indexingTime.with(indexingTime),
       this.scanningTime.with(scanningTime),
       this.numberOfFileProviders.with(numberOfFileProviders),
-      this.numberOfScannedFiles.with(StatisticsUtil.getNextPowerOfTwo(numberOfScannedFiles)),
+      this.numberOfScannedFiles.with(StatisticsUtil.roundToPowerOfTwo(numberOfScannedFiles)),
       this.numberOfFilesIndexedByExtensionsDuringScan.with(numberOfFilesIndexedByExtensionsDuringScan),
       this.numberOfFilesIndexedByExtensionsWithLoadingContent.with(numberOfFilesIndexedByExtensionsWithLoadingContent),
       this.numberOfFilesIndexedWithLoadingContent.with(numberOfFilesIndexedWithLoadingContent),
