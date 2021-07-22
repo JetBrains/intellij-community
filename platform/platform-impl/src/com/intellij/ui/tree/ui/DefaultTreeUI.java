@@ -11,11 +11,13 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LoadingNode;
 import com.intellij.ui.hover.TreeHoverListener;
+import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.ui.render.RenderingHelper;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -265,12 +267,19 @@ public final class DefaultTreeUI extends BasicTreeUI {
                 DRAW.paint((Graphics2D)g, helper.getX() + 1, bounds.y + 1, helper.getWidth() - 2, bounds.height - 2, 0);
               }
             }
+            JTree.DropLocation dropLocation = tree.getDropLocation();
+            if (dropLocation != null && g instanceof Graphics2D && path.equals(dropLocation.getPath())) {
+              // paint a dragged tree path in accordance to Highlighters.RectangleHighlighter
+              g.setColor(JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND);
+              RectanglePainter.FILL.paint((Graphics2D)g, helper.getX(), bounds.y, helper.getWidth(), bounds.height, 0);
+              g.setColor(JBUI.CurrentTheme.DragAndDrop.BORDER_COLOR);
+              RectanglePainter.DRAW.paint((Graphics2D)g, helper.getX(), bounds.y, helper.getWidth(), bounds.height, 0);
+            }
           }
           if ((bounds.y + bounds.height) >= maxPaintY) break;
           path = cache.getPathForRow(++row);
         }
       }
-      paintDropLine(g);
     }
     finally {
       g.dispose();
