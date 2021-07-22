@@ -11,8 +11,7 @@
     <!-- TODO: create normal change note list -->
     <change-notes><![CDATA[
         <ul>
-            <li>Annotate and provide quick-fix for trailing commas in inline tables</li>
-            <li>Restore missing icon for TOML files</li>
+            <li>Add intention for expanding inline tables into full ones</li>
         </ul>
     ]]>
     </change-notes>

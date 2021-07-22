@@ -8,6 +8,7 @@ package org.toml.lang.psi
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiParserFacade
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.LocalTimeCounter
 
@@ -30,6 +31,11 @@ class TomlPsiFactory(private val project: Project, private val markGenerated: Bo
     // Copied from org.rust.lang.core.psi.ext as it's not available here
     private inline fun <reified T : PsiElement> PsiElement.descendantOfTypeStrict(): T? =
         PsiTreeUtil.findChildOfType(this, T::class.java, /* strict */ true)
+
+    fun createNewline(): PsiElement = createWhitespace("\n")
+
+    fun createWhitespace(ws: String): PsiElement =
+        PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(ws)
 
     fun createLiteral(value: String): TomlLiteral =
         // If you're creating a string value, like `serde = "1.0.90"` make sure that the `value` parameter actually

@@ -41,5 +41,10 @@
                          displayName="Unresolved reference"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.toml.ide.inspections.TomlUnresolvedReferenceInspection"/>
+
+        <intentionAction>
+            <className>org.toml.ide.intentions.TomlExpandInlineTableIntention</className>
+            <category>TOML</category>
+        </intentionAction>
     </extensions>
 </idea-plugin>
