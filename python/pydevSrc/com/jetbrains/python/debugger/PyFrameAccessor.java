@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
@@ -24,6 +25,11 @@ import java.util.List;
 public interface PyFrameAccessor {
   @Nullable
   default Project getProject() { return null; }
+
+  @Nullable
+  default XDebuggerTreeNodeHyperlink getUserTypeRenderersLink(@NotNull String typeRendererId) {
+    return null;
+  }
 
   PyDebugValue evaluate(final String expression, final boolean execute, boolean doTrunc) throws PyDebuggerException;
 
@@ -68,6 +74,8 @@ public interface PyFrameAccessor {
   }
 
   default void setCurrentRootNode(@NotNull XCompositeNode node) {}
+
+  default void setUserTypeRenderersSettings() {}
 
   default boolean isSimplifiedView() {
     return false;

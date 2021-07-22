@@ -36,7 +36,9 @@ import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValueNode, XCompositeNode, XValueNodePresentationConfigurator.ConfigurableXValueNode, RestorableStateNode {
   public static final Comparator<XValueNodeImpl> COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName());
@@ -48,6 +50,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   @Nullable
   private String myRawValue;
   private XFullValueEvaluator myFullValueEvaluator;
+  private final @NotNull List<@NotNull XDebuggerTreeNodeHyperlink> myAdditionalHyperLinks = new ArrayList<>();
   private boolean myChanged;
   private XValuePresentation myValuePresentation;
 
@@ -169,6 +172,14 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     });
   }
 
+  @Override
+  public void addAdditionalHyperlink(@NotNull XDebuggerTreeNodeHyperlink link) {
+    invokeNodeUpdate(() -> {
+      myAdditionalHyperLinks.add(link);
+      fireNodeChanged();
+    });
+  }
+
   public void clearFullValueEvaluator() {
     myFullValueEvaluator = null;
   }
@@ -258,6 +269,11 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       };
     }
     return null;
+  }
+
+  @Override
+  public @NotNull List<@NotNull XDebuggerTreeNodeHyperlink> getAdditionalLinks() {
+    return myAdditionalHyperLinks;
   }
 
   @Override

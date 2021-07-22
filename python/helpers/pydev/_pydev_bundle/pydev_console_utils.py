@@ -14,6 +14,8 @@ from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_comm import InternalDataViewerAction
 from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
 from _pydevd_bundle.pydevd_tables import exec_table_command
+from _pydevd_bundle.pydevd_user_type_renderers import parse_set_type_renderers_message
+from _pydevd_bundle.pydevd_user_type_renderers_utils import is_temp_var, get_expression_from_temp_var
 from pydev_console.pydev_protocol import CompletionOption, CompletionOptionType, \
     PythonUnhandledException, PythonTableException
 
@@ -99,6 +101,7 @@ class BaseInterpreterInterface(BaseCodeExecutor):
         self.mainThread = mainThread
         self.banner_shown = False
         self.connect_status_queue = connect_status_queue
+        self.user_type_renderers = {}
 
         self.rpc_client = rpc_client
         self._first_command_executed = False
@@ -186,15 +189,17 @@ class BaseInterpreterInterface(BaseCodeExecutor):
     def getFrame(self):
         try:
             hidden_ns = self.get_ipython_hidden_vars_dict()
-            return pydevd_thrift.frame_vars_to_struct(self.get_namespace(), hidden_ns)
+            return pydevd_thrift.frame_vars_to_struct(self.get_namespace(), hidden_ns, self.user_type_renderers)
         except:
             traceback.print_exc()
             raise PythonUnhandledException(traceback.format_exc())
 
     def getVariable(self, attributes):
         try:
+            namespace = self.get_namespace()
+
             debug_values = []
-            val_dict = pydevd_vars.resolve_compound_var_object_fields(self.get_namespace(), attributes)
+            val_dict = pydevd_vars.resolve_compound_var_object_fields(namespace, attributes, self.user_type_renderers)
             if val_dict is None:
                 val_dict = {}
 
@@ -202,7 +207,7 @@ class BaseInterpreterInterface(BaseCodeExecutor):
             for k in keys:
                 val = val_dict[k]
                 evaluate_full_value = pydevd_thrift.should_evaluate_full_value(val)
-                debug_values.append(pydevd_thrift.var_to_struct(val, k, evaluate_full_value=evaluate_full_value))
+                debug_values.append(pydevd_thrift.var_to_struct(val, k, evaluate_full_value=evaluate_full_value, user_type_renderers=self.user_type_renderers))
 
             return debug_values
         except:
@@ -218,6 +223,15 @@ class BaseInterpreterInterface(BaseCodeExecutor):
             traceback.print_exc()
             raise PythonUnhandledException(traceback.format_exc())
 
+    def setUserTypeRenderers(self, message):
+        try:
+            renderers = parse_set_type_renderers_message(message)
+            self.user_type_renderers = renderers
+            return True
+        except:
+            traceback.print_exc()
+            raise PythonUnhandledException(traceback.format_exc())
+
     def execDataViewerAction(self, varName, action, args):
         try:
             tmp_var = pydevd_vars.eval_in_context(varName, self.get_namespace(), self.get_namespace())
@@ -229,8 +243,9 @@ class BaseInterpreterInterface(BaseCodeExecutor):
     def evaluate(self, expression, do_trunc):
         # returns `DebugValue` of evaluated expression
         try:
-            result = pydevd_vars.eval_in_context(expression, self.get_namespace(), self.get_namespace())
-            return [pydevd_thrift.var_to_struct(result, expression, do_trim=do_trunc)]
+            namespace = self.get_namespace()
+            result = pydevd_vars.eval_in_context(expression, namespace, namespace)
+            return [pydevd_thrift.var_to_struct(result, expression, do_trim=do_trunc, user_type_renderers=self.user_type_renderers)]
         except:
             traceback.print_exc()
             raise PythonUnhandledException(traceback.format_exc())
@@ -292,13 +307,17 @@ class BaseInterpreterInterface(BaseCodeExecutor):
                     attrs = None
                 if name in frame_variables.keys():
                     var_object = pydevd_vars.resolve_var_object(frame_variables[name], attrs)
-                    var_objects.append((var_object, name))
+                elif is_temp_var(name):
+                    expr = get_expression_from_temp_var(name)
+                    var_object = pydevd_vars.eval_in_context(expr, frame_variables, frame_variables)
+                    var_object = pydevd_vars.resolve_var_object(var_object, attrs)
                 else:
                     var_object = pydevd_vars.eval_in_context(name, frame_variables, frame_variables)
-                    var_objects.append((var_object, name))
+
+                var_objects.append((var_object, name))
 
             from _pydev_bundle.pydev_console_commands import ThriftGetValueAsyncThreadConsole
-            t = ThriftGetValueAsyncThreadConsole(self.get_server(), seq, var_objects)
+            t = ThriftGetValueAsyncThreadConsole(self.get_server(), seq, var_objects, self.user_type_renderers)
             t.start()
         except:
             traceback.print_exc()

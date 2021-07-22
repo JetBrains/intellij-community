@@ -10,15 +10,22 @@ import com.jetbrains.python.debugger.ArrayChunk
 import com.jetbrains.python.debugger.ArrayChunkBuilder
 import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.PyFrameAccessor
+import com.jetbrains.python.debugger.pydev.GetVariableCommand
 
 fun parseVars(vars: List<DebugValue>, parent: PyDebugValue?, frameAccessor: PyFrameAccessor): XValueChildrenList {
   val list = XValueChildrenList(vars.size)
   for (debugValue in vars) {
-    val pyDebugValue = createPyDebugValue(debugValue, frameAccessor)
-    if (parent != null) {
-      pyDebugValue.parent = parent
+    if (GetVariableCommand.isTypeRenderersTempVarName(debugValue.name)) {
+      var pyDebugValue = createPyDebugValue(debugValue, frameAccessor)
+      pyDebugValue = GetVariableCommand.createTempTypeRenderersValue(pyDebugValue, frameAccessor)
+      list.add(pyDebugValue.name, pyDebugValue)
+    } else {
+      val pyDebugValue = createPyDebugValue(debugValue, frameAccessor)
+      if (parent != null) {
+        pyDebugValue.parent = parent
+      }
+      list.add(pyDebugValue.visibleName, pyDebugValue)
     }
-    list.add(pyDebugValue.visibleName, pyDebugValue)
   }
   return list
 }
@@ -26,7 +33,7 @@ fun parseVars(vars: List<DebugValue>, parent: PyDebugValue?, frameAccessor: PyFr
 fun createPyDebugValue(value: DebugValue, frameAccessor: PyFrameAccessor) =
   PyDebugValue(value.name, value.type, value.qualifier, value.value ?: "",
                value.isContainer, value.shape, value.isReturnedValue, value.isIPythonHidden, value.isErrorOnEval,
-               frameAccessor)
+               value.typeRendererId, frameAccessor)
 
 fun createArrayChunk(response: GetArrayResponse, frameAccessor: PyFrameAccessor): ArrayChunk {
   val result = ArrayChunkBuilder()
@@ -40,7 +47,7 @@ fun createArrayChunk(response: GetArrayResponse, frameAccessor: PyFrameAccessor)
   result.setType(response.type)
   result.setMax(response.max)
   result.setMin(response.min)
-  result.setValue(PyDebugValue(response.slice, null, null, null, false, null, false, false, false, frameAccessor))
+  result.setValue(PyDebugValue(response.slice, null, null, null, false, null, false, false, false, null, frameAccessor))
 
   // `parseArrayHeaderData()`
 

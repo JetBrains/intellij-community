@@ -414,6 +414,8 @@ class PyDB(object):
 
         self.breakpoints = {}
 
+        self.__user_type_renderers = {}
+
         # mtime to be raised when breakpoints change
         self.mtime = 0
 
@@ -924,6 +926,12 @@ class PyDB(object):
             self.break_on_caught_exceptions = cp
 
         return eb
+
+    def set_user_type_renderers(self, renderers):
+        self.__user_type_renderers = renderers
+
+    def get_user_type_renderers(self):
+        return self.__user_type_renderers
 
     def _mark_suspend(self, thread, stop_reason):
         info = set_additional_thread_info(thread)

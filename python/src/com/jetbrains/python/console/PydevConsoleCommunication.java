@@ -24,6 +24,7 @@ import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.protocol.*;
@@ -33,10 +34,13 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
 import com.jetbrains.python.debugger.pydev.GetVariableCommand;
+import com.jetbrains.python.debugger.pydev.SetUserTypeRenderersCommand;
 import com.jetbrains.python.debugger.pydev.TableCommandType;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
+import com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersHyperLink;
+import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings;
 import com.jetbrains.python.parsing.console.PythonConsoleData;
 import org.apache.thrift.TException;
 import org.jetbrains.annotations.NotNull;
@@ -761,6 +765,39 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     for (PyFrameListener listener : myFrameListeners) {
       listener.sessionStopped();
     }
+  }
+
+  @Override
+  public void setUserTypeRenderersSettings() {
+    if (!isCommunicationClosed()) {
+      try {
+        executeBackgroundTask(
+          () -> {
+            PyUserTypeRenderersSettings settings = PyUserTypeRenderersSettings.getInstance();
+            if (settings == null) {
+              return false;
+            }
+            List<PyUserTypeRenderer> renderers = settings.getApplicableRenderers();
+            if (renderers.isEmpty()) {
+              return false;
+            }
+            final String renderersMessage = SetUserTypeRenderersCommand.createMessage(renderers);
+            return getPythonConsoleBackendClient().setUserTypeRenderers(renderersMessage);
+          },
+          true,
+          createRuntimeMessage(PyBundle.message("console.setting.user.type.renderers")),
+          "Error in setUserTypeRenderersSettings():"
+        );
+      }
+      catch (PyDebuggerException e) {
+        // ignore
+      }
+    }
+  }
+
+  @Override
+  public @Nullable XDebuggerTreeNodeHyperlink getUserTypeRenderersLink(@NotNull String typeRendererId) {
+    return new ConfigureTypeRenderersHyperLink(typeRendererId, getProject());
   }
 
   public void setDebugCommunication(PythonDebugConsoleCommunication debugCommunication) {

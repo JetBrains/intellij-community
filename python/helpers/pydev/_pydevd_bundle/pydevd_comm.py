@@ -144,7 +144,7 @@ from _pydevd_bundle.pydevd_comm_constants import (
     CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION, CMD_THREAD_RESUME_SINGLE_NOTIFICATION,
     CMD_REDIRECT_OUTPUT, CMD_GET_NEXT_STATEMENT_TARGETS, CMD_SET_PROJECT_ROOTS, CMD_VERSION,
     CMD_RETURN, CMD_SET_PROTOCOL, CMD_ERROR, CMD_GET_SMART_STEP_INTO_VARIANTS, CMD_DATAVIEWER_ACTION,
-    CMD_TABLE_EXEC, CMD_INTERRUPT_DEBUG_CONSOLE)
+    CMD_TABLE_EXEC, CMD_INTERRUPT_DEBUG_CONSOLE, CMD_SET_USER_TYPE_RENDERERS)
 MAX_IO_MSG_SIZE = 1000  #if the io is too big, we'll not send all (could make the debugger too non-responsive)
 #this number can be changed if there's need to do so
 
@@ -1238,7 +1238,9 @@ class InternalGetVariable(InternalThreadCommand):
         try:
             xml = StringIO.StringIO()
             xml.write("<xml>")
-            _typeName, val_dict = pydevd_vars.resolve_compound_variable_fields(self.thread_id, self.frame_id, self.scope, self.attributes)
+
+            _typeName, val_dict = pydevd_vars.resolve_compound_variable_fields(self.thread_id, self.frame_id, self.scope, self.attributes, dbg.get_user_type_renderers())
+
             if val_dict is None:
                 val_dict = {}
 
@@ -1251,7 +1253,7 @@ class InternalGetVariable(InternalThreadCommand):
             for k in keys:
                 val = val_dict[k]
                 evaluate_full_value = pydevd_xml.should_evaluate_full_value(val)
-                xml.write(pydevd_xml.var_to_xml(val, k, evaluate_full_value=evaluate_full_value))
+                xml.write(pydevd_xml.var_to_xml(val, k, evaluate_full_value=evaluate_full_value, user_type_renderers=dbg.get_user_type_renderers()))
 
             xml.write("</xml>")
             cmd = dbg.cmd_factory.make_get_variable_message(self.sequence, xml.getvalue())
@@ -1443,7 +1445,7 @@ class InternalGetFrame(InternalThreadCommand):
             if frame is not None:
                 hidden_ns = pydevd_console_integration.get_ipython_hidden_vars()
                 xml = "<xml>"
-                xml += pydevd_xml.frame_vars_to_xml(frame.f_locals, hidden_ns)
+                xml += pydevd_xml.frame_vars_to_xml(frame.f_locals, hidden_ns, dbg.get_user_type_renderers())
                 del frame
                 xml += "</xml>"
                 cmd = dbg.cmd_factory.make_get_frame_message(self.sequence, xml)
@@ -1556,7 +1558,7 @@ class InternalEvaluateExpression(InternalThreadCommand):
             if self.temp_name != "":
                 pydevd_vars.change_attr_expression(self.thread_id, self.frame_id, self.temp_name, self.expression, dbg, result)
             xml = "<xml>"
-            xml += pydevd_xml.var_to_xml(result, self.expression, self.doTrim)
+            xml += pydevd_xml.var_to_xml(result, self.expression, self.doTrim, user_type_renderers=dbg.get_user_type_renderers())
             xml += "</xml>"
             cmd = dbg.cmd_factory.make_evaluate_expression_message(self.sequence, xml)
             dbg.writer.add_command(cmd)
@@ -1888,7 +1890,7 @@ class InternalLoadFullValue(InternalThreadCommand):
                     var_obj = pydevd_vars.getVariable(self.thread_id, self.frame_id, scope, attrs)
                     var_objects.append((var_obj, name))
 
-            t = GetValueAsyncThreadDebug(dbg, self.sequence, var_objects)
+            t = GetValueAsyncThreadDebug(dbg, self.sequence, var_objects, dbg.get_user_type_renderers())
             t.start()
         except:
             exc = get_exception_traceback_str()
@@ -1901,12 +1903,13 @@ class AbstractGetValueAsyncThread(PyDBDaemonThread):
     """
     Abstract class for a thread, which evaluates values for async variables
     """
-    def __init__(self, frame_accessor, seq, var_objects):
+    def __init__(self, frame_accessor, seq, var_objects, user_type_renderers=None):
         PyDBDaemonThread.__init__(self)
         self.frame_accessor = frame_accessor
         self.seq = seq
         self.var_objs = var_objects
         self.cancel_event = threading.Event()
+        self.user_type_renderers = user_type_renderers
 
     def send_result(self, xml):
         raise NotImplementedError()
@@ -1920,7 +1923,7 @@ class AbstractGetValueAsyncThread(PyDBDaemonThread):
             current_time = time.time()
             if current_time - start > ASYNC_EVAL_TIMEOUT_SEC or self.cancel_event.is_set():
                 break
-            xml.write(pydevd_xml.var_to_xml(var_obj, name, evaluate_full_value=True))
+            xml.write(pydevd_xml.var_to_xml(var_obj, name, evaluate_full_value=True, user_type_renderers=self.user_type_renderers))
         xml.write("</xml>")
         self.send_result(xml)
         xml.close()

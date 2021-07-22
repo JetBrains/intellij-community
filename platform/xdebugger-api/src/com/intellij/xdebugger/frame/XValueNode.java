@@ -66,4 +66,10 @@ public interface XValueNode extends Obsolescent {
    * @see #MAX_VALUE_LENGTH
    */
   void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator);
+
+  /**
+   * The ability to add an unlimited number of hyper links to the node
+   * @param link its use depends on the implementation of the interface (not used by default)
+   */
+  default void addAdditionalHyperlink(@NotNull XDebuggerTreeNodeHyperlink link) {}
 }

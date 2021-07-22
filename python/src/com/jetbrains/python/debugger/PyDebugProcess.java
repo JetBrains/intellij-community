@@ -69,6 +69,8 @@ import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoContext;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoHandler;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoVariant;
+import com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersHyperLink;
+import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
@@ -360,6 +362,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public void init() {
     getSession().rebuildViews();
     registerBreakpoints();
+    setUserTypeRenderersSettings();
     setShowReturnValues(PyDebuggerSettings.getInstance().isWatchReturnValues());
     setUnitTestDebuggingMode();
   }
@@ -474,6 +477,25 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     for (XBreakpoint<? extends ExceptionBreakpointProperties> bp : myRegisteredExceptionBreakpoints.values()) {
       addExceptionBreakpoint(bp);
     }
+  }
+
+  @Override
+  public void setUserTypeRenderersSettings() {
+    PyUserTypeRenderersSettings settings = PyUserTypeRenderersSettings.getInstance();
+    if (settings == null) {
+      return;
+    }
+    if (isConnected()) {
+      List<PyUserTypeRenderer> renderersList = settings.getApplicableRenderers();
+      if (!renderersList.isEmpty()) {
+        myDebugger.setUserTypeRenderers(renderersList);
+      }
+    }
+  }
+
+  @Override
+  public @Nullable XDebuggerTreeNodeHyperlink getUserTypeRenderersLink(@NotNull String typeRendererId) {
+    return new ConfigureTypeRenderersHyperLink(typeRendererId, getProject());
   }
 
   public void registerLineBreakpoints() {

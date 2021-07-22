@@ -8,6 +8,7 @@ from _pydev_bundle.pydev_imports import quote
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange, NUMPY_NUMERIC_TYPES, NUMPY_FLOATING_POINT_TYPES
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
+from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var, is_temp_var, get_expression_from_temp_var
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
 
 try:
@@ -259,7 +260,30 @@ def get_offset(attrs):
     return offset
 
 
-def resolve_compound_variable_fields(thread_id, frame_id, scope, attrs):
+def _resolve_default_variable_fields(var, resolver, offset):
+    return resolver.get_dictionary(VariableWithOffset(var, offset) if offset else var)
+
+
+def _resolve_custom_variable_fields(var, var_expr, resolver, offset, type_renderer, frame_info=None):
+    append_default_children, val_dict = type_renderer.evaluate_var_children(
+        var, var_expr
+    )
+
+    if frame_info is not None:
+        thread_id, frame_id = frame_info
+        type_renderer.save_temp_vars_as_frame_locals(val_dict, thread_id, frame_id)
+
+    if append_default_children:
+        default_val_dict = _resolve_default_variable_fields(var, resolver, offset)
+        if len(val_dict) == 0:
+            return default_val_dict
+        for (name, value) in default_val_dict.items():
+            val_dict[name] = value
+
+    return val_dict
+
+
+def resolve_compound_variable_fields(thread_id, frame_id, scope, attrs, user_type_renderers={}):
     """
     Resolve compound variable in debugger scopes by its name and attributes
 
@@ -268,6 +292,7 @@ def resolve_compound_variable_fields(thread_id, frame_id, scope, attrs):
     :param scope: can be BY_ID, EXPRESSION, GLOBAL, LOCAL, FRAME
     :param attrs: after reaching the proper scope, we have to get the attributes until we find
             the proper location (i.e.: obj\tattr1\tattr2)
+    :param user_type_renderers: a dictionary with user type renderers
     :return: a dictionary of variables's fields
 
     :note: PyCharm supports progressive loading of large collections and uses the `attrs`
@@ -281,9 +306,20 @@ def resolve_compound_variable_fields(thread_id, frame_id, scope, attrs):
 
     var = getVariable(thread_id, frame_id, scope, attrs)
 
+    var_expr = ".".join(attrs.split('\t'))
+
     try:
         _type, _typeName, resolver = get_type(var)
-        return _typeName, resolver.get_dictionary(VariableWithOffset(var, offset) if offset else var)
+
+        type_renderer = try_get_type_renderer_for_var(var, user_type_renderers)
+        if type_renderer is not None and offset == 0:
+            frame_info = (thread_id, frame_id)
+            return _typeName, _resolve_custom_variable_fields(
+                var, var_expr, resolver, offset, type_renderer, frame_info
+            )
+
+        return _typeName, _resolve_default_variable_fields(var, resolver, offset)
+
     except:
         sys.stderr.write('Error evaluating: thread_id: %s\nframe_id: %s\nscope: %s\nattrs: %s\n' % (
             thread_id, frame_id, scope, orig_attrs,))
@@ -308,27 +344,43 @@ def resolve_var_object(var, attrs):
     return var
 
 
-def resolve_compound_var_object_fields(var, attrs):
+def resolve_compound_var_object_fields(var, attrs, user_type_renderers={}):
     """
     Resolve compound variable by its object and attributes
 
     :param var: an object of variable
     :param attrs: a sequence of variable's attributes separated by \t (i.e.: obj\tattr1\tattr2)
+    :param user_type_renderers: a dictionary with user type renderers
     :return: a dictionary of variables's fields
     """
+    namespace = var
+
     offset = get_offset(attrs)
 
     attrs = attrs.split('\t', 1)[1] if offset else attrs
 
     attr_list = attrs.split('\t')
 
-    for k in attr_list:
-        type, _typeName, resolver = get_type(var)
-        var = resolver.resolve(var, k)
+    var_expr = ".".join(attr_list)
+
+    if is_temp_var(var_expr):
+        var_expr = get_expression_from_temp_var(var_expr)
+        var = eval_in_context(var_expr, namespace, namespace)
+    else:
+        for k in attr_list:
+            type, _typeName, resolver = get_type(var)
+            var = resolver.resolve(var, k)
 
     try:
         type, _typeName, resolver = get_type(var)
-        return resolver.get_dictionary(VariableWithOffset(var, offset) if offset else var)
+
+        type_renderer = try_get_type_renderer_for_var(var, user_type_renderers)
+        if type_renderer is not None and offset == 0:
+            return _resolve_custom_variable_fields(
+                var, var_expr, resolver, offset, type_renderer
+            )
+
+        return _resolve_default_variable_fields(var, resolver, offset)
     except:
         traceback.print_exc()
 

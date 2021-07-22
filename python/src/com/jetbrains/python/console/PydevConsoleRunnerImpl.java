@@ -830,6 +830,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           consoleView.executeStatement(statement + "\n", ProcessOutputTypes.SYSTEM);
         }
 
+        setUserTypeRenderers();
+
         fireConsoleInitializedEvent(consoleView);
         consoleView.initialized();
       });
@@ -852,6 +854,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   private boolean handshake() {
     return myPydevConsoleCommunication.handshake();
+  }
+
+  private void setUserTypeRenderers() {
+    myPydevConsoleCommunication.setUserTypeRenderersSettings();
   }
 
   private AnAction createStopAction() {
