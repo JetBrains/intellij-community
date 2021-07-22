@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.PlatformEditorBundle
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.help.HelpManager
@@ -396,7 +397,7 @@ private class AAListCellRenderer(private val myUseEditorFont: Boolean) : SimpleL
 
     if (myUseEditorFont) {
       val scheme = EditorColorsManager.getInstance().globalScheme
-      font = UIUtil.getFontWithFallback(scheme.editorFontName, Font.PLAIN, scheme.editorFontSize)
+      font = UIUtil.getFontWithFallback(scheme.getFont(EditorFontType.PLAIN))
     }
 
     text = value.presentableName
