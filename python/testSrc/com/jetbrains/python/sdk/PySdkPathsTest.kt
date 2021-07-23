@@ -56,8 +56,6 @@ class PySdkPathsTest {
 
     updateSdkPaths(sdk)
 
-    Disposer.dispose(PythonPluginDisposable.getInstance()) // dispose virtual file pointer containers in sdk additional data
-
     val rootProvider = sdk.rootProvider
     val sdkRoots = rootProvider.getFiles(OrderRootType.CLASSES)
     assertThat(sdkRoots).contains(included)
@@ -75,8 +73,6 @@ class PySdkPathsTest {
 
     updateSdkPaths(sdk)
 
-    Disposer.dispose(PythonPluginDisposable.getInstance()) // dispose virtual file pointer containers in sdk additional data
-
     checkRoots(sdk, module, listOf(moduleRoot), emptyList())
   }
 
@@ -89,7 +85,6 @@ class PySdkPathsTest {
 
     mockPythonPluginDisposable()
     updateSdkPaths(sdk)
-    Disposer.dispose(PythonPluginDisposable.getInstance()) // dispose virtual file pointer containers in sdk additional data
 
     checkRoots(sdk, module, listOf(moduleRoot), emptyList())
   }
@@ -116,8 +111,6 @@ class PySdkPathsTest {
     }
 
     updateSdkPaths(simpleSdk)
-
-    Disposer.dispose(PythonPluginDisposable.getInstance()) // dispose virtual file pointer containers in sdk additional data
 
     checkRoots(simpleSdk, module, listOf(moduleRoot), emptyList())
   }
@@ -172,8 +165,6 @@ class PySdkPathsTest {
     updateSdkPaths(sdk) // since editableSdk was created after additional data had been created for sdk, they share the same data
 
     checkRoots(sdk, module, listOf(moduleRoot), emptyList())
-
-    Disposer.dispose(PythonPluginDisposable.getInstance()) // dispose virtual file pointer containers in sdk additional data
   }
 
   @Test
@@ -229,8 +220,6 @@ class PySdkPathsTest {
     updateSdkPaths(sdk) // after updateJdk call editableSdk and sdk share the same data
 
     checkRoots(sdk, module, listOf(moduleRoot), emptyList())
-
-    Disposer.dispose(PythonPluginDisposable.getInstance()) // dispose virtual file pointer containers in sdk additional data
   }
 
   @Test
@@ -256,8 +245,6 @@ class PySdkPathsTest {
 
     updateSdkPaths(simpleSdk)
 
-    Disposer.dispose(PythonPluginDisposable.getInstance()) // dispose virtual file pointer containers in sdk additional data
-
     checkRoots(simpleSdk, module, listOf(moduleRoot), emptyList())
   }
 
@@ -274,8 +261,6 @@ class PySdkPathsTest {
     runWriteActionAndWait { sdk.getOrCreateAdditionalData() }.apply { setAddedPathsFromVirtualFiles(setOf(userAddedPath)) }
 
     updateSdkPaths(sdk)
-
-    Disposer.dispose(PythonPluginDisposable.getInstance()) // dispose virtual file pointer containers in sdk additional data
 
     checkRoots(sdk, module, listOf(moduleRoot), listOf(userAddedPath))
   }
@@ -328,8 +313,6 @@ class PySdkPathsTest {
 
     updateSdkPaths(simpleSdk)
 
-    Disposer.dispose(PythonPluginDisposable.getInstance()) // dispose virtual file pointer containers in sdk additional data
-
     checkRoots(simpleSdk, module1, listOf(moduleRoot1), emptyList())
     checkRoots(simpleSdk, module2, listOf(moduleRoot2), emptyList())
   }
@@ -370,6 +353,7 @@ class PySdkPathsTest {
 
   private fun mockPythonPluginDisposable() {
     ApplicationManager.getApplication().replaceService(PythonPluginDisposable::class.java, PythonPluginDisposable(), projectModel.project)
+    Disposer.register(projectModel.project, PythonPluginDisposable.getInstance())
   }
 
   private fun updateSdkPaths(sdk: @NotNull Sdk) {
