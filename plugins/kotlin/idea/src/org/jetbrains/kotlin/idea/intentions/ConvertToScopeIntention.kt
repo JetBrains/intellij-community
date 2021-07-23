@@ -18,7 +18,9 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.siblings
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) : SelfTargetingIntention<KtExpression>(
     KtExpression::class.java,
@@ -169,13 +171,12 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
                 if (name !== null) property to name else null
             }
             RUN, WITH -> {
-                val receiver = (this as? KtDotQualifiedExpression)
-                    ?.let { getLeftMostReceiverExpression() } as? KtNameReferenceExpression
-
-                val declaration = receiver?.mainReference?.resolve()
-                val name = receiver?.getReferencedName()
-
-                if (declaration !== null && declaration !is PsiPackage && name !== null) declaration to name else null
+                val receiver = safeAs<KtDotQualifiedExpression>()?.getLeftMostReceiverExpression() as? KtNameReferenceExpression
+                val declaration = receiver?.mainReference?.resolve()?.takeUnless { it is PsiPackage } ?: return null
+                val selector = receiver.getQualifiedExpressionForReceiver()?.selectorExpression
+                    ?.let { it.safeAs<KtCallExpression>()?.calleeExpression ?: it } as? KtNameReferenceExpression
+                if (selector?.mainReference?.resolve() is KtClassOrObject) return null
+                declaration to receiver.getReferencedName()
             }
         }
     }
