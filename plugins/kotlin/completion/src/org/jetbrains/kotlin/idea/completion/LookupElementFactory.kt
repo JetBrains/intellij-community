@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.AutoPopupController
-import com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
@@ -14,6 +13,7 @@ import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.completion.handlers.GenerateLambdaInfo
+import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionCompositeDeclarativeInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionInsertHandler
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.util.CallType
@@ -130,21 +130,17 @@ class LookupElementFactory(
 
         if (lastParameter.original.type.isBuiltinFunctionalType) {
             val isSingleParameter = descriptor.valueParameters.size == 1
-
             val parameterType = lastParameter.type
-            val isNotLambda = when (val insertHandler = insertHandlerProvider.insertHandler(descriptor)) {
-                is KotlinFunctionInsertHandler.Normal -> insertHandler.lambdaInfo == null
-                is CompositeDeclarativeInsertHandler -> !insertHandler.isLambda
-                else -> true
-            }
 
-            if (isNotLambda) {
+            if (!InsertHandlerProvider.isKotlinLambda(descriptor, callType)) {
                 val functionParameterCount = getValueParametersCountFromFunctionType(parameterType)
                 add(
-                    createFunctionCallElementWithLambda(descriptor,
-                                                        parameterType,
-                                                        useReceiverTypes,
-                                                        explicitLambdaParameters = functionParameterCount > 1)
+                    createFunctionCallElementWithLambda(
+                        descriptor,
+                        parameterType,
+                        useReceiverTypes,
+                        explicitLambdaParameters = functionParameterCount > 1
+                    )
                 )
             }
 
@@ -167,9 +163,9 @@ class LookupElementFactory(
         explicitLambdaParameters: Boolean
     ): LookupElement {
         var lookupElement = createLookupElement(descriptor, useReceiverTypes)
-        val inputTypeArguments = when(val insertHandler = insertHandlerProvider.insertHandler(descriptor)) {
+        val inputTypeArguments = when (val insertHandler = insertHandlerProvider.insertHandler(descriptor)) {
             is KotlinFunctionInsertHandler.Normal -> insertHandler.inputTypeArguments
-            is CompositeDeclarativeInsertHandler -> insertHandler.inputTypeArguments
+            is KotlinFunctionCompositeDeclarativeInsertHandler -> insertHandler.inputTypeArguments
             else -> false
         }
         val lambdaInfo = GenerateLambdaInfo(parameterType, explicitLambdaParameters)
@@ -237,10 +233,9 @@ class LookupElementFactory(
     ): LookupElement {
         val lookupElement = createLookupElement(descriptor, useReceiverTypes)
 
-        //val needTypeArguments = (insertHandlerProvider.insertHandler(descriptor) as KotlinFunctionInsertHandler.Normal).inputTypeArguments
-        val needTypeArguments = when(val insertHandler = insertHandlerProvider.insertHandler(descriptor)) {
+        val needTypeArguments = when (val insertHandler = insertHandlerProvider.insertHandler(descriptor)) {
             is KotlinFunctionInsertHandler.Normal -> insertHandler.inputTypeArguments
-            is CompositeDeclarativeInsertHandler -> insertHandler.inputTypeArguments
+            is KotlinFunctionCompositeDeclarativeInsertHandler -> insertHandler.inputTypeArguments
             else -> false
         }
         return FunctionCallWithArgumentsLookupElement(lookupElement, descriptor, argumentText, needTypeArguments)
@@ -354,7 +349,7 @@ class LookupElementFactory(
         return callableWeightBasic(descriptor, receiverTypes)
     }
 
-    private fun callableWeightBasic(descriptor: CallableDescriptor, receiverTypes: Collection<ReceiverType>): CallableWeight? {
+    private fun callableWeightBasic(descriptor: CallableDescriptor, receiverTypes: Collection<ReceiverType>): CallableWeight {
         descriptor.callableWeightBasedOnReceiver(receiverTypes, CallableWeight.receiverCastRequired)?.let { return it }
 
         return when (descriptor.containingDeclaration) {

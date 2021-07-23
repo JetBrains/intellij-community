@@ -8,22 +8,17 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 open class CompositeDeclarativeInsertHandler(val handlers: Map<Char, DeclarativeInsertHandler2>,
-                                        val fallbackInsertHandler: InsertHandler<LookupElement>?,
-                                        // TODO: move to subclass: too specific to KotlinFunctionInsertHandler
-                                        val isLambda: Boolean,
-                                        val inputValueArguments: Boolean,
-                                        val inputTypeArguments: Boolean)
+                                        val fallbackInsertHandler: InsertHandler<LookupElement>?)
   : InsertHandler<LookupElement> {
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
     (handlers[context.completionChar] ?: fallbackInsertHandler)?.handleInsert(context, item)
-    //fallbackInsertHandler?.handleInsert(context, item)
   }
 
   companion object {
     fun withUniversalHandler(completionChars: CharArray, handler: DeclarativeInsertHandler2): CompositeDeclarativeInsertHandler {
       val handlersMap = completionChars.associate { it to handler }
       // it's important not to provide a fallbackInsertHandler
-      return CompositeDeclarativeInsertHandler(handlersMap, null, false, false, false)
+      return CompositeDeclarativeInsertHandler(handlersMap, null)
     }
   }
 }

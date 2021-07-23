@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.completion.smart
 
-import com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
@@ -21,6 +20,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.resolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.codeInsight.collectSyntheticStaticMembersAndConstructors
 import org.jetbrains.kotlin.idea.completion.*
+import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionCompositeDeclarativeInsertHandler
 import org.jetbrains.kotlin.idea.completion.handlers.KotlinFunctionInsertHandler
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
@@ -256,7 +256,7 @@ class TypeInstantiationItems(
             run {
                 val (inputValueArgs, isLambda) = when (baseInsertHandler) {
                     is KotlinFunctionInsertHandler.Normal -> baseInsertHandler.inputValueArguments to (baseInsertHandler.lambdaInfo != null)
-                    is CompositeDeclarativeInsertHandler -> baseInsertHandler.inputValueArguments to baseInsertHandler.isLambda
+                    is KotlinFunctionCompositeDeclarativeInsertHandler -> baseInsertHandler.inputValueArguments to baseInsertHandler.isLambda
                     else -> false to false
                 }
                 if (inputValueArgs) {
@@ -266,14 +266,6 @@ class TypeInstantiationItems(
                     lookupElement.putUserData(KotlinCompletionCharFilter.ACCEPT_OPENING_BRACE, Unit)
                 }
             }
-            //if (baseInsertHandler is KotlinFunctionInsertHandler.Normal) {
-            //    if (baseInsertHandler.inputValueArguments) {
-            //        lookupElement = lookupElement.keepOldArgumentListOnTab()
-            //    }
-            //    if (baseInsertHandler.lambdaInfo != null) {
-            //        lookupElement.putUserData(KotlinCompletionCharFilter.ACCEPT_OPENING_BRACE, Unit)
-            //    }
-            //}
             lookupElement = lookupElement.assignSmartCompletionPriority(SmartCompletionItemPriority.INSTANTIATION)
         }
 

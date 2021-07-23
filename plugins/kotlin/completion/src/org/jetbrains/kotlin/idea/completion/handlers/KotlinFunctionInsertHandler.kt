@@ -28,6 +28,23 @@ import org.jetbrains.kotlin.types.KotlinType
 
 class GenerateLambdaInfo(val lambdaType: KotlinType, val explicitParameters: Boolean)
 
+class KotlinFunctionCompositeDeclarativeInsertHandler(
+    handlers: Map<Char, DeclarativeInsertHandler2>,
+    fallbackInsertHandler: InsertHandler<LookupElement>?,
+    val isLambda: Boolean,
+    val inputValueArguments: Boolean,
+    val inputTypeArguments: Boolean
+) : CompositeDeclarativeInsertHandler(handlers, fallbackInsertHandler) {
+
+    companion object {
+        fun withUniversalHandler(completionChars: CharArray, handler: DeclarativeInsertHandler2): CompositeDeclarativeInsertHandler {
+            val handlersMap = completionChars.associate { it to handler }
+            // it's important not to provide a fallbackInsertHandler here
+            return KotlinFunctionCompositeDeclarativeInsertHandler(handlersMap, null, false, false, false)
+        }
+    }
+}
+
 fun createNormalFunctionInsertHandler(
     editor: Editor,
     callType: CallType<*>,
@@ -95,12 +112,10 @@ fun createNormalFunctionInsertHandler(
                 if (shouldPlaceCaretInBrackets) {
                     builder.offsetToPutCaret += noLambdaCaseInsideBracketOffset + lambdaCaseInsideBracketOffset
                     builder.withPopupOptions(DeclarativeInsertHandler2.PopupOptions.ParameterInfo)
-                }
-                else {
+                } else {
                     builder.offsetToPutCaret += stringToInsert.toString().length
                 }
-            }
-            else {
+            } else {
                 // we would love to put caret inside value params, but we can't, cause we have to stay on typeParams first
                 // so do nothing here.
             }
@@ -167,29 +182,29 @@ fun createNormalFunctionInsertHandler(
     }
 
     // \t
-/*
-    run {
-        // identifier123| ***
-        val replaceInsertHandler = DeclarativeInsertHandler2(
-            insertOperations = insertOperations,
-            offsetToPutCaret = offsetToPutCaret,
-            postInsertHandler = postInsertHandler
-        )
+    /*
+        run {
+            // identifier123| ***
+            val replaceInsertHandler = DeclarativeInsertHandler2(
+                insertOperations = insertOperations,
+                offsetToPutCaret = offsetToPutCaret,
+                postInsertHandler = postInsertHandler
+            )
 
-        var offset = context.replacementOffset
+            var offset = context.replacementOffset
 
-        val insertLambda = lambdaInfo != null && !chars.isCharAt(offset, '(')
-        var insertTypeArguments = inputTypeArguments && !(insertLambda && lambdaInfo!!.explicitParameters)
+            val insertLambda = lambdaInfo != null && !chars.isCharAt(offset, '(')
+            var insertTypeArguments = inputTypeArguments && !(insertLambda && lambdaInfo!!.explicitParameters)
 
 
-        val offset1 = chars.skipSpaces(offset)
-        if (offset1 < chars.length) {
-            if (chars[offset1] == '<') {
-                val token = context.file.findElementAt(offset1)!!
-                if (token.node.elementType == KtTokens.LT) {
-                    val parent = token.parent
-                    */
-/* if type argument list is on multiple lines this is more likely wrong parsing*//*
+            val offset1 = chars.skipSpaces(offset)
+            if (offset1 < chars.length) {
+                if (chars[offset1] == '<') {
+                    val token = context.file.findElementAt(offset1)!!
+                    if (token.node.elementType == KtTokens.LT) {
+                        val parent = token.parent
+                        */
+    /* if type argument list is on multiple lines this is more likely wrong parsing*//*
 
                     if (parent is KtTypeArgumentList && parent.getText().indexOf('\n') < 0) {
                         offset = parent.endOffset
@@ -201,13 +216,14 @@ fun createNormalFunctionInsertHandler(
 
     }
 */
-    // (
 
-    val fallbackHandler = KotlinFunctionInsertHandler.Normal(callType, inputTypeArguments, inputValueArguments, argumentText, lambdaInfo, argumentsOnly)
-    return CompositeDeclarativeInsertHandler(handlers = handlers, fallbackInsertHandler = fallbackHandler,
-                                             isLambda = lambdaInfo != null, inputValueArguments = inputValueArguments,
-                                             inputTypeArguments = inputTypeArguments)
-    //return fallbackHandler
+    val fallbackHandler =
+        KotlinFunctionInsertHandler.Normal(callType, inputTypeArguments, inputValueArguments, argumentText, lambdaInfo, argumentsOnly)
+    return KotlinFunctionCompositeDeclarativeInsertHandler(
+        handlers = handlers, fallbackInsertHandler = fallbackHandler,
+        isLambda = lambdaInfo != null, inputValueArguments = inputValueArguments,
+        inputTypeArguments = inputTypeArguments
+    )
 }
 
 sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallableInsertHandler(callType) {
