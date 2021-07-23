@@ -2,11 +2,13 @@
 package training.learn.course
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Version
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import training.dsl.TaskTestContext
+import training.learn.CourseManager
 import training.learn.lesson.LessonListener
 import training.learn.lesson.LessonState
 import training.learn.lesson.LessonStateManager
@@ -71,5 +73,12 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
   internal fun pass() {
     LessonStateManager.setPassed(this)
     lessonListeners.forEach { it.lessonPassed(this) }
+  }
+
+  internal fun isNewLesson(): Boolean {
+    val availableSince = properties.availableSince ?: return false
+    val lessonVersion = Version.parseVersion(availableSince) ?: return false
+    val previousOpenedVersion = CourseManager.instance.previousOpenedVersion ?: return true
+    return previousOpenedVersion < lessonVersion
   }
 }

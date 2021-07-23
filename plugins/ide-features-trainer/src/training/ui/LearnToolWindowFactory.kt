@@ -2,6 +2,8 @@
 package training.ui
 
 import com.intellij.diagnostic.runActivity
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
@@ -10,6 +12,7 @@ import com.intellij.openapi.wm.ToolWindowFactoryEx
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.util.containers.ContainerUtil
 import training.lang.LangManager
+import training.util.LEARNING_PANEL_OPENED_IN
 import training.util.findLanguageSupport
 
 internal class LearnToolWindowFactory : ToolWindowFactoryEx, DumbAware {
@@ -27,6 +30,8 @@ internal class LearnToolWindowFactory : ToolWindowFactoryEx, DumbAware {
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+    val strictVersion = ApplicationInfo.getInstance().strictVersion
+    PropertiesComponent.getInstance().setValue(LEARNING_PANEL_OPENED_IN, strictVersion)
     val learnToolWindow = LearnToolWindow(project, toolWindow)
     val contentManager = toolWindow.contentManager
     val content = contentManager.factory.createContent(learnToolWindow, null, false)
