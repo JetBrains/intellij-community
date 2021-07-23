@@ -67,7 +67,7 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
   }
 
   public void testImportProjectWithManyPoms() throws Exception {
-    Path pom1 = createPom();
+    Path pom1 = createPom("pom1.xml");
     Path pom2 = pom1.getParent().resolve("pom2.xml");
     PathKt.write(pom2, MavenTestCase.createPomXml(
       "<groupId>test</groupId>" +
@@ -96,7 +96,11 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
   }
 
   private @NotNull Path createPom() throws IOException {
-    return createTempFile("pom.xml", MavenTestCase.createPomXml("<groupId>test</groupId>" +
+    return createPom("pom.xml");
+  }
+
+  private @NotNull Path createPom(String pomName) throws IOException {
+    return createTempFile(pomName, MavenTestCase.createPomXml("<groupId>test</groupId>" +
                                                                 "<artifactId>project</artifactId>" +
                                                                 "<version>1</version>")).toPath();
   }
