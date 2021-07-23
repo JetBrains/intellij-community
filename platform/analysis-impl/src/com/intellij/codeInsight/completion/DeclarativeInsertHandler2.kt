@@ -2,20 +2,20 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.AutoPopupController
-import com.intellij.codeInsight.completion.CompletionInitializationContext.IDENTIFIER_END_OFFSET
 import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-open class CompositeDeclarativeInsertHandler(val handlers: Map<Char, DeclarativeInsertHandler2>,
-                                        val fallbackInsertHandler: InsertHandler<LookupElement>?)
+open class CompositeDeclarativeInsertHandler(val handlers: Map<Char, Lazy<DeclarativeInsertHandler2>>,
+                                             val fallbackInsertHandler: InsertHandler<LookupElement>?)
   : InsertHandler<LookupElement> {
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
-    (handlers[context.completionChar] ?: fallbackInsertHandler)?.handleInsert(context, item)
+    (handlers[context.completionChar]?.value ?: fallbackInsertHandler)?.handleInsert(context, item)
   }
 
   companion object {
-    fun withUniversalHandler(completionChars: CharArray, handler: DeclarativeInsertHandler2): CompositeDeclarativeInsertHandler {
+    fun withUniversalHandler(completionChars: CharArray,
+                             handler: DeclarativeInsertHandler2.LazyBuilder): CompositeDeclarativeInsertHandler {
       val handlersMap = completionChars.associate { it to handler }
       // it's important not to provide a fallbackInsertHandler
       return CompositeDeclarativeInsertHandler(handlersMap, null)
@@ -41,6 +41,7 @@ class DeclarativeInsertHandler2 private constructor(
   data class RelativeTextEdit(val rangeFrom: Int, val rangeTo: Int, val newText: String) {
     fun toAbsolute(baseOffset: Int) = AbsoluteTextEdit(rangeFrom + baseOffset, rangeTo + baseOffset, newText)
   }
+
   data class AbsoluteTextEdit(val rangeFrom: Int, val rangeTo: Int, val newText: String)
 
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
@@ -66,7 +67,7 @@ class DeclarativeInsertHandler2 private constructor(
       val popupController = AutoPopupController.getInstance(context.project)
 
       if (element != null && popupController != null) {
-        when(popupOptions) {
+        when (popupOptions) {
           PopupOptions.ParameterInfo -> popupController.autoPopupParameterInfo(context.editor, element)
           PopupOptions.MemberLookup -> popupController.autoPopupMemberLookup(context.editor, null)
           PopupOptions.DoNotShow -> Unit
@@ -76,19 +77,31 @@ class DeclarativeInsertHandler2 private constructor(
   }
 
   sealed class PopupOptions {
-    object DoNotShow: PopupOptions()
-    object ParameterInfo: PopupOptions()
-    object MemberLookup: PopupOptions()
+    object DoNotShow : PopupOptions()
+    object ParameterInfo : PopupOptions()
+    object MemberLookup : PopupOptions()
 
-    fun showPopup() = when(this) {
+    fun showPopup() = when (this) {
       is DoNotShow -> false
       else -> true
     }
   }
 
+  // This is a handy interface for Java interop
+  fun interface HandlerProducer {
+    fun produce(builder: Builder)
+  }
+  class LazyBuilder(private val block: HandlerProducer): Lazy<DeclarativeInsertHandler2> {
+    private val delegate = lazy { Builder().also(block::produce).build() }
+    override val value: DeclarativeInsertHandler2
+      get() = delegate.value
+
+    override fun isInitialized(): Boolean = delegate.isInitialized()
+  }
+
   class Builder {
     private val textOperations = mutableListOf<RelativeTextEdit>()
-    var offsetToPutCaret : Int = 0
+    var offsetToPutCaret: Int = 0
     private var addCompletionChar: Boolean = false
     private var postInsertHandler: InsertHandler<LookupElement>? = null
     private var popupOptions: PopupOptions = PopupOptions.DoNotShow

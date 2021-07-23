@@ -18,19 +18,19 @@ public class AddSpaceInsertHandler implements InsertHandler<LookupElement> {
   private final static String VALID_COMPLETION_CHARS = "\n\t\r(,.:=";
 
   public final static InsertHandler<LookupElement> INSTANCE = CompositeDeclarativeInsertHandler.Companion
-    .withUniversalHandler(VALID_COMPLETION_CHARS.toCharArray(),
-                          new DeclarativeInsertHandler2.Builder()
-                            .addOperation(0, " ")
-                            .withOffsetToPutCaret(1)
-                            .build());
+    .withUniversalHandler(VALID_COMPLETION_CHARS.toCharArray(), new DeclarativeInsertHandler2.LazyBuilder(builder -> {
+      builder.addOperation(0, " ")
+        .withOffsetToPutCaret(1);
+    }
+    ));
 
   public final static InsertHandler<LookupElement> INSTANCE_WITH_AUTO_POPUP = CompositeDeclarativeInsertHandler.Companion
-    .withUniversalHandler(VALID_COMPLETION_CHARS.toCharArray(),
-                          new DeclarativeInsertHandler2.Builder()
-                            .addOperation(0, " ")
-                            .withOffsetToPutCaret(1)
-                            .withPopupOptions(DeclarativeInsertHandler2.PopupOptions.MemberLookup.INSTANCE)
-                            .build());
+    .withUniversalHandler(VALID_COMPLETION_CHARS.toCharArray(), new DeclarativeInsertHandler2.LazyBuilder(builder -> {
+      builder.addOperation(0, " ")
+        .withOffsetToPutCaret(1)
+        .withPopupOptions(DeclarativeInsertHandler2.PopupOptions.MemberLookup.INSTANCE);
+      }
+      ));
 
   private final String myIgnoreOnChars;
   private final boolean myTriggerAutoPopup;

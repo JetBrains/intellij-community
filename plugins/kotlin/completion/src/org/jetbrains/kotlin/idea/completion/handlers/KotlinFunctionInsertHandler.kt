@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.types.KotlinType
 class GenerateLambdaInfo(val lambdaType: KotlinType, val explicitParameters: Boolean)
 
 class KotlinFunctionCompositeDeclarativeInsertHandler(
-    handlers: Map<Char, DeclarativeInsertHandler2>,
+    handlers: Map<Char, Lazy<DeclarativeInsertHandler2>>,
     fallbackInsertHandler: InsertHandler<LookupElement>?,
     val isLambda: Boolean,
     val inputValueArguments: Boolean,
@@ -37,7 +37,10 @@ class KotlinFunctionCompositeDeclarativeInsertHandler(
 ) : CompositeDeclarativeInsertHandler(handlers, fallbackInsertHandler) {
 
     companion object {
-        fun withUniversalHandler(completionChars: CharArray, handler: DeclarativeInsertHandler2): CompositeDeclarativeInsertHandler {
+        fun withUniversalHandler(
+            completionChars: CharArray,
+            handler: DeclarativeInsertHandler2.LazyBuilder
+        ): CompositeDeclarativeInsertHandler {
             val handlersMap = completionChars.associate { it to handler }
             // it's important not to provide a fallbackInsertHandler here
             return KotlinFunctionCompositeDeclarativeInsertHandler(handlersMap, null, false, false, false)
@@ -58,15 +61,12 @@ fun createNormalFunctionInsertHandler(
         assert(argumentText == "")
     }
 
-    val handlers = mutableMapOf<Char, DeclarativeInsertHandler2>()
+    val lazyHandlers = mutableMapOf<Char, Lazy<DeclarativeInsertHandler2>>()
 
     val chars = editor.document.charsSequence
 
-
     // \n - NormalCompletion
-    run {
-        val builder = DeclarativeInsertHandler2.Builder()
-
+    lazyHandlers[Lookup.NORMAL_SELECT_CHAR] = DeclarativeInsertHandler2.LazyBuilder { builder ->
         val stringToInsert = StringBuilder()
 
         val offset = editor.caretModel.offset
@@ -178,8 +178,8 @@ fun createNormalFunctionInsertHandler(
             }
         })
 
-        handlers[Lookup.NORMAL_SELECT_CHAR] = builder.build()
     }
+    println("!!! builder set to map")
 
     // \t
     /*
@@ -219,8 +219,9 @@ fun createNormalFunctionInsertHandler(
 
     val fallbackHandler =
         KotlinFunctionInsertHandler.Normal(callType, inputTypeArguments, inputValueArguments, argumentText, lambdaInfo, argumentsOnly)
+
     return KotlinFunctionCompositeDeclarativeInsertHandler(
-        handlers = handlers, fallbackInsertHandler = fallbackHandler,
+        handlers = lazyHandlers, fallbackInsertHandler = fallbackHandler,
         isLambda = lambdaInfo != null, inputValueArguments = inputValueArguments,
         inputTypeArguments = inputTypeArguments
     )
