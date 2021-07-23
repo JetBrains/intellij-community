@@ -7,7 +7,6 @@ import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.Murmur3_32Hash
 import com.intellij.util.io.inputStream
-import com.intellij.util.lang.ImmutableZipEntry
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.io.RW_CREATE_NEW
@@ -36,7 +35,7 @@ class ReorderJarsTest {
   @Test
   fun `dir to create`() {
     val packageIndexBuilder = PackageIndexBuilder()
-    packageIndexBuilder.add(listOf(ImmutableZipEntry("tsMeteorStubs/meteor-v1.3.1.d.ts", 0, 0, 0, 0, 0)))
+    packageIndexBuilder.addFile("tsMeteorStubs/meteor-v1.3.1.d.ts")
     assertThat(packageIndexBuilder._getDirsToCreate()).containsExactlyInAnyOrder("tsMeteorStubs")
 
     val file = fsRule.fs.getPath("/f")

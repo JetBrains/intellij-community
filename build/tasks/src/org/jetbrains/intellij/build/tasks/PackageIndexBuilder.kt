@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.tasks
 
 import com.intellij.util.io.Murmur3_32Hash
-import com.intellij.util.lang.ImmutableZipEntry
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.jetbrains.intellij.build.io.ZipFileWriter
 
@@ -38,14 +37,6 @@ internal class PackageIndexBuilder {
     for (name in list) {
       // name in our ImmutableZipEntry doesn't have ending slash
       zipCreator.addDirEntry(if (name.endsWith('/')) name else "$name/")
-    }
-  }
-
-  fun add(entries: Collection<ImmutableZipEntry>) {
-    for (entry in entries) {
-      if (!entry.isDirectory) {
-        addFile(entry.name)
-      }
     }
   }
 

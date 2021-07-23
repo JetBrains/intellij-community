@@ -65,9 +65,8 @@ fun buildJar(targetFile: Path, sources: List<Source>, logger: System.Logger?, dr
       }
       else {
         ImmutableZipFile.load((source as ZipSource).file).use { zipFile ->
-          val entries = getFilteredEntries(zipFile, uniqueNames)
-          writeEntries(entries, zipCreator, zipFile)
-          packageIndexBuilder.add(entries)
+          val entries = getFilteredEntries(zipFile, uniqueNames, includeManifest = sources.size == 1)
+          writeEntries(entries.iterator(), zipCreator, zipFile, packageIndexBuilder)
         }
       }
 
@@ -79,14 +78,17 @@ fun buildJar(targetFile: Path, sources: List<Source>, logger: System.Logger?, dr
   }
 }
 
-private fun getFilteredEntries(zipFile: ImmutableZipFile, uniqueNames: MutableSet<String>): List<ImmutableZipEntry> {
-  return zipFile.entries.filter {
+private fun getFilteredEntries(zipFile: ImmutableZipFile,
+                               uniqueNames: MutableSet<String>,
+                               includeManifest: Boolean): Sequence<ImmutableZipEntry> {
+  return zipFile.entries.asSequence().filter {
     val name = it.name
 
     @Suppress("SpellCheckingInspection")
     uniqueNames.add(name) &&
     !name.endsWith(".kotlin_metadata") &&
-    name != "META-INF/MANIFEST.MF" && name != PACKAGE_INDEX_NAME &&
+    (includeManifest || name != "META-INF/MANIFEST.MF") &&
+    name != PACKAGE_INDEX_NAME &&
     name != "license" && !name.startsWith("license/") &&
     name != "META-INF/services/javax.xml.parsers.SAXParserFactory" &&
     name != "META-INF/services/javax.xml.stream.XMLEventFactory" &&

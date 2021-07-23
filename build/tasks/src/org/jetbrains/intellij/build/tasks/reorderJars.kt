@@ -163,13 +163,11 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): 
       }
     })
 
-    packageIndexBuilder.add(entries)
-
     Files.createDirectories(tempJarFile.parent)
     FileChannel.open(tempJarFile, RW_CREATE_NEW).use { outChannel ->
       val zipCreator = ZipFileWriter(outChannel, deflater = null)
       packageIndexBuilder.writePackageIndex(zipCreator)
-      writeEntries(entries, zipCreator, zipFile)
+      writeEntries(entries.iterator(), zipCreator, zipFile, packageIndexBuilder)
       packageIndexBuilder.writeDirs(zipCreator)
 
       val comment = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN)
@@ -194,12 +192,17 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): 
   return PackageIndexEntry(path = resultJarFile, packageIndexBuilder.classPackageHashSet, packageIndexBuilder.resourcePackageHashSet)
 }
 
-internal fun writeEntries(entries: Collection<ImmutableZipEntry>, zipCreator: ZipFileWriter, sourceZipFile: ImmutableZipFile) {
+internal fun writeEntries(entries: Iterator<ImmutableZipEntry>,
+                          zipCreator: ZipFileWriter,
+                          sourceZipFile: ImmutableZipFile,
+                          packageIndexBuilder: PackageIndexBuilder) {
   for (entry in entries) {
     val name = entry.name
     if (entry.isDirectory) {
       continue
     }
+
+    packageIndexBuilder.addFile(name)
 
     // by intention not the whole original ZipArchiveEntry is copied,
     // but only name, method and size are copied - that's enough and should be enough
