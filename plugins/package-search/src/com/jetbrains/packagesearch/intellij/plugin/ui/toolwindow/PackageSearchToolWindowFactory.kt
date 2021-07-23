@@ -27,7 +27,6 @@ import com.jetbrains.packagesearch.intellij.plugin.util.addSelectionChangedListe
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.lookAndFeelFlow
-import com.jetbrains.packagesearch.intellij.plugin.util.map
 import com.jetbrains.packagesearch.intellij.plugin.util.onEach
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchModulesChangesFlow
@@ -102,15 +101,7 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
         contentManager.removeAllContents(true)
 
         val panels = buildList {
-            add(
-                PackageManagementPanel(
-                    rootDataModelProvider = project.packageSearchDataService,
-                    selectedPackageSetter = project.packageSearchDataService,
-                    targetModuleSetter = project.packageSearchDataService,
-                    searchClient = project.packageSearchDataService,
-                    operationExecutor = project.packageSearchDataService
-                )
-            )
+            add(PackageManagementPanel(project))
             if (FeatureFlags.showRepositoriesTab) {
                 add(RepositoryManagementPanel(rootDataModelProvider = project.packageSearchDataService))
             }
