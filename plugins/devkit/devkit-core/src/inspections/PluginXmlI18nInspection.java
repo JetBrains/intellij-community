@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl;
@@ -244,7 +244,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     return null;
   }
 
-  private static class InspectionI18NQuickFix implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
+  private static class InspectionI18NQuickFix implements LocalQuickFix, BatchQuickFix {
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
@@ -273,7 +273,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       return false;
     }
 
-    private void doFix(@NotNull Project project, List<XmlTag> tags) {
+    private static void doFix(@NotNull Project project, List<XmlTag> tags) {
       choosePropertiesFileAndExtract(project, tags, selection -> {
         PropertiesFile propertiesFile = findPropertiesFile(project, selection);
         if (propertiesFile != null) {
@@ -318,7 +318,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     }
   }
 
-  private static final class ActionOrGroupQuickFixAction implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
+  private static final class ActionOrGroupQuickFixAction implements LocalQuickFix, BatchQuickFix {
     private final VirtualFile myPropertiesFile;
     private final boolean myIsAction;
 
@@ -467,7 +467,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   }
 
 
-  private static class SeparatorKeyI18nQuickFix implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
+  private static class SeparatorKeyI18nQuickFix implements LocalQuickFix, BatchQuickFix {
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
@@ -497,7 +497,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     }
 
 
-    private void doFix(@NotNull Project project, List<XmlTag> tags) {
+    private static void doFix(@NotNull Project project, List<XmlTag> tags) {
       choosePropertiesFileAndExtract(project, tags, selection -> {
         PropertiesFile propertiesFile = findPropertiesFile(project, selection);
         if (propertiesFile != null) {

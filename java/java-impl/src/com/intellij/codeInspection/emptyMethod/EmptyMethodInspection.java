@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.emptyMethod;
 
 import com.intellij.analysis.AnalysisScope;
@@ -311,7 +311,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   }
 
 
-  private static class DeleteMethodQuickFix implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
+  private static class DeleteMethodQuickFix implements LocalQuickFix, BatchQuickFix {
     private final ProblemDescriptionsProcessor myProcessor;
     private final boolean myNeedToDeleteHierarchy;
 
@@ -328,7 +328,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-       applyFix(project, new ProblemDescriptor[]{descriptor}, new ArrayList<>(), null);
+       applyFix(project, new ProblemDescriptor[]{descriptor}, List.of(), null);
     }
 
     private static void deleteHierarchy(RefMethod refMethod, List<? super PsiElement> result) {
