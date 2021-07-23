@@ -240,10 +240,10 @@ internal class PackagesTable(
     }
 
     override fun getCellRenderer(row: Int, column: Int): TableCellRenderer =
-        tableModel.columns[column].getRenderer(tableModel.items[row]) ?: DefaultTableCellRenderer()
+        tableModel.columns.getOrNull(column)?.getRenderer(tableModel.items[row]) ?: DefaultTableCellRenderer()
 
     override fun getCellEditor(row: Int, column: Int): TableCellEditor? =
-        tableModel.columns[column].getEditor(tableModel.items[row])
+        tableModel.columns.getOrNull(column)?.getEditor(tableModel.items[row])
 
     internal data class ViewModel(
         val items: TableItems,

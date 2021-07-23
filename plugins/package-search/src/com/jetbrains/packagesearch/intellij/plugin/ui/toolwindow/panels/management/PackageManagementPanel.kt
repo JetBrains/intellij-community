@@ -3,6 +3,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.project.Project
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.UIUtil
@@ -24,10 +25,13 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.computePackagesTableItems
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
+import com.jetbrains.packagesearch.intellij.plugin.util.ReadActions
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.filter
@@ -35,6 +39,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.newCoroutineContext
+import kotlinx.coroutines.withContext
 import java.awt.Dimension
 import javax.swing.BorderFactory
 import javax.swing.JScrollPane
@@ -45,10 +51,24 @@ internal class PackageManagementPanel(
     selectedPackageSetter: SelectedPackageSetter,
     targetModuleSetter: TargetModuleSetter,
     searchClient: SearchClient,
-    operationExecutor: OperationExecutor
+    operationExecutor: OperationExecutor,
+    project: Project
 ) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")), CoroutineScope, Disposable {
 
-    override val coroutineContext = SupervisorJob() + CoroutineName("PackageManagementPanel")
+    companion object {
+
+        operator fun invoke(project: Project) = PackageManagementPanel(
+            rootDataModelProvider = project.packageSearchDataService,
+            selectedPackageSetter = project.packageSearchDataService,
+            targetModuleSetter = project.packageSearchDataService,
+            searchClient = project.packageSearchDataService,
+            operationExecutor = project.packageSearchDataService,
+            project = project
+        )
+    }
+
+    override val coroutineContext =
+        project.lifecycleScope.newCoroutineContext(SupervisorJob() + CoroutineName("PackageManagementPanel"))
 
     private val operationFactory = PackageSearchOperationFactory()
 
@@ -134,14 +154,16 @@ internal class PackageManagementPanel(
             .launchIn(this)
 
         rootDataModelProvider.dataModelFlow.onEach { data ->
-            val tableItems = computePackagesTableItems(
-                project = project,
-                packages = data.packageModels,
-                selectedPackageModel = data.selectedPackage,
-                onlyStable = data.filterOptions.onlyStable,
-                targetModules = data.targetModules,
-                traceInfo = data.traceInfo
-            )
+            val tableItems = withContext(Dispatchers.ReadActions) {
+                computePackagesTableItems(
+                    project = project,
+                    packages = data.packageModels,
+                    selectedPackageModel = data.selectedPackage,
+                    onlyStable = data.filterOptions.onlyStable,
+                    targetModules = data.targetModules,
+                    traceInfo = data.traceInfo
+                )
+            }
 
             packagesListPanel.display(
                 PackagesListPanel.ViewModel(
@@ -164,7 +186,7 @@ internal class PackageManagementPanel(
                     allKnownRepositories = data.allKnownRepositories,
                     targetModules = data.targetModules,
                     onlyStable = data.filterOptions.onlyStable,
-                    invokeLaterScope = project.lifecycleScope
+                    invokeLaterScope = this
                 )
             )
         }.launchIn(this)

@@ -21,16 +21,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapConcat
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlin.streams.toList
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
 
 internal val Project.packageSearchDataService
     get() = service<PackageSearchDataService>()
@@ -70,7 +66,7 @@ internal val Project.nativeModulesChangesFlow
             }
         )
         awaitClose { connection.disconnect() }
-    }.debounce(200.toDuration(DurationUnit.MILLISECONDS)).map { it.toList() }
+    }.mapLatest { it.toList() }
 
 internal val Project.packageSearchModulesChangesFlow
     get() = trustedProjectFlow.flatMapConcat { trustedState ->

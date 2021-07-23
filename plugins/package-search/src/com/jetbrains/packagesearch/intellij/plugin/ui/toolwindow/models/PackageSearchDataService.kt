@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -50,9 +49,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -63,7 +61,6 @@ import java.net.SocketTimeoutException
 import java.net.URI
 import java.util.Locale
 import java.util.concurrent.TimeUnit.HOURS
-import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.TimeoutException
 import kotlin.time.toDuration
 
@@ -96,6 +93,8 @@ internal class PackageSearchDataService(
 
     override val dataStatusState: MutableStateFlow<DataStatus> = MutableStateFlow(DataStatus())
 
+    private val highlightEvents = Channel<Unit>()
+
     override val dataModelFlow: StateFlow<RootDataModel> = combine(
         searchQueryState,
         searchResultsState,
@@ -117,9 +116,8 @@ internal class PackageSearchDataService(
             selectedPackageModel = selectedPackage
         )
     }.replayOnSignal(dataChangeChannel.consumeAsFlow())
-        .debounce(200.toDuration(MILLISECONDS))
-        .map { it.toRootDataModel() }
-        .onEach { rerunHighlightingOnOpenBuildFiles() }
+        .mapLatest { it.toRootDataModel() }
+        .onEach { highlightEvents.send(Unit) }
         .catch {
             logError(contextName = "dataModelFlow", throwable = it) { "Error while processing latest model change." }
         }
@@ -145,7 +143,37 @@ internal class PackageSearchDataService(
             refreshKnownRepositories(TraceInfo(TraceInfo.TraceSource.INIT))
         }
 
-        searchQueryState.onEach { performSearch(it, TraceInfo(TraceInfo.TraceSource.SEARCH_QUERY)) }
+        highlightEvents.consumeAsFlow()
+            .onEach { rerunHighlightingOnOpenBuildFiles() }
+            .launchIn(this)
+
+        searchQueryState.mapLatest { query ->
+            val traceInfo = TraceInfo(TraceInfo.TraceSource.SEARCH_QUERY)
+            logDebug(traceInfo, "PKGSDataService#performSearch()") { "Searching for '$query'..." }
+            if (query.isBlank()) {
+                logDebug(traceInfo, "PKGSDataService#performSearch()") { "Query is empty, reverting to no results" }
+                return@mapLatest null
+            }
+
+            setStatus(isSearching = true)
+
+            val r =
+                dataProvider.doSearch(query, filterOptionsState.value).onFailure {
+                    logError(traceInfo, "performSearch()") { "Search failed for query '$query': ${it.message}" }
+                    showErrorNotification(
+                        it.message,
+                        PackageSearchBundle.message("packagesearch.search.client.searching.failed")
+                    )
+                }
+                    .onSuccess {
+                        logDebug(traceInfo, "PKGSDataService#performSearch()") {
+                            "Searching for '$query' completed, yielded ${it.packages.size} results in ${it.repositories.size} repositories"
+                        }
+                    }
+                    .getOrNull()
+            setStatus(isSearching = false)
+            r
+        }
             .catch { error ->
                 when (error) {
                     is TimeoutCancellationException, is TimeoutException, is SocketTimeoutException ->
@@ -153,6 +181,7 @@ internal class PackageSearchDataService(
                     else -> logError("searchQueryState", error) { "Error while retrieving search results." }
                 }
             }
+            .onEach { searchResultsState.emit(it) }
             .launchIn(this)
     }
 
@@ -172,33 +201,6 @@ internal class PackageSearchDataService(
                 knownRepositoriesRemoteInfo.emit(it)
             }
         setStatus(isRefreshingData = false)
-    }
-
-    private suspend fun performSearch(query: String, traceInfo: TraceInfo) {
-        logDebug(traceInfo, "PKGSDataService#performSearch()") { "Searching for '$query'..." }
-        if (query.isBlank()) {
-            logDebug(traceInfo, "PKGSDataService#performSearch()") { "Query is empty, reverting to no results" }
-            searchResultsState.emit(null)
-            return
-        }
-
-        setStatus(isSearching = true)
-
-        dataProvider.doSearch(query, filterOptionsState.value)
-            .onFailure {
-                logError(traceInfo, "performSearch()") { "Search failed for query '$query': ${it.message}" }
-                showErrorNotification(
-                    it.message,
-                    PackageSearchBundle.message("packagesearch.search.client.searching.failed")
-                )
-            }
-            .onSuccess {
-                logDebug(traceInfo, "PKGSDataService#performSearch()") {
-                    "Searching for '$query' completed, yielded ${it.packages.size} results in ${it.repositories.size} repositories"
-                }
-                searchResultsState.emit(it)
-            }
-        setStatus(isSearching = false)
     }
 
     private suspend fun OnDataChangedIntermediateModel.toRootDataModel(): RootDataModel {
@@ -251,7 +253,11 @@ internal class PackageSearchDataService(
         return newData
     }
 
-    private suspend fun fetchProjectModuleModels(targetModules: TargetModules, traceInfo: TraceInfo, projectModules: List<ProjectModule>): List<ModuleModel> {
+    private suspend fun fetchProjectModuleModels(
+        targetModules: TargetModules,
+        traceInfo: TraceInfo,
+        projectModules: List<ProjectModule>
+    ): List<ModuleModel> {
         // Refresh project modules, this will cascade into updating the rest of the data
 
         val moduleModels = withContext(Dispatchers.ReadActions) { projectModules.map { ModuleModel(it) } }
@@ -485,28 +491,26 @@ internal class PackageSearchDataService(
         logDebug(traceInfo, "PKGSDataService#setStatusAsync()") { "Status changed: $newStatus" }
     }
 
-    private fun rerunHighlightingOnOpenBuildFiles() {
+    private suspend fun rerunHighlightingOnOpenBuildFiles() = withContext(Dispatchers.ReadActions) {
         val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project)
         val psiManager = PsiManager.getInstance(project)
 
-        runReadAction {
-            FileEditorManager.getInstance(project).openFiles.asSequence()
-                .filter { virtualFile ->
-                    try {
-                        val file = psiManager.findFile(virtualFile) ?: return@filter false
-                        ProjectModuleOperationProvider.forProjectPsiFileOrNull(project, file)
-                            ?.hasSupportFor(project, file)
-                            ?: false
-                    } catch (ignored: Throwable) {
-                        logWarn(contextName = "PackageSearchDataService#rerunHighlightingOnOpenBuildFiles", ignored) {
-                            "Error while filtering open files to trigger highlight rerun for"
-                        }
-                        false
+        FileEditorManager.getInstance(project).openFiles.asSequence()
+            .filter { virtualFile ->
+                try {
+                    val file = psiManager.findFile(virtualFile) ?: return@filter false
+                    ProjectModuleOperationProvider.forProjectPsiFileOrNull(project, file)
+                        ?.hasSupportFor(project, file)
+                        ?: false
+                } catch (ignored: Throwable) {
+                    logWarn(contextName = "PackageSearchDataService#rerunHighlightingOnOpenBuildFiles", ignored) {
+                        "Error while filtering open files to trigger highlight rerun for"
                     }
+                    false
                 }
-                .mapNotNull { psiManager.findFile(it) }
-                .forEach { daemonCodeAnalyzer.restart(it) }
-        }
+            }
+            .mapNotNull { psiManager.findFile(it) }
+            .forEach { daemonCodeAnalyzer.restart(it) }
     }
 
     override fun setTargetModules(targetModules: TargetModules) {
