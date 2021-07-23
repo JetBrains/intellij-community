@@ -14,7 +14,8 @@ open class ProblemsViewState : BaseState() {
     fun getInstance(project: Project) = project.getService(ProblemsViewStateManager::class.java).state
   }
 
-  var selectedIndex by property(0)
+  var selectedTabId by string("")
+  
   var proportion by property(0.5f)
 
   var autoscrollToSource by property(false)
