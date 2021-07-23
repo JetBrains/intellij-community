@@ -66,7 +66,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     data[RECENT_INDEX_DATA_KEY] = getRecentFilesIndex(virtualFile, project)
     data[PREDICTION_SCORE_DATA_KEY] = getPredictionScore(virtualFile, project)
     data.putAll(getModificationTimeStats(virtualFile, currentTime))
-    data.putAll(getFileTypeStats(virtualFile, currentTime))
+    data.putAll(getFileTypeStats(virtualFile, project, currentTime))
 
     return data
   }
@@ -106,9 +106,9 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     )
   }
 
-  private fun getFileTypeStats(virtualFile: VirtualFile, currentTime: Long): Map<String, Any> {
+  private fun getFileTypeStats(virtualFile: VirtualFile, project: Project, currentTime: Long): Map<String, Any> {
     val fileTypeName = virtualFile.fileType.name
-    val localSummary = service<FileTypeUsageLocalSummary>()
+    val localSummary = project.service<FileTypeUsageLocalSummary>()
     val allFileTypesStats = localSummary.getFileTypeStats()
 
     val totalUsage = allFileTypesStats.values.sumBy { it.usageCount }

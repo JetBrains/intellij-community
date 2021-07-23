@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.local
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.util.SimpleModificationTracker
@@ -13,9 +11,7 @@ import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
 
-@State(name = "FileTypeUsageLocalSummary",
-       storages = [Storage("fileTypeUsageSummary.xml", roamingType = RoamingType.DISABLED)],
-       reportStatistic = false)
+@State(name = "FileTypeUsageLocalSummary", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], reportStatistic = false)
 @Service(Service.Level.PROJECT)
 class FileTypeUsageLocalSummary : PersistentStateComponent<FileTypeUsageLocalSummaryState>, SimpleModificationTracker() {
   @Volatile
@@ -69,10 +65,8 @@ data class FileTypeUsageLocalSummaryState(
 )
 
 private class FileTypeSummaryListener : FileEditorManagerListener {
-  private val service = ApplicationManager.getApplication().getService(FileTypeUsageLocalSummary::class.java)
-                        ?: throw ExtensionNotApplicableException.INSTANCE
-
   override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+    val service = source.project.getService(FileTypeUsageLocalSummary::class.java)
     val fileTypeName = file.fileType.name
     service.updateFileTypeSummary(fileTypeName)
   }
