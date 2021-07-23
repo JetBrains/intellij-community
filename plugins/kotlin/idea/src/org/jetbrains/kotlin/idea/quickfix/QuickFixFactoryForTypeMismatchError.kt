@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isKFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
@@ -113,6 +114,11 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             if (expectedType.isMarkedNullable && expressionType.isMarkedNullable) {
                 actions.add(AddToStringFix(diagnosticElement, true))
             }
+        }
+
+        val expectedClassDescriptor = expressionType.constructor.declarationDescriptor as? ClassDescriptor
+        if (expectedClassDescriptor != null && KotlinBuiltIns.isKClass(expectedClassDescriptor) && expectedType.isJClass()) {
+            actions.add(ConvertKClassToClassFix(diagnosticElement))
         }
 
         if (expectedType.isInterface()) {

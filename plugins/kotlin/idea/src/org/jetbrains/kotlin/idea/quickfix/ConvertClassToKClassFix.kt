@@ -20,9 +20,9 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 
-private val JAVA_LANG_CLASS_FQ_NAME = FqName("java.lang.Class")
+internal val JAVA_LANG_CLASS_FQ_NAME = FqName("java.lang.Class")
 
-private fun KotlinType.isJClass(): Boolean {
+internal fun KotlinType.isJClass(): Boolean {
     val expressionTypeFqName = constructor.declarationDescriptor?.fqNameSafe ?: return false
     return expressionTypeFqName == JAVA_LANG_CLASS_FQ_NAME
 }
