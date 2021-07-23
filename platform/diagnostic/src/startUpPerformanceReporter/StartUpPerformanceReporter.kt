@@ -12,7 +12,6 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
@@ -123,15 +122,12 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
 
       val currentReport = w.toByteBuffer()
 
+      if (System.getProperty("idea.log.perf.stats", "false").toBoolean()) {
+        w.writeToLog(LOG)
+      }
+
       val perfFilePath = System.getProperty("idea.log.perf.stats.file")
       if (!perfFilePath.isNullOrBlank()) {
-        val app = ApplicationManager.getApplication()
-        if (!app.isUnitTestMode &&
-            SystemProperties.getBooleanProperty("idea.log.perf.stats", app.isInternal ||
-                                                                       ApplicationInfoEx.getInstanceEx().build.isSnapshot)) {
-          w.writeToLog(LOG)
-        }
-
         LOG.info("StartUp Measurement report was written to: $perfFilePath")
         Path.of(perfFilePath).write(currentReport)
       }
