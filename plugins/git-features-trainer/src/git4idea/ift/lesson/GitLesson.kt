@@ -6,8 +6,11 @@ import git4idea.ift.GitProjectUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import training.learn.course.KLesson
+import training.learn.course.LessonProperties
 
 abstract class GitLesson(@NonNls id: String, @Nls name: String) : KLesson(id, name) {
+  override val properties = LessonProperties(availableSince = "2021.2")
+
   override fun prepare(project: Project) {
     GitProjectUtil.restoreGitLessonsFiles(project)
   }

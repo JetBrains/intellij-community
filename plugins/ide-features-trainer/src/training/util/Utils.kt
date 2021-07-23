@@ -6,11 +6,13 @@ import com.intellij.DynamicBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
@@ -211,3 +213,9 @@ private fun excludeNullCheck(value: String?): String? {
 }
 
 fun String.replaceSpacesWithNonBreakSpace(): String = this.replace(" ", "\u00A0")
+
+internal val iftPluginIsUsing: Boolean get() = LessonStateManager.getPassedLessonsNumber() >= 5
+
+internal const val LEARNING_PANEL_OPENED_IN = "ift.learning.panel.opened.in"
+internal val learningPanelWasOpenedInCurrentVersion: Boolean
+  get() = PropertiesComponent.getInstance().getValue(LEARNING_PANEL_OPENED_IN) == ApplicationInfo.getInstance().strictVersion

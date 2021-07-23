@@ -37,6 +37,8 @@ internal object LessonStateManager {
     }
   }
 
+  fun getPassedLessonsNumber(): Int = LessonStateBase.instance.map.values.filter { it == LessonState.PASSED }.size
+
   fun getStateFromBase(lessonId: String): LessonState =
     LessonStateBase.instance.map.getOrPut(lessonId.toLowerCase()) { LessonState.NOT_PASSED }
 }

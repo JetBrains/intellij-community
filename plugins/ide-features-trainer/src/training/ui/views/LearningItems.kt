@@ -16,10 +16,7 @@ import training.learn.course.IftModule
 import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
 import training.ui.UISettings
-import training.util.createBalloon
-import training.util.learningProgressString
-import training.util.rigid
-import training.util.scaledRigid
+import training.util.*
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -80,6 +77,10 @@ class LearningItems(private val project: Project) : JPanel() {
 
     result.add(rigid(4, 0))
     result.add(name)
+    if (iftPluginIsUsing && lesson.isNewLesson()) {
+      result.add(rigid(10, 0))
+      result.add(NewContentLabel())
+    }
     result.add(Box.createHorizontalGlue())
 
     return result
@@ -121,8 +122,20 @@ class LearningItems(private val project: Project) : JPanel() {
 
     val name = JLabel(module.name)
     name.font = UISettings.instance.modulesFont
-    modulePanel.add(name)
-    scaledRigid(UISettings.instance.progressModuleGap, 0)
+    if (!iftPluginIsUsing || expanded.contains(module) || !module.lessons.any { it.isNewLesson() }) {
+      modulePanel.add(name)
+    } else {
+      val nameLine = JPanel()
+      nameLine.isOpaque = false
+      nameLine.layout = BoxLayout(nameLine, BoxLayout.X_AXIS)
+      nameLine.alignmentX = LEFT_ALIGNMENT
+
+      nameLine.add(name)
+      nameLine.add(rigid(10, 0))
+      nameLine.add(NewContentLabel())
+
+      modulePanel.add(nameLine)
+    }
     modulePanel.add(scaledRigid(0, UISettings.instance.progressModuleGap))
 
     if (expanded.contains(module)) {
@@ -206,4 +219,3 @@ private fun mouseAlreadyInside(c: Component): Boolean {
   bounds.location = c.locationOnScreen
   return bounds.contains(mousePos)
 }
-

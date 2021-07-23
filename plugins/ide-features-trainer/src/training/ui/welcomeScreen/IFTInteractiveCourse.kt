@@ -20,6 +20,9 @@ import training.learn.OpenLessonActivities
 import training.learn.course.IftModule
 import training.learn.course.KLesson
 import training.statistic.StatisticBase
+import training.ui.views.NewContentLabel
+import training.util.iftPluginIsUsing
+import training.util.learningPanelWasOpenedInCurrentVersion
 import training.util.rigid
 import java.awt.event.ActionEvent
 import javax.swing.*
@@ -64,7 +67,21 @@ private class IFTInteractiveCourseData : InteractiveCourseData {
 
     panel.add(rigid(16, 1))
     for (module in modules) {
-      panel.add(moduleHeader(module))
+      val moduleHeader = moduleHeader(module)
+      if (!moduleHasNewContent(module)) {
+        panel.add(moduleHeader)
+      } else {
+        val nameLine = JPanel()
+        nameLine.isOpaque = false
+        nameLine.layout = BoxLayout(nameLine, BoxLayout.X_AXIS)
+        nameLine.alignmentX = JPanel.LEFT_ALIGNMENT
+
+        nameLine.add(moduleHeader)
+        nameLine.add(rigid(10, 0))
+        nameLine.add(NewContentLabel())
+
+        panel.add(nameLine)
+      }
       panel.add(rigid(2, 2))
       panel.add(moduleDescription(module))
       panel.add(rigid(16, 16))
@@ -72,6 +89,23 @@ private class IFTInteractiveCourseData : InteractiveCourseData {
     panel.add(rigid(16, 15))
     StatisticBase.logWelcomeScreenPanelExpanded()
     return panel
+  }
+
+  private fun moduleHasNewContent(module: IftModule): Boolean {
+    if (!iftPluginIsUsing) {
+      return false
+    }
+    return module.lessons.any { it.isNewLesson() }
+  }
+
+  override fun newContentMarker(): JComponent? {
+    if (learningPanelWasOpenedInCurrentVersion) {
+      return null
+    }
+    if (CourseManager.instance.modules.any { moduleHasNewContent(it) }) {
+      return NewContentLabel()
+    }
+    return null
   }
 
   private fun moduleDescription(module: IftModule): HeightLimitedPane {
