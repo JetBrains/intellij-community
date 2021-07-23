@@ -10,7 +10,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
@@ -20,10 +19,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
@@ -71,11 +67,30 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     state.addClosureState(state);
   }
 
+  private static boolean hasNoChanges(@NotNull TypeDfaState baseDfaState, @NotNull TypeDfaState newDfaState) {
+    var oldMap = baseDfaState.getVarTypes();
+    for (var entry : newDfaState.getVarTypes().entrySet()) {
+      if (!oldMap.containsKey(entry.getKey()) || !oldMap.get(entry.getKey()).equals(entry.getValue())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private void handleFunctionalExpression(@NotNull TypeDfaState state, @NotNull FunctionalBlockEndInstruction instruction) {
-    GrFunctionalExpression block = instruction.getElement();
+    GrFunctionalExpression block = instruction.getStartNode().getElement();
     ClosureFrame currentClosureFrame = state.popTopClosureFrame();
     assert currentClosureFrame != null : "Encountered end of closure without closure start";
-    if (currentClosureFrame.getStartState().contentsEqual(state)) {
+    List<VariableDescriptor> toRemove = new ArrayList<>();
+    for (var newDescriptor : state.getVarTypes().keySet()) {
+      if (newDescriptor instanceof ResolvedVariableDescriptor && ((ResolvedVariableDescriptor)newDescriptor).getVariable().getContext() == block) {
+        toRemove.add(newDescriptor);
+      }
+    }
+    for (var descr : toRemove) {
+      state.getVarTypes().remove(descr);
+    }
+    if (hasNoChanges(currentClosureFrame.getStartState(), state)) {
       return;
     }
     // todo: more accurate handling of flushing type
@@ -83,13 +98,13 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     if (kind.equals(InvocationKind.IN_PLACE_ONCE)) {
       return;
     }
-    for (var newDescriptor : state.getVarTypes().keySet()) {
-      if (!currentClosureFrame.getStartState().containsVariable(newDescriptor)) {
-        state.removeBinding(newDescriptor);
-      }
-    }
     switch (kind) {
       case IN_PLACE_UNKNOWN:
+        for (var descriptor : state.getVarTypes().keySet()) {
+          if (!currentClosureFrame.getStartState().containsVariable(descriptor)) {
+            state.removeBinding(descriptor);
+          }
+        }
         state.joinState(currentClosureFrame.getStartState(), myManager);
         break;
       case UNKNOWN:

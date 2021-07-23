@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -147,7 +148,33 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   public static @NotNull Instruction @NotNull [] buildControlFlow(@NotNull GroovyPsiElement scope, @NotNull GrControlFlowPolicy policy) {
-    return new ControlFlowBuilder(policy).doBuildLargeControlFlow(scope);
+    return extractSubFlow(new ControlFlowBuilder(policy).doBuildLargeControlFlow(scope), scope);
+  }
+
+  private static @NotNull Instruction @NotNull [] extractSubFlow(Instruction[] mainFlow, GroovyPsiElement scope) {
+    var flowOwner = PsiTreeUtil.getParentOfType(scope, GrControlFlowOwner.class, false);
+    if (flowOwner == scope) {
+      return mainFlow;
+    }
+    List<Instruction> subFlow = new ArrayList<>();
+    for (Instruction instruction : mainFlow) {
+      if (instruction.getElement() == flowOwner) {
+        if (subFlow.isEmpty()) {
+          subFlow.add(instruction);
+        }
+        else {
+          return subFlow.toArray(Instruction.EMPTY_ARRAY);
+        }
+      }
+      else if (!subFlow.isEmpty()) {
+        subFlow.add(instruction);
+      }
+    }
+    if (subFlow.isEmpty()) {
+      return mainFlow;
+    } else {
+      return subFlow.toArray(Instruction.EMPTY_ARRAY);
+    }
   }
 
   private Instruction[] doBuildLargeControlFlow(GroovyPsiElement scope) {
@@ -254,12 +281,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   @Override
   public void visitClosure(@NotNull GrClosableBlock closure) {
-    InstructionImpl startClosure = new FunctionalBlockBeginInstruction(closure);
+    FunctionalBlockBeginInstruction startClosure = new FunctionalBlockBeginInstruction(closure);
     addNodeAndCheckPending(startClosure);
     addFunctionalExpressionParameters(closure);
-    super.visitClosure(closure);
-    InstructionImpl endClosure = new FunctionalBlockEndInstruction(startClosure, closure);
-    addNode(endClosure);
+    addControlFlowInstructions(closure);
+    InstructionImpl endClosure = new FunctionalBlockEndInstruction(startClosure);
+    addNodeAndCheckPending(endClosure);
   }
 
   private void addReadFromNestedControlFlow(@NotNull PsiElement anchor, ReadWriteVariableInstruction @NotNull [] reads) {

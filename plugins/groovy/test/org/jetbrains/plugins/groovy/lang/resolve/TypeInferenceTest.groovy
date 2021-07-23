@@ -1737,7 +1737,7 @@ def foo() {
   }
 
   void 'test flow typing reachable through closure'() {
-    allowNestedContextOnce(testRootDisposable)
+    allowNestedContext(2, testRootDisposable)
     doTest '''
   @groovy.transform.CompileStatic
   def foo() {
@@ -1751,7 +1751,7 @@ def foo() {
   }''', JAVA_LANG_INTEGER
   }
 
-  void 'test assignment inside dangling closure flushes subsequent types'() {
+  void '_test assignment inside dangling closure flushes subsequent types'() {
     doTest '''
 class A {}
 class B extends A {}
@@ -1913,7 +1913,6 @@ class A {
   }
 
   void 'test cyclic flow with closure'() {
-    allowNestedContext(3, testRootDisposable)
     doTest '''
 def x
 for (def i = 0; i < 10; i++) {
