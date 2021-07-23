@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.application.PathManager
@@ -21,10 +21,7 @@ import java.util.concurrent.CountDownLatch
 import kotlin.system.exitProcess
 
 val skippedPluginModules = hashSetOf(
-  // skip intellij.cwm.plugin - quiche downloading should be implemented as a maven lib
-  "intellij.cwm.plugin",
-  // this plugin wants Kotlin plugin - not installed in IDEA running from sources
-  "intellij.android.plugin"
+  "intellij.cwm.plugin", // quiche downloading should be implemented as a maven lib
 )
 
 val LOG: Logger = LoggerFactory.getLogger(DevIdeaBuildServer::class.java)
