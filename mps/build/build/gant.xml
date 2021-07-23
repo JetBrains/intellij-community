@@ -261,6 +261,19 @@
             <arg value="apply"/>
             <arg value="${patchJBUIScale}"/>
         </exec>
+
+        <!-- This is backport of platform commit - remove after 2021.1.3  -->
+        <property name="patchToolWindowsPane"
+                  value="${basedir}/patches/ToolWindowsPane.patch"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="--check"/>
+            <arg value="${patchToolWindowsPane}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${patchToolWindowsPane}"/>
+        </exec>
     </target>
 
     <!-- ===================================================== -->

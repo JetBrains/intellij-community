@@ -1,0 +1,60 @@
+Index: community/platform/platform-impl/src/com/intellij/openapi/wm/impl/ToolWindowsPane.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- community/platform/platform-impl/src/com/intellij/openapi/wm/impl/ToolWindowsPane.java	(revision 66a2670e3dc91d1e37a0f1f547f60da5f329c4f7)
++++ community/platform/platform-impl/src/com/intellij/openapi/wm/impl/ToolWindowsPane.java	(revision 070880ecf1529ae2cb2ee1fed2e10256f7f539e5)
+@@ -240,28 +240,31 @@
+
+   void removeDecorator(@NotNull WindowInfo info, @Nullable JComponent component, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
+     if (info.getType() == ToolWindowType.DOCKED) {
+-      WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), !info.isSplit());
+-      if (sideInfo == null) {
+-        setComponent(null, info.getAnchor(), 0);
+-      }
+-      else {
+-        ToolWindowAnchor anchor = info.getAnchor();
+-        JComponent c = getComponentAt(anchor);
+-        if (c instanceof Splitter) {
+-          Splitter splitter = (Splitter)c;
+-          InternalDecoratorImpl component1 = (InternalDecoratorImpl)(info.isSplit() ? splitter.getFirstComponent() : splitter.getSecondComponent());
+-          state.addSplitProportion(info, component1, splitter);
+-          setComponent(component1, anchor,
+-                       component1 == null ? 0 : ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError(component1).getWeight());
+-        }
+-        else {
+-          setComponent(null, anchor, 0);
+-        }
+-      }
++      if (component != null && component.isShowing()) {
++        WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), !info.isSplit());
++        if (sideInfo == null) {
++          setComponent(null, info.getAnchor(), 0);
++        }
++        else {
++          ToolWindowAnchor anchor = info.getAnchor();
++          JComponent c = getComponentAt(anchor);
++          if (c instanceof Splitter) {
++            Splitter splitter = (Splitter)c;
++            InternalDecoratorImpl component1 =
++              (InternalDecoratorImpl)(info.isSplit() ? splitter.getFirstComponent() : splitter.getSecondComponent());
++            state.addSplitProportion(info, component1, splitter);
++            setComponent(component1, anchor,
++                         component1 == null ? 0 : ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError(component1).getWeight());
++          }
++          else {
++            setComponent(null, anchor, 0);
++          }
++        }
+
+-      if (!dirtyMode) {
+-        layeredPane.validate();
+-        layeredPane.repaint();
++        if (!dirtyMode) {
++          layeredPane.validate();
++          layeredPane.repaint();
++        }
+       }
+     }
+     else if (info.getType() == ToolWindowType.SLIDING) {
