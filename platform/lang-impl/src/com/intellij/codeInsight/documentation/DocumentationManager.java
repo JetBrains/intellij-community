@@ -1125,6 +1125,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         else if (text.isEmpty()) {
           return null;
         }
+        else if (precalculatedDocumentation != null) {
+          return text; // text == precalculatedDocumentation in this case; don't decorate it
+        }
         else {
           return decorate(element, text, collector.effectiveUrl, provider);
         }
