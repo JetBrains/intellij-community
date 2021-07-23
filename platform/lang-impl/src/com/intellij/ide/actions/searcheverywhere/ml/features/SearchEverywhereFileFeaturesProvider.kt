@@ -62,7 +62,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     }
 
     data[IS_OPENED_DATA_KEY] = isOpened(virtualFile, project)
-    data[FILETYPE_DATA_KEY] = virtualFile.fileType
+    data[FILETYPE_DATA_KEY] = virtualFile.fileType.name
     data[RECENT_INDEX_DATA_KEY] = getRecentFilesIndex(virtualFile, project)
     data[PREDICTION_SCORE_DATA_KEY] = getPredictionScore(virtualFile, project)
     data.putAll(getModificationTimeStats(virtualFile, currentTime))
