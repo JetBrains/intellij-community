@@ -181,6 +181,7 @@
 
     <extensionPoint name="welcomeScreen" interface="com.intellij.openapi.wm.WelcomeScreenProvider"/>
     <extensionPoint name="welcomeFrameProvider" interface="com.intellij.openapi.wm.WelcomeFrameProvider" dynamic="true"/>
+    <extensionPoint name="welcomeFrameBehaviour" interface="com.intellij.openapi.wm.WelcomeFrameBehaviour" dynamic="true"/>
     <extensionPoint name="welcomeTabFactory" interface="com.intellij.openapi.wm.WelcomeTabFactory" dynamic="true"/>
     <extensionPoint name="interactiveCourseFactory" interface="com.intellij.openapi.wm.InteractiveCourseFactory" dynamic="true"/>
     <extensionPoint name="startPagePromoter" interface="com.intellij.openapi.wm.StartPagePromoter" dynamic="true"/>
