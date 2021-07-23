@@ -254,6 +254,7 @@ final class JarPackager {
           String fileName = file.fileName.toString()
           //noinspection SpellCheckingInspection
           if (fileName.endsWith("-rt.jar") || fileName.startsWith("jps-") || fileName.contains("-agent") ||
+              fileName == "yjp-controller-api-redist.jar" ||
               libName == "async-profiler-windows") {
             files.remove(i)
             buildLibrary(library, relativePathToLibFile, outputDir.resolve(fileName), List.of(file), layoutSpec, buildContext)
