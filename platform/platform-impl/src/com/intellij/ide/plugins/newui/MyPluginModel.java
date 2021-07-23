@@ -388,9 +388,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
                                                          descriptor,
                                                          MyPluginModel.this,
                                                          !isUpdate);
-          ApplicationManager.getApplication().invokeLater(
-            () -> prepareToInstall(info),
-            parentComponent == null ? ModalityState.any() : ModalityState.stateForComponent(parentComponent));
+          ApplicationManager.getApplication().invokeLater(() -> prepareToInstall(info), modalityState);
 
           PluginInstallOperation operation = new PluginInstallOperation(pluginsToInstall,
                                                                         getCustomRepoPlugins(),
