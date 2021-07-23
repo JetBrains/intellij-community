@@ -24,6 +24,7 @@ import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -323,6 +324,27 @@ public final class SwitchUtils {
     } else {
       return null;
     }
+  }
+
+  /**
+   * @return either default switch label statement {@link PsiSwitchLabelStatementBase}, or {@link PsiDefaultCaseLabelElement},
+   * or null, if nothing was found.
+   */
+  @Nullable
+  public static PsiElement findDefaultElement(@NotNull PsiSwitchBlock switchBlock) {
+    PsiCodeBlock body = switchBlock.getBody();
+    if (body == null) return null;
+    for (PsiStatement statement : body.getStatements()) {
+      PsiSwitchLabelStatementBase switchLabelStatement = ObjectUtils.tryCast(statement, PsiSwitchLabelStatementBase.class);
+      if (switchLabelStatement == null) continue;
+      if (switchLabelStatement.isDefaultCase()) return switchLabelStatement;
+      PsiCaseLabelElementList labelElementList = switchLabelStatement.getCaseLabelElementList();
+      if (labelElementList == null) return null;
+      PsiCaseLabelElement defaultElement = ContainerUtil.find(labelElementList.getElements(),
+                                                              labelElement -> labelElement instanceof PsiDefaultCaseLabelElement);
+      if (defaultElement != null) return defaultElement;
+    }
+    return null;
   }
 
   public static @Nullable @NonNls String createPatternCaseText(PsiExpression expression){

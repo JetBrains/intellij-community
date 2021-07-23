@@ -412,7 +412,7 @@ public class SwitchBlockHighlightingModel {
       if (!results.isEmpty()) return results;
 
       if (needToCheckCompleteness(elementsToCheckCompleteness)) {
-        checkCompleteness(elementsToCheckCompleteness, results);
+        checkCompleteness(elementsToCheckCompleteness, results, true);
       }
       return results;
     }
@@ -644,15 +644,18 @@ public class SwitchBlockHighlightingModel {
      *
      * @see JavaPsiPatternUtil#isTotalForType(PsiPattern, PsiType)
      */
-    private void checkCompleteness(@NotNull List<PsiCaseLabelElement> elements, @NotNull List<HighlightInfo> results) {
-      PsiElement elementCoversType = findTotalPatternForType(elements, mySelectorType);
-      PsiElement defaultElement = findDefaultElement();
-      if (defaultElement != null && elementCoversType != null) {
-        results.add(createError(defaultElement, JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
-        results.add(createError(elementCoversType, JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
-        return;
+    private void checkCompleteness(@NotNull List<PsiCaseLabelElement> elements, @NotNull List<HighlightInfo> results,
+                                   boolean inclusiveTotalAndDefault) {
+      if (inclusiveTotalAndDefault) {
+        PsiElement elementCoversType = findTotalPatternForType(elements, mySelectorType);
+        PsiElement defaultElement = findDefaultElement();
+        if (defaultElement != null && elementCoversType != null) {
+          results.add(createError(defaultElement, JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
+          results.add(createError(elementCoversType, JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
+          return;
+        }
+        if (defaultElement != null || elementCoversType != null) return;
       }
-      if (defaultElement != null || elementCoversType != null) return;
       PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
       if (selectorClass != null && getSwitchSelectorKind() == SelectorKind.ENUM) {
         List<String> enumElements = new SmartList<>();
@@ -807,7 +810,7 @@ public class SwitchBlockHighlightingModel {
       if (switchModel instanceof PatternsInSwitchBlockHighlightingModel) {
         if (findTotalPatternForType(labelElements, switchModel.mySelectorType) != null) return COMPLETE_WITH_TOTAL;
         if (!needToCheckCompleteness && !isEnumSelector) return INCOMPLETE;
-        ((PatternsInSwitchBlockHighlightingModel)switchModel).checkCompleteness(labelElements, results);
+        ((PatternsInSwitchBlockHighlightingModel)switchModel).checkCompleteness(labelElements, results, false);
       }
       else {
         if (!needToCheckCompleteness && !isEnumSelector) return INCOMPLETE;
