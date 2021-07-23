@@ -18,9 +18,10 @@ class GoogleDocsImportPasteProvider : PasteProvider {
     if (GoogleDocsImportUtils.isLinkToDocumentCorrect(copiedLink)) {
       val docsId = GoogleDocsImportUtils.extractDocsId(copiedLink)
       val project = CommonDataKeys.PROJECT.getData(dataContext)!!
+      val suggestedPath = CommonDataKeys.VIRTUAL_FILE.getData(dataContext)?.path ?: project.basePath!!
 
       val credential = GoogleAuthorizationManager(project).getCredentials() ?: return
-      GoogleDocsImportTask(project, credential, docsId).queue()
+      GoogleDocsImportTask(project, credential, docsId, suggestedPath).queue()
     }
   }
 
