@@ -58,7 +58,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   private final Deque<InstructionImpl> myProcessingStack = new ArrayDeque<>();
   private GroovyPsiElement myScope;
-
+  private final Deque<GrFunctionalExpression> myFunctionalScopeStack = new ArrayDeque<>();
 
   /**
    * stack of current catch blocks
@@ -148,23 +148,22 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   public static @NotNull Instruction @NotNull [] buildControlFlow(@NotNull GroovyPsiElement scope, @NotNull GrControlFlowPolicy policy) {
-    return extractSubFlow(new ControlFlowBuilder(policy).doBuildLargeControlFlow(scope), scope);
+    return new ControlFlowBuilder(policy).doBuildLargeControlFlow(scope);
   }
 
-  private static @NotNull Instruction @NotNull [] extractSubFlow(Instruction[] mainFlow, GroovyPsiElement scope) {
-    var flowOwner = PsiTreeUtil.getParentOfType(scope, GrControlFlowOwner.class, false);
-    if (flowOwner == scope) {
+  public static @NotNull Instruction @NotNull [] extractSubFlow(Instruction[] mainFlow, GroovyPsiElement scope) {
+    if (ControlFlowUtils.getTopmostOwner(scope) == scope) {
       return mainFlow;
     }
+    var flowOwner = PsiTreeUtil.getParentOfType(scope, GrControlFlowOwner.class, false);
     List<Instruction> subFlow = new ArrayList<>();
     for (Instruction instruction : mainFlow) {
-      if (instruction.getElement() == flowOwner) {
-        if (subFlow.isEmpty()) {
-          subFlow.add(instruction);
-        }
-        else {
-          return subFlow.toArray(Instruction.EMPTY_ARRAY);
-        }
+      if (instruction.getElement() == flowOwner && subFlow.isEmpty()) {
+        subFlow.add(instruction);
+      }
+      else if (instruction instanceof FunctionalBlockEndInstruction &&
+               (((FunctionalBlockEndInstruction)instruction).getStartNode()).getElement() == flowOwner) {
+        return subFlow.toArray(Instruction.EMPTY_ARRAY);
       }
       else if (!subFlow.isEmpty()) {
         subFlow.add(instruction);
@@ -282,11 +281,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   @Override
   public void visitClosure(@NotNull GrClosableBlock closure) {
     FunctionalBlockBeginInstruction startClosure = new FunctionalBlockBeginInstruction(closure);
-    addNodeAndCheckPending(startClosure);
+    myFunctionalScopeStack.add(closure);
+    addNode(startClosure);
     addFunctionalExpressionParameters(closure);
     addControlFlowInstructions(closure);
     InstructionImpl endClosure = new FunctionalBlockEndInstruction(startClosure);
-    addNodeAndCheckPending(endClosure);
+    addNode(endClosure);
+    checkPending(closure, endClosure);
+    myFunctionalScopeStack.pop();
   }
 
   private void addReadFromNestedControlFlow(@NotNull PsiElement anchor, ReadWriteVariableInstruction @NotNull [] reads) {
@@ -337,13 +339,15 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     final GrExpression value = returnStatement.getReturnValue();
     if (value != null) value.accept(this);
 
+    GroovyPsiElement scopeElement = myFunctionalScopeStack.isEmpty() ? null : returnStatement;
+
     if (isNodeNeeded) {
       InstructionImpl returnInstruction = startNode(returnStatement);
-      addPendingEdge(null, myHead);
+      addPendingEdge(scopeElement, myHead);
       finishNode(returnInstruction);
     }
     else {
-      addPendingEdge(null, myHead);
+      addPendingEdge(scopeElement, myHead);
     }
     interruptFlow();
   }

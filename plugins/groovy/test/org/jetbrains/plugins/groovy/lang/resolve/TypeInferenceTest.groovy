@@ -1737,7 +1737,6 @@ def foo() {
   }
 
   void 'test flow typing reachable through closure'() {
-    allowNestedContext(2, testRootDisposable)
     doTest '''
   @groovy.transform.CompileStatic
   def foo() {

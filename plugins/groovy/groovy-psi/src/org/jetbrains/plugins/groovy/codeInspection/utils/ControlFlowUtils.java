@@ -424,12 +424,12 @@ public final class ControlFlowUtils {
   }
 
   @NotNull
-  public static List<GrStatement> collectReturns(@Nullable PsiElement element) {
+  public static List<GrStatement> collectReturns(@Nullable GroovyPsiElement element) {
     return collectReturns(element, element instanceof GrCodeBlock || element instanceof GroovyFile || element instanceof GrLambdaBody);
   }
 
   @NotNull
-  public static List<GrStatement> collectReturns(@Nullable PsiElement element, final boolean allExitPoints) {
+  public static List<GrStatement> collectReturns(@Nullable GroovyPsiElement element, final boolean allExitPoints) {
     if (element == null) return Collections.emptyList();
 
     final Instruction[] flow;
@@ -437,9 +437,9 @@ public final class ControlFlowUtils {
       flow = ((GrControlFlowOwner)element).getControlFlow();
     }
     else {
-      flow = ControlFlowBuilder.buildControlFlow((GroovyPsiElement)element);
+      flow = ControlFlowBuilder.buildControlFlow(element);
     }
-    return collectReturns(flow, allExitPoints);
+    return collectReturns(flow, element, allExitPoints);
   }
 
   // stateful class
@@ -468,14 +468,12 @@ public final class ControlFlowUtils {
     private @NotNull List<GrStatement> getCollectedStatements() {
       return collector;
     }
-  }
-
-  @NotNull
-  public static List<GrStatement> collectReturns(Instruction @NotNull [] flow,
-                                                 final boolean allExitPoints) {
-    boolean[] visited = new boolean[flow.length];
+  }@NotNull
+  public static List<GrStatement> collectReturns(Instruction @NotNull [] flow, @NotNull GroovyPsiElement element, final boolean allExitPoints) {
+    Instruction[] subFlow = ControlFlowBuilder.extractSubFlow(flow, element);
+    boolean[] visited = new boolean[subFlow.length];
     var collector = new ExitPointCollector(allExitPoints ? MaybeReturnInstruction.class : null, GrReturnStatement.class);
-    visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, collector);
+    visitAllExitPointsInner(subFlow[subFlow.length - 1], subFlow[0], visited, collector);
     return collector.getCollectedStatements();
   }
 
@@ -680,6 +678,7 @@ public final class ControlFlowUtils {
 
   private static boolean visitAllExitPointsInner(Instruction last, Instruction first, boolean[] visited, ExitPointVisitor visitor) {
     if (first == last) return true;
+    //var shift = first.num();
     if (last instanceof AfterCallInstruction) {
       visited[last.num()] = true;
       return visitAllExitPointsInner(((AfterCallInstruction)last).myCall, first, visited, visitor);

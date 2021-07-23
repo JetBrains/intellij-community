@@ -137,7 +137,7 @@ public final class GroovyExtractChooser {
     GrControlFlowOwner controlFlowOwner = ControlFlowUtils.findControlFlowOwner(statement0);
     LOG.assertTrue(controlFlowOwner != null);
     final Instruction[] flow = ControlFlowBuilder.buildControlFlow(controlFlowOwner, GrAllVarsInitializedPolicy.getInstance());
-    allReturnStatements.addAll(ControlFlowUtils.collectReturns(flow, true));
+    allReturnStatements.addAll(ControlFlowUtils.collectReturns(flow, controlFlowOwner, true));
 
     ArrayList<GrStatement> returnStatements = new ArrayList<>();
     for (GrStatement returnStatement : allReturnStatements) {
