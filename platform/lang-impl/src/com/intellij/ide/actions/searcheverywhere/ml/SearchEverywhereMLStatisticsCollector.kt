@@ -84,7 +84,7 @@ internal class SearchEverywhereMLStatisticsCollector {
         data[SELECTED_ELEMENTS_DATA_KEY] = selectedElements.map {
           if (it < elements.size) {
             val element = elements[it].element
-            if (element is GotoActionModel.MatchedValue) {
+            if (isMLSupportedElement(element)) {
               return@map elementIdProvider.getId(element)
             }
           }
