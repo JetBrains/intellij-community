@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.Application;
@@ -135,6 +135,9 @@ public final class AsyncEventSupport {
       PingProgress.interactWithEdtProgress();
       try {
         applier.afterVfsChange();
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
       }
       catch (Throwable e) {
         LOG.error(e);
