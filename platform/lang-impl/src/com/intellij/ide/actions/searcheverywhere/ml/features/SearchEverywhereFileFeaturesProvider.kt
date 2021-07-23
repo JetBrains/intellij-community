@@ -115,7 +115,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     val stats = allFileTypesStats[fileTypeName]
 
     val timeSinceLastUsage = if (stats == null) Long.MAX_VALUE else currentTime - stats.lastUsed
-    val usageRatio = if (stats == null) 0 else stats.usageCount.toDouble() / totalUsage
+    val usageRatio = if (stats == null) 0.0 else roundDouble(stats.usageCount.toDouble() / totalUsage)
 
     return hashMapOf(
       FILETYPE_USAGE_RATIO_DATA_KEY to usageRatio,
@@ -130,6 +130,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
 
   private fun getPredictionScore(virtualFile: VirtualFile, project: Project): Double {
     val historyManagerWrapper = FileHistoryManagerWrapper.getInstance(project)
-    return historyManagerWrapper.calcNextFileProbability(virtualFile)
+    val probability =  historyManagerWrapper.calcNextFileProbability(virtualFile)
+    return roundDouble(probability)
   }
 }
