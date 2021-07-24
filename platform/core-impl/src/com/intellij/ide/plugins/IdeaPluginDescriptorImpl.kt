@@ -494,8 +494,15 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   }
 
   override fun toString(): String {
-    return "PluginDescriptor(name=$name, id=$id, descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
-           "path=${pluginPathToUserString(path)}, version=$version, package=$packagePrefix), isBundled=$isBundled"
+    return "PluginDescriptor(" +
+           "name=$name, " +
+           "id=$id, " +
+           "descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
+           "path=${pluginPathToUserString(path)}, " +
+           "version=$version, " +
+           "package=$packagePrefix, " +
+           "isBundled=$isBundled" +
+           ")"
   }
 }
 
