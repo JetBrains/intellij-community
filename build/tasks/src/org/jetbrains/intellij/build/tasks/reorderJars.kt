@@ -10,8 +10,6 @@ import org.jetbrains.intellij.build.io.info
 import org.jetbrains.intellij.build.io.warn
 import java.io.InputStream
 import java.lang.System.Logger
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
@@ -166,16 +164,10 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): 
     Files.createDirectories(tempJarFile.parent)
     FileChannel.open(tempJarFile, RW_CREATE_NEW).use { outChannel ->
       val zipCreator = ZipFileWriter(outChannel, deflater = null)
-      packageIndexBuilder.writePackageIndex(zipCreator)
       writeEntries(entries.iterator(), zipCreator, zipFile, packageIndexBuilder)
       packageIndexBuilder.writeDirs(zipCreator)
-
-      val comment = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN)
-      comment.putInt(1759251304)
-      comment.putShort(orderedNames.size.toShort())
-      comment.flip()
-
-      zipCreator.finish(comment)
+      packageIndexBuilder.writePackageIndex(zipCreator)
+      zipCreator.finish()
     }
   }
 
@@ -197,11 +189,11 @@ internal fun writeEntries(entries: Iterator<ImmutableZipEntry>,
                           sourceZipFile: ImmutableZipFile,
                           packageIndexBuilder: PackageIndexBuilder) {
   for (entry in entries) {
-    val name = entry.name
     if (entry.isDirectory) {
       continue
     }
 
+    val name = entry.name
     packageIndexBuilder.addFile(name)
 
     // by intention not the whole original ZipArchiveEntry is copied,
