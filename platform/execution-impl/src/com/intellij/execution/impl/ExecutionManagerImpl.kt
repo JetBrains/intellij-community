@@ -76,10 +76,10 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     internal val DELEGATED_RUN_PROFILE_KEY = Key.create<RunProfile>("DELEGATED_RUN_PROFILE_KEY")
 
     @JvmField
-    val EXECUTION_SESSION_ID_KEY = Key.create<Any>("EXECUTION_SESSION_ID_KEY")
+    val EXECUTION_SESSION_ID_KEY = ExecutionManager.EXECUTION_SESSION_ID_KEY
 
     @JvmField
-    val EXECUTION_SKIP_RUN = Key.create<Boolean>("EXECUTION_SKIP_RUN")
+    val EXECUTION_SKIP_RUN = ExecutionManager.EXECUTION_SKIP_RUN
 
     @JvmStatic
     fun getInstance(project: Project) = project.service<ExecutionManager>() as ExecutionManagerImpl

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners
 
 import com.intellij.execution.ExecutionException
@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionManager
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
+import com.intellij.execution.ui.ExecutionUiService
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import org.jetbrains.concurrency.resolvedPromise
@@ -34,6 +35,6 @@ fun executeState(state: RunProfileState, environment: ExecutionEnvironment, runn
 
 fun showRunContent(executionResult: ExecutionResult?, environment: ExecutionEnvironment): RunContentDescriptor? {
   return executionResult?.let {
-    RunContentBuilder(it, environment).showRunContent(environment.contentToReuse)
+    ExecutionUiService.getInstance().showRunContent(it, environment)
   }
 }

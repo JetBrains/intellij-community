@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCoreUtil;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,7 @@ public abstract class EditorMacro extends Macro {
    * @return 1-based column index where tabs are treated as single characters. External tools don't know about IDEA's tab size.
    */
   protected static String getColumnNumber(Editor editor, LogicalPosition pos) {
-    if (EditorUtil.inVirtualSpace(editor, pos)) {
+    if (EditorCoreUtil.inVirtualSpace(editor, pos)) {
       return String.valueOf(pos.column + 1);
     }
 

@@ -19,29 +19,26 @@ package com.intellij.ide.macro;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.OrderEnumerator;
 import org.jetbrains.annotations.NotNull;
 
-public final class ModulePathMacro extends Macro {
+public final class ModuleFilePathMacro extends Macro {
   @NotNull
   @Override
   public String getName() {
-    return "ModuleSourcePath";
+    return "ModuleFilePath";
   }
 
   @NotNull
   @Override
   public String getDescription() {
-    return IdeBundle.message("macro.module.source.path");
+    return IdeBundle.message("macro.module.file.path");
   }
 
   @Override
   public String expand(@NotNull DataContext dataContext) {
     final Module module = LangDataKeys.MODULE.getData(dataContext);
-    if (module == null) {
-      return null;
-    }
-    return OrderEnumerator.orderEntries(module).withoutSdk().withoutLibraries().getSourcePathsList().getPathsString();
+    return module != null ? module.getModuleFilePath() : null;
   }
 }

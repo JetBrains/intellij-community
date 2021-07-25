@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.macro;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -234,7 +233,7 @@ public final class MacrosDialog extends DialogWrapper {
     final HashMap<String, String> macros = new HashMap<>(PathMacros.getInstance().getUserMacros());
     if (addModuleMacros) {
       macros.put(PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacros.getInstance().getValue(PathMacroUtil.MODULE_DIR_MACRO_NAME));
-      macros.put(ProgramParametersConfigurator.MODULE_WORKING_DIR,
+      macros.put(PathMacroUtil.MODULE_WORKING_DIR,
                  PathMacros.getInstance().getValue(PathMacroUtil.MODULE_WORKING_DIR_NAME));
     }
     return macros;

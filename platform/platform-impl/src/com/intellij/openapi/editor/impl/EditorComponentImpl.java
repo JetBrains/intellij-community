@@ -162,7 +162,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       if (location == null) {
         location = myEditor.getCaretModel().getLogicalPosition();
       }
-      return EditorUtil.inVirtualSpace(myEditor, location);
+      return EditorCoreUtil.inVirtualSpace(myEditor, location);
     }
     return null;
   }

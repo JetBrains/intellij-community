@@ -649,7 +649,7 @@ public final class EditorUtil {
   }
 
   public static boolean inVirtualSpace(@NotNull Editor editor, @NotNull LogicalPosition logicalPosition) {
-    return !editor.offsetToLogicalPosition(editor.logicalPositionToOffset(logicalPosition)).equals(logicalPosition);
+    return EditorCoreUtil.inVirtualSpace(editor, logicalPosition);
   }
 
   public static void reinitSettings() {

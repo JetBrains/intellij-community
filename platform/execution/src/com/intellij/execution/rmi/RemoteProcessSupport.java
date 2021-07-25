@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi;
 
 import com.intellij.execution.*;
@@ -12,8 +12,8 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.DefaultProgramRunnerKt;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.ExecutionUiService;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -149,7 +149,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   }
 
   public EntryPoint acquire(@NotNull Target target, @NotNull Parameters configuration, @Nullable ProgressIndicator indicator) throws Exception {
-    ApplicationManagerEx.getApplicationEx().assertTimeConsuming();
+    ExecutionUiService.getInstance().assertTimeConsuming();
 
     EntryPoint inProcess = acquireInProcess(target, configuration);
     if (inProcess != null) return inProcess;
