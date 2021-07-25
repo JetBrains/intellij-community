@@ -72,6 +72,7 @@
       <overrideImplementsAnnotationsHandler implementation="com.theoryinpractice.testng.intention.OverrideImplementsTestNGAnnotationsHandler"/>
       <gotoRelatedProvider implementation="com.theoryinpractice.testng.TestNGRelatedFilesProvider"/>
       <methodReferencesSearch implementation="com.theoryinpractice.testng.DataProviderSearcher"/>
+      <methodReferencesSearch implementation="com.theoryinpractice.testng.DataProviderTestSearcher"/>
       <stacktrace.fold substring="at org.testng.internal."/>
       <stacktrace.fold substring="at org.testng.TestRunner."/>
       <stacktrace.fold substring="at org.testng.SuiteRunner."/>

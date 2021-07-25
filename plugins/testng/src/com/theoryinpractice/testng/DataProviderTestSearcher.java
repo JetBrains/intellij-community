@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -11,11 +11,11 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.util.Processor;
+import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
-import org.testng.annotations.DataProvider;
 
-public class DataProviderSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
-  public DataProviderSearcher() {
+public class DataProviderTestSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
+  public DataProviderTestSearcher() {
     super(true);
   }
 
@@ -23,9 +23,9 @@ public class DataProviderSearcher extends QueryExecutorBase<PsiReference, Method
   public void processQuery(@NotNull MethodReferencesSearch.SearchParameters queryParameters, @NotNull Processor<? super PsiReference> consumer) {
     final PsiMethod method = queryParameters.getMethod();
 
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, TestNGUtil.TEST_ANNOTATION_FQN);
     if (annotation == null) return;
-    final PsiAnnotationMemberValue dataProviderMethodName = annotation.findDeclaredAttributeValue("name");
+    final PsiAnnotationMemberValue dataProviderMethodName = annotation.findDeclaredAttributeValue("dataProvider");
     if (dataProviderMethodName != null) {
       final String providerName = StringUtil.unquoteString(dataProviderMethodName.getText());
       queryParameters.getOptimizer().searchWord(providerName, queryParameters.getEffectiveSearchScope(), UsageSearchContext.IN_STRINGS, true, method);
