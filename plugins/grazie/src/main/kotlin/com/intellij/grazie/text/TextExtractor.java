@@ -110,7 +110,14 @@ public abstract class TextExtractor {
 
   private static boolean isCopyrightComment(TextContent content) {
     return (content.getDomain() == TextContent.TextDomain.COMMENTS || content.getDomain() == TextContent.TextDomain.DOCUMENTATION) &&
-           StringUtil.startsWithIgnoreCase(content.toString(), "Copyright");
+           StringUtil.containsIgnoreCase(content.toString(), "Copyright") &&
+           isAtFileStart(content);
+  }
+
+  private static boolean isAtFileStart(TextContent content) {
+    PsiFile file = content.getCommonParent().getContainingFile();
+    int textStart = content.textOffsetToFile(0);
+    return file.getViewProvider().getContents().subSequence(0, textStart).chars().noneMatch(Character::isLetterOrDigit);
   }
 
   private static boolean isSuppressionComment(TextContent content) {
