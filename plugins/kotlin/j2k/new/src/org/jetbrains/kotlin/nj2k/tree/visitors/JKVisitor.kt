@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.nj2k.tree.visitors
 import org.jetbrains.kotlin.nj2k.tree.*
 
 abstract class JKVisitor {
-    abstract fun visitTreeElement(treeElement: JKTreeElement)
+    abstract fun visitTreeElement(treeElement: JKElement)
     open fun visitDeclaration(declaration: JKDeclaration) = visitTreeElement(declaration)
     open fun visitClass(klass: JKClass) = visitDeclaration(klass)
     open fun visitVariable(variable: JKVariable) = visitDeclaration(variable)
@@ -60,6 +60,10 @@ abstract class JKVisitor {
     open fun visitJavaSwitchCase(javaSwitchCase: JKJavaSwitchCase) = visitTreeElement(javaSwitchCase)
     open fun visitJavaDefaultSwitchCase(javaDefaultSwitchCase: JKJavaDefaultSwitchCase) = visitJavaSwitchCase(javaDefaultSwitchCase)
     open fun visitJavaLabelSwitchCase(javaLabelSwitchCase: JKJavaLabelSwitchCase) = visitJavaSwitchCase(javaLabelSwitchCase)
+    open fun visitJavaClassicLabelSwitchCase(javaClassicLabelSwitchCase: JKJavaClassicLabelSwitchCase) = visitJavaLabelSwitchCase(javaClassicLabelSwitchCase)
+    open fun visitJavaArrowLabelSwitchCase(javaArrowSwitchLabelCase: JKJavaArrowSwitchLabelCase) = visitJavaLabelSwitchCase(javaArrowSwitchLabelCase)
+
+
     open fun visitExpression(expression: JKExpression) = visitTreeElement(expression)
     open fun visitOperatorExpression(operatorExpression: JKOperatorExpression) = visitExpression(operatorExpression)
     open fun visitBinaryExpression(binaryExpression: JKBinaryExpression) = visitOperatorExpression(binaryExpression)
@@ -103,6 +107,11 @@ abstract class JKVisitor {
     open fun visitKtItExpression(ktItExpression: JKKtItExpression) = visitExpression(ktItExpression)
     open fun visitKtAnnotationArrayInitializerExpression(ktAnnotationArrayInitializerExpression: JKKtAnnotationArrayInitializerExpression) =
         visitExpression(ktAnnotationArrayInitializerExpression)
+    open fun visitJavaSwitchExpression(javaSwitchExpression: JKJavaSwitchExpression) = visitExpression(javaSwitchExpression)
+
+
+    open fun visitKtWhenBlock(ktWhenBlock: JKKtWhenBlock) = visitTreeElement(ktWhenBlock)
+    open fun visitKtWhenExpression(ktWhenExpression: JKKtWhenExpression) = visitKtWhenBlock(ktWhenExpression)
 
     open fun visitKtTryExpression(ktTryExpression: JKKtTryExpression) = visitExpression(ktTryExpression)
     open fun visitKtTryCatchSection(ktTryCatchSection: JKKtTryCatchSection) = visitTreeElement(ktTryCatchSection)
@@ -128,6 +137,7 @@ abstract class JKVisitor {
     open fun visitForInStatement(forInStatement: JKForInStatement) = visitStatement(forInStatement)
     open fun visitIfElseStatement(ifElseStatement: JKIfElseStatement) = visitStatement(ifElseStatement)
     open fun visitBreakStatement(breakStatement: JKBreakStatement) = visitStatement(breakStatement)
+    open fun visitJavaYildStatement(javaYieldStatement: JKJavaYieldStatement) = visitStatement(javaYieldStatement)
     open fun visitContinueStatement(continueStatement: JKContinueStatement) = visitStatement(continueStatement)
     open fun visitBlockStatement(blockStatement: JKBlockStatement) = visitStatement(blockStatement)
     open fun visitBlockStatementWithoutBrackets(blockStatementWithoutBrackets: JKBlockStatementWithoutBrackets) =
@@ -135,7 +145,7 @@ abstract class JKVisitor {
 
     open fun visitExpressionStatement(expressionStatement: JKExpressionStatement) = visitStatement(expressionStatement)
     open fun visitDeclarationStatement(declarationStatement: JKDeclarationStatement) = visitStatement(declarationStatement)
-    open fun visitKtWhenStatement(ktWhenStatement: JKKtWhenStatement) = visitStatement(ktWhenStatement)
+    open fun visitKtWhenStatement(ktWhenStatement: JKKtWhenStatement) = visitKtWhenBlock(ktWhenStatement)
     open fun visitKtConvertedFromForLoopSyntheticWhileStatement(ktConvertedFromForLoopSyntheticWhileStatement: JKKtConvertedFromForLoopSyntheticWhileStatement) =
         visitStatement(ktConvertedFromForLoopSyntheticWhileStatement)
 
@@ -148,4 +158,6 @@ abstract class JKVisitor {
     open fun visitJavaAssertStatement(javaAssertStatement: JKJavaAssertStatement) = visitStatement(javaAssertStatement)
     open fun visitJavaForLoopStatement(javaForLoopStatement: JKJavaForLoopStatement) = visitLoopStatement(javaForLoopStatement)
     open fun visitJavaAnnotationMethod(javaAnnotationMethod: JKJavaAnnotationMethod) = visitMethod(javaAnnotationMethod)
+
+    open fun visitErrorStatement(errorStatement: JKErrorStatement) = visitStatement(errorStatement)
 }

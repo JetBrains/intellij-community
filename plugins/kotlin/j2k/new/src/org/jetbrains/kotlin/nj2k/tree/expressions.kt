@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.tree
 
+import com.intellij.psi.PsiSwitchExpression
 import org.jetbrains.kotlin.nj2k.symbols.*
 
 
@@ -338,4 +339,30 @@ class JKJavaAssignmentExpression(
     var expression by child(expression)
     override fun calculateType(typeFactory: JKTypeFactory) = field.calculateType(typeFactory)
     override fun accept(visitor: JKVisitor) = visitor.visitJavaAssignmentExpression(this)
+}
+
+class JKJavaSwitchExpression(
+    expression: JKExpression,
+    cases: List<JKJavaSwitchCase>
+) : JKExpression(), JKJavaSwitchBlock {
+    override var expression: JKExpression by child(expression)
+    override var cases: List<JKJavaSwitchCase> by children(cases)
+    override fun accept(visitor: JKVisitor) = visitor.visitJavaSwitchExpression(this)
+
+    override fun calculateType(typeFactory: JKTypeFactory): JKType? {
+        val psiType = (psi as? PsiSwitchExpression)?.type ?: return null
+        return typeFactory.fromPsiType(psiType)
+    }
+}
+
+class JKKtWhenExpression(
+    expression: JKExpression,
+    cases: List<JKKtWhenCase>,
+    private val type: JKType?,
+) : JKExpression(), JKKtWhenBlock {
+    override var expression: JKExpression by child(expression)
+    override var cases: List<JKKtWhenCase> by children(cases)
+    override fun accept(visitor: JKVisitor) = visitor.visitKtWhenExpression(this)
+
+    override fun calculateType(typeFactory: JKTypeFactory): JKType? = type
 }

@@ -77,7 +77,7 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
         }
 
-        override fun visitTreeElementRaw(treeElement: JKTreeElement) {
+        override fun visitTreeElementRaw(treeElement: JKElement) {
             printer.print("/* !!! Hit visitElement for element type: ${treeElement::class} !!! */")
         }
 
@@ -769,15 +769,23 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
             printer.print(" })")
         }
 
-        override fun visitKtWhenStatementRaw(ktWhenStatement: JKKtWhenStatement) {
+        override fun visitKtWhenBlockRaw(ktWhenBlock: JKKtWhenBlock) {
             printer.print("when(")
-            ktWhenStatement.expression.accept(this)
+            ktWhenBlock.expression.accept(this)
             printer.print(")")
-            printer.block() {
-                printer.renderList(ktWhenStatement.cases, { printer.println() }) {
+            printer.block {
+                printer.renderList(ktWhenBlock.cases, { printer.println() }) {
                     it.accept(this)
                 }
             }
+        }
+
+        override fun visitKtWhenExpression(ktWhenExpression: JKKtWhenExpression) {
+            visitKtWhenBlockRaw(ktWhenExpression)
+        }
+
+        override fun visitKtWhenStatement(ktWhenStatement: JKKtWhenStatement) {
+            visitKtWhenBlockRaw(ktWhenStatement)
         }
 
         override fun visitAnnotationListRaw(annotationList: JKAnnotationList) {
@@ -835,6 +843,29 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitKtValueWhenLabelRaw(ktValueWhenLabel: JKKtValueWhenLabel) {
             ktValueWhenLabel.expression.accept(this)
+        }
+
+        override fun visitErrorStatement(errorStatement: JKErrorStatement) {
+            visitErrorElement(errorStatement)
+        }
+
+        private fun visitErrorElement(errorElement: JKErrorElement) {
+            val message = buildString {
+                append("Cannot convert element: ${errorElement.reason}")
+                errorElement.psi?.let { append("\nWith text:\n${it.text}") }
+            }
+            printer.print("TODO(")
+            printer.indented {
+                printer.print("\"\"\"")
+                printer.println()
+                message.split('\n').forEach { line ->
+                    printer.print("|")
+                    printer.print(line.replace("$", "\\$"))
+                    printer.println()
+                }
+                printer.print("\"\"\"")
+            }
+            printer.print(").trimMargin()")
         }
     }
 }

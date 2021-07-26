@@ -202,6 +202,7 @@ class JavaToJKTreeBuilder constructor(
             is PsiArrayInitializerExpression -> toJK()
             is PsiLambdaExpression -> toJK()
             is PsiClassObjectAccessExpressionImpl -> toJK()
+            is PsiSwitchExpression -> JKJavaSwitchExpression(expression.toJK(), collectSwitchCases())
             else -> throwCanNotConvertError()
         }.also {
             if (this != null) {
@@ -962,29 +963,7 @@ class JavaToJKTreeBuilder constructor(
                 is PsiWhileStatement -> JKWhileStatement(with(expressionTreeMapper) { condition.toJK() }, body.toJK())
                 is PsiDoWhileStatement -> JKDoWhileStatement(body.toJK(), with(expressionTreeMapper) { condition.toJK() })
 
-                is PsiSwitchStatement -> {
-                    val cases = mutableListOf<JKJavaSwitchCase>()
-                    for (statement in body?.statements.orEmpty()) {
-                        when (statement) {
-                            is PsiSwitchLabelStatement ->
-                                cases += when {
-                                    statement.isDefaultCase -> JKJavaDefaultSwitchCase(emptyList())
-                                    else -> JKJavaLabelSwitchCase(
-                                        with(expressionTreeMapper) { statement.caseValue.toJK() },
-                                        emptyList()
-                                    )
-                                }.withFormattingFrom(statement)
-                            else ->
-                                cases.lastOrNull()?.also { it.statements = it.statements + statement.toJK() } ?: run {
-                                    cases += JKJavaLabelSwitchCase(
-                                        JKStubExpression(),
-                                        listOf(statement.toJK())
-                                    )
-                                }
-                        }
-                    }
-                    JKJavaSwitchStatement(with(expressionTreeMapper) { expression.toJK() }, cases)
-                }
+                is PsiSwitchStatement -> JKJavaSwitchStatement(with(expressionTreeMapper) { expression.toJK() }, collectSwitchCases())
                 is PsiBreakStatement ->
                     JKBreakStatement(labelIdentifier?.let { JKLabelText(JKNameIdentifier(it.text)) } ?: JKLabelEmpty())
                 is PsiContinueStatement -> {
@@ -1012,6 +991,7 @@ class JavaToJKTreeBuilder constructor(
                         with(expressionTreeMapper) { lockExpression?.toJK() } ?: JKStubExpression(),
                         body?.toJK() ?: JKBodyStub
                     )
+                is PsiYieldStatement -> JKJavaYieldStatement(with(expressionTreeMapper) { expression.toJK() })
                 else -> throwCanNotConvertError()
             }.also {
                 if (this != null) {
@@ -1082,6 +1062,43 @@ class JavaToJKTreeBuilder constructor(
                     it.withAttachment("file.error", e.message)
                 }
             }
+    }
+
+    private fun PsiSwitchBlock.collectSwitchCases(): List<JKJavaSwitchCase> = with (declarationMapper) {
+        val statements = body?.statements ?: return emptyList()
+        val cases = mutableListOf<JKJavaSwitchCase>()
+        for (statement in statements) {
+            when (statement) {
+                is PsiSwitchLabelStatement ->
+                    cases += when {
+                        statement.isDefaultCase -> JKJavaDefaultSwitchCase(emptyList())
+                        else -> JKJavaClassicLabelSwitchCase(
+                            with(expressionTreeMapper) { statement.getCaseLabelElementList()?.elements?.map { (it as? PsiExpression).toJK() }.orEmpty() },
+                            emptyList()
+                        )
+                    }.withFormattingFrom(statement)
+                is PsiSwitchLabeledRuleStatement -> {
+                    val body = statement.body.toJK()
+                    cases += when {
+                        statement.isDefaultCase -> JKJavaDefaultSwitchCase(listOf(body))
+                        else -> {
+                            JKJavaArrowSwitchLabelCase(
+                                with(expressionTreeMapper) { statement.getCaseLabelElementList()?.elements?.map { (it as? PsiExpression).toJK() }.orEmpty() },
+                                listOf(body),
+                            )
+                        }
+                    }.withFormattingFrom(statement)
+                }
+                else ->
+                    cases.lastOrNull()?.also { it.statements = it.statements + statement.toJK() } ?: run {
+                        cases += JKJavaClassicLabelSwitchCase(
+                            listOf(JKStubExpression()),
+                            listOf(statement.toJK())
+                        )
+                    }
+            }
+        }
+       return cases
     }
 
     companion object {

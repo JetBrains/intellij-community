@@ -7,70 +7,82 @@ import com.intellij.psi.controlFlow.ControlFlowFactory
 import com.intellij.psi.controlFlow.ControlFlowUtil
 import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.asStatement
 import org.jetbrains.kotlin.nj2k.blockStatement
 import org.jetbrains.kotlin.nj2k.runExpression
 import org.jetbrains.kotlin.nj2k.tree.*
 
 
-
-class SwitchStatementConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
+class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
-        if (element !is JKJavaSwitchStatement) return recurse(element)
+        if (element !is JKJavaSwitchBlock) return recurse(element)
         element.invalidate()
         element.cases.forEach { case ->
             case.statements.forEach { it.detach(case) }
             if (case is JKJavaLabelSwitchCase) {
-                case.label.detach(case)
+                case::labels.detached()
             }
         }
         val cases = switchCasesToWhenCases(element.cases).moveElseCaseToTheEnd()
-        val whenStatement = JKKtWhenStatement(element.expression, cases)
-        return recurse(whenStatement)
+        val whenBlock = when (element) {
+            is JKJavaSwitchExpression -> JKKtWhenExpression(element.expression, cases, element.calculateType(typeFactory))
+            is JKJavaSwitchStatement -> JKKtWhenStatement(element.expression, cases)
+            else -> error("Unexpected class ${element::class.simpleName}")
+        }
+
+        return recurse(whenBlock)
     }
 
     private fun List<JKKtWhenCase>.moveElseCaseToTheEnd(): List<JKKtWhenCase> =
         sortedBy { it.labels.any { it is JKKtElseWhenLabel } }
 
-    private fun switchCasesToWhenCases(cases: List<JKJavaSwitchCase>): List<JKKtWhenCase> =
-        if (cases.isEmpty()) emptyList()
-        else {
-            val statements = cases
+    private fun switchCasesToWhenCases(cases: List<JKJavaSwitchCase>): List<JKKtWhenCase> {
+        if (cases.isEmpty()) return emptyList()
+
+        val statements = if (cases.first() is JKJavaArrowSwitchLabelCase) cases.first().statements else {
+            cases
                 .takeWhileInclusive { it.statements.fallsThrough() }
                 .flatMap { it.statements }
-                .takeWhileInclusive { it.singleListOrBlockStatements().none { isSwitchBreak(it) } }
+                .takeWhileInclusive { it.singleListOrBlockStatements().none { isSwitchBreakOrYield(it) } }
                 .mapNotNull { statement ->
-                    when {
-                        statement is JKBlockStatement ->
-                            blockStatement(
-                                statement.block.statements
-                                    .takeWhile { !isSwitchBreak(it) }
-                                    .map { it.copyTreeAndDetach() }
-                            ).withFormattingFrom(statement)
-                        isSwitchBreak(statement) -> null
-                        else -> statement.copyTreeAndDetach()
+                    when (statement) {
+                      is JKBlockStatement -> blockStatement(
+                          statement.block.statements
+                              .takeWhileInclusive { !isSwitchBreakOrYield(it) }
+                              .mapNotNull {  handleBreakOrYield(it) }
+                      ).withFormattingFrom(statement)
+                        else -> handleBreakOrYield(statement)
                     }
                 }
-
-            val javaLabels = cases
-                .takeWhileInclusive { it.statements.isEmpty() }
-
-            val statementLabels = javaLabels
-                .filterIsInstance<JKJavaLabelSwitchCase>()
-                .map { JKKtValueWhenLabel(it.label) }
-            val elseLabel = javaLabels
-                .find { it is JKJavaDefaultSwitchCase }
-                ?.let { JKKtElseWhenLabel() }
-            val elseWhenCase = elseLabel?.let { label ->
-                JKKtWhenCase(listOf(label), statements.map { it.copyTreeAndDetach() }.singleBlockOrWrapToRun())
-            }
-            val mainWhenCase =
-                if (statementLabels.isNotEmpty()) {
-                    JKKtWhenCase(statementLabels, statements.singleBlockOrWrapToRun())
-                } else null
-            listOfNotNull(mainWhenCase) +
-                    listOfNotNull(elseWhenCase) +
-                    switchCasesToWhenCases(cases.drop(javaLabels.size))
         }
+
+        val javaLabels = cases
+            .takeWhileInclusive { it.statements.isEmpty() }
+
+        val statementLabels = javaLabels
+            .filterIsInstance<JKJavaLabelSwitchCase>()
+            .flatMap { it.labels }
+            .map { JKKtValueWhenLabel(it) }
+
+        val elseLabel = javaLabels
+            .find { it is JKJavaDefaultSwitchCase }
+            ?.let { JKKtElseWhenLabel() }
+        val elseWhenCase = elseLabel?.let { label ->
+            JKKtWhenCase(listOf(label), statements.map { it.copyTreeAndDetach() }.singleBlockOrWrapToRun())
+        }
+        val mainWhenCase =
+            if (statementLabels.isNotEmpty()) {
+                JKKtWhenCase(statementLabels, statements.singleBlockOrWrapToRun())
+            } else null
+        return listOfNotNull(mainWhenCase) +
+                listOfNotNull(elseWhenCase) +
+                switchCasesToWhenCases(cases.drop(javaLabels.size))
+
+    }
+    private fun handleBreakOrYield(statement: JKStatement) = when {
+        isSwitchBreak(statement) -> null
+        else -> statement.copyTreeAndDetach()
+    }
 
     private fun <T> List<T>.takeWhileInclusive(predicate: (T) -> Boolean): List<T> =
         takeWhile(predicate) + listOfNotNull(find { !predicate(it) })
@@ -99,6 +111,9 @@ class SwitchStatementConversion(context: NewJ2kConverterContext) : RecursiveAppl
     private fun isSwitchBreak(statement: JKStatement) =
         statement is JKBreakStatement && statement.label is JKLabelEmpty
 
+    private fun isSwitchBreakOrYield(statement: JKStatement) =
+        isSwitchBreak(statement) || statement is JKJavaYieldStatement
+
     private fun List<JKStatement>.fallsThrough(): Boolean =
         all { it.fallsThrough() }
 
@@ -110,8 +125,8 @@ class SwitchStatementConversion(context: NewJ2kConverterContext) : RecursiveAppl
                     this is JKContinueStatement -> false
             this is JKBlockStatement -> block.statements.fallsThrough()
             this is JKIfElseStatement ||
-                    this is JKJavaSwitchStatement ||
-                    this is JKKtWhenStatement ->
+                    this is JKJavaSwitchBlock ||
+                    this is JKKtWhenBlock ->
                 psi?.canCompleteNormally() == true
             else -> true
         }
