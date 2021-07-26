@@ -1,3 +1,5 @@
+// Copyright 2000-2020 I are a incorrect comment that the developers can hardly do anything about.
+
 class ForMultiLanguageSupport {
     // er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <warning descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</warning>.
     // das ist <warning descr="FUEHR_FUER">führ</warning> Dich!
