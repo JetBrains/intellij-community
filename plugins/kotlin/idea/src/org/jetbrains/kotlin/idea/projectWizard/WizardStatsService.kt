@@ -51,7 +51,9 @@ class WizardStatsService : CounterUsagesCollector() {
             "reactApplication",
             "composeDesktopApplication",
             "composeMultiplatformApplication",
-            "none"
+            "none",
+            // AppCode KMM
+            "multiplatformMobileApplicationUsingAppleGradlePlugin",
         )
         private val allowedModuleTemplates = listOf(
             "composeAndroid",
