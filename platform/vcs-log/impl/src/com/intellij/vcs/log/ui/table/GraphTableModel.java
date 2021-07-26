@@ -158,7 +158,7 @@ public final class GraphTableModel extends AbstractTableModel {
   @NotNull
   public VcsFullCommitDetails getFullDetails(int row) {
     Integer id = getIdAtRow(row);
-    return myLogData.getCommitDetailsGetter().getCommitData(id, Collections.singleton(id));
+    return myLogData.getCommitDetailsGetter().getCommitData(id);
   }
 
   @NotNull
