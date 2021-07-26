@@ -71,10 +71,10 @@ public class LangDataKeys extends PlatformDataKeys {
   public static final DataKey<Library> LIBRARY = DataKey.create("project.model.library");
 
   public static final DataKey<RunProfile> RUN_PROFILE = DataKey.create("runProfile");
-  @Deprecated
   /**
    * @deprecated Please use ExecutionDataKeys.EXECUTION_ENVIRONMENT
    */
+  @Deprecated
   public static final DataKey<ExecutionEnvironment> EXECUTION_ENVIRONMENT = ExecutionDataKeys.EXECUTION_ENVIRONMENT;
   public static final DataKey<RunContentDescriptor> RUN_CONTENT_DESCRIPTOR = DataKey.create("RUN_CONTENT_DESCRIPTOR");
 }

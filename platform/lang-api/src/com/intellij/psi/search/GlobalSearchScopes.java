@@ -18,18 +18,18 @@ import java.util.Collection;
 public final class GlobalSearchScopes {
   private GlobalSearchScopes() {}
 
-  @Deprecated
   /**
    * @deprecated Please use ExecutionSearchScopes.executionScope
    */
+  @Deprecated
   public static @NotNull GlobalSearchScope executionScope(@NotNull Project project, @Nullable RunProfile runProfile) {
     return ExecutionSearchScopes.executionScope(project, runProfile);
   }
 
-  @Deprecated
   /**
    * @deprecated Please use ExecutionSearchScopes.executionScope
    */
+  @Deprecated
   public static @Nullable GlobalSearchScope executionScope(@NotNull Collection<? extends Module> modules) {
     return ExecutionSearchScopes.executionScope(modules);
   }
