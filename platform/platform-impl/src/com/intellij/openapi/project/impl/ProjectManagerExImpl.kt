@@ -78,7 +78,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       LOG.debug("open project: $options", Exception())
     }
 
-    if (options.project != null && isProjectOpened(options.project)) {
+    if (options.project != null && isProjectOpened(options.project as Project)) {
       return CompletableFuture.completedFuture(null)
     }
 
@@ -119,7 +119,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
         result = prepareProject(options, projectStoreBaseDir) ?: return@run null
       }
       else {
-        result = PrepareProjectResult(options.project, null)
+        result = PrepareProjectResult(options.project as Project, null)
       }
 
       val project = result.project

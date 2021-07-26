@@ -398,7 +398,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return files;
   }
 
-  boolean isRecentlyChanged(@NotNull VirtualFile file) {
+  public boolean isRecentlyChanged(@NotNull VirtualFile file) {
     synchronized (state) {
       return state.changedPaths.contains(file.getPath());
     }

@@ -99,4 +99,20 @@ public abstract class WindowManager {
 
   public void updateDefaultFrameInfoOnProjectClose(@NotNull Project project) {
   }
+
+  /**
+   * @return focus owner of the specified window.
+   * @exception IllegalArgumentException if {@code window} is {@code null}.
+   */
+  public abstract Component getFocusedComponent(@NotNull Window window);
+
+  /**
+   * @param project may be {@code null} when no project is opened.
+   * @return focused component for the project. If project isn't specified then
+   * the method returns focused component in window which has no project.
+   * If there is no focused component at all then the method returns {@code null}.
+   */
+  public abstract @Nullable Component getFocusedComponent(@Nullable Project project);
+
+  public abstract @Nullable Window getMostRecentFocusedWindow();
 }

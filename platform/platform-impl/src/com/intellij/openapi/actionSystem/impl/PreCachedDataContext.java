@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
@@ -6,6 +6,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.impl.DataValidators;
+import com.intellij.ide.impl.FreezingDataContext;
 import com.intellij.ide.impl.dataRules.FileEditorRule;
 import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.*;
@@ -37,7 +38,7 @@ import static com.intellij.ide.impl.DataManagerImpl.validateEditor;
 /**
  * @author gregsh
  */
-class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnActionEvent.InjectedDataContextSupplier {
+class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnActionEvent.InjectedDataContextSupplier, FreezingDataContext {
 
   private static int ourPrevMapEventCount;
   private static final Map<Component, Map<String, Object>> ourPrevMaps = ContainerUtil.createWeakKeySoftValueMap();
@@ -97,7 +98,8 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     return this instanceof InjectedDataContext ? this : new InjectedDataContext(myCachedData, myUserData, myMissedKeysIfFrozen);
   }
   
-  boolean isFrozenDataContext() {
+  @Override
+  public boolean isFrozenDataContext() {
     return myMissedKeysIfFrozen != null;
   }
 

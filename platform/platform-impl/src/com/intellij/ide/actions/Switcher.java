@@ -799,7 +799,7 @@ public final class Switcher extends BaseSwitcherAction {
       if (myNameForRendering == null) {
         // Recently changed files would also be taken into account (not only open 'visible' files)
         myNameForRendering = SlowOperations.allowSlowOperations(
-          () -> EditorTabPresentationUtil.getUniqueEditorTabTitle(myProject, first, second)
+          () -> EditorTabPresentationUtil.getUniqueEditorTabTitle(myProject, first)
         );
       }
       return myNameForRendering;

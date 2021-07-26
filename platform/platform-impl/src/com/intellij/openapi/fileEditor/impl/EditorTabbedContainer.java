@@ -275,8 +275,8 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     }
 
     tab = new TabInfo(component)
-      .setText(SlowOperations.allowSlowOperations(() -> EditorTabPresentationUtil.getEditorTabTitle(myProject, file, myWindow)))
-      .setTabColor(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file, myWindow))
+      .setText(SlowOperations.allowSlowOperations(() -> EditorTabPresentationUtil.getEditorTabTitle(myProject, file)))
+      .setTabColor(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file))
       .setIcon(UISettings.getInstance().getShowFileIconInTabs() ? icon : null)
       .setTooltipText(tooltip)
       .setObject(file)
@@ -336,7 +336,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static String calcTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
-    return EditorTabPresentationUtil.getEditorTabTitle(project, file, null);
+    return EditorTabPresentationUtil.getEditorTabTitle(project, file);
   }
 
   public Component getComponentAt(int i) {

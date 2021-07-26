@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
+import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -51,8 +52,6 @@ public class WSLDistribution {
   public static final String DEFAULT_WSL_MNT_ROOT = "/mnt/";
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
-  public static final String UNC_PREFIX = "\\\\wsl$\\";
-  private static final String WSLENV = "WSLENV";
   static final int DEFAULT_TIMEOUT = SystemProperties.getIntProperty("ide.wsl.probe.timeout", 20_000);
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
@@ -381,13 +380,13 @@ public class WSLDistribution {
       }
     }
     if (builder.length() > 0) {
-      String prevValue = commandLine.getEnvironment().get(WSLENV);
+      String prevValue = commandLine.getEnvironment().get(WslConstants.WSLENV);
       if (prevValue == null) {
-        prevValue = commandLine.getParentEnvironment().get(WSLENV);
+        prevValue = commandLine.getParentEnvironment().get(WslConstants.WSLENV);
       }
       String value = prevValue != null ? StringUtil.trimEnd(prevValue, ':') + ':' + builder
                                        : builder.toString();
-      commandLine.getEnvironment().put(WSLENV, value);
+      commandLine.getEnvironment().put(WslConstants.WSLENV, value);
     }
   }
 
@@ -489,8 +488,8 @@ public class WSLDistribution {
    * @return Linux path for a file pointed by {@code windowsPath} or null if unavailable, like \\MACHINE\path
    */
   public @Nullable @NlsSafe String getWslPath(@NotNull String windowsPath) {
-    if (FileUtil.toSystemDependentName(windowsPath).startsWith(UNC_PREFIX)) {
-      windowsPath = StringUtil.trimStart(FileUtil.toSystemDependentName(windowsPath), UNC_PREFIX);
+    if (FileUtil.toSystemDependentName(windowsPath).startsWith(WslConstants.UNC_PREFIX)) {
+      windowsPath = StringUtil.trimStart(FileUtil.toSystemDependentName(windowsPath), WslConstants.UNC_PREFIX);
       int index = windowsPath.indexOf('\\');
       if (index == -1) return null;
 
@@ -567,7 +566,7 @@ public class WSLDistribution {
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public @NotNull File getUNCRoot() {
-    return new File(UNC_PREFIX + myDescriptor.getMsId());
+    return new File(WslConstants.UNC_PREFIX + myDescriptor.getMsId());
   }
 
   /**
@@ -575,7 +574,7 @@ public class WSLDistribution {
    */
   @ApiStatus.Experimental
   public @NotNull Path getUNCRootPath() {
-    return Paths.get(UNC_PREFIX + myDescriptor.getMsId());
+    return Paths.get(WslConstants.UNC_PREFIX + myDescriptor.getMsId());
   }
 
   /**

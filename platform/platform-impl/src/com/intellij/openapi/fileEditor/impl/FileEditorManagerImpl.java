@@ -421,7 +421,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
    *         file's status
    */
   @NotNull
-  Color getFileColor(@NotNull VirtualFile file) {
+  public Color getFileColor(@NotNull VirtualFile file) {
     FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     Color statusColor = fileStatusManager != null ? fileStatusManager.getStatus(file).getColor() : UIUtil.getLabelForeground();
     if (statusColor == null) statusColor = UIUtil.getLabelForeground();

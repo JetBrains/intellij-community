@@ -178,7 +178,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
           myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
         }
         else {
-          myStacktraceCommonPart = PerformanceWatcher.getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
+          myStacktraceCommonPart = PerformanceWatcherImpl.getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
         }
       }
       File dir = toFile.getParentFile();
@@ -442,7 +442,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
     CallTreeNode addCallee(StackTraceElement e, long time, ThreadInfo threadInfo) {
       for (CallTreeNode child : myChildren) {
-        if (PerformanceWatcher.compareStackTraceElements(child.myStackTraceElement, e)) {
+        if (PerformanceWatcherImpl.compareStackTraceElements(child.myStackTraceElement, e)) {
           child.myTime += time;
           return child;
         }

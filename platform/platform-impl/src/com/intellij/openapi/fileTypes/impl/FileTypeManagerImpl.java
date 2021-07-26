@@ -673,6 +673,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
   }
 
+  @Override
   @Nullable // null means all conventional detect methods returned UnknownFileType.INSTANCE, have to detect from content
   public FileType getByFile(@NotNull VirtualFile file) {
     Pair<VirtualFile, FileType> fixedType = FILE_TYPE_FIXED_TEMPORARILY.get();

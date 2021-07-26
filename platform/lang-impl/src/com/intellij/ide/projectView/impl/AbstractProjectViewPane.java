@@ -16,7 +16,9 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.module.UnloadedModuleDescription;
@@ -990,6 +992,15 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return true;
   }
 
+  @NotNull
+   private static Color getFileForegroundColor(@NotNull Project project, @NotNull VirtualFile file) {
+    FileEditorManager manager = FileEditorManager.getInstance(project);
+    if (manager instanceof FileEditorManagerImpl) {
+      return ((FileEditorManagerImpl)manager).getFileColor(file);
+    }
+    return UIUtil.getLabelForeground();
+  }
+
   private final class MyDragSource implements DnDSource {
     @Override
     public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
@@ -1083,8 +1094,8 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       setFont(UIUtil.getTreeFont());
       setOpaque(true);
       if (file != null) {
-        setBackground(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file, null));
-        setForeground(EditorTabPresentationUtil.getFileForegroundColor(myProject, file));
+        setBackground(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file));
+        setForeground(getFileForegroundColor(myProject, file));
       } else {
         setForeground(RenderingUtil.getForeground(getTree(), true));
         setBackground(RenderingUtil.getBackground(getTree(), true));

@@ -55,7 +55,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-public final class ProjectUtil {
+public final class ProjectUtil extends ProjectUtilCore {
   private static final Logger LOG = Logger.getInstance(ProjectUtil.class);
 
   public static final String DEFAULT_PROJECT_NAME = "default";
@@ -362,17 +362,6 @@ public final class ProjectUtil {
     });
   }
 
-  @ApiStatus.Internal
-  public static @Nullable VirtualFile getFileAndRefresh(@NotNull Path file) {
-    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString()));
-    if (virtualFile == null || !virtualFile.isValid()) {
-      return null;
-    }
-
-    virtualFile.refresh(false, false);
-    return virtualFile;
-  }
-
   public static @Nullable Project openProject(@NotNull String path, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
     return openProject(Paths.get(path), OpenProjectTask.withProjectToClose(projectToClose, forceOpenInNewFrame));
   }
@@ -447,11 +436,6 @@ public final class ProjectUtil {
 
   public static boolean isRemotePath(@NotNull String path) {
     return path.contains("://") || path.contains("\\\\");
-  }
-
-  public static @NotNull Project @NotNull [] getOpenProjects() {
-    ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
-    return projectManager == null ? new Project[0] : projectManager.getOpenProjects();
   }
 
   public static @Nullable Project findAndFocusExistingProjectForPath(@NotNull Path file) {
@@ -711,15 +695,12 @@ public final class ProjectUtil {
     return result;
   }
 
-  public static boolean isValidProjectPath(@NotNull Path file) {
-    return Files.isDirectory(file.resolve(Project.DIRECTORY_STORE_FOLDER)) ||
-           (Strings.endsWith(file.toString(), ProjectFileType.DOT_DEFAULT_EXTENSION) && Files.isRegularFile(file));
-  }
-
-  @SuppressWarnings("IdentifierGrammar")
-  public static @NotNull @SystemDependent String getProjectsPath() { //todo: merge somehow with getBaseDir
-    Application app = ApplicationManager.getApplication();
-    String fromSettings = app == null || app.isHeadlessEnvironment() ? null : GeneralSettings.getInstance().getDefaultProjectDirectory();
+  @NotNull
+  @SystemDependent
+  public static String getProjectsPath() { //todo: merge somehow with getBaseDir
+    Application application = ApplicationManager.getApplication();
+    String fromSettings = application == null || application.isHeadlessEnvironment() ? null :
+                          GeneralSettings.getInstance().getDefaultProjectDirectory();
     if (StringUtil.isNotEmpty(fromSettings)) {
       return PathManager.getAbsolutePath(fromSettings);
     }

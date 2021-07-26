@@ -7,7 +7,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
@@ -48,7 +48,7 @@ public final class VcsLogUiUtil {
                                            @NotNull String logId,
                                            @NotNull Disposable disposableParent) {
     ProgressStripe progressStripe =
-      new ProgressStripe(component, disposableParent, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+      new ProgressStripe(component, disposableParent, ProgressIndicatorBase.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
         @Override
         public void updateUI() {
           super.updateUI();

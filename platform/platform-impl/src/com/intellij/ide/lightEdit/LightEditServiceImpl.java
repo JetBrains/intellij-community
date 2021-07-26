@@ -555,4 +555,19 @@ public final class LightEditServiceImpl implements LightEditService,
     return myConfiguration.preferredMode != null &&
            LightEditConfiguration.PreferredMode.Project.equals(myConfiguration.preferredMode);
   }
+
+  @Override
+  public boolean isLightEditEnabled() {
+    return LightEditUtil.isLightEditEnabled();
+  }
+
+  @Override
+  public @Nullable Project openFile(@NotNull Path path, boolean suggestSwitchToProject) {
+    return LightEditUtil.openFile(path, suggestSwitchToProject);
+  }
+
+  @Override
+  public boolean isForceOpenInLightEditMode() {
+    return LightEditUtil.isForceOpenInLightEditMode();
+  }
 }

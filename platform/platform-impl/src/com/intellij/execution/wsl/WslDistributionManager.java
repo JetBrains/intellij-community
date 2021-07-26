@@ -5,9 +5,9 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -102,7 +102,7 @@ public abstract class WslDistributionManager implements Disposable {
   }
 
   public static boolean isWslPath(@NotNull String path) {
-    return FileUtilRt.toSystemDependentName(path).startsWith(WSLDistribution.UNC_PREFIX);
+    return FileUtilRt.toSystemDependentName(path).startsWith(WslConstants.UNC_PREFIX);
   }
 
   private @NotNull List<WSLDistribution> loadInstalledDistributions() {

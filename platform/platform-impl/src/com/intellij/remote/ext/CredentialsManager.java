@@ -1,12 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote.ext;
 
-import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.remote.CredentialsType;
 import com.intellij.remote.OutdatedCredentialsType;
 import com.intellij.remote.RemoteSdkAdditionalData;
@@ -39,7 +39,7 @@ public abstract class CredentialsManager {
     if (sdk instanceof ProjectJdkImpl) {
       var path = sdk.getHomePath();
       if (path != null && path.startsWith(WSL_PATH_TO_REMOVE)) {
-        ((ProjectJdkImpl)sdk).setHomePath(WSLDistribution.UNC_PREFIX + path.substring(WSL_PATH_TO_REMOVE.length()));
+        ((ProjectJdkImpl)sdk).setHomePath(WslConstants.UNC_PREFIX + path.substring(WSL_PATH_TO_REMOVE.length()));
       }
     }
   }
