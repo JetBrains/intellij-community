@@ -51,11 +51,14 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable, DataProvider {
-  public static final DataKey<String> SELECTED_TEXT_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName() + " selected text");
-  public static final DataKey<JBTerminalWidget> TERMINAL_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName());
   private static final Logger LOG = Logger.getInstance(JBTerminalWidget.class);
+
+  public static final DataKey<JBTerminalWidget> TERMINAL_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName());
+  public static final DataKey<String> SELECTED_TEXT_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName() + " selected text");
+  public static final DataKey<Supplier<String>> TEXT_SUPPLIER_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName() + " text");
 
   private final CompositeFilterWrapper myCompositeFilterWrapper;
   private JBTerminalWidgetListener myListener;
@@ -315,30 +318,44 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     if (SELECTED_TEXT_DATA_KEY.is(dataId)) {
       return getSelectedText();
     }
+    if (TEXT_SUPPLIER_DATA_KEY.is(dataId)) {
+      return (Supplier<String>)this::getText;
+    }
     if (TERMINAL_DATA_KEY.is(dataId)) {
       return this;
     }
     return null;
   }
 
-  @Nullable
-  private String getSelectedText() {
-    TerminalPanel terminalPanel = getTerminalPanel();
-    TerminalSelection selection = terminalPanel.getSelection();
-    if (selection != null) {
+  private @Nullable String getSelectedText() {
+    JBTerminalPanel terminalPanel = getTerminalPanel();
+    TerminalSelection selection = getTerminalPanel().getSelection();
+    if (selection == null) return null;
+    TerminalTextBuffer buffer = terminalPanel.getTerminalTextBuffer();
+    buffer.lock();
+    try {
       Pair<Point, Point> points = selection.pointsForRun(terminalPanel.getColumnCount());
-      if (points.first != null && points.second != null) {
-        TerminalTextBuffer buffer = terminalPanel.getTerminalTextBuffer();
-        buffer.lock();
-        try {
-          return SelectionUtil.getSelectionText(points.first, points.second, buffer);
-        }
-        finally {
-          buffer.unlock();
-        }
-      }
+      return SelectionUtil.getSelectionText(points.first, points.second, buffer);
     }
-    return null;
+    finally {
+      buffer.unlock();
+    }
+  }
+
+  private String getText() {
+    TerminalPanel terminalPanel = getTerminalPanel();
+    TerminalTextBuffer buffer = terminalPanel.getTerminalTextBuffer();
+    buffer.lock();
+    try {
+      TerminalSelection selection = new TerminalSelection(
+        new Point(0, -buffer.getHistoryLinesCount()),
+        new Point(terminalPanel.getWidth(), buffer.getScreenLinesCount()));
+      Pair<Point, Point> points = selection.pointsForRun(terminalPanel.getColumnCount());
+      return SelectionUtil.getSelectionText(points.first, points.second, buffer);
+    }
+    finally {
+      buffer.unlock();
+    }
   }
 
   public void writePlainMessage(@NotNull @Nls String message) {
