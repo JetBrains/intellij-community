@@ -65,6 +65,10 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     assertSize(2, IdentifierHighlighterPass.getUsages(element, file, true));
   }
 
+  public void testGuardWithInstanceOfPatternMatching() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
