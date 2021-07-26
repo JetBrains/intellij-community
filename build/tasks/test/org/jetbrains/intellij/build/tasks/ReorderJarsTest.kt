@@ -96,12 +96,12 @@ class ReorderJarsTest {
     var data: ByteArray
     ZipFile(Files.newByteChannel(file)).use { zipFile2 ->
       val entries = zipFile2.entriesInPhysicalOrder.toList()
-      val entry = entries[1]
+      val entry = entries[0]
       data = zipFile2.getInputStream(entry).readNBytes(entry.size.toInt())
       assertThat(data).hasSize(548)
       assertThat(entry.name).isEqualTo("org/jetbrains/annotations/Nullable.class")
-      assertThat(entries[2].name).isEqualTo("org/jetbrains/annotations/NotNull.class")
-      assertThat(entries[3].name).isEqualTo("META-INF/MANIFEST.MF")
+      assertThat(entries[1].name).isEqualTo("org/jetbrains/annotations/NotNull.class")
+      assertThat(entries[2].name).isEqualTo("META-INF/MANIFEST.MF")
     }
   }
 
@@ -118,8 +118,8 @@ class ReorderJarsTest {
     assertThat(file.name).isEqualTo("zkm.jar")
     ZipFile(file).use { zipFile ->
       val entries: List<ZipEntry> = zipFile.entries.toList()
-      assertThat(entries[0].name).isEqualTo(PACKAGE_INDEX_NAME)
-      assertThat(entries[1].name).isEqualTo("META-INF/plugin.xml")
+      assertThat(entries.last().name).isEqualTo(PACKAGE_INDEX_NAME)
+      assertThat(entries.first().name).isEqualTo("META-INF/plugin.xml")
     }
   }
 }
