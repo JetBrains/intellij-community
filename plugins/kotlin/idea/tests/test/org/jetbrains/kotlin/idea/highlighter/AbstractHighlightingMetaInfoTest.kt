@@ -7,9 +7,9 @@ import gnu.trove.TObjectHashingStrategy
 import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.CodeMetaInfoTestCase
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.HighlightingCodeMetaInfo
-import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingRenderConfiguration
-import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingRenderConfiguration.DescriptionRenderingOption
-import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingRenderConfiguration.SeverityRenderingOption
+import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration
+import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration.DescriptionRenderingOption
+import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration.SeverityRenderingOption
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import java.io.File
 import java.util.*
@@ -25,7 +25,7 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinLightCodeInsightFixtureT
     }
 
     private fun checkHighlighting(expectedHighlightingFile: File) {
-        val highlightingRenderConfiguration = HighlightingRenderConfiguration(
+        val highlightingRenderConfiguration = HighlightingConfiguration(
             descriptionRenderingOption = DescriptionRenderingOption.IF_NOT_NULL,
             renderSeverityOption = SeverityRenderingOption.ONLY_NON_INFO,
         )
