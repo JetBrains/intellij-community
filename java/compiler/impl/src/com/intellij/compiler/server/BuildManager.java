@@ -1333,6 +1333,9 @@ public final class BuildManager implements Disposable {
     if (Registry.is("compiler.build.report.statistics")) {
       cmdLine.addParameter("-D" + GlobalOptions.REPORT_BUILD_STATISTICS + "=true");
     }
+    if (Registry.is("compiler.natural.int.multimap.impl")) {  // todo: temporary flag to evaluate experimental multimap implementation
+      cmdLine.addParameter("-Djps.mappings.natural.int.multimap.impl=true");
+    }
 
     // third party libraries tweaks
     cmdLine.addParameter("-Djdt.compiler.useSingleThread=true"); // always run eclipse compiler in single-threaded mode
