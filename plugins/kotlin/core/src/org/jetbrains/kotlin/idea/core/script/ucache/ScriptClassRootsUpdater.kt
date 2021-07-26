@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -225,7 +226,7 @@ abstract class ScriptClassRootsUpdater(
     }
 
     private fun notifyRootsChanged() {
-        runInEdt {
+        runInEdt (ModalityState.NON_MODAL) {
             runWriteAction {
                 if (project.isDisposed) return@runWriteAction
 
