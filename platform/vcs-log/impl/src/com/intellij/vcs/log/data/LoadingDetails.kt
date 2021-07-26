@@ -1,14 +1,16 @@
 package com.intellij.vcs.log.data
 
-import com.intellij.vcs.log.CommitId
-import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.CommonBundle
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.impl.VcsUserImpl
+
+interface LoadingDetails
 
 /**
  * Fake [com.intellij.vcs.log.impl.VcsCommitMetadataImpl] implementation that is used to indicate that details are not ready for the moment,
@@ -16,7 +18,7 @@ import com.intellij.vcs.log.impl.VcsUserImpl
  *
  * @author Kirill Likhodedov
  */
-open class LoadingDetails(private val commitIdComputable: Computable<out CommitId>, val loadingTaskIndex: Long) : VcsFullCommitDetails {
+open class LoadingDetailsImpl(private val commitIdComputable: Computable<out CommitId>, val loadingTaskIndex: Long) : VcsFullCommitDetails, LoadingDetails {
   private val commitId: CommitId by lazy(LazyThreadSafetyMode.PUBLICATION) { commitIdComputable.compute() }
 
   override fun getId(): Hash = commitId.hash
