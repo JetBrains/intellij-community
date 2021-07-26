@@ -39,7 +39,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComme
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver
-import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
@@ -203,7 +202,7 @@ class JavaToJKTreeBuilder constructor(
             is PsiLambdaExpression -> toJK()
             is PsiClassObjectAccessExpressionImpl -> toJK()
             is PsiSwitchExpression -> JKJavaSwitchExpression(expression.toJK(), collectSwitchCases())
-            else -> throwCanNotConvertError()
+            else -> createErrorExpression()
         }.also {
             if (this != null) {
                 (it as PsiOwner).psi = this
@@ -263,7 +262,7 @@ class JavaToJKTreeBuilder constructor(
             }
         }
 
-        fun PsiLiteralExpression.toJK(): JKLiteralExpression {
+        fun PsiLiteralExpression.toJK(): JKExpression {
             require(this is PsiLiteralExpressionImpl)
 
             return when (literalElementType) {
@@ -276,7 +275,7 @@ class JavaToJKTreeBuilder constructor(
                 JavaTokenType.LONG_LITERAL -> JKLiteralExpression(text, LONG)
                 JavaTokenType.FLOAT_LITERAL -> JKLiteralExpression(text, FLOAT)
                 JavaTokenType.DOUBLE_LITERAL -> JKLiteralExpression(text, DOUBLE)
-                else -> throwCanNotConvertError("Unknown literal element type: $literalElementType")
+                else -> createErrorExpression()
             }.also {
                 it.withFormattingFrom(this)
             }
@@ -346,12 +345,12 @@ class JavaToJKTreeBuilder constructor(
                     val callee = when ((methodExpression.referenceNameElement as PsiKeyword).tokenType) {
                         SUPER_KEYWORD -> JKSuperExpression(JKLabelEmpty(), JKNoType)
                         THIS_KEYWORD -> JKThisExpression(JKLabelEmpty(), JKNoType)
-                        else -> throwCanNotConvertError("unknown keyword in callee position")
+                        else -> createErrorExpression("unknown keyword in callee position")
                     }
                     val calleeSymbol = when {
                         symbol is JKMethodSymbol -> symbol
                         target is KtLightMethod -> KtClassImplicitConstructorSymbol(target, typeFactory)
-                        else -> throwCanNotConvertError("Expected constructor call, found ${target?.javaClass?.name}")
+                        else -> JKUnresolvedMethod(methodExpression, typeFactory)
                     }
                     JKDelegationConstructorCall(calleeSymbol, callee, arguments.toJK())
                 }
@@ -406,7 +405,7 @@ class JavaToJKTreeBuilder constructor(
                                         createOperator(JavaTokenType.EQ, type) //TODO correct type
                                     )
                                 }
-                                else -> throwCanNotConvertError("expected getter or setter call")
+                                else -> createErrorExpression("expected getter or setter call")
                             }
                         }
 
@@ -425,7 +424,7 @@ class JavaToJKTreeBuilder constructor(
                         .qualified(qualifier)
                 symbol is JKFieldSymbol ->
                     JKFieldAccessExpression(symbol).qualified(qualifier)
-                else -> throwCanNotConvertError("unexpected symbol ${symbol::class}")
+                else -> createErrorExpression()
             }.also {
                 it.withFormattingFrom(this)
             }
@@ -484,7 +483,7 @@ class JavaToJKTreeBuilder constructor(
                 is JKPackageSymbol -> JKPackageAccessExpression(symbol)
                 is JKMethodSymbol -> JKMethodAccessExpression(symbol)
                 is JKTypeParameterSymbol -> JKTypeQualifierExpression(JKTypeParameterType(symbol))
-                else -> throwCanNotConvertError("unexpected symbol ${symbol::class}")
+                else -> createErrorExpression()
             }.qualified(qualifierExpression?.toJK()).also {
                 it.withFormattingFrom(this)
             }
@@ -529,7 +528,7 @@ class JavaToJKTreeBuilder constructor(
                         classOrAnonymousClassReference?.resolve()?.let {
                             symbolProvider.provideDirectSymbol(it) as JKClassSymbol
                         } ?: JKUnresolvedClassSymbol(
-                            classOrAnonymousClassReference?.referenceName ?: throwCanNotConvertError(),
+                            classOrAnonymousClassReference?.referenceName ?: NO_NAME_RPOVIDNO_NAME_PROVIDEDD,
                             typeFactory
                         )
                     val typeArgumentList =
@@ -570,7 +569,7 @@ class JavaToJKTreeBuilder constructor(
 
         fun PsiTypeCastExpression.toJK(): JKExpression {
             return JKTypeCastExpression(
-                operand?.toJK() ?: throwCanNotConvertError(),
+                operand?.toJK() ?: createErrorExpression(),
                 (castType?.type?.toJK() ?: JKNoType).asTypeElement()
             ).also {
                 it.withFormattingFrom(this)
@@ -786,24 +785,29 @@ class JavaToJKTreeBuilder constructor(
             return JKAnnotationList(this?.applicableAnnotations?.map { it.toJK() }.orEmpty())
         }
 
-        fun PsiAnnotation.toJK(): JKAnnotation = JKAnnotation(
-            symbolProvider.provideSymbolForReference<JKSymbol>(
-                nameReferenceElement ?: throwCanNotConvertError()
-            ).safeAs() ?: JKUnresolvedClassSymbol(nameReferenceElement?.text ?: throwCanNotConvertError(), typeFactory),
-            parameterList.attributes.map { parameter ->
-                if (parameter.nameIdentifier != null) {
-                    JKAnnotationNameParameter(
-                        parameter.value?.toJK() ?: JKStubExpression(),
-                        JKNameIdentifier(parameter.name ?: throwCanNotConvertError())
-                    )
-                } else {
-                    JKAnnotationParameterImpl(
-                        parameter.value?.toJK() ?: JKStubExpression()
-                    )
-                }
+        fun PsiAnnotation.toJK(): JKAnnotation {
+            val symbol = when (val reference = nameReferenceElement) {
+                null -> JKUnresolvedClassSymbol(NO_NAME_RPOVIDNO_NAME_PROVIDEDD, typeFactory)
+                else -> symbolProvider.provideSymbolForReference<JKSymbol>(reference).safeAs<JKClassSymbol>()
+                    ?: JKUnresolvedClassSymbol(nameReferenceElement?.text ?: NO_NAME_RPOVIDNO_NAME_PROVIDEDD, typeFactory)
             }
-        ).also {
-            it.withFormattingFrom(this)
+            return JKAnnotation(
+                symbol,
+                parameterList.attributes.map { parameter ->
+                    if (parameter.nameIdentifier != null) {
+                        JKAnnotationNameParameter(
+                            parameter.value?.toJK() ?: JKStubExpression(),
+                            JKNameIdentifier(parameter.name ?: NO_NAME_RPOVIDNO_NAME_PROVIDEDD)
+                        )
+                    } else {
+                        JKAnnotationParameterImpl(
+                            parameter.value?.toJK() ?: JKStubExpression()
+                        )
+                    }
+                }
+            ).also {
+                it.withFormattingFrom(this)
+            }
         }
 
         fun PsiDocComment.deprecatedAnnotation(): JKAnnotation? =
@@ -822,7 +826,7 @@ class JavaToJKTreeBuilder constructor(
                 is PsiAnnotation -> toJK()
                 is PsiArrayInitializerMemberValue ->
                     JKKtAnnotationArrayInitializerExpression(initializers.map { it.toJK() })
-                else -> throwCanNotConvertError()
+                else -> createErrorExpression()
             }.also {
                 it.withFormattingFrom(this)
             }
@@ -992,7 +996,7 @@ class JavaToJKTreeBuilder constructor(
                         body?.toJK() ?: JKBodyStub
                     )
                 is PsiYieldStatement -> JKJavaYieldStatement(with(expressionTreeMapper) { expression.toJK() })
-                else -> throwCanNotConvertError()
+                else -> createErrorStatement()
             }.also {
                 if (this != null) {
                     (it as PsiOwner).psi = this
@@ -1005,12 +1009,13 @@ class JavaToJKTreeBuilder constructor(
             when (this) {
                 is PsiResourceVariable -> JKJavaResourceDeclaration((this as PsiLocalVariable).toJK())
                 is PsiResourceExpression -> JKJavaResourceExpression(with(expressionTreeMapper) { this@toJK.expression.toJK() })
-                else -> throwCanNotConvertError()
+                else -> error("Unexpected resource list ${this::class.java}")
             }
 
         fun PsiCatchSection.toJK(): JKJavaTryCatchSection =
             JKJavaTryCatchSection(
-                parameter?.toJK() ?: throwCanNotConvertError(),
+                parameter?.toJK()
+                    ?: JKParameter(JKTypeElement(JKNoType), JKNameIdentifier(NO_NAME_RPOVIDNO_NAME_PROVIDEDD)),
                 catchBlock?.toJK() ?: JKBodyStub
             ).also {
                 it.psi = this
@@ -1018,11 +1023,17 @@ class JavaToJKTreeBuilder constructor(
             }
     }
 
-    fun PsiLabeledStatement.collectLabels(): Pair<List<PsiIdentifier>, PsiStatement> =
-        generateSequence(emptyList<PsiIdentifier>() to this as PsiStatement) { (labels, statement) ->
-            if (statement !is PsiLabeledStatementImpl) return@generateSequence null
-            (labels + statement.labelIdentifier) to (statement.statement ?: throwCanNotConvertError())
-        }.last()
+    fun PsiLabeledStatement.collectLabels(): Pair<List<PsiIdentifier>, PsiStatement> {
+        val labels = mutableListOf<PsiIdentifier>()
+        var currentStatement: PsiStatement? = this
+
+        while (currentStatement is PsiLabeledStatementImpl) {
+            labels += currentStatement.labelIdentifier
+            currentStatement = currentStatement.statement ?: return labels to currentStatement
+        }
+
+        return labels to currentStatement!!
+    }
 
 
     fun buildTree(psi: PsiElement, saveImports: Boolean): JKTreeRoot? =
@@ -1046,23 +1057,14 @@ class JavaToJKTreeBuilder constructor(
         }?.let { JKTreeRoot(it) }
 
 
-    private fun PsiElement.throwCanNotConvertError(message: String? = null): Nothing {
-        throw KotlinExceptionWithAttachments("Cannot convert the following Java element ${this::class}" + message?.let { " due to `$it`" })
-            .also {
-                try {
-                    it.withAttachment("elementText", text)
-                } catch (e: Exception) {
-                    it.withAttachment("elementText.error", e.message)
-                }
-            }
-            .also {
-                try {
-                    it.withAttachment("file", containingFile?.text)
-                } catch (e: Exception) {
-                    it.withAttachment("file.error", e.message)
-                }
-            }
+    private fun PsiElement.createErrorExpression(message: String? = null): JKExpression {
+        return JKErrorExpression(this, message)
     }
+
+    private fun PsiElement.createErrorStatement(message: String? = null): JKStatement {
+        return JKErrorStatement(this, message)
+    }
+
 
     private fun PsiSwitchBlock.collectSwitchCases(): List<JKJavaSwitchCase> = with (declarationMapper) {
         val statements = body?.statements ?: return emptyList()
@@ -1103,6 +1105,7 @@ class JavaToJKTreeBuilder constructor(
 
     companion object {
         private const val DEPRECATED_ANNOTATION_FQ_NAME = "java.lang.Deprecated"
+        private const val NO_NAME_RPOVIDNO_NAME_PROVIDEDD = "NO_NAME_PROVIDED"
     }
 }
 

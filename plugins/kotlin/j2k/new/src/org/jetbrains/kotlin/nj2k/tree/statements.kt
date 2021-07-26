@@ -196,6 +196,6 @@ class JKJavaAnnotationMethod(
 }
 
 
-class JKErrorStatement(override var psi: PsiElement?, override val reason: String?) : JKStatement(), JKErrorElement {
+class JKErrorStatement(override var psi: PsiElement?, override val reason: String? = null) : JKStatement(), JKErrorElement {
     override fun accept(visitor: JKVisitor) = visitor.visitErrorStatement(this)
 }

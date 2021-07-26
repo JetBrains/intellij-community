@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.tree
 
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiSwitchExpression
 import org.jetbrains.kotlin.nj2k.symbols.*
 
@@ -365,4 +366,10 @@ class JKKtWhenExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitKtWhenExpression(this)
 
     override fun calculateType(typeFactory: JKTypeFactory): JKType? = type
+}
+
+class JKErrorExpression(override var psi: PsiElement?, override val reason: String?) : JKExpression(), JKErrorElement {
+    override fun calculateType(typeFactory: JKTypeFactory): JKType = typeFactory.types.nothing
+
+    override fun accept(visitor: JKVisitor) = visitor.visitExpression(this)
 }

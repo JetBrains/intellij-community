@@ -287,6 +287,8 @@ class JKJavaResourceDeclaration(declaration: JKLocalVariable) : JKJavaResourceEl
     var declaration by child(declaration)
 }
 
+class JKJavaErrorResourceDeclaration
+
 interface JKErrorElement: JKElement {
     val psi: PsiElement?
     val reason: String?

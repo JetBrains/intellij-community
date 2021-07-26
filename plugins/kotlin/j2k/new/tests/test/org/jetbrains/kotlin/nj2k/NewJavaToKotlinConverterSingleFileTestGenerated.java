@@ -2721,6 +2721,29 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/newJ2k/invalidCode")
+    public static class InvalidCode extends AbstractNewJavaToKotlinConverterSingleFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotationApplicationWithoutName.java")
+        public void testAnnotationApplicationWithoutName() throws Exception {
+            runTest("testData/newJ2k/invalidCode/annotationApplicationWithoutName.java");
+        }
+
+        @TestMetadata("catchWithoutParameter.java")
+        public void testCatchWithoutParameter() throws Exception {
+            runTest("testData/newJ2k/invalidCode/catchWithoutParameter.java");
+        }
+
+        @TestMetadata("newExpressionWithoutName.java")
+        public void testNewExpressionWithoutName() throws Exception {
+            runTest("testData/newJ2k/invalidCode/newExpressionWithoutName.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/newJ2k/isOperator")
     public static class IsOperator extends AbstractNewJavaToKotlinConverterSingleFileTest {
         private void runTest(String testDataFilePath) throws Exception {

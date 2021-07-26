@@ -160,4 +160,5 @@ abstract class JKVisitor {
     open fun visitJavaAnnotationMethod(javaAnnotationMethod: JKJavaAnnotationMethod) = visitMethod(javaAnnotationMethod)
 
     open fun visitErrorStatement(errorStatement: JKErrorStatement) = visitStatement(errorStatement)
+    open fun visitErrorExpression(errorExpression: JKErrorExpression) = visitExpression(errorExpression)
 }
