@@ -51,11 +51,6 @@
       <interface-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl</implementation-class>
     </component>
-
-    <component>
-      <interface-class>com.intellij.facet.pointers.FacetPointersManager</interface-class>
-      <implementation-class>com.intellij.facet.impl.pointers.FacetPointersManagerImpl</implementation-class>
-    </component>
   </project-components>
 
   <extensionPoints>
@@ -120,6 +115,10 @@
     <projectService serviceImplementation="com.intellij.psi.search.scope.packageSet.UpdatingScopeOnProjectStructureChangeListener"
                     preload="await"/>
     <startupActivity implementation="com.intellij.codeInsight.actions.ReaderModeEditorSettingsListener"/>
+
+    <projectService serviceImplementation="com.intellij.facet.impl.pointers.FacetPointersManagerImpl"
+                    serviceInterface="com.intellij.facet.pointers.FacetPointersManager"/>
+    <postStartupActivity implementation="com.intellij.facet.impl.pointers.FacetPointersPostStartupActivity"/>
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->
@@ -197,5 +196,8 @@
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener" activeInHeadlessMode="false"/>
     <listener class="com.intellij.codeInsight.actions.ReaderModeSettingsListener"
               topic="com.intellij.codeInsight.actions.ReaderModeListener" activeInHeadlessMode="false"/>
+
+    <listener class="com.intellij.facet.impl.pointers.FacetPointerModuleListener" topic="com.intellij.openapi.project.ModuleListener"/>
+    <listener class="com.intellij.facet.impl.pointers.FacetPointersFacetManagerListener" topic="com.intellij.facet.FacetManagerListener"/>
   </projectListeners>
 </idea-plugin>
