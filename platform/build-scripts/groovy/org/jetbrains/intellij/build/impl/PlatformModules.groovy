@@ -33,6 +33,7 @@ final class PlatformModules {
     "intellij.platform.codeStyle",
     "intellij.platform.indexing",
     "intellij.platform.jps.model",
+    "intellij.platform.lang.core",
     "intellij.platform.lang",
     "intellij.platform.lang.core",
     "intellij.platform.lvcs",
@@ -54,7 +55,7 @@ final class PlatformModules {
     "intellij.xml.psi",
     "intellij.xml.structureView",
     "intellij.platform.concurrency",
-  )
+    )
 
   /**
    * List of modules which are included into lib/platform-impl.jar in all IntelliJ based IDEs.
@@ -63,6 +64,7 @@ final class PlatformModules {
     "intellij.platform.analysis.impl",
     "intellij.platform.builtInServer.impl",
     "intellij.platform.core.impl",
+    "intellij.platform.ide.core.impl",
     "intellij.platform.diff.impl",
     "intellij.platform.editor.ex",
     "intellij.platform.codeStyle.impl",
@@ -71,16 +73,18 @@ final class PlatformModules {
     "intellij.platform.elevation.client",
     "intellij.platform.elevation.common",
     "intellij.platform.elevation.daemon",
-    "intellij.platform.execution.impl",
     "intellij.platform.inspect",
     "intellij.platform.lang.impl",
     "intellij.platform.workspaceModel.storage",
     "intellij.platform.workspaceModel.jps",
     "intellij.platform.lvcs.impl",
+    "intellij.platform.vfs.impl",
     "intellij.platform.ide.impl",
     "intellij.platform.ide.core.impl",
     "intellij.platform.vfs.impl",
     "intellij.platform.projectModel.impl",
+    "intellij.platform.macro",
+    "intellij.platform.execution.impl",
     "intellij.platform.externalSystem.impl",
     "intellij.platform.scriptDebugger.protocolReaderRuntime",
     "intellij.regexp",
