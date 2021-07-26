@@ -12,6 +12,4 @@ interface OpenProjectProvider {
   fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project?
 
   fun linkToExistingProject(projectFile: VirtualFile, project: Project)
-
-  fun linkDirectlyFileToExistingProject(projectFile: VirtualFile, project: Project)
 }

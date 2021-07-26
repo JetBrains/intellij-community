@@ -21,12 +21,11 @@ internal class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
     return MavenUtil.isPomFile(file)
   }
 
-  override fun linkAndRefreshProject(projectDirectory: Path, project: Project, projectFile: VirtualFile?) {
+  override fun linkAndRefreshProject(projectDirectory: Path, project: Project) {
     val builder = builder
     try {
       builder.isUpdate = MavenProjectsManager.getInstance(project).isMavenizedProject
       builder.setFileToImport(projectDirectory)
-      builder.setProjectFileToImport(projectFile)
       if (builder.validate(null, project)) {
         builder.commit(project, null, ModulesProvider.EMPTY_MODULES_PROVIDER)
       }

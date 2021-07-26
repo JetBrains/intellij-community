@@ -33,7 +33,7 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
     return !file.isDirectory && BUILD_FILE_EXTENSIONS.any { file.name.endsWith(it) }
   }
 
-  override fun linkAndRefreshProject(projectDirectory: Path, project: Project, projectFile: VirtualFile?) {
+  override fun linkAndRefreshProject(projectDirectory: Path, project: Project) {
     val gradleProjectSettings = createLinkSettings(projectDirectory, project)
 
     attachGradleProjectAndRefresh(gradleProjectSettings, project)

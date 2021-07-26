@@ -43,7 +43,7 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
 
   protected abstract fun isProjectFile(file: VirtualFile): Boolean
 
-  protected abstract fun linkAndRefreshProject(projectDirectory: Path, project: Project, projectFile: VirtualFile?)
+  protected abstract fun linkAndRefreshProject(projectDirectory: Path, project: Project)
 
   override fun canOpenProject(file: VirtualFile): Boolean {
     return if (file.isDirectory) file.children.any(::isProjectFile) else isProjectFile(file)
@@ -76,7 +76,7 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
           project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
           project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, true)
           ApplicationManager.getApplication().invokeAndWait {
-            linkAndRefreshProject(nioPath, project, if (projectFile.isDirectory) null else projectFile)
+            linkAndRefreshProject(nioPath, project)
           }
           updateLastProjectLocation(nioPath)
         }
@@ -88,15 +88,8 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
 
   override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
     LOG.debug("Import project from $projectFile")
-
     val projectDirectory = getProjectDirectory(projectFile)
-    linkAndRefreshProject(projectDirectory.toNioPath(), project, null)
-  }
-
-  override fun linkDirectlyFileToExistingProject(projectFile: VirtualFile, project: Project) {
-    LOG.debug("Import project directly from $projectFile")
-    val projectDirectory = getProjectDirectory(projectFile)
-    linkAndRefreshProject(projectDirectory.toNioPath(), project, projectFile)
+    linkAndRefreshProject(projectDirectory.toNioPath(), project)
   }
 
   fun linkToExistingProject(projectFilePath: String, project: Project) {
