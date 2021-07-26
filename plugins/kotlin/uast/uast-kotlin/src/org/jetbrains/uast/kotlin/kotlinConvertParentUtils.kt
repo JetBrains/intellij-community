@@ -15,6 +15,8 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
@@ -207,7 +209,6 @@ fun convertParentImpl(element: UElement, parent: PsiElement?): UElement? {
 private fun isInConditionBranch(element: UElement, result: USwitchClauseExpressionWithBody) =
         element.psi?.parentsWithSelf?.takeWhile { it !== result.psi }?.any { it is KtWhenCondition } ?: false
 
-
 private fun findAnnotationClassFromConstructorParameter(parameter: KtParameter): UClass? {
     val primaryConstructor = parameter.getStrictParentOfType<KtPrimaryConstructor>() ?: return null
     val containingClass = primaryConstructor.getContainingClassOrObject()
@@ -215,4 +216,13 @@ private fun findAnnotationClassFromConstructorParameter(parameter: KtParameter):
         return KotlinUastLanguagePlugin().convertElementWithParent(containingClass, null) as? UClass
     }
     return null
+}
+
+private fun KotlinUAnnotation.findAttributeValueExpression(arg: ValueArgument): UExpression? {
+    val resolvedCall = sourcePsi.getResolvedCall(sourcePsi.analyze())
+    val mapping = resolvedCall?.getArgumentMapping(arg)
+    return (mapping as? ArgumentMatch)?.let { match ->
+        val namedExpression = attributeValues.find { it.name == match.valueParameter.name.asString() }
+        namedExpression?.expression as? KotlinUVarargExpression ?: namedExpression
+    }
 }
