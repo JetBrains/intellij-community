@@ -804,7 +804,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/build/build-debug-binaries/intellij.pycharm.community.build.debugBinaries.iml" filepath="$PROJECT_DIR$/python/build/build-debug-binaries/intellij.pycharm.community.build.debugBinaries.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/build/dependencies/intellij.pycharm.community.build.dependencies.iml" filepath="$PROJECT_DIR$/python/build/dependencies/intellij.pycharm.community.build.dependencies.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.pycharm.community.customization.iml" filepath="$PROJECT_DIR$/python/intellij.pycharm.community.customization.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/ide/impl/intellij.pycharm.community.customization.impl.iml" filepath="$PROJECT_DIR$/python/ide/impl/intellij.pycharm.community.customization.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/ide/impl/intellij.pycharm.community.ide.impl.iml" filepath="$PROJECT_DIR$/python/ide/impl/intellij.pycharm.community.ide.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.pycharm.community.main.iml" filepath="$PROJECT_DIR$/python/intellij.pycharm.community.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-common-tests/intellij.python.commonTests.iml" filepath="$PROJECT_DIR$/python/python-common-tests/intellij.python.commonTests.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/openapi/intellij.python.community.iml" filepath="$PROJECT_DIR$/python/openapi/intellij.python.community.iml" />
