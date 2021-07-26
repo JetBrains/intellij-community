@@ -133,7 +133,6 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
   private fun findNewParameters(parameters: List<InputParameter>, duplicates: List<Duplicate>): List<InputParameter> {
     return duplicates
       .fold(parameters) { updatedParameters, duplicate -> updateParameters(updatedParameters, duplicate.changedExpressions) }
-      //.sortedBy { parameter -> parameter.references.minOf{ expression -> expression.textRange.startOffset } }
   }
 
   private fun confirmDuplicates(project: Project, editor: Editor, duplicates: List<Duplicate>): List<Duplicate> {
