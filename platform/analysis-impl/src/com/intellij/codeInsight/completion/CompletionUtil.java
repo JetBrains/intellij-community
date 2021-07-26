@@ -300,7 +300,21 @@ public final class CompletionUtil {
                                                                                      OffsetMap offsetMap) {
     int initialStartOffset = Math.max(0, caretOffset - item.getLookupString().length());
 
-    offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, initialStartOffset);
+    return createInsertionContext(lookupItems, completionChar, editor, psiFile, initialStartOffset, caretOffset, idEndOffset, offsetMap);
+  }
+
+  @NotNull
+  @ApiStatus.Internal
+  public static CompletionAssertions.WatchingInsertionContext createInsertionContext(@Nullable List<LookupElement> lookupItems,
+                                                                                     char completionChar,
+                                                                                     Editor editor,
+                                                                                     PsiFile psiFile,
+                                                                                     int startOffset,
+                                                                                     int caretOffset,
+                                                                                     int idEndOffset,
+                                                                                     OffsetMap offsetMap) {
+
+    offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, startOffset);
     offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset);
     offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, idEndOffset);
 

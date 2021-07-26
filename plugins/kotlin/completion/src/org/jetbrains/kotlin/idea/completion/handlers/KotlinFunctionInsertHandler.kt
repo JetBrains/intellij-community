@@ -179,7 +179,6 @@ fun createNormalFunctionInsertHandler(
         })
 
     }
-    println("!!! builder set to map")
 
     // \t
     /*
