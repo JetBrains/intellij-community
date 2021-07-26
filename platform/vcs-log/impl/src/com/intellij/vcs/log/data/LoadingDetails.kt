@@ -1,117 +1,38 @@
-package com.intellij.vcs.log.data;
+package com.intellij.vcs.log.data
 
-import com.intellij.CommonBundle;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.impl.VcsUserImpl;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.List;
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.VcsFullCommitDetails
+import com.intellij.CommonBundle
+import com.intellij.openapi.util.Computable
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.log.impl.VcsUserImpl
 
 /**
- * Fake {@link com.intellij.vcs.log.impl.VcsCommitMetadataImpl} implementation that is used to indicate that details are not ready for the moment,
+ * Fake [com.intellij.vcs.log.impl.VcsCommitMetadataImpl] implementation that is used to indicate that details are not ready for the moment,
  * they are being retrieved from the VCS.
  *
  * @author Kirill Likhodedov
  */
-public class LoadingDetails implements VcsFullCommitDetails {
-  private static final VcsUserImpl STUB_USER = new VcsUserImpl("", "");
+open class LoadingDetails(private val commitIdComputable: Computable<out CommitId>, val loadingTaskIndex: Long) : VcsFullCommitDetails {
+  private val commitId: CommitId by lazy(LazyThreadSafetyMode.PUBLICATION) { commitIdComputable.compute() }
 
-  @NotNull private final Computable<? extends CommitId> myCommitIdComputable;
-  private final long myLoadingTaskIndex;
-  @Nullable private volatile CommitId myCommitId;
+  override fun getId(): Hash = commitId.hash
+  override fun getRoot(): VirtualFile = commitId.root
+  override fun getFullMessage(): String = ""
+  override fun getSubject(): String = CommonBundle.getLoadingTreeNodeText()
+  override fun getAuthor(): VcsUser = STUB_USER
+  override fun getCommitter(): VcsUser = STUB_USER
+  override fun getAuthorTime(): Long = -1
+  override fun getCommitTime(): Long = -1
+  override fun getParents(): List<Hash> = emptyList()
+  override fun getTimestamp(): Long = -1
+  override fun getChanges(): Collection<Change> = emptyList()
+  override fun getChanges(parent: Int): Collection<Change> = emptyList()
 
-  public LoadingDetails(@NotNull Computable<? extends CommitId> commitIdComputable, long loadingTaskIndex) {
-    myCommitIdComputable = commitIdComputable;
-    myLoadingTaskIndex = loadingTaskIndex;
-  }
-
-
-  protected CommitId getCommitId() {
-    if (myCommitId == null) {
-      myCommitId = myCommitIdComputable.compute();
-    }
-    return myCommitId;
-  }
-
-  public long getLoadingTaskIndex() {
-    return myLoadingTaskIndex;
-  }
-
-  @NotNull
-  @Override
-  public Collection<Change> getChanges() {
-    return ContainerUtil.emptyList();
-  }
-
-  @NotNull
-  @Override
-  public Collection<Change> getChanges(int parent) {
-    return ContainerUtil.emptyList();
-  }
-
-  @NotNull
-  @Override
-  public String getFullMessage() {
-    return "";
-  }
-
-  @NotNull
-  @Override
-  public VirtualFile getRoot() {
-    return getCommitId().getRoot();
-  }
-
-  @NotNull
-  @Override
-  public String getSubject() {
-    return CommonBundle.getLoadingTreeNodeText();
-  }
-
-  @NotNull
-  @Override
-  public VcsUser getAuthor() {
-    return STUB_USER;
-  }
-
-  @NotNull
-  @Override
-  public VcsUser getCommitter() {
-    return STUB_USER;
-  }
-
-  @Override
-  public long getAuthorTime() {
-    return -1;
-  }
-
-  @Override
-  public long getCommitTime() {
-    return -1;
-  }
-
-  @NotNull
-  @Override
-  public Hash getId() {
-    return getCommitId().getHash();
-  }
-
-  @NotNull
-  @Override
-  public List<Hash> getParents() {
-    return ContainerUtil.emptyList();
-  }
-
-  @Override
-  public long getTimestamp() {
-    return -1;
+  companion object {
+    private val STUB_USER = VcsUserImpl("", "")
   }
 }
