@@ -15,7 +15,7 @@ public class Main {
       case String s1:
         System.out.println(<error descr="Cannot resolve symbol 's'">s</error>.length());
       case Integer i:
-        System.out.println(<error descr="Cannot resolve symbol 'i'">i</error>);
+        System.out.println(i);
       default:
         System.out.println(1);
     };
