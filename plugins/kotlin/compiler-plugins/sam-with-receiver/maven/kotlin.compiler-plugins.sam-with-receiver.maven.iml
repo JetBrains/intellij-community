@@ -15,5 +15,6 @@
     <orderEntry type="module" module-name="kotlin.maven" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.common" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.maven" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.base-compiler-plugins-ide-support" />
   </component>
 </module>

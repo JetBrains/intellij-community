@@ -89,11 +89,11 @@ fun createCodeMetaInfo(obj: Any, renderConfiguration: AbstractCodeMetaInfoRender
     fun errorMessage() = "Unexpected render configuration for object $obj"
     return when (obj) {
         is Diagnostic -> {
-            require(renderConfiguration is DiagnosticCodeMetaInfoConfiguration, ::errorMessage)
+            require(renderConfiguration is DiagnosticCodeMetaInfoRenderConfiguration, ::errorMessage)
             obj.textRanges.map { DiagnosticCodeMetaInfo(it.start, it.end, renderConfiguration, obj) }
         }
         is ActualDiagnostic -> {
-            require(renderConfiguration is DiagnosticCodeMetaInfoConfiguration, ::errorMessage)
+            require(renderConfiguration is DiagnosticCodeMetaInfoRenderConfiguration, ::errorMessage)
             obj.diagnostic.textRanges.map { DiagnosticCodeMetaInfo(it.start, it.end, renderConfiguration, obj.diagnostic) }
         }
         is HighlightInfo -> {

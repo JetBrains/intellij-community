@@ -32,7 +32,7 @@ abstract class ScratchFile(val project: Project, val file: VirtualFile) {
     }
 
     val ktScratchFile: KtFile?
-        get() = getPsiFile().safeAs()
+        get() = getPsiFile().safeAs<KtFile>()
 
     fun setModule(value: Module?) {
         module = value

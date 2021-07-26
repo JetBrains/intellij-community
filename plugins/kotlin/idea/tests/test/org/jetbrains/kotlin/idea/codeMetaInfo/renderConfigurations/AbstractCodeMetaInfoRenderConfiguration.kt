@@ -68,7 +68,7 @@ open class HighlightingConfiguration(
 
     override fun asString(codeMetaInfo: CodeMetaInfo): String {
         if (codeMetaInfo !is HighlightingCodeMetaInfo) return ""
-        return getTag() + getPlatformsString(codeMetaInfo) + getParamsString(codeMetaInfo)
+        return getTag() + getAttributesString(codeMetaInfo) + getParamsString(codeMetaInfo)
     }
 
     fun getTag() = "HIGHLIGHTING"
