@@ -117,15 +117,16 @@ class ReplaceWithDotCallFix(
 
             var parent = qualifiedExpression.getQualifiedExpressionForReceiver() as? KtSafeQualifiedExpression
             var callChainCount = 0
-            if (parent != null) {
-                val bindingContext = qualifiedExpression.analyze(BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
-                while (parent is KtQualifiedExpression) {
-                    val compilerReports = bindingContext.diagnostics.forElement(parent.operationTokenNode as PsiElement)
-                    if (compilerReports.none { it.factory == Errors.UNNECESSARY_SAFE_CALL }) break
-                    callChainCount++
-                    parent = parent.getQualifiedExpressionForReceiver() as? KtSafeQualifiedExpression
-                }
-            }
+            TODO("FIX ME LATER")
+            //if (parent != null) {
+            //    val bindingContext = qualifiedExpression.analyze(BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
+            //    while (parent is KtQualifiedExpression) {
+            //        val compilerReports = bindingContext.diagnostics.forElement(parent.operationTokenNode as PsiElement)
+            //        if (compilerReports.none { it.factory == Errors.UNNECESSARY_SAFE_CALL }) break
+            //        callChainCount++
+            //        parent = parent.getQualifiedExpressionForReceiver() as? KtSafeQualifiedExpression
+            //    }
+            //}
 
             return listOf(ReplaceWithDotCallFix(qualifiedExpression, callChainCount))
         }
