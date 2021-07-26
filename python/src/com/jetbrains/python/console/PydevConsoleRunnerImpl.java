@@ -116,6 +116,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   public static final @NonNls String CONSOLE_START_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n" +
                                                              "sys.path.extend([" + WORKING_DIR_AND_PYTHON_PATHS + "])\n";
   public static final @NonNls String STARTED_BY_RUNNER = "startedByRunner";
+  public static final @NonNls String INLINE_OUTPUT_SUPPORTED = "INLINE_OUTPUT_SUPPORTED";
   private static final Long WAIT_BEFORE_FORCED_CLOSE_MILLIS = 2000L;
   private static final Logger LOG = Logger.getInstance(PydevConsoleRunnerImpl.class);
   @SuppressWarnings("SpellCheckingInspection")
@@ -1219,6 +1220,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
       if (debuggerSettings.getValuesPolicy() != PyDebugValue.ValuesPolicy.SYNC) {
         myEnvironmentVariables.put(PyDebugValue.POLICY_ENV_VARS.get(debuggerSettings.getValuesPolicy()), "True");
+      }
+      if (PyConsoleOutputCustomizer.Companion.getInstance().isInlineOutputSupported()) {
+        myEnvironmentVariables.put(INLINE_OUTPUT_SUPPORTED, "True");
       }
     }
 
