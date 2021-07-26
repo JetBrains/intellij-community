@@ -256,7 +256,10 @@ public class MavenProject {
       // module name can be relative and contain either / of \\ separators
 
       name = FileUtil.toSystemIndependentName(name);
-      if (!name.endsWith('.' + extension)) {
+
+      String finalName = name;
+      boolean fullPathInModuleName = ContainerUtil.exists(MavenConstants.POM_EXTENSIONS, ext -> finalName.endsWith('.' + ext));
+      if (!fullPathInModuleName) {
         if (!name.endsWith("/")) name += "/";
         name += MavenConstants.POM_EXTENSION + '.' + extension;
       }
