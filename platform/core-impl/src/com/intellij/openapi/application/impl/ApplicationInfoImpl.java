@@ -589,11 +589,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public @Nullable String getWelcomeWizardDialog() { return myWelcomeScreenDialog; }
 
   @Override
-  public String getPackageCode() {
-    return null;
-  }
-
-  @Override
   public boolean isEAP() {
     return myEAP;
   }

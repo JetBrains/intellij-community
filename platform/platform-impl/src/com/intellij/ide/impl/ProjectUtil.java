@@ -66,9 +66,7 @@ public final class ProjectUtil {
 
   private ProjectUtil() { }
 
-  /**
-   * @deprecated Use {@link #updateLastProjectLocation(Path)}
-   */
+  /** @deprecated Use {@link #updateLastProjectLocation(Path)} */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static void updateLastProjectLocation(@NotNull String projectFilePath) {
@@ -144,7 +142,7 @@ public final class ProjectUtil {
         continue;
       }
 
-      // PlatformProjectOpenProcessor is not a strong project info holder, so, no need implement optimized case for PlatformProjectOpenProcessor  (VFS not required)
+      // `PlatformProjectOpenProcessor` is not a strong project info holder, so there is no need to optimize (VFS not required)
       VirtualFile virtualFile = lazyVirtualFile.getValue();
       if (virtualFile == null) {
         return null;
@@ -169,8 +167,7 @@ public final class ProjectUtil {
           }
         }
       }
-      catch (IOException ignore) {
-      }
+      catch (IOException ignore) { }
     }
 
     List<ProjectOpenProcessor> processors = computeProcessors(file, lazyVirtualFile);
@@ -212,7 +209,7 @@ public final class ProjectUtil {
         continue;
       }
 
-      // PlatformProjectOpenProcessor is not a strong project info holder, so, no need implement optimized case for PlatformProjectOpenProcessor  (VFS not required)
+      // `PlatformProjectOpenProcessor` is not a strong project info holder, so there is no need to optimize (VFS not required)
       VirtualFile virtualFile = lazyVirtualFile.getValue();
       if (virtualFile == null) {
         return CompletableFuture.completedFuture(null);
@@ -237,8 +234,7 @@ public final class ProjectUtil {
           }
         }
       }
-      catch (IOException ignore) {
-      }
+      catch (IOException ignore) { }
     }
 
     List<ProjectOpenProcessor> processors = computeProcessors(file, lazyVirtualFile);
@@ -620,8 +616,8 @@ public final class ProjectUtil {
 
     boolean appIsActive = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != null;
 
-    // On macOS 'toFront' restores the frame, if needed.
-    // On Linux restoring minimized frame can steal focus from active application, so we do it only if IDE is active.
+    // On macOS, `j.a.Window#toFront` restores the frame if needed.
+    // On X Window, restoring minimized frame can steal focus from an active application, so we do it only when the IDE is active.
     if (SystemInfo.isWindows || SystemInfo.isXWindow && appIsActive) {
       int state = frame.getExtendedState();
       if ((state & Frame.ICONIFIED) != 0) {
@@ -634,12 +630,11 @@ public final class ProjectUtil {
     }
     else {
       if (!SystemInfo.isXWindow || appIsActive) {
-        // some Linux window managers allow 'toFront' to steal focus, so we don't call it on Linux if IDE is not active
+        // some Linux window managers allow `j.a.Window#toFront` to steal focus, so we don't call it on Linux when the IDE is inactive
         frame.toFront();
       }
-
       if (!SystemInfo.isWindows) {
-        // on Windows 'toFront' will request attention if needed
+        // on Windows, `j.a.Window#toFront` will request attention if needed
         AppIcon.getInstance().requestAttention(project, true);
       }
     }
@@ -657,14 +652,15 @@ public final class ProjectUtil {
     return getUserHomeProjectDir();
   }
 
-  @NotNull
   private static String getUserHomeProjectDir() {
-    final String userHome = SystemProperties.getUserHome();
-    String productName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
+    String productName;
     if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip()) {
       productName = ApplicationNamesInfo.getInstance().getProductName();
     }
-    return userHome.replace('/', File.separatorChar) + File.separator + productName + "Projects";
+    else {
+      productName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
+    }
+    return SystemProperties.getUserHome().replace('/', File.separatorChar) + File.separator + productName + "Projects";
   }
 
   public static @Nullable Project tryOpenFileList(@Nullable Project project, @NotNull List<? extends File> list, String location) {
@@ -674,8 +670,7 @@ public final class ProjectUtil {
   public static @Nullable Project tryOpenFiles(@Nullable Project project, @NotNull List<? extends Path> list, String location) {
     Project result = null;
 
-    try
-    {
+    try {
       for (Path file : list) {
         result = openOrImport(file.toAbsolutePath(), OpenProjectTask.withProjectToClose(project, true));
         if (result != null) {
@@ -721,12 +716,10 @@ public final class ProjectUtil {
            (Strings.endsWith(file.toString(), ProjectFileType.DOT_DEFAULT_EXTENSION) && Files.isRegularFile(file));
   }
 
-  @NotNull
-  @SystemDependent
-  public static String getProjectsPath() { //todo: merge somehow with getBaseDir
-    Application application = ApplicationManager.getApplication();
-    String fromSettings = application == null || application.isHeadlessEnvironment() ? null :
-                          GeneralSettings.getInstance().getDefaultProjectDirectory();
+  @SuppressWarnings("IdentifierGrammar")
+  public static @NotNull @SystemDependent String getProjectsPath() { //todo: merge somehow with getBaseDir
+    Application app = ApplicationManager.getApplication();
+    String fromSettings = app == null || app.isHeadlessEnvironment() ? null : GeneralSettings.getInstance().getDefaultProjectDirectory();
     if (StringUtil.isNotEmpty(fromSettings)) {
       return PathManager.getAbsolutePath(fromSettings);
     }
@@ -741,8 +734,7 @@ public final class ProjectUtil {
     return ourProjectsPath;
   }
 
-  @NotNull
-  private static String getProjectsDirDefault() {
+  private static @NotNull String getProjectsDirDefault() {
     if (PlatformUtils.isDataGrip()) return getUserHomeProjectDir();
     return PathManager.getConfigPath() + File.separator + PROJECTS_DIR;
   }
@@ -751,19 +743,16 @@ public final class ProjectUtil {
     return Paths.get(getProjectsPath(), name);
   }
 
-  @Nullable
-  public static Path getProjectFile(@NotNull String name) {
+  public static @Nullable Path getProjectFile(@NotNull String name) {
     Path projectDir = getProjectPath(name);
     return Files.isDirectory(projectDir.resolve(Project.DIRECTORY_STORE_FOLDER)) ? projectDir : null;
   }
 
-  @Nullable
-  public static Project openOrCreateProject(@NotNull String name) {
+  public static @Nullable Project openOrCreateProject(@NotNull String name) {
     return openOrCreateProject(name, null);
   }
 
-  @Nullable
-  public static Project openOrCreateProject(@NotNull String name, @Nullable ProjectCreatedCallback  projectCreatedCallback) {
+  public static @Nullable Project openOrCreateProject(@NotNull String name, @Nullable ProjectCreatedCallback  projectCreatedCallback) {
     return ProgressManager.getInstance().computeInNonCancelableSection(() -> openOrCreateProjectInner(name, projectCreatedCallback));
   }
 
@@ -771,8 +760,7 @@ public final class ProjectUtil {
     void projectCreated(Project project);
   }
 
-  @NotNull
-  public static Set<String> getExistingProjectNames() {
+  public static @NotNull Set<String> getExistingProjectNames() {
     Set<String> result = new LinkedHashSet<>();
     File file = new File(getProjectsPath());
     for (String name : ObjectUtils.notNull(file.list(), ArrayUtilRt.EMPTY_STRING_ARRAY)) {
@@ -783,8 +771,7 @@ public final class ProjectUtil {
     return result;
   }
 
-  @Nullable
-  private static Project openOrCreateProjectInner(@NotNull String name, @Nullable ProjectCreatedCallback projectCreatedCallback) {
+  private static @Nullable Project openOrCreateProjectInner(@NotNull String name, @Nullable ProjectCreatedCallback projectCreatedCallback) {
     Path existingFile = getProjectFile(name);
     if (existingFile != null) {
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
