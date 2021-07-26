@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradle.compilerPlugin.noarg
 
-import org.jetbrains.kotlin.annotation.plugin.ide.AbstractAnnotationPluginGradleImportHandler
+import org.jetbrains.kotlin.idea.gradle.compilerPlugin.AbstractAnnotationPluginGradleImportHandler
 import org.jetbrains.kotlin.plugin.ide.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.noarg.NoArgCommandLineProcessor
