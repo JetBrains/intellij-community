@@ -3,10 +3,7 @@
 
 package org.jetbrains.builtInWebServer
 
-import com.intellij.ide.browsers.OpenInBrowserRequest
-import com.intellij.ide.browsers.ReloadMode
-import com.intellij.ide.browsers.WebBrowserUrlProvider
-import com.intellij.ide.browsers.WebBrowserXmlService
+import com.intellij.ide.browsers.*
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -60,17 +57,18 @@ fun getBuiltInServerUrls(info: PathInfo,
                          project: Project,
                          currentAuthority: String? = null,
                          appendAccessToken: Boolean = true,
-                         reloadMode: ReloadMode? = null): SmartList<Url> {
+                         preferredReloadMode: ReloadMode? = null): SmartList<Url> {
   val effectiveBuiltInServerPort = BuiltInServerOptions.getInstance().effectiveBuiltInServerPort
   val path = info.path
 
   val authority = currentAuthority ?: "localhost:$effectiveBuiltInServerPort"
-  val appendReloadOnSave = reloadMode?.let { it == ReloadMode.RELOAD_ON_SAVE } ?: BuiltInServerOptions.getInstance().reloadPageOnSave
+  val reloadMode = preferredReloadMode ?: WebBrowserManager.getInstance().webServerReloadMode
+  val appendReloadOnSave = reloadMode != ReloadMode.DISABLED
   val queryBuilder = StringBuilder()
   if (appendAccessToken || appendReloadOnSave) queryBuilder.append('?')
   if (appendAccessToken) queryBuilder.append(TOKEN_PARAM_NAME).append('=').append(acquireToken())
   if (appendAccessToken && appendReloadOnSave) queryBuilder.append('&')
-  if (appendReloadOnSave) queryBuilder.append(WebServerPageConnectionService.RELOAD_URL_PARAM)
+  if (appendReloadOnSave) queryBuilder.append(WebServerPageConnectionService.RELOAD_URL_PARAM).append('=').append(reloadMode.name)
   val query = queryBuilder.toString()
 
   val urls = SmartList(Urls.newHttpUrl(authority, "/${project.name}/$path", query))
