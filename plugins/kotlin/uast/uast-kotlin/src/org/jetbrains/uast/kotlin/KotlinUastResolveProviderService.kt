@@ -25,16 +25,14 @@ import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.constants.UnsignedErrorValueTypeConstant
 import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
+import org.jetbrains.kotlin.resolve.lazy.ForceResolveUtil
 import org.jetbrains.kotlin.types.CommonSupertypes
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.UastCallKind
-import org.jetbrains.uast.UastSpecialExpressionKind
+import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 
 interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderService {
@@ -52,6 +50,29 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
     override fun convertParent(uElement: UElement, parent: PsiElement?): UElement? {
         return convertParentImpl(uElement, parent)
+    }
+
+    private fun getResolvedCall(sourcePsi: KtCallElement): ResolvedCall<*>? {
+        val annotationEntry = sourcePsi.getParentOfType<KtAnnotationEntry>(false) ?: return null
+        val bindingContext = sourcePsi.analyze()
+        val annotationDescriptor = bindingContext[BindingContext.ANNOTATION, annotationEntry] ?: return null
+        ForceResolveUtil.forceResolveAllContents(annotationDescriptor)
+        return sourcePsi.getResolvedCall(bindingContext)
+    }
+
+    override fun convertValueArguments(ktCallElement: KtCallElement, parent: UElement): List<UNamedExpression>? {
+        val resolvedCall = getResolvedCall(ktCallElement) ?: return null
+        return resolvedCall.valueArguments.entries.mapNotNull {
+            val arguments = it.value.arguments
+            val name = it.key.name.asString()
+            when {
+                arguments.size == 1 ->
+                    KotlinUNamedExpression.create(name, arguments.first(), parent)
+                arguments.size > 1 ->
+                    KotlinUNamedExpression.create(name, arguments, parent)
+                else -> null
+            }
+        }
     }
 
     override fun getArgumentForParameter(ktCallElement: KtCallElement, index: Int, parent: UElement): UExpression? {
