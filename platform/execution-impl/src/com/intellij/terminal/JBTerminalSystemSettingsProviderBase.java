@@ -251,6 +251,11 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
   }
 
   @Override
+  public boolean pasteOnMiddleMouseClick() {
+    return true;
+  }
+
+  @Override
   public int getBufferMaxLinesCount() {
     final int linesCount = AdvancedSettings.getInt("terminal.buffer.max.lines.count");
     if (linesCount > 0) {
