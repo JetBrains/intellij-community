@@ -14,7 +14,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.extractMethod.SignatureSuggesterPreviewDialog
 import com.intellij.refactoring.extractMethod.newImpl.*
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.guessName
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
 import com.intellij.refactoring.extractMethod.newImpl.JavaDuplicatesFinder.Companion.textRangeOf
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
@@ -161,7 +161,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     val expressionGroups = groupEquivalentExpressions(changes.map(ChangedExpression::pattern))
     val parametersGroupedByPatternExpressions = expressionGroups.map { expressionGroup ->
       val parameter = parameters.firstOrNull { expressions -> isEqual(expressionGroup.first(), expressions.references.first()) }
-      parameter?.copy(references = expressionGroup) ?: InputParameter(expressionGroup, guessName(expressionGroup.first()), expressionGroup.first().type!!)
+      parameter?.copy(references = expressionGroup) ?: inputParameterOf(expressionGroup)
     }
     val splitParameters = parametersGroupedByPatternExpressions.flatMap { parameter -> splitByCandidateExpressions(parameter, parameter.references.map { changeMap[it]!! }) }
     return fixNameConflicts(splitParameters)

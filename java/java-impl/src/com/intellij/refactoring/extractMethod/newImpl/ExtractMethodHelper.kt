@@ -55,6 +55,13 @@ object ExtractMethodHelper {
     return InputParameter(externalReference.references, requireNotNull(externalReference.variable.name), externalReference.variable.type)
   }
 
+  fun inputParameterOf(expressionGroup: List<PsiExpression>): InputParameter {
+    require(expressionGroup.isNotEmpty())
+    val expression = expressionGroup.first()
+    val objectType = PsiType.getJavaLangObject(expression.manager, GlobalSearchScope.projectScope(expression.project))
+    return InputParameter(expressionGroup, guessName(expression), expressionGroup.first().type ?: objectType)
+  }
+
   fun PsiElement.addSiblingAfter(element: PsiElement): PsiElement {
     return this.parent.addAfter(element, this)
   }
