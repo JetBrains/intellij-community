@@ -1455,7 +1455,7 @@ public class MavenUtil {
 
   public static File getMavenPluginParentFile() {
     File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
-    return luceneLib.getParentFile().getParentFile().getParentFile();
+    return luceneLib.getParentFile().getParentFile();
   }
 
   public static MavenDistribution getEffectiveMavenHome(Project project, String workingDirectory) {
