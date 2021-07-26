@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UNamedExpression
 import org.jetbrains.uast.UastCallKind
 
 interface BaseKotlinUastResolveProviderService {
@@ -27,6 +28,8 @@ interface BaseKotlinUastResolveProviderService {
     fun convertParent(uElement: UElement): UElement?
 
     fun convertParent(uElement: UElement, parent: PsiElement?): UElement?
+
+    fun convertValueArguments(ktCallElement: KtCallElement, parent: UElement): List<UNamedExpression>?
 
     fun getArgumentForParameter(ktCallElement: KtCallElement, index: Int, parent: UElement): UExpression?
 

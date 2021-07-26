@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.idea.frontend.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.idea.frontend.api.analyseForUast
 import org.jetbrains.kotlin.idea.frontend.api.calls.KtAnnotationCall
+import org.jetbrains.kotlin.idea.frontend.api.calls.KtCallWithArguments
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.frontend.api.types.*
@@ -20,10 +21,7 @@ import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.UastCallKind
-import org.jetbrains.uast.UastErrorType
+import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.toPsiMethod
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 
@@ -38,6 +36,17 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun convertParent(uElement: UElement, parent: PsiElement?): UElement? {
         TODO("Not yet implemented")
+    }
+
+    override fun convertValueArguments(ktCallElement: KtCallElement, parent: UElement): List<UNamedExpression>? {
+        analyseForUast(ktCallElement) {
+            val argumentMapping = (ktCallElement.resolveCall() as? KtCallWithArguments)?.argumentMapping ?: return null
+            return argumentMapping.entries.map {
+                val name = it.value.name.asString()
+                // TODO: it.key.isSpread() ?
+                KotlinUNamedExpression.create(name, it.key, parent)
+            }
+        }
     }
 
     override fun getArgumentForParameter(ktCallElement: KtCallElement, index: Int, parent: UElement): UExpression? {
