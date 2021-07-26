@@ -651,7 +651,7 @@ public class SwitchBlockHighlightingModel {
         PsiElement elementCoversType = findTotalPatternForType(elements, mySelectorType);
         PsiElement defaultElement = findDefaultElement();
         if (defaultElement != null && elementCoversType != null) {
-          results.add(createError(defaultElement, JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
+          results.add(createError(defaultElement.getFirstChild(), JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
           results.add(createError(elementCoversType, JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
           return;
         }
@@ -803,9 +803,8 @@ public class SwitchBlockHighlightingModel {
       for (PsiStatement statement : body.getStatements()) {
         if (!(statement instanceof PsiSwitchLabelStatementBase)) continue;
         PsiSwitchLabelStatementBase switchLabel = (PsiSwitchLabelStatementBase)statement;
-        PsiKeyword firstChild = ObjectUtils.tryCast(switchLabel.getFirstChild(), PsiKeyword.class);
-        if (firstChild != null && JavaTokenType.DEFAULT_KEYWORD.equals(firstChild.getTokenType())) {
-          return firstChild;
+        if (switchLabel.isDefaultCase()) {
+          return switchLabel;
         }
         PsiCaseLabelElementList labelElementList = switchLabel.getCaseLabelElementList();
         if (labelElementList == null) continue;
