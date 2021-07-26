@@ -33,10 +33,10 @@ import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstruction
 import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstructionKind
 import org.jetbrains.kotlin.idea.debugger.test.util.render
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.KotlinBaseTest
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinBaseTest
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
 abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase() {

@@ -108,7 +108,6 @@ import org.jetbrains.kotlin.idea.fir.inspections.AbstractFe10BindingIntentionTes
 import org.jetbrains.kotlin.idea.fir.low.level.api.sessions.AbstractSessionsInvalidationTest
 import org.jetbrains.kotlin.idea.fir.low.level.api.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
 import org.jetbrains.kotlin.idea.frontend.api.symbols.*
-import org.jetbrains.kotlin.idea.frontend.api.components.AbstractOverriddenDeclarationProviderTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyWithLibTest
 import org.jetbrains.kotlin.idea.highlighter.*
@@ -204,11 +203,8 @@ import org.jetbrains.kotlin.tools.projectWizard.cli.AbstractProjectTemplateBuild
 import org.jetbrains.kotlin.tools.projectWizard.cli.AbstractYamlBuildFileGenerationTest
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractProjectTemplateNewWizardProjectImportTest
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractYamlNewWizardProjectImportTest
-import org.jetbrains.kotlinx.serialization.AbstractSerializationIrBytecodeListingTest
-import org.jetbrains.kotlinx.serialization.AbstractSerializationPluginBytecodeListingTest
-import org.jetbrains.kotlinx.serialization.AbstractSerializationPluginDiagnosticTest
 import org.jetbrains.kotlinx.serialization.idea.AbstractSerializationPluginIdeDiagnosticTest
-import org.jetbrains.kotlinx.serialization.idea.AbstractSerializationQuickFixTest
+import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSerializationQuickFixTest
 import org.jetbrains.uast.test.kotlin.*
 import org.jetbrains.kotlin.spec.utils.tasks.detectDirsWithTestsMapFileOnly
 import org.jetbrains.uast.test.comparasion.*
@@ -779,8 +775,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractLightTestRunLineMarkersTest> {
-            model("codeInsight/lineMarker/runMarkers", pattern = "^((jUnit|test).*)\\.kt$".toRegex(), testMethodName = "doLightTest", testClassName = "WithLightTestFramework")
-            model("codeInsight/lineMarker/runMarkers", pattern = "^((jUnit|test).*)\\.kt$".toRegex(), testMethodName = "doPureTest", testClassName = "WithoutLightTestFramework")
+            model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test).*)\\.kt$"), testMethodName = "doLightTest", testClassName = "WithLightTestFramework")
+            model("codeInsight/lineMarker/runMarkers", pattern = Patterns.forRegex("^((jUnit|test).*)\\.kt$"), testMethodName = "doPureTest", testClassName = "WithoutLightTestFramework")
         }
 
         testClass<AbstractLineMarkersTestInLibrarySources> {
@@ -1153,11 +1149,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractHighLevelWeigherTest> {
-            model("weighers/basic", pattern = KT_OR_KTS_WITHOUT_DOTS_IN_NAME)
+            model("weighers/basic", pattern = KT_OR_KTS_WITHOUT_DOTS)
         }
 
         testClass<AbstractHighLevelMultiFileJvmBasicCompletionTest> {
-            model("basic/multifile", pattern = DIRECTORY, extension = null, recursive = false)
+            model("basic/multifile", pattern = DIRECTORY, isRecursive = false)
         }
 
         testClass<AbstractFirKeywordCompletionTest> {
@@ -1352,7 +1348,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractMultiFileSmartCompletionTest> {
-            model("smartMultiFile", pattern = DIRECTORY, extension = null, recursive = false)
+            model("smartMultiFile", pattern = DIRECTORY, isRecursive = false)
         }
 
         testClass<AbstractJvmBasicCompletionTest>("org.jetbrains.kotlin.idea.completion.test.KDocCompletionTestGenerated") {
@@ -1534,7 +1530,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
                 model("diagnostics")
             }
             testClass<AbstractSerializationQuickFixTest> {
-                model("quickfix", pattern = "^([\\w\\-_]+)\\.kt$", filenameStartsLowerCase = true)
+                model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
             }
         }
 
@@ -1596,7 +1592,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("idea/performanceTests/test", "../idea/tests/testData") {
         testClass<AbstractPerformanceJavaToKotlinCopyPasteConversionTest> {
-            model("copyPaste/conversion", testMethod = "doPerfTest", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
+            model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
         testClass<AbstractPerformanceNewJavaToKotlinCopyPasteConversionTest> {
