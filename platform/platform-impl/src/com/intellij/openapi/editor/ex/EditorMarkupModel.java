@@ -27,8 +27,6 @@ public interface EditorMarkupModel extends MarkupModel {
   @NotNull
   Editor getEditor();
 
-  boolean isDisposed();
-
   void setErrorStripeVisible(boolean val);
 
   void setErrorStripeRenderer(@Nullable ErrorStripeRenderer renderer);

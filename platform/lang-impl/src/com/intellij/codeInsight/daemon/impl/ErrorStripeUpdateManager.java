@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +80,10 @@ public final class ErrorStripeUpdateManager implements Disposable {
 
       TrafficLightRenderer tlRenderer = createRenderer(editor, file);
       ApplicationManager.getApplication().invokeLater(() -> {
-        if (editorMarkupModel.isDisposed()) return;
+        if (editor.isDisposed()) {
+          Disposer.dispose(tlRenderer); // would be registered in setErrorStripeRenderer() below
+          return;
+        }
         editorMarkupModel.setErrorStripeRenderer(tlRenderer);
       });
     });

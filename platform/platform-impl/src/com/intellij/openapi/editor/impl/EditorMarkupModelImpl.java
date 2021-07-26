@@ -348,11 +348,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   @Override
-  public boolean isDisposed() {
-    return Disposer.isDisposed(resourcesDisposable);
-  }
-
-  @Override
   public void caretPositionChanged(@NotNull CaretEvent event) {
     updateTrafficLightVisibility();
   }
