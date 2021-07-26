@@ -58,6 +58,7 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.idea" exported="" />
     <orderEntry type="module" module-name="kotlin.repl" exported="" />
     <orderEntry type="module" module-name="kotlin.scripting" exported="" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" exported="" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" exported="" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" exported="" />
     <orderEntry type="module" module-name="kotlin.refIndex" exported="" />
@@ -77,7 +78,10 @@
     <orderEntry type="module" module-name="kotlin.scripting-support" exported="" />
     <orderEntry type="module" module-name="kotlin.project-model" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-common" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-jvm" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-script-util" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.allopen-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
