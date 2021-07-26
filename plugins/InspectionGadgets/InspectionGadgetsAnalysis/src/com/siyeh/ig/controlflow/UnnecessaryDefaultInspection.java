@@ -69,7 +69,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
     return new DeleteDefaultFix();
   }
 
-  private static class DeleteDefaultFix extends InspectionGadgetsFix {
+  public static class DeleteDefaultFix extends InspectionGadgetsFix {
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override

@@ -6,6 +6,10 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.java.LanguageLevel;
@@ -648,11 +652,16 @@ public class SwitchBlockHighlightingModel {
     private void checkCompleteness(@NotNull List<PsiCaseLabelElement> elements, @NotNull List<HighlightInfo> results,
                                    boolean inclusiveTotalAndDefault) {
       if (inclusiveTotalAndDefault) {
-        PsiElement elementCoversType = findTotalPatternForType(elements, mySelectorType);
+        PsiCaseLabelElement elementCoversType = findTotalPatternForType(elements, mySelectorType);
         PsiElement defaultElement = findDefaultElement();
         if (defaultElement != null && elementCoversType != null) {
-          results.add(createError(defaultElement.getFirstChild(), JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
-          results.add(createError(elementCoversType, JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
+          HighlightInfo defaultInfo =
+            createError(defaultElement.getFirstChild(), JavaErrorBundle.message("switch.total.pattern.and.default.exist"));
+          registerDeleteFixForDefaultElement(defaultInfo, defaultElement);
+          results.add(defaultInfo);
+          HighlightInfo patternInfo = createError(elementCoversType, JavaErrorBundle.message("switch.total.pattern.and.default.exist"));
+          QuickFixAction.registerQuickFixAction(patternInfo, getFixFactory().createDeleteSwitchLabelFix(elementCoversType));
+          results.add(patternInfo);
           return;
         }
         if (defaultElement != null || elementCoversType != null) return;
@@ -678,6 +687,18 @@ public class SwitchBlockHighlightingModel {
       }
       else {
         results.add(createCompletenessInfoForSwitch(!elements.isEmpty()));
+      }
+    }
+
+    private void registerDeleteFixForDefaultElement(HighlightInfo info, PsiElement defaultElement) {
+      if (defaultElement instanceof PsiCaseLabelElement) {
+        QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteSwitchLabelFix((PsiCaseLabelElement)defaultElement));
+        return;
+      }
+      ProblemDescriptor descriptor = ProblemDescriptorUtil.toProblemDescriptor(myFile, info);
+      if (descriptor != null) {
+        final LocalQuickFix fix = getFixFactory().createDeleteDefaultFix();
+        QuickFixAction.registerQuickFixAction(info, new LocalQuickFixAsIntentionAdapter(fix, descriptor));
       }
     }
 
@@ -818,7 +839,7 @@ public class SwitchBlockHighlightingModel {
     }
 
     @Nullable
-    private static PsiElement findTotalPatternForType(@NotNull List<PsiCaseLabelElement> labelElements, @NotNull PsiType type) {
+    private static PsiCaseLabelElement findTotalPatternForType(@NotNull List<PsiCaseLabelElement> labelElements, @NotNull PsiType type) {
       return ContainerUtil.find(labelElements, element ->
         element instanceof PsiPattern && JavaPsiPatternUtil.isTotalForType(((PsiPattern)element), type));
     }

@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -29,6 +30,8 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
 
   public void testPatternMatchingInSwitch() {
     doTest();
+    IntentionAction action = myFixture.getAvailableIntention("Remove 'default' branch");
+    assertNotNull(action);
   }
 
   public void testPatternMatchingWithGuard() {

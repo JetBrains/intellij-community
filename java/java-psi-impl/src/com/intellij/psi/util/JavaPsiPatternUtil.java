@@ -75,6 +75,13 @@ public final class JavaPsiPatternUtil {
     return pattern;
   }
 
+  public static PsiElement skipParenthesizedPatternUp(PsiElement parent) {
+    while (parent instanceof PsiParenthesizedPattern) {
+      parent = parent.getParent();
+    }
+    return parent;
+  }
+
   /**
    * @param pattern
    * @return extracted pattern variable or null if the pattern is incomplete or unknown
