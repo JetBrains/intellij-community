@@ -23,7 +23,7 @@ class WizardStatsService : CounterUsagesCollector() {
     companion object {
 
         // Collector ID
-        private val GROUP = EventLogGroup("kotlin.ide.new.project", 7)
+        private val GROUP = EventLogGroup("kotlin.ide.new.project", 8)
 
         // Whitelisted values for the events fields
         private val allowedProjectTemplates = listOf( // Modules
