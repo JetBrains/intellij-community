@@ -298,13 +298,11 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     if (group == null) return;
     GroupNode parentGroup = (GroupNode)node.getParent();
     appendGroupText(table, parentGroup, panel, fileBgColor, isSelected);
-    if (node.canNavigateToSource()) {
-      SimpleColoredComponent renderer = new SimpleColoredComponent();
-      renderer.setIcon(group.getIcon());
-      SimpleTextAttributes attributes = deriveBgColor(SimpleTextAttributes.REGULAR_ATTRIBUTES, fileBgColor);
-      renderer.append(group.getPresentableGroupText(), attributes);
-      SpeedSearchUtil.applySpeedSearchHighlighting(table, renderer, false, isSelected);
-      panel.add(renderer);
-    }
+    SimpleColoredComponent renderer = new SimpleColoredComponent();
+    renderer.setIcon(group.getIcon());
+    SimpleTextAttributes attributes = deriveBgColor(SimpleTextAttributes.REGULAR_ATTRIBUTES, fileBgColor);
+    renderer.append(group.getPresentableGroupText(), attributes);
+    SpeedSearchUtil.applySpeedSearchHighlighting(table, renderer, false, isSelected);
+    panel.add(renderer);
   }
 }
