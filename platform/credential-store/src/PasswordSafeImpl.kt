@@ -42,13 +42,13 @@ open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSaf
   protected val currentProviderIfComputed: CredentialStore?
     get() = if (_currentProvider.isInitialized()) _currentProvider.value else null
 
-  internal var currentProvider: CredentialStore
+  var currentProvider: CredentialStore
     get() = _currentProvider.value
     set(value) {
       _currentProvider.value = value
     }
 
-  internal fun closeCurrentStore(isSave: Boolean, isEvenMemoryOnly: Boolean) {
+  fun closeCurrentStore(isSave: Boolean, isEvenMemoryOnly: Boolean) {
     val store = currentProviderIfComputed ?: return
     if (!isEvenMemoryOnly && store is InMemoryCredentialStore) {
       return
@@ -169,7 +169,7 @@ class PasswordSafeImpl : BasePasswordSafe(), SettingsSavingComponent {
     get() = memoryHelperProvider.value as PasswordStorage
 }
 
-internal fun getDefaultKeePassDbFile() = getDefaultKeePassBaseDirectory().resolve(DB_FILE_NAME)
+fun getDefaultKeePassDbFile() = getDefaultKeePassBaseDirectory().resolve(DB_FILE_NAME)
 
 private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode == true)) {
@@ -177,9 +177,10 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   }
 
   fun showError(@NlsContexts.NotificationTitle title: String) {
-    NOTIFICATION_MANAGER.notify(title, CredentialStoreBundle.message("notification.content.in.memory.storage"), null) {
-      it.addAction(NotificationAction.createExpiring(CredentialStoreBundle.message("notification.content.password.settings.action")) { e, _ -> openSettings(e.project) })
-    }
+    CredentialStoreUiService.getInstance().notify(title,
+                                                  CredentialStoreBundle.message("notification.content.in.memory.storage"), null,
+                                                  NotificationAction.createExpiring(CredentialStoreBundle.message("notification.content.password.settings.action"))
+                                                  { e, _ -> CredentialStoreUiService.getInstance().openSettings(e.project) })
   }
 
   if (settings.providerType == ProviderType.KEEPASS) {
@@ -223,7 +224,7 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   return InMemoryCredentialStore()
 }
 
-internal fun createPersistentCredentialStore(): CredentialStore? {
+fun createPersistentCredentialStore(): CredentialStore? {
   for (factory in CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensionList) {
     return factory.create() ?: continue
   }
@@ -242,7 +243,3 @@ fun createKeePassStore(dbFile: Path, masterPasswordFile: Path): PasswordSafe {
 }
 
 private fun CredentialAttributes.toPasswordStoreable() = if (isPasswordMemoryOnly) CredentialAttributes(serviceName, userName, requestor) else this
-
-fun openSettings(project: Project?) {
-  ShowSettingsUtil.getInstance().showSettingsDialog(project, PasswordSafeConfigurable::class.java)
-}

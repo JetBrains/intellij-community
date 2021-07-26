@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.intellij.credentialStore.gpg.Pgp
@@ -37,7 +37,7 @@ import javax.swing.JCheckBox
 import javax.swing.JPanel
 import javax.swing.JRadioButton
 
-internal class PasswordSafeConfigurable : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe",
+class PasswordSafeConfigurable : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe",
                                                                                                              CredentialStoreBundle.message("password.safe.configurable"),
                                                                                                              "reference.ide.settings.password.safe") {
   private val settings = service<PasswordSafeSettings>()
@@ -47,7 +47,7 @@ internal class PasswordSafeConfigurable : ConfigurableBase<PasswordSafeConfigura
   override fun createUi() = PasswordSafeConfigurableUi(settings)
 }
 
-internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : ConfigurableUi<PasswordSafeSettings> {
+class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : ConfigurableUi<PasswordSafeSettings> {
   private lateinit var myPanel: DialogPanel
   private lateinit var usePgpKey: JCheckBox
   private lateinit var pgpKeyCombo: ComboBox<PgpKey>

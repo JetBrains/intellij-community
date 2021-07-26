@@ -351,6 +351,9 @@
                              key="password.safe.configurable"
                              id="application.passwordSafe"/>
 
+    <applicationService serviceInterface="com.intellij.credentialStore.CredentialStoreUiService"
+                        serviceImplementation="com.intellij.credentialStore.CredentialStoreUiServiceImpl"/>
+
     <applicationService serviceInterface="com.intellij.execution.process.ElevationService"
                         serviceImplementation="com.intellij.execution.process.elevation.ElevationServiceImpl"/>
 

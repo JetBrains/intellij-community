@@ -4,10 +4,6 @@ package com.intellij.credentialStore
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.credentialStore.keePass.InMemoryCredentialStore
 import com.intellij.jna.JnaLoader
-import com.intellij.notification.NotificationDisplayType
-import com.intellij.notification.NotificationGroup
-import com.intellij.notification.NotificationType
-import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Conditions
@@ -18,8 +14,6 @@ import org.jetbrains.annotations.TestOnly
 import java.io.Closeable
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
-
-internal val NOTIFICATION_MANAGER by lazy { SingletonNotificationManager("Password Safe", NotificationType.ERROR) }
 
 private val REMOVED_CREDENTIALS = Credentials("REMOVED_CREDENTIALS")
 
@@ -118,7 +112,7 @@ private fun notifyUnsatisfiedLinkError(e: UnsatisfiedLinkError) {
     message += "\n"
     message += CredentialStoreBundle.message("notification.content.native.keychain.unavailable.linux.addition")
   }
-  NOTIFICATION_MANAGER.notify(CredentialStoreBundle.message("notification.title.native.keychain.unavailable"), message, null)
+  CredentialStoreUiService.getInstance().notify(CredentialStoreBundle.message("notification.title.native.keychain.unavailable"), message, null, null)
 }
 
 private class MacOsCredentialStoreFactory : CredentialStoreFactory {

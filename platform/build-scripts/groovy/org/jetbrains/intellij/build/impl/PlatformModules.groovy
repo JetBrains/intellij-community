@@ -100,6 +100,7 @@ final class PlatformModules {
     "intellij.platform.diagnostic",
     "intellij.platform.core.ui",
     "intellij.platform.credentialStore",
+    "intellij.platform.credentialStore.ui",
     "intellij.platform.rd.community",
     "intellij.platform.ml.impl"
   )
