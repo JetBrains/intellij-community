@@ -12,10 +12,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.rt" />
     <orderEntry type="library" name="Trove4j" level="project" />
-    <orderEntry type="library" name="ion" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
     <orderEntry type="library" name="jetbrains-annotations-java5" level="project" />
-    <orderEntry type="library" exported="" name="Slf4j" level="project" />
     <orderEntry type="library" exported="" name="Gradle" level="project" />
     <orderEntry type="module-library" exported="" scope="PROVIDED">
       <library name="org.codehaus.groovy:groovy:2.4.17 - Gradle Tooling" type="repository">
