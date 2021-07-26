@@ -93,6 +93,7 @@ class DeclarativeInsertHandler2 private constructor(
   }
   class LazyBuilder(private val block: HandlerProducer): Lazy<DeclarativeInsertHandler2> {
     private val delegate = lazy { Builder().also(block::produce).build() }
+
     override val value: DeclarativeInsertHandler2
       get() = delegate.value
 

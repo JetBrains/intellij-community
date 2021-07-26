@@ -152,9 +152,10 @@ fun createNormalFunctionInsertHandler(
                 }
             }
 
-            // TODO: it looks hacky to adjust context this way
+            // The following code looks hacky:
             // brackets with arguments are already present, and they should be kept, that's why we provide fake context
-            // NB: it is important to fork context here, so that original one remains intact
+            // which only includes the rendered text.
+            // NB: it is important to fork context here and keep the original one intact
             context.forkByOffsetMap().let { forkedContext ->
                 val tailOffset = forkedContext.startOffset + renderedText.length
                 forkedContext.tailOffset = tailOffset

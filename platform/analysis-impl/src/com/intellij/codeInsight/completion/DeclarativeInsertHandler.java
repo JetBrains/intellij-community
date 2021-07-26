@@ -82,7 +82,6 @@ public final class DeclarativeInsertHandler implements InsertHandler<LookupEleme
       return this;
     }
 
-
     @NotNull
     public DeclarativeInsertHandler build() {
       return new DeclarativeInsertHandler(StringUtil.notNullize(myIgnoredCharacters),
