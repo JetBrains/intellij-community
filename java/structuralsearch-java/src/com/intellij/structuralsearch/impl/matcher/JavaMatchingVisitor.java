@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -10,6 +10,7 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.structuralsearch.MatchOptions;
@@ -1601,11 +1602,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (!myMatchingVisitor.getMatchContext().getOptions().isLooseMatching()) {
       return pattern;
     }
-    while (pattern instanceof PsiParenthesizedPattern) {
-      final PsiParenthesizedPattern parenthesizedPattern = (PsiParenthesizedPattern)pattern;
-      pattern = parenthesizedPattern.getPattern();
-    }
-    return pattern;
+    return JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern);
   }
 
   @Override
