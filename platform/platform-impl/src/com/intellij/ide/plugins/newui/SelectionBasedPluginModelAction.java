@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.core.CoreBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
@@ -75,7 +74,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
                         boolean showShortcut,
                         @NotNull List<? extends C> selection,
                         @NotNull Function<? super C, ? extends IdeaPluginDescriptor> pluginDescriptor) {
-      super(action.toString(),
+      super(action.getPresentableText(),
             pluginModel,
             showShortcut,
             selection,
@@ -143,7 +142,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
                     @NotNull JComponent uiParent,
                     @NotNull List<? extends C> selection,
                     @NotNull Function<? super C, ? extends IdeaPluginDescriptor> pluginDescriptor) {
-      super(CoreBundle.message("plugins.configurable.uninstall"),
+      super(IdeBundle.message("plugins.configurable.uninstall"),
             pluginModel,
             showShortcut,
             selection,

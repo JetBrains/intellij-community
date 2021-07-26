@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.core.CoreBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
@@ -335,7 +334,7 @@ public class InstalledPluginsTableModel {
     return MessageDialogBuilder
       .okCancel(IdeBundle.message(enabled ? "dialog.title.enable.required.plugins" : "dialog.title.disable.dependent.plugins"),
                 IdeBundle.message(key, dependenciesText))
-      .yesText(CoreBundle.message(enabled ? "plugins.configurable.enable" : "plugins.configurable.disable"))
+      .yesText(IdeBundle.message(enabled ? "plugins.configurable.enable" : "plugins.configurable.disable"))
       .noText(Messages.getCancelButton())
       .ask(getProject());
   }

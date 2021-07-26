@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.errordialog;
 
-import com.intellij.core.CoreBundle;
 import com.intellij.diagnostic.DiagnosticBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -219,7 +219,7 @@ public class PluginConflictDialog extends DialogWrapper {
 
   private class DisableAction extends DialogWrapperAction {
     protected DisableAction() {
-      super(CoreBundle.message("plugins.configurable.disable"));
+      super(IdeBundle.message("plugins.configurable.disable"));
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
 

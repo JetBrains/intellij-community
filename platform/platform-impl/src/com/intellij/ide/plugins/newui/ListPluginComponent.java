@@ -224,7 +224,7 @@ public class ListPluginComponent extends JPanel {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
         }
         else {
-          if (Registry.is("ide.plugins.per.project", false) &&
+          if (PluginEnabler.isPerProjectEnabled() &&
               !Registry.is("ide.plugins.per.project.use.checkboxes", false)) {
             myEnableDisableButton = SelectionBasedPluginModelAction.createGearButton(
               action -> createEnableDisableAction(action, List.of(this)),
