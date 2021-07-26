@@ -41,7 +41,8 @@ private inline fun createActivity(project: ProjectImpl, message: () -> String): 
 
 internal inline fun <T : Any> runOnlyCorePluginExtensions(ep: ExtensionPointImpl<T>, crossinline executor: (T) -> Unit) {
   ep.processWithPluginDescriptor(true) { handler, pluginDescriptor ->
-    if (pluginDescriptor.pluginId != PluginManagerCore.CORE_ID && pluginDescriptor.pluginId != PluginManagerCore.JAVA_PLUGIN_ID) {
+    if (pluginDescriptor.pluginId != PluginManagerCore.CORE_ID && pluginDescriptor.pluginId != PluginManagerCore.JAVA_PLUGIN_ID &&
+        pluginDescriptor.pluginId.idString != "com.intellij.kotlinNative.platformDeps") {
       logger<ProjectImpl>().error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
     }
 
