@@ -98,6 +98,11 @@ class BuildOptions {
   static final String FUS_METADATA_BUNDLE_STEP = "fus_metadata_bundle_step"
 
   /**
+   * @see org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
+   */
+  static final String REPAIR_UTILITY_BUNDLE_STEP = "repair_utility_bundle_step"
+
+  /**
    * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
    */
   public static final String BUILD_DMG_WITHOUT_BUNDLED_JRE = "intellij.build.dmg.without.bundled.jre"

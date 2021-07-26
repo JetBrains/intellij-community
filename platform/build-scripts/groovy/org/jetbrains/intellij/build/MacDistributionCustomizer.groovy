@@ -2,6 +2,9 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
+
+import java.nio.file.Paths
 
 @CompileStatic
 abstract class MacDistributionCustomizer {
@@ -133,5 +136,6 @@ abstract class MacDistributionCustomizer {
    * @param arch distribution target architecture, not null
    */
   void copyAdditionalFiles(BuildContext context, String targetDirectory, JvmArchitecture arch) {
+    RepairUtilityBuilder.bundle(context, OsFamily.MACOS, arch, Paths.get(targetDirectory))
   }
 }
