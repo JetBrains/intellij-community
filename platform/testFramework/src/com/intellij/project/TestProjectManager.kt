@@ -56,7 +56,6 @@ open class TestProjectManager : ProjectManagerExImpl() {
   private val trackingProjects = UnsafeWeakList<Project>()
 
   override fun newProject(projectFile: Path, options: OpenProjectTask): Project? {
-    totalCreatedProjectCount++
     checkProjectLeaksInTests()
 
     val project = super.newProject(projectFile, options)
@@ -102,6 +101,7 @@ open class TestProjectManager : ProjectManagerExImpl() {
 
   override fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
     val project = super.instantiateProject(projectStoreBaseDir, options)
+    totalCreatedProjectCount++
     trackProject(project)
     return project
   }
