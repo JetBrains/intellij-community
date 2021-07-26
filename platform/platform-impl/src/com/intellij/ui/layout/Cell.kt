@@ -127,8 +127,15 @@ interface CellBuilder<out T : JComponent> {
   fun applyIfEnabled(): CellBuilder<T>
 
   @ApiStatus.Experimental
-  fun accessibleName(accessibleName: String): CellBuilder<T> {
-    component.accessibleContext.accessibleName
+  fun accessibleName(name: String): CellBuilder<T> {
+    component.accessibleContext.accessibleName = name
+
+    return this
+  }
+
+  @ApiStatus.Experimental
+  fun accessibleDescription(description: String): CellBuilder<T> {
+    component.accessibleContext.accessibleDescription = description
 
     return this
   }
