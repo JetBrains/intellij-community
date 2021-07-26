@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.constants.UnsignedErrorValueTypeConstant
+import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.types.CommonSupertypes
 import org.jetbrains.kotlin.types.KotlinType
@@ -156,8 +158,15 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return CompileTimeConstantUtils.isArrayFunctionCall(resolvedCall)
     }
 
-    override fun resolveToClassIfConstructorCall(ktCallElement: KtCallElement, source: UElement): PsiElement? {
-        return resolveToClassIfConstructorCallImpl(ktCallElement, source)
+    override fun resolveToClassIfConstructorCall(ktCallElement: KtCallElement, source: UElement): PsiClass? {
+        return resolveToClassIfConstructorCallImpl(ktCallElement, source) as? PsiClass
+    }
+
+    override fun resolveToClass(ktAnnotationEntry: KtAnnotationEntry): PsiClass? {
+        val classDescriptor = ktAnnotationEntry.analyze()[BindingContext.ANNOTATION, ktAnnotationEntry]?.annotationClass ?: return null
+        return ktAnnotationEntry.calleeExpression?.let { ktExpression ->
+            resolveToDeclarationImpl(ktExpression, classDescriptor) as? PsiClass
+        }
     }
 
     override fun resolveToDeclaration(ktExpression: KtExpression): PsiElement? {
