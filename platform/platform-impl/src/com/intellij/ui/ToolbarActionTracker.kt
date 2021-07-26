@@ -3,22 +3,21 @@ package com.intellij.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.PositionTracker
+import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Component
 import java.awt.Point
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.event.AncestorEvent
-import org.jetbrains.annotations.ApiStatus.Experimental
 
 
 @Experimental
-abstract class ToolbarActionTracker<T: PositionTracker.Client<*>>: Disposable {
+abstract class ToolbarActionTracker<T : PositionTracker.Client<*>> : Disposable {
   /**
    * pointProvider - point in toolbar coordinates
    */
@@ -49,11 +48,12 @@ abstract class ToolbarActionTracker<T: PositionTracker.Client<*>>: Disposable {
       hideOrRepaint(component)
     }
   }
+
   private val componentAdapter = MyComponentAdapter()
-  private var ancestorListener : MyAncestorAdapter? = null
+  private var ancestorListener: MyAncestorAdapter? = null
   private var toolbar: JComponent? = null
 
-  protected fun followToolbarComponent(component: JComponent, toolbar: JComponent, pointProvider: (Component, T) -> Point) {
+  protected open fun followToolbarComponent(component: JComponent, toolbar: JComponent, pointProvider: (Component, T) -> Point) {
     if (canShow()) {
       this.toolbar = toolbar
       this.pointProvider = pointProvider
@@ -63,7 +63,7 @@ abstract class ToolbarActionTracker<T: PositionTracker.Client<*>>: Disposable {
     }
   }
 
-  protected fun unfollowComponent(component: JComponent){
+  protected fun unfollowComponent(component: JComponent) {
     component.removeComponentListener(componentAdapter)
     toolbar?.removeAncestorListener(ancestorListener)
   }
@@ -95,6 +95,7 @@ abstract class ToolbarActionTracker<T: PositionTracker.Client<*>>: Disposable {
 
     @JvmField
     val ARROW_SHIFT = JBUIScale.scale(20) + Registry.intValue("ide.balloon.shadow.size") + BalloonImpl.ARC.get()
+
     /**
      * Use this method for following an ActionToolbar component.
      */
