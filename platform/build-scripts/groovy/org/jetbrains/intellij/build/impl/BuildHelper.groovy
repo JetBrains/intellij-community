@@ -37,6 +37,8 @@ final class BuildHelper {
   final MethodHandle addModuleSources
   final MethodHandle isLibraryMergeable
 
+  final MethodHandle setAppInfo
+
   private final MethodHandle copyDirHandle
 
   private BuildHelper(ClassLoader helperClassLoader) {
@@ -79,7 +81,6 @@ final class BuildHelper {
                                                                            string, path,
                                                                            logger))
 
-
     Class<?> jarBuilder = helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.JarBuilder")
     buildJar = lookup.findStatic(jarBuilder, "buildJar", MethodType.methodType(voidClass, path, list, logger, bool))
 
@@ -89,9 +90,12 @@ final class BuildHelper {
     addModuleSources = lookup.findStatic(jarBuilder,
                                          "addModuleSources",
                                          MethodType.methodType(voidClass, string, Map.class as Class<?>, path,
-                                                              Collection.class as Class<?>, Path, Collection.class as Class<?>, list,
+                                                              Collection.class as Class<?>, path, Collection.class as Class<?>, list,
                                                                logger))
-    isLibraryMergeable = lookup.findStatic(jarBuilder, "isLibraryMergeable", MethodType.methodType(bool, string,))
+    isLibraryMergeable = lookup.findStatic(jarBuilder, "isLibraryMergeable", MethodType.methodType(bool, string))
+
+    setAppInfo = lookup.findStatic(helperClassLoader.loadClass("org.jetbrains.intellij.build.tasks.AsmKt"), "injectAppInfo",
+                                   MethodType.methodType(voidClass, path, path, string))
   }
 
   static void copyDir(Path fromDir, Path targetDir, BuildContext buildContext) {
