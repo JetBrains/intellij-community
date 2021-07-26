@@ -75,7 +75,8 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     private MavenGeneralSettings myGeneralSettingsCache;
     private MavenImportingSettings myImportingSettingsCache;
 
-    private Path myImportRoot;
+    private Path myImportRootDirectory;
+    private VirtualFile myImportProjectFile;
     private List<VirtualFile> myFiles;
 
     private MavenProjectsTree myMavenProjectTree;
@@ -305,18 +306,12 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
         indicator.setText(MavenProjectBundle.message("maven.locating.files"));
 
-        getParameters().myImportRoot = root;
-        if (getParameters().myImportRoot == null) {
+        getParameters().myImportRootDirectory = root;
+        if (getParameters().myImportRootDirectory == null) {
           throw new MavenProcessCanceledException();
         }
 
-        Path file = getRootPath();
-        VirtualFile virtualFile = file == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString()));
-        if (virtualFile == null) {
-          throw new MavenProcessCanceledException();
-        }
-        getParameters().myFiles = FileFinder.findPomFiles(virtualFile.getChildren(), LookForNestedToggleAction.isSelected(), indicator);
-
+        getParameters().myFiles = getProjectFiles(indicator);
         readMavenProjectTree(indicator);
 
         indicator.setText("");
@@ -438,11 +433,11 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   }
 
   public @Nullable Path getRootPath() {
-    if (getParameters().myImportRoot == null && isUpdate()) {
+    if (getParameters().myImportRootDirectory == null && isUpdate()) {
       Project project = getProjectToUpdate();
-      getParameters().myImportRoot = project == null ? null : Paths.get(Objects.requireNonNull(project.getBasePath()));
+      getParameters().myImportRootDirectory = project == null ? null : Paths.get(Objects.requireNonNull(project.getBasePath()));
     }
-    return getParameters().myImportRoot;
+    return getParameters().myImportRootDirectory;
   }
 
   public @Nullable String getSuggestedProjectName() {
@@ -456,7 +451,12 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   }
 
   public void setFileToImport(@NotNull Path path) {
-    getParameters().myImportRoot = Files.isDirectory(path) ? path : path.getParent();
+    getParameters().myImportRootDirectory = Files.isDirectory(path) ? path : path.getParent();
+  }
+
+  public void setFileToImport(@NotNull VirtualFile file) {
+    if (!file.isDirectory()) getParameters().myImportProjectFile = file;
+    getParameters().myImportRootDirectory = file.isDirectory() ? file.toNioPath() : file.getParent().toNioPath();
   }
 
   @Nullable
@@ -469,5 +469,18 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   @Override
   public ProjectOpenProcessor getProjectOpenProcessor() {
     return ProjectOpenProcessor.EXTENSION_POINT_NAME.findExtensionOrFail(MavenProjectOpenProcessor.class);
+  }
+
+  private List<VirtualFile> getProjectFiles(@NotNull MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+    if (getParameters().myImportProjectFile != null) {
+      return Collections.singletonList(getParameters().myImportProjectFile);
+    }
+    Path file = getRootPath();
+    VirtualFile virtualFile = file == null ? null : LocalFileSystem.getInstance()
+      .refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString()));
+    if (virtualFile == null) {
+      throw new MavenProcessCanceledException();
+    }
+    return FileFinder.findPomFiles(virtualFile.getChildren(), LookForNestedToggleAction.isSelected(), indicator);
   }
 }
