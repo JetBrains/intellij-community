@@ -282,13 +282,15 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
         presentation.setIcon(getInformativeIcon(project, selectedSettings));
         RunConfiguration configuration = selectedSettings.getConfiguration();
-        if (configuration instanceof CompoundRunConfiguration) {
-          enabled = canRun(project, ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets());
-        }
-        else {
-          ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
-          enabled = canRun(project, Collections.singletonList(new SettingsAndEffectiveTarget(configuration, target)));
-          hideDisabledExecutorButtons = configuration.hideDisabledExecutorButtons();
+        if (!isSuppressed(project)) {
+          if (configuration instanceof CompoundRunConfiguration) {
+            enabled = canRun(project, ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets());
+          }
+          else {
+            ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
+            enabled = canRun(project, Collections.singletonList(new SettingsAndEffectiveTarget(configuration, target)));
+            hideDisabledExecutorButtons = configuration.hideDisabledExecutorButtons();
+          }
         }
         if (enabled) {
           presentation.setDescription(myExecutor.getDescription());
@@ -310,6 +312,13 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         presentation.setVisible(myExecutor.isApplicable(project));
       }
       presentation.setText(text);
+    }
+
+    private static boolean isSuppressed(Project project) {
+      for (ExecutionActionSuppressor suppressor : ExecutionActionSuppressor.EP_NAME.getExtensionList()) {
+        if (suppressor.isSuppressed(project)) return true;
+      }
+      return false;
     }
 
     protected Icon getInformativeIcon(@NotNull Project project, @NotNull RunnerAndConfigurationSettings selectedConfiguration) {
