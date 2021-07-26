@@ -41,9 +41,6 @@ public final class BuiltInServerOptions implements PersistentStateComponent<Buil
   @Attribute
   public boolean allowUnsignedRequests = false;
 
-  @Attribute
-  public boolean reloadPageOnSave = true;
-
   public static BuiltInServerOptions getInstance() {
     return ApplicationManager.getApplication().getService(BuiltInServerOptions.class);
   }

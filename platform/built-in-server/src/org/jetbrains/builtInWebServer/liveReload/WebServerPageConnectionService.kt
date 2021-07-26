@@ -4,11 +4,15 @@ package org.jetbrains.builtInWebServer.liveReload
 import com.google.common.net.HttpHeaders
 import com.intellij.CommonBundle
 import com.intellij.concurrency.JobScheduler
+import com.intellij.ide.browsers.ReloadMode
 import com.intellij.ide.browsers.actions.WebPreviewFileEditor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -67,24 +71,24 @@ class WebServerPageConnectionService {
    * @return suffix to add to requested file in response
    */
   fun fileRequested(request: FullHttpRequest, fileSupplier: Supplier<out VirtualFile?>): CharSequence? {
-    var isReloadRequest = false
+    var reloadRequest = ReloadMode.DISABLED
     val uri = request.uri()
     if (uri != null && uri.contains(RELOAD_URL_PARAM)) {
       val decoder = QueryStringDecoder(uri)
-      isReloadRequest = decoder.parameters().containsKey(RELOAD_URL_PARAM)
+      reloadRequest = ReloadMode.valueOf(decoder.parameters()[RELOAD_URL_PARAM]?.get(0) ?: ReloadMode.DISABLED.name)
     }
-    if (!isReloadRequest && myState.isEmpty) return null
+    if (reloadRequest == ReloadMode.DISABLED && myState.isEmpty) return null
     val file = fileSupplier.get()
-    if (!isReloadRequest && file != null) {
+    if (reloadRequest == ReloadMode.DISABLED && file != null) {
       myState.resourceRequested(request, file)
       return null
     }
-    if (!isReloadRequest) return null
+    if (reloadRequest == ReloadMode.DISABLED) return null
     if (file == null) {
       LOGGER.warn("VirtualFile for $uri isn't resolved, reload on save can't be started")
       return null
     }
-    val clientId = myState.pageRequested(uri, file)
+    val clientId = myState.pageRequested(uri, file, reloadRequest)
 
     val optionalConsoleLog =
       if (LOGGER.isDebugEnabled) "\nconsole.log('JetBrains Reload on Save script loaded, clientId = $clientId');" else ""
@@ -197,7 +201,7 @@ class WebServerPageConnectionService {
     gotItTooltip.withLink(CommonBundle.message("action.text.configure.ellipsis")) {
       ShowSettingsUtil.getInstance().showSettingsDialog(
         editorComponent.editor.project,
-        { (it as? ConfigurableWrapper)?.id == "project.propDebugger" },
+        { (it as? ConfigurableWrapper)?.id == "reference.settings.ide.settings.web.browsers" },
         null)
     }
 
@@ -289,12 +293,22 @@ class WebServerPageConnectionService {
     }
 
     @Synchronized
-    fun pageRequested(uri: String, file: VirtualFile): Int {
+    fun pageRequested(uri: String, file: VirtualFile, reloadMode: ReloadMode): Int {
       if (myRequestedPages.isEmpty) {
         if (myListenerDisposable == null) {
           val disposable = Disposer.newDisposable(ApplicationManager.getApplication(), WebServerFileContentListener::class.java.simpleName)
           VirtualFileManager.getInstance().addAsyncFileListener(WebServerFileContentListener(), disposable)
           myListenerDisposable = disposable
+          if (reloadMode == ReloadMode.RELOAD_ON_CHANGE) {
+            EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
+              override fun documentChanged(event: DocumentEvent) {
+                val virtualFile = FileDocumentManager.getInstance().getFile(event.document)
+                if (isTrackedFile(virtualFile)) {
+                  FileDocumentManager.getInstance().saveDocument(event.document)
+                }
+              }
+            }, disposable)
+          }
         }
         else {
           LOGGER.error("Listener already added")
@@ -302,11 +316,16 @@ class WebServerPageConnectionService {
       }
       val clientId = ++myLastClientId
       LOGGER.debug("Page is requested for $uri, clientId = $clientId")
-      val newPage = RequestedPage(clientId, file)
+      val newPage = RequestedPage(clientId, file, reloadMode)
       myRequestedPages.putValue(uri, newPage)
       JobScheduler.getScheduler().schedule({ stopWaitingForClient(uri, newPage) }, 30, TimeUnit.SECONDS)
       return clientId
     }
+
+    private fun isTrackedFile(virtualFile: VirtualFile?) = myRequestedFilesWithoutReferrer.contains(virtualFile)
+      || myRequestedPages.values().stream().filter{ p -> p?.reloadMode == ReloadMode.RELOAD_ON_CHANGE }
+                                                             .anyMatch { it!!.myFiles.contains(virtualFile) }
+
 
     @Synchronized
     private fun stopWaitingForClient(uri: String, page: RequestedPage) {
@@ -415,7 +434,7 @@ class WebServerPageConnectionService {
       get() = myRequestedPages.isEmpty
   }
 
-  private class RequestedPage(val myClientId: Int, requestedPageFile: VirtualFile) {
+  private class RequestedPage(val myClientId: Int, requestedPageFile: VirtualFile, val reloadMode: ReloadMode) {
     val myFiles: MutableSet<VirtualFile?> = HashSet()
     val myClient = CompletableFuture<WebSocketClient?>()
 
