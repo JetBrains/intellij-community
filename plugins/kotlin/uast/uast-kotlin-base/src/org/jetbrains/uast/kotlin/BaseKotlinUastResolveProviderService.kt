@@ -31,6 +31,8 @@ interface BaseKotlinUastResolveProviderService {
 
     fun convertValueArguments(ktCallElement: KtCallElement, parent: UElement): List<UNamedExpression>?
 
+    fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): KtExpression?
+
     fun getArgumentForParameter(ktCallElement: KtCallElement, index: Int, parent: UElement): UExpression?
 
     fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression?

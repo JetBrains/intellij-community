@@ -49,6 +49,16 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
+    override fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): KtExpression? {
+        analyseForUast(ktCallElement) {
+            val resolvedAnnotationCall = ktCallElement.resolveCall() as? KtAnnotationCall ?: return null
+            val resolvedAnnotationConstructorSymbol =
+                resolvedAnnotationCall.targetFunction.candidates.singleOrNull() as? KtConstructorSymbol ?: return null
+            val parameter = resolvedAnnotationConstructorSymbol.valueParameters.find { it.name.asString() == name } ?: return null
+            return (parameter.psi as? KtParameter)?.defaultValue
+        }
+    }
+
     override fun getArgumentForParameter(ktCallElement: KtCallElement, index: Int, parent: UElement): UExpression? {
         TODO("Not yet implemented")
     }
