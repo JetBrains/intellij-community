@@ -32,7 +32,6 @@ import com.intellij.psi.PsiIdentifier
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.ui.GotItTooltip
 import com.intellij.util.SmartList
@@ -196,7 +195,7 @@ object InplaceExtractUtils {
   }
 
   fun getNameIdentifier(call: PsiMethodCallExpression?): PsiIdentifier? {
-    return PsiTreeUtil.getChildOfType(call?.methodExpression, PsiIdentifier::class.java)
+    return call?.methodExpression?.referenceNameElement as? PsiIdentifier
   }
 
   fun createCodePreview(editor: Editor,
