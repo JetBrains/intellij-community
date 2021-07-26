@@ -2,7 +2,6 @@
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -133,7 +132,7 @@ public final class MacKeymapUtil {
 
   @NotNull
   private static String get(@NotNull String value, @NotNull String replacement) {
-    if (!AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols")) {
+    if (AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols")) {
       return replacement;
     }
     Font font = UIUtil.getLabelFont();
