@@ -136,6 +136,9 @@
 
     <applicationService serviceImplementation="com.intellij.ui.jcef.JBCefStartup" preload="true" os="mac"/>
 
+    <applicationService serviceInterface="com.intellij.ide.ui.IdeUiService"
+                                          serviceImplementation="com.intellij.ide.ui.IdeUiServiceImpl"/>
+
     <applicationService serviceInterface="com.intellij.execution.ExecutorRegistry"
                         serviceImplementation="com.intellij.execution.ExecutorRegistryImpl"/>
 
