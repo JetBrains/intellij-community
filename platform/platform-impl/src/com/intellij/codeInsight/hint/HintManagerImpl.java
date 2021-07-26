@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,8 @@ import java.awt.*;
 public class HintManagerImpl extends HintManager {
   private static final Logger LOG = Logger.getInstance(HintManager.class);
 
-  static int getPriority(QuestionAction action) {
+  @ApiStatus.Internal
+  public static int getPriority(QuestionAction action) {
     return action instanceof PriorityQuestionAction ? ((PriorityQuestionAction)action).getPriority() : 0;
   }
 

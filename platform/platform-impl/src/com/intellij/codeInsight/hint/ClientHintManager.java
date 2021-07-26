@@ -6,12 +6,18 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * Interface to create hints for particular clients. Take a look at {@link com.intellij.openapi.client.ClientSession}
+ */
+@ApiStatus.Experimental
+@ApiStatus.Internal
 public interface ClientHintManager {
 
   static @NotNull ClientHintManager getCurrentInstance() {
