@@ -25,7 +25,6 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting-ide-services" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.core" exported="" />
