@@ -38,7 +38,6 @@ private val LOG = logger<AbstractCommitWorkflow>()
 
 internal fun CommitOptions.saveState() = allOptions.forEach { it.saveState() }
 internal fun CommitOptions.restoreState() = allOptions.forEach { it.restoreState() }
-internal fun CommitOptions.refresh() = allOptions.forEach { it.refresh() }
 
 private class CommitProperty<T>(private val key: Key<T>, private val defaultValue: T) : ReadWriteProperty<CommitContext, T> {
   override fun getValue(thisRef: CommitContext, property: KProperty<*>): T = thisRef.getUserData(key) ?: defaultValue
