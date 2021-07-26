@@ -125,6 +125,6 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
     }
 
     override fun listRepositoriesInModule(module: ProjectModule): Collection<UnifiedDependencyRepository> =
-        DependencyModifierService.getInstance(module.nativeModule.project).declaredRepositories(module.nativeModule)
-    
+        DependencyModifierService.getInstance(module.nativeModule.project)
+            .declaredRepositories(module.nativeModule)
 }

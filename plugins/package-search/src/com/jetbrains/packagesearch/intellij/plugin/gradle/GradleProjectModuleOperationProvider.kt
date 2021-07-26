@@ -17,6 +17,8 @@ private const val FILENAME_GRADLE_WRAPPER_PROPERTIES = "gradle-wrapper.propertie
 
 internal open class GradleProjectModuleOperationProvider : AbstractProjectModuleOperationProvider() {
 
+    override fun usesSharedPackageUpdateInspection() = true
+
     override fun hasSupportFor(project: Project, psiFile: PsiFile?): Boolean {
         // Logic based on com.android.tools.idea.gradle.project.sync.GradleFiles.isGradleFile()
 
