@@ -35,7 +35,7 @@ fun SdkComboBox.setSelectedJdkReference(sdkLookupProvider: SdkLookupProvider, jd
 fun SdkComboBox.addJdkReferenceItem(name: String, homePath: String?): SdkListItem {
   val type = getJavaSdkType()
   val isValid = isValidJdk(homePath)
-  val versionString = if (isValid && homePath != null) type.getVersionString(homePath) else null
+  val versionString = if (isValid) type.getVersionString(homePath) else null
   return addSdkReferenceItem(type, name, versionString, isValid)
 }
 
