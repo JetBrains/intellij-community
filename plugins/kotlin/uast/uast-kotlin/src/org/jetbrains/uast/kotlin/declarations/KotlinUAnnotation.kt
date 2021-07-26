@@ -71,10 +71,6 @@ abstract class KotlinUAnnotationBase<T : KtCallElement>(
 
     protected abstract fun computeClassDescriptor(): ClassDescriptor?
 
-    override fun resolve(): PsiClass? = computeClassDescriptor()?.let {
-        sourcePsi.calleeExpression?.let { ktExpression -> resolveToDeclarationImpl(ktExpression, it) }
-    } as? PsiClass
-
     override fun findAttributeValue(name: String?): UExpression? =
         findDeclaredAttributeValue(name) ?: findAttributeDefaultValue(name ?: "value")
 
@@ -93,12 +89,14 @@ abstract class KotlinUAnnotationBase<T : KtCallElement>(
             ?.find { it.name.asString() == name } ?: return null
 
         val defaultValue = (parameter.source.getPsi() as? KtParameter)?.defaultValue ?: return null
-        return getLanguagePlugin().convertWithParent(defaultValue)
+        return languagePlugin?.convertWithParent(defaultValue)
     }
 
     override fun convertParent(): UElement? {
-        sourcePsi.parent.safeAs<KtAnnotatedExpression>()?.let {
-            return it.baseExpression?.let { KotlinConverter.convertExpression(it, null, DEFAULT_EXPRESSION_TYPES_LIST) }
+        sourcePsi.parent.safeAs<KtAnnotatedExpression>()?.let { annotatedExpression ->
+            return annotatedExpression.baseExpression?.let {
+                baseResolveProviderService.baseKotlinConverter.convertExpression(it, null, DEFAULT_EXPRESSION_TYPES_LIST)
+            }
         }
 
         val superParent = super.convertParent() ?: return null
@@ -126,7 +124,11 @@ class KotlinUAnnotation(
 
     override fun annotationUseSiteTarget() = sourcePsi.useSiteTarget?.getAnnotationUseSiteTarget()
 
-    override val uastAnchor by lazy {
+    override fun resolve(): PsiClass? {
+        return baseResolveProviderService.resolveToClass(sourcePsi)
+    }
+
+    override val uastAnchor by lz {
         KotlinUIdentifier(
             javaPsi?.nameReferenceElement,
             annotationEntry.typeReference?.nameElement,
@@ -140,13 +142,17 @@ class KotlinUNestedAnnotation private constructor(
     original: KtCallExpression,
     givenParent: UElement?
 ) : KotlinUAnnotationBase<KtCallExpression>(original, givenParent) {
-    override val javaPsi: PsiAnnotation? by lazy { original.toLightAnnotation() }
+    override val javaPsi: PsiAnnotation? by lz { original.toLightAnnotation() }
 
     override fun computeClassDescriptor(): ClassDescriptor? = classDescriptor(sourcePsi)
 
     override fun annotationUseSiteTarget(): AnnotationUseSiteTarget? = null
 
-    override val uastAnchor by lazy {
+    override fun resolve(): PsiClass? {
+        return baseResolveProviderService.resolveToClassIfConstructorCall(sourcePsi, this)
+    }
+
+    override val uastAnchor by lz {
         KotlinUIdentifier(
             javaPsi?.nameReferenceElement?.referenceNameElement,
             (original.calleeExpression as? KtNameReferenceExpression)?.getReferencedNameElement(),
