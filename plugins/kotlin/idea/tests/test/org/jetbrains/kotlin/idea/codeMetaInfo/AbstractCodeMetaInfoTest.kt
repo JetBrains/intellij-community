@@ -41,8 +41,6 @@ import org.jetbrains.kotlin.diagnostics.AbstractDiagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiModuleIdeResolveTest
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.codeMetaInfo.models.CodeMetaInfo
-import org.jetbrains.kotlin.idea.codeMetaInfo.models.DiagnosticCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.HighlightingCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.getCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration
@@ -68,7 +66,7 @@ class CodeMetaInfoTestCase(
 ) : DaemonAnalyzerTestCase() {
 
     fun getDiagnosticCodeMetaInfos(
-        configuration: DiagnosticCodeMetaInfoConfiguration = DiagnosticCodeMetaInfoConfiguration(),
+        configuration: DiagnosticCodeMetaInfoRenderConfiguration = DiagnosticCodeMetaInfoRenderConfiguration(),
         parseDirective: Boolean = true
     ): List<CodeMetaInfo> {
         val tempSourceKtFile = PsiManager.getInstance(project).findFile(file.virtualFile) as KtFile
@@ -155,7 +153,7 @@ class CodeMetaInfoTestCase(
 
         for (configuration in codeMetaInfoTypes) {
             when (configuration) {
-                is DiagnosticCodeMetaInfoConfiguration -> {
+                is DiagnosticCodeMetaInfoRenderConfiguration -> {
                     codeMetaInfoForCheck.addAll(getDiagnosticCodeMetaInfos(configuration))
                 }
                 is HighlightingConfiguration -> {
@@ -167,11 +165,11 @@ class CodeMetaInfoTestCase(
                 else -> throw IllegalArgumentException("Unexpected code meta info configuration: $configuration")
             }
         }
-        if (codeMetaInfoTypes.any { it is DiagnosticCodeMetaInfoConfiguration } &&
+        if (codeMetaInfoTypes.any { it is DiagnosticCodeMetaInfoRenderConfiguration } &&
             !codeMetaInfoTypes.any { it is HighlightingConfiguration }
         ) {
             checkHighlightErrorItemsInDiagnostics(
-                getDiagnosticCodeMetaInfos(DiagnosticCodeMetaInfoConfiguration(), false).filterIsInstance<DiagnosticCodeMetaInfo>()
+                getDiagnosticCodeMetaInfos(DiagnosticCodeMetaInfoRenderConfiguration(), false).filterIsInstance<DiagnosticCodeMetaInfo>()
             )
         }
 
@@ -246,7 +244,7 @@ class CodeMetaInfoTestCase(
 
 abstract class AbstractDiagnosticCodeMetaInfoTest : AbstractCodeMetaInfoTest() {
     override fun getConfigurations() = listOf(
-        DiagnosticCodeMetaInfoConfiguration(),
+        DiagnosticCodeMetaInfoRenderConfiguration(),
         LineMarkerConfiguration()
     )
 }
@@ -266,7 +264,7 @@ abstract class AbstractHighlightingCodeMetaInfoTest : AbstractCodeMetaInfoTest()
 abstract class AbstractCodeMetaInfoTest : AbstractMultiModuleTest() {
     open val checkNoDiagnosticError get() = false
     open fun getConfigurations() = listOf(
-        DiagnosticCodeMetaInfoConfiguration(),
+        DiagnosticCodeMetaInfoRenderConfiguration(),
         LineMarkerConfiguration(),
         HighlightingConfiguration()
     )
