@@ -34,11 +34,6 @@ open class DiffRequestProcessorEditor(
   init {
     putUserData(EditorWindow.HIDE_TABS, true)
 
-    if (!DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE, processor.context)) {
-      Disposer.register(this, Disposable {
-        Disposer.dispose(processor)
-      })
-    }
     Disposer.register(processor, Disposable {
       firePropertyChange(FileEditor.PROP_VALID, true, false)
     })
@@ -51,7 +46,12 @@ open class DiffRequestProcessorEditor(
 
   override fun dispose() {
     disposed = true
+    if (!DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE, processor.context)) {
+      Disposer.dispose(processor)
+    }
+    super.dispose()
   }
+
   override fun isValid(): Boolean = !disposed && !processor.isDisposed
   override fun getFile(): VirtualFile = file
   override fun getName(): String = DiffBundle.message("diff.file.editor.name")
