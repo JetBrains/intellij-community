@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradle.compilerPlugin.samWithReceiver
 
-import org.jetbrains.kotlin.annotation.plugin.ide.AbstractAnnotationPluginGradleImportHandler
+import org.jetbrains.kotlin.idea.gradle.compilerPlugin.AbstractAnnotationPluginGradleImportHandler
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverCommandLineProcessor
 import org.jetbrains.kotlin.samWithReceiver.ide.SamWithReceiverModel

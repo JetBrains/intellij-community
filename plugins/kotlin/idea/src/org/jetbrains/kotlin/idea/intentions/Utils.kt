@@ -407,5 +407,5 @@ fun BuilderByPattern<KtExpression>.appendCallOrQualifiedExpression(
 }
 
 fun KtCallExpression.singleLambdaArgumentExpression(): KtLambdaExpression? {
-    return lambdaArguments.singleOrNull()?.getArgumentExpression().safeAs() ?: getLastLambdaExpression()
+    return lambdaArguments.singleOrNull()?.getArgumentExpression().safeAs<KtLambdaExpression>() ?: getLastLambdaExpression()
 }
