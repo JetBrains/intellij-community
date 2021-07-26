@@ -130,6 +130,17 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
+    override fun qualifiedAnnotationName(ktCallElement: KtCallElement): String? {
+        analyseForUast(ktCallElement) {
+            val resolvedAnnotationCall = ktCallElement.resolveCall() as? KtAnnotationCall ?: return null
+            val resolvedAnnotationConstructorSymbol =
+                resolvedAnnotationCall.targetFunction.candidates.singleOrNull() as? KtConstructorSymbol ?: return null
+            return resolvedAnnotationConstructorSymbol.containingClassIdIfNonLocal
+                ?.asSingleFqName()
+                ?.toString()
+        }
+    }
+
     override fun callKind(ktCallElement: KtCallElement): UastCallKind {
         analyseForUast(ktCallElement) {
             val resolvedFunctionLikeSymbol =

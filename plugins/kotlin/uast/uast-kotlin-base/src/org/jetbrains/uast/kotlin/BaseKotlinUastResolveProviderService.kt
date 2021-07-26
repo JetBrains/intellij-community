@@ -53,6 +53,8 @@ interface BaseKotlinUastResolveProviderService {
 
     fun resolvedFunctionName(ktCallElement: KtCallElement): String?
 
+    fun qualifiedAnnotationName(ktCallElement: KtCallElement): String?
+
     fun callKind(ktCallElement: KtCallElement): UastCallKind
 
     fun resolveToClassIfConstructorCall(ktCallElement: KtCallElement, source: UElement): PsiClass?

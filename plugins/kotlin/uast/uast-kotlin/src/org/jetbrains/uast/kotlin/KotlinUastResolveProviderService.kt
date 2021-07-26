@@ -11,7 +11,10 @@ import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ParameterDescriptor
+import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
+import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
@@ -25,11 +28,9 @@ import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.constants.UnsignedErrorValueTypeConstant
 import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.ForceResolveUtil
-import org.jetbrains.kotlin.types.CommonSupertypes
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.TypeUtils
-import org.jetbrains.kotlin.types.isError
+import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
 import org.jetbrains.uast.*
@@ -155,6 +156,14 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return resolvedCall.resultingDescriptor.name.asString()
     }
 
+    override fun qualifiedAnnotationName(ktCallElement: KtCallElement): String? {
+        return ktCallElement.resolveToClassDescriptor().takeUnless(ErrorUtils::isError)
+            ?.fqNameUnsafe
+            ?.takeIf(FqNameUnsafe::isSafe)
+            ?.toSafe()
+            ?.toString()
+    }
+
     override fun callKind(ktCallElement: KtCallElement): UastCallKind {
         val resolvedCall = ktCallElement.getResolvedCall(ktCallElement.analyze()) ?: return UastCallKind.METHOD_CALL
         return when {
@@ -184,11 +193,20 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
     }
 
     override fun resolveToClass(ktAnnotationEntry: KtAnnotationEntry): PsiClass? {
-        val classDescriptor = ktAnnotationEntry.analyze()[BindingContext.ANNOTATION, ktAnnotationEntry]?.annotationClass ?: return null
+        val classDescriptor = ktAnnotationEntry.resolveToClassDescriptor() ?: return null
         return ktAnnotationEntry.calleeExpression?.let { ktExpression ->
             resolveToDeclarationImpl(ktExpression, classDescriptor) as? PsiClass
         }
     }
+
+    fun <T : KtCallElement> T.resolveToClassDescriptor(): ClassDescriptor? =
+        when (this) {
+            is KtAnnotationEntry ->
+                this.analyze()[BindingContext.ANNOTATION, this]?.annotationClass
+            is KtCallExpression ->
+                (this.getResolvedCall(this.analyze())?.resultingDescriptor as? ClassConstructorDescriptor)?.constructedClass
+            else -> null
+        }
 
     override fun resolveToDeclaration(ktExpression: KtExpression): PsiElement? {
         if (ktExpression is KtExpressionWithLabel) {
