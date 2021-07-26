@@ -11,6 +11,7 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.actions.CommonCheckinProjectAction
@@ -256,5 +257,9 @@ object GitLessonsUtil {
       }
     }
     else text("$introduction $suggestionWithoutIcon")
+  }
+
+  fun loadIllustration(illustrationName: String): Icon {
+    return IconLoader.getIcon("illustrations/$illustrationName", GitLessonsUtil::class.java)
   }
 }

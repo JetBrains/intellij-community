@@ -9,10 +9,12 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.learn.LearnBundle
 import training.ui.LearningUiHighlightingManager
+import training.ui.LearningUiManager
 import java.awt.Component
 import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
+import javax.swing.Icon
 import javax.swing.JList
 import javax.swing.JTree
 import javax.swing.tree.TreePath
@@ -71,6 +73,9 @@ abstract class TaskContext : LearningDslBase {
    * Write a text to the learn panel (panel with a learning tasks).
    */
   open fun text(@Language("HTML") @Nls text: String, useBalloon: LearningBalloonConfig? = null) = Unit
+
+  /** Add an illustration */
+  fun illustration(icon: Icon): Unit = text("<illustration>${LearningUiManager.getIconIndex(icon)}</illustration>")
 
   /** Insert text in the current position */
   open fun type(text: String) = Unit

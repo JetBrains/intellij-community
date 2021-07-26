@@ -73,6 +73,9 @@ internal class UISettings {
   val balloonAdditionalBorder: EmptyBorder
     get() = EmptyBorder(JBUI.scale(7), JBUI.scale(4), JBUI.scale(7), 0)
 
+  val taskParagraphAbove: Int get() = JBUI.scale(24)
+  val taskInternalParagraphAbove: Int get() = JBUI.scale(24)
+
   val checkIndent: Int get() = JBUI.scale(40)
 
   val numberTaskIndent: Int get() = JBUI.scale(11)
