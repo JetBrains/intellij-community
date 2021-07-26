@@ -95,9 +95,12 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
 
     final AtomicBoolean thisSwitchLabelIsImmediate = new AtomicBoolean();
 
-    PsiTreeUtil.treeWalkUp(place, getParent(), (currentScope, __) -> {
-      final PsiElement sibling = PsiTreeUtil.skipWhitespacesBackward(currentScope.getPrevSibling());
-      if (sibling == this) {
+    PsiTreeUtil.treeWalkUp(place, getParent(), (currentScope, prevScope) -> {
+      final PsiElement immediateSwitchLabel = PsiTreeUtil.findSiblingBackward(currentScope,
+                                                                              JavaElementType.SWITCH_LABEL_STATEMENT,
+                                                                              false,
+                                                                              null);
+      if (immediateSwitchLabel == this) {
         thisSwitchLabelIsImmediate.set(true);
         return false;
       }
