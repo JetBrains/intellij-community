@@ -48,12 +48,14 @@
     <todoIndexer filetype="Kotlin" implementationClass="org.jetbrains.kotlin.idea.search.KotlinTodoIndexer"/>
     <indexPatternBuilder implementation="org.jetbrains.kotlin.idea.search.KotlinIndexPatternBuilder"/>
 
-    <projectService serviceInterface="org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService"
-                    serviceImplementation="org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactoryService"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService"
+            serviceImplementation="org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactoryService"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.stubindex.SubpackagesIndexService"/>
 
-    <applicationService serviceInterface="org.jetbrains.kotlin.psi.stubs.elements.StubIndexService"
-                        serviceImplementation="org.jetbrains.kotlin.idea.stubindex.IdeStubIndexService"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.psi.stubs.elements.StubIndexService"
+            serviceImplementation="org.jetbrains.kotlin.idea.stubindex.IdeStubIndexService"/>
   </extensions>
 </idea-plugin>

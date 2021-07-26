@@ -2888,6 +2888,15 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.convert.argument.to.set.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.collections.RedundantAsSequenceInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle"
+                     groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.redundant.assequence.call" bundle="messages.KotlinBundle"/>
   </extensions>
 
 </idea-plugin>
