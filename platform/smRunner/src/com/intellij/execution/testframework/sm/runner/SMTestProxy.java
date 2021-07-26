@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
@@ -17,6 +17,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ExecutionDataKeys;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -30,6 +32,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +49,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * @author Roman Chernyatchik
  */
-public class SMTestProxy extends AbstractTestProxy {
+public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   public static final Key<String> NODE_ID = Key.create("test.proxy.id");
 
   private static final Logger LOG = Logger.getInstance(SMTestProxy.class.getName());
@@ -266,6 +269,34 @@ public class SMTestProxy extends AbstractTestProxy {
   @Override
   public boolean isConfig() {
     return myConfig;
+  }
+
+  private Navigatable getNavigatable() {
+    SMRootTestProxy root = getRoot();
+    if (root == null) return null;
+    return TestsUIUtil.getOpenFileDescriptor(this, root.myTestConsoleProperties);
+  }
+
+  @Override
+  public void navigate(boolean requestFocus) {
+    ReadAction.nonBlocking(() -> getNavigatable())
+      .expireWith(this)
+      .finishOnUiThread(ModalityState.NON_MODAL, navigatable -> {
+      if (navigatable != null) {
+        navigatable.navigate(requestFocus);
+      }
+    }).submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  @Override
+  public boolean canNavigate() {
+    Navigatable navigatable = getNavigatable();
+    return navigatable != null && navigatable.canNavigate();
+  }
+
+  @Override
+  public boolean canNavigateToSource() {
+    return canNavigate();
   }
 
   @Override
