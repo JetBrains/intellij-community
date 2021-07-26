@@ -7,17 +7,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.lazy.ForceResolveUtil
-import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
@@ -42,8 +38,6 @@ abstract class KotlinUAnnotationBase<T : KtCallElement>(
         baseResolveProviderService.convertValueArguments(sourcePsi, this) ?: emptyList()
     }
 
-    protected abstract fun computeClassDescriptor(): ClassDescriptor?
-
     override fun findAttributeValue(name: String?): UExpression? =
         findDeclaredAttributeValue(name) ?: findAttributeDefaultValue(name ?: "value")
 
@@ -56,13 +50,9 @@ abstract class KotlinUAnnotationBase<T : KtCallElement>(
     }
 
     private fun findAttributeDefaultValue(name: String): UExpression? {
-        val parameter = computeClassDescriptor()
-            ?.unsubstitutedPrimaryConstructor
-            ?.valueParameters
-            ?.find { it.name.asString() == name } ?: return null
-
-        val defaultValue = (parameter.source.getPsi() as? KtParameter)?.defaultValue ?: return null
-        return languagePlugin?.convertWithParent(defaultValue)
+        return baseResolveProviderService.findDefaultValueForAnnotationAttribute(sourcePsi, name)?.let {
+            languagePlugin?.convertWithParent(it)
+        }
     }
 
     override fun convertParent(): UElement? {
@@ -92,9 +82,6 @@ class KotlinUAnnotation(
     override val javaPsi: PsiAnnotation? =
         annotationEntry.actionUnderSafeAnalyzeBlock({ annotationEntry.toLightAnnotation() }, { null })
 
-    override fun computeClassDescriptor(): ClassDescriptor? =
-        sourcePsi.analyze()[BindingContext.ANNOTATION, sourcePsi]?.annotationClass
-
     override fun annotationUseSiteTarget() = sourcePsi.useSiteTarget?.getAnnotationUseSiteTarget()
 
     override fun resolve(): PsiClass? {
@@ -115,9 +102,8 @@ class KotlinUNestedAnnotation private constructor(
     original: KtCallExpression,
     givenParent: UElement?
 ) : KotlinUAnnotationBase<KtCallExpression>(original, givenParent) {
-    override val javaPsi: PsiAnnotation? by lz { original.toLightAnnotation() }
 
-    override fun computeClassDescriptor(): ClassDescriptor? = classDescriptor(sourcePsi)
+    override val javaPsi: PsiAnnotation? by lz { original.toLightAnnotation() }
 
     override fun annotationUseSiteTarget(): AnnotationUseSiteTarget? = null
 
