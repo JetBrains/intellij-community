@@ -235,6 +235,9 @@ public final class JUnit4TestRunnerUtil {
       }
       catch (NoSuchMethodException ignored) { }
     }
+    if(methodName.contains("[")) {
+      return true;
+    }
     return false;
   }
 
