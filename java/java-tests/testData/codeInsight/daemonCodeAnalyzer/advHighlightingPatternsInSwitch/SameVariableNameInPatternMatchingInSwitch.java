@@ -40,12 +40,12 @@ class Main {
       case Integer n && n > 1:
         switch(o2) {
           case Integer <error descr="Variable 'm' is already defined in the scope">m</error> && m > 0:
-            m += <error descr="Cannot resolve symbol 'n'">n</error>;
+            m += n;
           case Integer <error descr="Variable 'p' is already defined in the scope">p</error> && p > 0:
-            p += <error descr="Cannot resolve symbol 'n'">n</error> + m;
+            p += n + m;
             break;
           case Integer p1:
-            p += <error descr="Cannot resolve symbol 'n'">n</error> + m + p1;
+            p += n + m + p1;
         };
         break;
     };

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult.*;
 import static com.intellij.psi.PsiModifier.ABSTRACT;
@@ -325,7 +326,6 @@ public class SwitchBlockHighlightingModel {
   private enum SelectorKind {INT, ENUM, STRING, CLASS_OR_ARRAY}
 
   public static class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlightingModel {
-
     PatternsInSwitchBlockHighlightingModel(@NotNull LanguageLevel languageLevel,
                                            @NotNull PsiSwitchBlock switchBlock,
                                            @NotNull PsiFile psiFile) {
@@ -569,6 +569,7 @@ public class SwitchBlockHighlightingModel {
         }
       }
       checkFallThroughInSwitchLabels(switchBlockGroup, results, alreadyFallThroughElements);
+      checkFallthroughReferences(switchBlockGroup, results);
     }
 
     private static void checkFallThroughInSwitchLabels(@NotNull List<List<PsiSwitchLabelStatementBase>> switchBlockGroup,
@@ -576,13 +577,13 @@ public class SwitchBlockHighlightingModel {
                                                        @NotNull Set<PsiElement> alreadyFallThroughElements) {
       for (int i = 1; i < switchBlockGroup.size(); i++) {
         List<PsiSwitchLabelStatementBase> switchLabels = switchBlockGroup.get(i);
+        PsiSwitchLabelStatementBase firstSwitchLabelInGroup = switchLabels.get(0);
         for (PsiSwitchLabelStatementBase switchLabel : switchLabels) {
           if (!(switchLabel instanceof PsiSwitchLabelStatement)) return;
           PsiCaseLabelElementList labelElementList = switchLabel.getCaseLabelElementList();
           if (labelElementList == null) continue;
           var patternElements = ContainerUtil.filter(labelElementList.getElements(), labelElement -> labelElement instanceof PsiPattern);
           if (patternElements.isEmpty()) continue;
-          PsiSwitchLabelStatementBase firstSwitchLabelInGroup = switchLabels.get(0);
           PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(firstSwitchLabelInGroup, PsiStatement.class);
           if (prevStatement == null) continue;
           if (ControlFlowUtils.statementMayCompleteNormally(prevStatement)) {
@@ -731,6 +732,70 @@ public class SwitchBlockHighlightingModel {
       results.add(info);
     }
 
+    private static void checkFallthroughReferences(@NotNull List<List<PsiSwitchLabelStatementBase>> switchBlockGroup,
+                                                   @NotNull List<HighlightInfo> results) {
+      final List<PsiSwitchLabelStatementBase> switches = switchBlockGroup.stream()
+        .flatMap(List::stream)
+        .limit(2)
+        .collect(Collectors.toList());
+      if (switches.size() < 2) return;
+
+      final Set<PsiPatternVariable> patternVariables = new HashSet<>();
+
+      int caseLabelsProcessed = 0;
+      for (PsiElement element = switches.get(0); element != null; element = element.getNextSibling()) {
+        if (element instanceof PsiSwitchLabelStatementBase) {
+          final PsiSwitchLabelStatementBase caseLabel = (PsiSwitchLabelStatementBase)element;
+          final PsiStatement prevStmt = PsiTreeUtil.getPrevSiblingOfType(caseLabel, PsiStatement.class);
+          final boolean currentLabelIsFallthrough = ControlFlowUtils.statementMayCompleteNormally(prevStmt);
+          if (!currentLabelIsFallthrough) {
+            caseLabelsProcessed = 0;
+            patternVariables.clear();
+          }
+
+          if (!isCaseNull(element)) caseLabelsProcessed++;
+
+          patternVariables.addAll(getPatternVariables(caseLabel));
+          continue;
+        }
+
+        if (caseLabelsProcessed < 2) continue;
+
+        final PatternVariableReferencesResolveVisitor visitor = new PatternVariableReferencesResolveVisitor(caseLabelsProcessed, patternVariables);
+
+        element.accept(visitor);
+        results.addAll(visitor.myResults);
+      }
+    }
+
+    @NotNull
+    private static Set<PsiPatternVariable> getPatternVariables(@Nullable PsiSwitchLabelStatementBase label) {
+      if (label == null) return Collections.emptySet();
+
+      final PsiCaseLabelElementList list = ((PsiSwitchLabelStatementBase)label).getCaseLabelElementList();
+      if (list == null) return Collections.emptySet();
+
+      return Arrays.stream(list.getElements())
+        .filter(PsiTypeTestPattern.class::isInstance)
+        .map(PsiTypeTestPattern.class::cast)
+        .map(PsiTypeTestPattern::getPatternVariable)
+        .collect(Collectors.toSet());
+    }
+
+    private static boolean isCaseNull(@Nullable PsiElement item) {
+      if (item == null) return false;
+      if (!(item instanceof PsiSwitchLabelStatementBase)) return false;
+      final PsiSwitchLabelStatementBase switchLabel = (PsiSwitchLabelStatementBase)item;
+
+      final PsiCaseLabelElementList caseElementsList = switchLabel.getCaseLabelElementList();
+      if (caseElementsList == null) return false;
+
+      final PsiCaseLabelElement[] elements = caseElementsList.getElements();
+      if (elements.length != 1) return false;
+
+      return elements[0].getNode().getFirstChildNode().getElementType() == JavaTokenType.NULL_KEYWORD;
+    }
+
     @Nullable
     private PsiElement findDefaultElement() {
       PsiCodeBlock body = myBlock.getBody();
@@ -831,6 +896,32 @@ public class SwitchBlockHighlightingModel {
       INCOMPLETE,
       COMPLETE_WITH_TOTAL,
       COMPLETE_WITHOUT_TOTAL
+    }
+
+    private static class PatternVariableReferencesResolveVisitor extends JavaRecursiveElementWalkingVisitor {
+      private final int myLabelsProcessed;
+      private final Set<PsiPatternVariable> myPatternVariables;
+      private final List<HighlightInfo> myResults;
+
+      public PatternVariableReferencesResolveVisitor(int totalCaseLabelsProcessed, Set<PsiPatternVariable> patternVariables) {
+        myLabelsProcessed = totalCaseLabelsProcessed;
+        myPatternVariables = patternVariables;
+        myResults = new SmartList<>();
+      }
+
+      @Override
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        if (myLabelsProcessed < 2) return;
+        super.visitReferenceElement(reference);
+
+        final PsiElement anchor = reference.resolve();
+        if (!(anchor instanceof PsiPatternVariable) || !myPatternVariables.contains(anchor)) return;
+
+        final String referenceName = reference.getElement().getText();
+        final HighlightInfo error = createError(reference, JavaErrorBundle.message("cannot.resolve.symbol", referenceName));
+
+        myResults.add(error);
+      }
     }
   }
 }
