@@ -37,7 +37,7 @@ object StatisticsUtil {
    *
    * Special cases:
    *  - returns the same value if it is a power of two;
-   *  - returns `-roundToPowerOfTwo(abs(value))` if value is negative;
+   *  - returns `-roundToPowerOfTwo(abs(value))` if the value is negative;
    *  - returns 0 in case of 0;
    *  - returns Int.MAX_VALUE if next power of two is bigger than Int.MAX_VALUE;
    *  - returns Int.MIN_VALUE if next power of two is smaller than Int.MIN_VALUE.
