@@ -51,4 +51,6 @@ class ForMultiLanguageSupport {
   //   <TYPO>igamma</TYPO>(a, x) = gamma(a, x) / Gamma(a)
 
   // value between hours and minutes (":" is used by default)
+
+  // Copyright refers to <warning descr="EN_A_VS_AN">an</warning> legal right bla-bla-bla, and we check for errors here.
 }
