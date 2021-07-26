@@ -4,6 +4,7 @@ package training.ui
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.openapi.util.SystemInfo
@@ -159,17 +160,11 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     StyleConstants.setFontFamily(LINK, fontFamily)
     StyleConstants.setFontSize(LINK, fontSize)
 
-    StyleConstants.setLeftIndent(TASK_PARAGRAPH_STYLE, UISettings.instance.checkIndent.toFloat())
-    StyleConstants.setRightIndent(TASK_PARAGRAPH_STYLE, 0f)
-    StyleConstants.setSpaceAbove(TASK_PARAGRAPH_STYLE, 24.0f)
-    StyleConstants.setSpaceBelow(TASK_PARAGRAPH_STYLE, 0.0f)
-    StyleConstants.setLineSpacing(TASK_PARAGRAPH_STYLE, 0.2f)
+    StyleConstants.setSpaceAbove(TASK_PARAGRAPH_STYLE, UISettings.instance.taskParagraphAbove.toFloat())
+    setCommonParagraphAttributes(TASK_PARAGRAPH_STYLE)
 
-    StyleConstants.setLeftIndent(INTERNAL_PARAGRAPH_STYLE, UISettings.instance.checkIndent.toFloat())
-    StyleConstants.setRightIndent(INTERNAL_PARAGRAPH_STYLE, 0f)
-    StyleConstants.setSpaceAbove(INTERNAL_PARAGRAPH_STYLE, 8.0f)
-    StyleConstants.setSpaceBelow(INTERNAL_PARAGRAPH_STYLE, 0.0f)
-    StyleConstants.setLineSpacing(INTERNAL_PARAGRAPH_STYLE, 0.2f)
+    StyleConstants.setSpaceAbove(INTERNAL_PARAGRAPH_STYLE, UISettings.instance.taskInternalParagraphAbove.toFloat())
+    setCommonParagraphAttributes(INTERNAL_PARAGRAPH_STYLE)
 
     StyleConstants.setLineSpacing(BALLOON_STYLE, 0.2f)
     StyleConstants.setLeftIndent(BALLOON_STYLE, UISettings.instance.balloonIndent.toFloat())
@@ -179,6 +174,13 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     StyleConstants.setForeground(SHORTCUT, UISettings.instance.shortcutTextColor)
     StyleConstants.setForeground(LINK, UISettings.instance.lessonLinkColor)
     StyleConstants.setForeground(CODE, codeForegroundColor)
+  }
+
+  private fun setCommonParagraphAttributes(attributeSet: SimpleAttributeSet) {
+    StyleConstants.setLeftIndent(attributeSet, UISettings.instance.checkIndent.toFloat())
+    StyleConstants.setRightIndent(attributeSet, 0f)
+    StyleConstants.setSpaceBelow(attributeSet, 0.0f)
+    StyleConstants.setLineSpacing(attributeSet, 0.2f)
   }
 
   fun messagesNumber(): Int = activeMessages.size
@@ -253,10 +255,12 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     insertOffset = 0
     var previous: LessonMessage? = null
     for (lessonMessage in allLessonMessages()) {
-      paragraphStyle = when {
-        previous?.useInternalParagraphStyle == true -> INTERNAL_PARAGRAPH_STYLE
-        panelMode -> TASK_PARAGRAPH_STYLE
-        else -> BALLOON_STYLE
+      if (previous?.messageParts?.firstOrNull()?.type != MessagePart.MessageType.ILLUSTRATION) {
+        paragraphStyle = when {
+          previous?.useInternalParagraphStyle == true -> INTERNAL_PARAGRAPH_STYLE
+          panelMode -> TASK_PARAGRAPH_STYLE
+          else -> BALLOON_STYLE
+        }
       }
       val messageParts: List<MessagePart> = lessonMessage.messageParts
       lessonMessage.start = insertOffset
@@ -274,6 +278,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
           MessagePart.MessageType.LINK -> appendLink(part)?.let { ranges.add(it) }
           MessagePart.MessageType.ICON_IDX -> LearningUiManager.iconMap[part.text]?.let { addPlaceholderForIcon(it) }
           MessagePart.MessageType.PROPOSE_RESTORE -> insertText(part.text, BOLD)
+          MessagePart.MessageType.ILLUSTRATION -> addPlaceholderForIllustration(part)
           MessagePart.MessageType.LINE_BREAK -> {
             insertText("\n", REGULAR)
             paragraphStyle = INTERNAL_PARAGRAPH_STYLE
@@ -288,6 +293,23 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
       previous = lessonMessage
     }
   }
+
+  private fun addPlaceholderForIllustration(part: MessagePart) {
+    val illustration = LearningUiManager.iconMap[part.text]
+    if (illustration == null) {
+      thisLogger().error("No illustration for ${part.text}")
+    }
+    else {
+      val spaceAbove = spaceAboveIllustrationParagraph(illustration) + UISettings.instance.taskInternalParagraphAbove
+      val illustrationStyle = SimpleAttributeSet()
+      StyleConstants.setSpaceAbove(illustrationStyle, spaceAbove.toFloat())
+      setCommonParagraphAttributes(illustrationStyle)
+      paragraphStyle = illustrationStyle
+    }
+    insertText(" ", REGULAR)
+  }
+
+  private fun spaceAboveIllustrationParagraph(illustration: Icon) = illustration.iconHeight - getFontMetrics(this.font).height
 
   private fun addPlaceholderForIcon(icon: Icon) {
     var placeholder = " "
@@ -383,6 +405,9 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
       var startOffset = lessonMessage.start
       if (startOffset != 0) startOffset++
       val rectangle = modelToView2D(startOffset).toRectangle()
+      if (lessonMessage.messageParts.singleOrNull()?.type == MessagePart.MessageType.ILLUSTRATION) {
+        continue
+      }
       val icon = if (lessonMessage.state == MessageState.PASSED) {
         FeaturesTrainerIcons.Img.GreenCheckmark
       }
@@ -513,6 +538,12 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
             val rect = modelToView2D(myMessage.startOffset + 1)
             val icon = LearningUiManager.iconMap[myMessage.text]
             icon?.paintIcon(this, g2d, rect.x.toInt(), rect.y.toInt())
+          }
+          MessagePart.MessageType.ILLUSTRATION -> {
+            val x = modelToView2D(myMessage.startOffset).x.toInt()
+            val y = modelToView2D(myMessage.endOffset - 1).y.toInt()
+            val icon = LearningUiManager.iconMap[myMessage.text]
+            icon?.paintIcon(this, g2d, x, y - spaceAboveIllustrationParagraph(icon))
           }
         }
       }
