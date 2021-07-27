@@ -14,7 +14,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -1231,7 +1231,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       return importProjects(new IdeModifiableModelsProviderBridge(myProject, builder));
     }
     else {
-      return importProjects(new IdeModifiableModelsProviderImpl(myProject));
+      return importProjects(ProjectDataManager.getInstance().createModifiableModelsProvider(myProject));
     }
   }
 

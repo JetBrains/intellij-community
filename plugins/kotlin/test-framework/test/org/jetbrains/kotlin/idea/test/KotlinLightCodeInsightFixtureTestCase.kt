@@ -13,7 +13,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -403,7 +403,7 @@ private fun rollbackCompilerOptions(project: Project, module: Module, removeFace
     KotlinCommonCompilerArgumentsHolder.getInstance(project).update { this.languageVersion = LanguageVersion.LATEST_STABLE.versionString }
 
     if (removeFacet) {
-        module.removeKotlinFacet(IdeModifiableModelsProviderImpl(project), commitModel = true)
+        module.removeKotlinFacet(ProjectDataManager.getInstance().createModifiableModelsProvider(project), commitModel = true)
         return
     }
 
@@ -434,7 +434,7 @@ fun withCustomLanguageAndApiVersion(
         if (removeFacet) {
             KotlinCommonCompilerArgumentsHolder.getInstance(project)
                 .update { this.languageVersion = LanguageVersion.LATEST_STABLE.versionString }
-            module.removeKotlinFacet(IdeModifiableModelsProviderImpl(project), commitModel = true)
+            module.removeKotlinFacet(ProjectDataManager.getInstance().createModifiableModelsProvider(project), commitModel = true)
         } else {
             configureLanguageAndApiVersion(
                 project,
@@ -453,7 +453,7 @@ private fun configureLanguageAndApiVersion(
     apiVersion: String?
 ) {
     WriteAction.run<Throwable> {
-        val modelsProvider = IdeModifiableModelsProviderImpl(project)
+        val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
         val facet = module.getOrCreateFacet(modelsProvider, useProjectSettings = false)
 
         val compilerArguments = facet.configuration.settings.compilerArguments
