@@ -41,13 +41,18 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
       if (isSpecificallyModified()) {
         return true;
       }
-      RunnerAndConfigurationSettings snapshot = getEditor().getSnapshot();
+      RunnerAndConfigurationSettings snapshot = getSnapshot();
       return !JDOMUtil.areElementsEqual(((SerializableScheme)original).writeScheme(), ((SerializableScheme)snapshot).writeScheme());
     }
     catch (ConfigurationException e) {
       //ignore
     }
     return super.isModified();
+  }
+
+  @NotNull
+  protected RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
+    return getEditor().getSnapshot();
   }
 
   boolean isSpecificallyModified() {

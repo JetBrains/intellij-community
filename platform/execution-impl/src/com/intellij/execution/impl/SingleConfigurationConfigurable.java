@@ -118,6 +118,15 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   @Override
+  protected @NotNull RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
+    RunnerAndConfigurationSettings snapshot = super.getSnapshot();
+    snapshot.setName(getNameText());
+    RunnerAndConfigurationSettings original = getSettings();
+    snapshot.setTemporary(original.isTemporary());
+    return snapshot;
+  }
+
+  @Override
   boolean isSpecificallyModified() {
     return myComponent != null && myComponent.myRCStorageUi != null && myComponent.myRCStorageUi.isModified();
   }
