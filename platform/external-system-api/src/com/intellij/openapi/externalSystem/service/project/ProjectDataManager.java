@@ -53,4 +53,10 @@ public interface ProjectDataManager {
 
   @NotNull
   Collection<ExternalProjectInfo> getExternalProjectsData(@NotNull Project project, @NotNull ProjectSystemId projectSystemId);
+
+  /**
+   * Returns an instance which can be used to perform massive modifications of the project configurations. {@link IdeModifiableModelsProvider#commit()}
+   * must be manually called on the returned instance for these modifications to take effect.
+   */
+  @NotNull IdeModifiableModelsProvider createModifiableModelsProvider(@NotNull Project project);
 }
