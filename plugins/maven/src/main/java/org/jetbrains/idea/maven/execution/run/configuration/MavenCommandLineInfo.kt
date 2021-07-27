@@ -61,7 +61,7 @@ class MavenCommandLineInfo(project: Project, projectPathField: WorkingDirectoryF
       phases.sortedBy { it.text } + goals.sortedBy { it.text }
     }
 
-    override val tableCompletionInfo: List<TextCompletionInfo> = emptyList()
+    override val tableCompletionInfo: List<TextCompletionInfo> by lazy { completionInfo }
   }
 
   private class ArgumentsCompletionTableInfo : CompletionTableInfo {
