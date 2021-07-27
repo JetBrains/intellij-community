@@ -35,10 +35,11 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class ShowUsagesTableCellRenderer implements TableCellRenderer {
-  private final UsageViewImpl myUsageView;
-  @NotNull private final AtomicInteger myOutOfScopeUsages;
-  @NotNull private final SearchScope mySearchScope;
+final class ShowUsagesTableCellRenderer implements TableCellRenderer {
+
+  private final @NotNull UsageViewImpl myUsageView;
+  private final @NotNull AtomicInteger myOutOfScopeUsages;
+  private final @NotNull SearchScope mySearchScope;
 
   ShowUsagesTableCellRenderer(@NotNull UsageViewImpl usageView, @NotNull AtomicInteger outOfScopeUsages, @NotNull SearchScope searchScope) {
     myUsageView = usageView;
