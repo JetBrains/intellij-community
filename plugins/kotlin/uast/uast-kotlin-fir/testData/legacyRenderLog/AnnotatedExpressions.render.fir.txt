@@ -1,8 +1,8 @@
 public final class AnnotatedExpressionsKt {
     public static final fun foo() : void {
         [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
-        @not-implemented-annotation var a: int = 1
-        @not-implemented-annotation var b: int = 2
+        @kotlin.Suppress var a: int = 1
+        @kotlin.Suppress var b: int = 2
         [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
         [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
         var c: int = elvis {

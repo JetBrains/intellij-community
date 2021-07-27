@@ -1,14 +1,14 @@
 TestAnnotation -> UClass (name = TestAnnotation)
-TestAnnotation -> USimpleNameReferenceExpression (identifier = TestAnnotation)
+TestAnnotation -> UAnnotation (fqName = TestAnnotation)
 prop1 -> UField (name = prop1)
 Int -> USimpleNameReferenceExpression (identifier = Int)
 get -> null
-TestAnnotation -> USimpleNameReferenceExpression (identifier = TestAnnotation)
+TestAnnotation -> UAnnotation (fqName = TestAnnotation)
 prop2 -> null
 Int -> USimpleNameReferenceExpression (identifier = Int)
 get -> [!] UnknownKotlinExpression (PROPERTY_ACCESSOR)
 set -> null
-TestAnnotation -> USimpleNameReferenceExpression (identifier = TestAnnotation)
+TestAnnotation -> UAnnotation (fqName = TestAnnotation)
 prop3 -> null
 Int -> USimpleNameReferenceExpression (identifier = Int)
 get -> [!] UnknownKotlinExpression (PROPERTY_ACCESSOR)

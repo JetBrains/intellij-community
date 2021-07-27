@@ -1,17 +1,19 @@
 UFile (package = ) [public final class ReceiverFunKt {...]
     UClass (name = ReceiverFunKt) [public final class ReceiverFunKt {...}]
-        UMethod (name = foo) [public static final fun foo(@not-implemented-annotation @org.jetbrains.annotations.NotNull $this$foo: java.lang.String) : int {...}]
-            UParameter (name = $this$foo) [@not-implemented-annotation @org.jetbrains.annotations.NotNull var $this$foo: java.lang.String]
-                UAnnotation (fqName = not-implemented-annotation) [@not-implemented-annotation]
+        UMethod (name = foo) [public static final fun foo(@MyReceiverAnnotation @org.jetbrains.annotations.NotNull $this$foo: java.lang.String) : int {...}]
+            UParameter (name = $this$foo) [@MyReceiverAnnotation @org.jetbrains.annotations.NotNull var $this$foo: java.lang.String]
+                UAnnotation (fqName = MyReceiverAnnotation) [@MyReceiverAnnotation]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return this.length] = Nothing
                     UQualifiedReferenceExpression [this.length] = external length()
                         UThisExpression (label = null) [this] = Undetermined
                         USimpleNameReferenceExpression (identifier = length) [length] = external length()
-        UMethod (name = getRx) [public static final fun getRx(@not-implemented-annotation @org.jetbrains.annotations.NotNull $this$rx: java.lang.String) : kotlin.text.Regex {...}]
-            UParameter (name = $this$rx) [@not-implemented-annotation @org.jetbrains.annotations.NotNull var $this$rx: java.lang.String]
-                UAnnotation (fqName = not-implemented-annotation) [@not-implemented-annotation]
+        UMethod (name = getRx) [public static final fun getRx(@MyReceiverAnnotation(name = "RegExp") @org.jetbrains.annotations.NotNull $this$rx: java.lang.String) : kotlin.text.Regex {...}]
+            UParameter (name = $this$rx) [@MyReceiverAnnotation(name = "RegExp") @org.jetbrains.annotations.NotNull var $this$rx: java.lang.String]
+                UAnnotation (fqName = MyReceiverAnnotation) [@MyReceiverAnnotation(name = "RegExp")]
+                    UNamedExpression (name = name) [name = "RegExp"] = Undetermined
+                        ULiteralExpression (value = "RegExp") ["RegExp"] = "RegExp"
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return toRegex()] = Nothing

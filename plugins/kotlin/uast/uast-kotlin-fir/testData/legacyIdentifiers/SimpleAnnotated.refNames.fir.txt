@@ -1,5 +1,0 @@
-Suppress -> USimpleNameReferenceExpression (identifier = Suppress) from KtNameReferenceExpression
-println -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) from KtNameReferenceExpression
-kotlin -> USimpleNameReferenceExpression (identifier = kotlin) from KtNameReferenceExpression
-SinceKotlin -> USimpleNameReferenceExpression (identifier = SinceKotlin) from KtNameReferenceExpression
-String -> USimpleNameReferenceExpression (identifier = String) from KtNameReferenceExpression

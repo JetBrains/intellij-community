@@ -34,10 +34,12 @@ UFile (package = ) [public final class TryCatch {...]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [body()] : PsiType:Unit
                             UIdentifier (Identifier (body)) [UIdentifier (Identifier (body))]
                             USimpleNameReferenceExpression (identifier = body, resolvesTo = null) [body] : PsiType:Unit
-                    UCatchClause (e) [catch (@org.jetbrains.annotations.NotNull @not-implemented-annotation var e: java.lang.Throwable) {...}]
-                        UParameter (name = e) [@org.jetbrains.annotations.NotNull @not-implemented-annotation var e: java.lang.Throwable]
+                    UCatchClause (e) [catch (@org.jetbrains.annotations.NotNull @java.lang.SuppressWarnings(value = "Something") var e: java.lang.Throwable) {...}]
+                        UParameter (name = e) [@org.jetbrains.annotations.NotNull @java.lang.SuppressWarnings(value = "Something") var e: java.lang.Throwable]
                             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                            UAnnotation (fqName = not-implemented-annotation) [@not-implemented-annotation]
+                            UAnnotation (fqName = java.lang.SuppressWarnings) [@java.lang.SuppressWarnings(value = "Something")]
+                                UNamedExpression (name = value) [value = "Something"]
+                                    ULiteralExpression (value = "Something") ["Something"] : PsiType:String
                         UBlockExpression [{...}] : PsiType:Unit
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [catcher()] : PsiType:Unit
                                 UIdentifier (Identifier (catcher)) [UIdentifier (Identifier (catcher))]
