@@ -595,7 +595,7 @@ public final class PyNames {
    * @return true iff the name is either a keyword or a reserved name, like None.
    */
   public static boolean isReserved(@NonNls String name) {
-    return KEYWORDS.contains(name) || NONE.equals(name);
+    return name != null && KEYWORDS.contains(name) || NONE.equals(name);
   }
 
   // NOTE: includes unicode only good for py3k
