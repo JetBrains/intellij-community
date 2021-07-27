@@ -93,6 +93,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
@@ -385,7 +386,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     final AtomicInteger outOfScopeUsages = new AtomicInteger();
     AtomicBoolean manuallyResized = new AtomicBoolean();
 
-    var renderer = new ShowUsagesTableCellRenderer(project, usageView::isOriginUsage, outOfScopeUsages, searchScope);
+    Predicate<? super Usage> originUsageCheck = usageView::isOriginUsage;
+    var renderer = new ShowUsagesTableCellRenderer(project, originUsageCheck, outOfScopeUsages, searchScope);
     ShowUsagesTable table = new ShowUsagesTable(renderer, usageView);
     AsyncProcessIcon processIcon = new AsyncProcessIcon("xxx");
     TitlePanel statusPanel = new TitlePanel();
@@ -485,7 +487,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       int totalCount = copy.size();
       int visibleCount = totalCount - filteredOutCount;
       statusPanel.setText(getStatusString(!processIcon.isDisposed(), hasMore, visibleCount, totalCount));
-      rebuildTable(usageView, data, table, popup, parameters.popupPosition, parameters.minWidth, manuallyResized);
+      rebuildTable(project, originUsageCheck, data, table, popup, parameters.popupPosition, parameters.minWidth, manuallyResized);
     });
 
     MessageBusConnection messageBusConnection = project.getMessageBus().connect(usageView);
@@ -1049,7 +1051,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     return width;
   }
 
-  private static void rebuildTable(@NotNull UsageViewImpl usageView,
+  private static void rebuildTable(@NotNull Project project,
+                                   @NotNull Predicate<? super Usage> originUsageCheck,
                                    @NotNull List<UsageNode> data,
                                    @NotNull ShowUsagesTable table,
                                    @Nullable AbstractPopup popup,
@@ -1072,7 +1075,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       // do not pre-select the usage under caret by default
       if (newSelection == 0 && table.getModel().getRowCount() > 1) {
         Object valueInTopRow = table.getModel().getValueAt(0, 0);
-        if (valueInTopRow instanceof UsageNode && usageView.isOriginUsage(((UsageNode)valueInTopRow).getUsage())) {
+        if (valueInTopRow instanceof UsageNode && originUsageCheck.test(((UsageNode)valueInTopRow).getUsage())) {
           newSelection++;
         }
       }
@@ -1085,7 +1088,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         calcMaxWidth(table); // compute column widths
       }
       else {
-        PropertiesComponent properties = PropertiesComponent.getInstance(usageView.getProject());
+        PropertiesComponent properties = PropertiesComponent.getInstance(project);
         setPopupSize(table, popup, popupPosition, minWidth, properties.isValueSet(PREVIEW_PROPERTY_KEY), data.size());
       }
     }
