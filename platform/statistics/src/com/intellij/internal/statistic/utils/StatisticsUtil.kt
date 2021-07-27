@@ -5,6 +5,8 @@ import java.text.SimpleDateFormat
 import java.time.ZoneOffset
 import java.util.*
 import kotlin.math.abs
+import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 object StatisticsUtil {
   private const val kilo = 1000
@@ -69,6 +71,62 @@ object StatisticsUtil {
       if (value > 0) return Long.MAX_VALUE else return Long.MIN_VALUE
     }
     return java.lang.Long.signum(value) * nextPowerOfTwo
+  }
+
+  /**
+   * Please, use only in specific cases where precision of `roundToPowerOfTwo` is not enough
+   *
+   * Anonymizes sensitive project properties by rounding it to the power of ten multiplied with either:
+   *  - leading digit if second digit is smaller than 4 or equal to 4
+   *  - leading digit plus one if second digit is greater than 5 or equal to 5
+   *
+   * Special cases:
+   *  - returns the same value if all trailing digits equal zero;
+   *  - returns `-roundToHighestDigit(abs(value))` if the value is negative;
+   *  - returns 0 in case of 0;
+   *  - returns +/-1 for abs(value) in 1..4
+   *  - returns +/-10 for abs(value) in 5..10
+   *  - returns `roundToHighestDigit(Int.MAX_VALUE)` for Int.MIN_VALUE
+   */
+  @JvmStatic
+  fun roundToHighestDigit(value: Int): Int {
+    if (value == 0) return 0
+    val abs = if (value != Int.MIN_VALUE) abs(value) else Int.MAX_VALUE // See abs(Int) documentation
+    if (abs <= 4) return Integer.signum(value) * 1
+    else if (abs <= 10) return Integer.signum(value) * 10
+
+    var firstDigit = abs.toFloat()
+    var tenPowX = 1
+    while (firstDigit > 10) {
+      firstDigit /= 10
+      tenPowX *= 10
+    }
+
+    // can't get overflow because second digit in max int (2147483647) is '1'
+    return Integer.signum(value) * (firstDigit.roundToInt() * tenPowX)
+  }
+
+  /**
+   * Please, use only in specific cases where precision of `roundToPowerOfTwo` is not enough
+   *
+   *  @see com.intellij.internal.statistic.utils.StatisticsUtil.roundToHighestDigit(int)
+   */
+  @JvmStatic
+  fun roundToHighestDigit(value: Long): Long {
+    if (value == 0L) return 0L
+    val abs = if (value != Long.MIN_VALUE) abs(value) else Long.MAX_VALUE // See abs(Long) documentation
+    if (abs <= 4L) return java.lang.Long.signum(value) * 1L
+    else if (abs <= 10L) return java.lang.Long.signum(value) * 10L
+
+    var firstDigit = abs.toDouble()
+    var tenPowX = 1L
+    while (firstDigit > 10L) {
+      firstDigit /= 10L
+      tenPowX *= 10L
+    }
+
+    // can't get overflow because second digit in max long (9223372036854775807L) is '2'
+    return java.lang.Long.signum(value) * (firstDigit.roundToLong() * tenPowX)
   }
 
   /**
