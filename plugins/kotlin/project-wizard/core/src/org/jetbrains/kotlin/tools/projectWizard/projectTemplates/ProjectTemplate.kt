@@ -74,7 +74,6 @@ abstract class ProjectTemplate : DisplayableSettingItem {
         val ALL = listOf(
             ConsoleApplicationProjectTemplate,
             MultiplatformMobileApplicationProjectTemplate,
-            MultiplatformMobileLibraryProjectTemplate,
             MultiplatformApplicationProjectTemplate,
             MultiplatformLibraryProjectTemplate,
             NativeApplicationProjectTemplate,
@@ -378,43 +377,6 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
 
     protected abstract fun iosAppModule(shared: Module): Module
     protected abstract fun androidAppModule(shared: Module): Module
-}
-
-object MultiplatformMobileLibraryProjectTemplate : ProjectTemplate() {
-    override val title = KotlinNewProjectWizardBundle.message("project.template.mpp.mobile.lib.title")
-    override val description = KotlinNewProjectWizardBundle.message("project.template.mpp.mobile.lib.description")
-    override val id = "multiplatformMobileLibrary"
-
-    @NonNls
-    override val suggestedProjectName = "myMppMobileLibrary"
-    override val projectKind = ProjectKind.Multiplatform
-
-    override val setsPluginSettings: List<SettingWithValue<*, *>>
-        get() = listOf(
-            KotlinPlugin.modules.reference withValue listOf(
-                MultiplatformModule(
-                    "library",
-                    template = MobileMppTemplate(),
-                    targets = listOf(
-                        ModuleType.common.createDefaultTarget(),
-                        Module(
-                            "android", AndroidTargetConfigurator,
-                            sourceSets = SourcesetType.ALL.map { type ->
-                                Sourceset(type, dependencies = emptyList())
-                            }
-                        ).withConfiguratorSettings<AndroidTargetConfigurator> {
-                            configurator.androidPlugin withValue AndroidGradlePlugin.LIBRARY
-                        },
-                        Module(
-                            "ios", RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.iosX64),
-                            sourceSets = SourcesetType.ALL.map { type ->
-                                Sourceset(type, dependencies = emptyList())
-                            }
-                        )
-                    )
-                )
-            )
-        )
 }
 
 object NodeJsApplicationProjectTemplate : ProjectTemplate() {

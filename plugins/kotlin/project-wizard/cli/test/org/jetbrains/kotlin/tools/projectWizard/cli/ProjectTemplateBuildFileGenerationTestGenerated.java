@@ -63,11 +63,6 @@ public class ProjectTemplateBuildFileGenerationTestGenerated extends AbstractPro
         runTest("testData/projectTemplatesBuildFileGeneration/multiplatformMobileApplication/");
     }
 
-    @TestMetadata("multiplatformMobileLibrary")
-    public void testMultiplatformMobileLibrary() throws Exception {
-        runTest("testData/projectTemplatesBuildFileGeneration/multiplatformMobileLibrary/");
-    }
-
     @TestMetadata("nativeApplication")
     public void testNativeApplication() throws Exception {
         runTest("testData/projectTemplatesBuildFileGeneration/nativeApplication/");

@@ -65,11 +65,6 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/multiplatformMobileApplication/");
         }
 
-        @TestMetadata("multiplatformMobileLibrary")
-        public void testMultiplatformMobileLibrary() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/multiplatformMobileLibrary/");
-        }
-
         @TestMetadata("nativeApplication")
         public void testNativeApplication() throws Exception {
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/nativeApplication/");
@@ -123,11 +118,6 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/multiplatformMobileApplication/");
         }
 
-        @TestMetadata("multiplatformMobileLibrary")
-        public void testMultiplatformMobileLibrary() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/multiplatformMobileLibrary/");
-        }
-
         @TestMetadata("nativeApplication")
         public void testNativeApplication() throws Exception {
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/nativeApplication/");
@@ -179,11 +169,6 @@ public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends
         @TestMetadata("multiplatformMobileApplication")
         public void testMultiplatformMobileApplication() throws Exception {
             runTest("../cli/testData/projectTemplatesBuildFileGeneration/multiplatformMobileApplication/");
-        }
-
-        @TestMetadata("multiplatformMobileLibrary")
-        public void testMultiplatformMobileLibrary() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/multiplatformMobileLibrary/");
         }
 
         @TestMetadata("nativeApplication")
