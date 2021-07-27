@@ -1,18 +1,61 @@
 UFile (package = ) [public final class AnnotationParametersKt {...]
     UClass (name = AnnotationParametersKt) [public final class AnnotationParametersKt {...}]
-        UMethod (name = foo) [public static final fun foo() : int {...}]
+        UMethod (name = foo) [@RequiresPermission(anyOf = <anonymous class>(1, 2, 3))...}]
+            UAnnotation (fqName = RequiresPermission) [@RequiresPermission(anyOf = <anonymous class>(1, 2, 3))]
+                UNamedExpression (name = anyOf) [anyOf = <anonymous class>(1, 2, 3)] = Nothing
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3)) [<anonymous class>(1, 2, 3)] = external <anonymous class>(1, 2, 3)((long)1, (long)2, (long)3)
+                        UIdentifier (Identifier (intArrayOf)) [UIdentifier (Identifier (intArrayOf))]
+                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>(1, 2, 3)((long)1, (long)2, (long)3)
+                        ULiteralExpression (value = 1) [1] = (long)1
+                        ULiteralExpression (value = 2) [2] = (long)2
+                        ULiteralExpression (value = 3) [3] = (long)3
+            UAnnotation (fqName = IntRange) [@IntRange(from = 10, to = 0)]
+                UNamedExpression (name = from) [from = 10] = Nothing
+                    ULiteralExpression (value = 10) [10] = (long)10
+                UNamedExpression (name = to) [to = 0] = Nothing
+                    ULiteralExpression (value = 0) [0] = (long)0
+            UAnnotation (fqName = WithDefaultValue) [@WithDefaultValue]
+            UAnnotation (fqName = SuppressLint) [@SuppressLint(value = "Lorem")]
+                UNamedExpression (name = value) [value = "Lorem"] = Nothing
+                    ULiteralExpression (value = "Lorem") ["Lorem"] = "Lorem"
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return 5] = Nothing
                     ULiteralExpression (value = 5) [5] = (long)5
-        UMethod (name = bar) [public static final fun bar() : void {...}]
+        UMethod (name = bar) [@IntRange(from = 0, to = 100)...}]
+            UAnnotation (fqName = IntRange) [@IntRange(from = 0, to = 100)]
+                UNamedExpression (name = from) [from = 0] = Nothing
+                    ULiteralExpression (value = 0) [0] = (long)0
+                UNamedExpression (name = to) [to = 100] = Nothing
+                    ULiteralExpression (value = 100) [100] = (long)100
+            UAnnotation (fqName = SuppressLint) [@SuppressLint(value = "Lorem", value = "Ipsum", value = "Dolor")]
+                UNamedExpression (name = value) [value = "Lorem"] = Nothing
+                    ULiteralExpression (value = "Lorem") ["Lorem"] = "Lorem"
+                UNamedExpression (name = value) [value = "Ipsum"] = Nothing
+                    ULiteralExpression (value = "Ipsum") ["Ipsum"] = "Ipsum"
+                UNamedExpression (name = value) [value = "Dolor"] = Nothing
+                    ULiteralExpression (value = "Dolor") ["Dolor"] = "Dolor"
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return Unit] = Nothing
                     USimpleNameReferenceExpression (identifier = Unit) [Unit] = external Unit()
-        UMethod (name = fooWithArrLiteral) [public static final fun fooWithArrLiteral() : int {...}]
+        UMethod (name = fooWithArrLiteral) [@RequiresPermission(anyOf = collectionLiteral[1, 2, 3])...}]
+            UAnnotation (fqName = RequiresPermission) [@RequiresPermission(anyOf = collectionLiteral[1, 2, 3])]
+                UNamedExpression (name = anyOf) [anyOf = collectionLiteral[1, 2, 3]] = Nothing
+                    UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [collectionLiteral[1, 2, 3]] = external collectionLiteral[1, 2, 3]((long)1, (long)2, (long)3)
+                        UIdentifier (Identifier ([)) [UIdentifier (Identifier ([))]
+                        ULiteralExpression (value = 1) [1] = (long)1
+                        ULiteralExpression (value = 2) [2] = (long)2
+                        ULiteralExpression (value = 3) [3] = (long)3
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return 5] = Nothing
                     ULiteralExpression (value = 5) [5] = (long)5
-        UMethod (name = fooWithStrArrLiteral) [public static final fun fooWithStrArrLiteral() : int {...}]
+        UMethod (name = fooWithStrArrLiteral) [@RequiresStrPermission(strs = collectionLiteral["a", "b", "c"])...}]
+            UAnnotation (fqName = RequiresStrPermission) [@RequiresStrPermission(strs = collectionLiteral["a", "b", "c"])]
+                UNamedExpression (name = strs) [strs = collectionLiteral["a", "b", "c"]] = Nothing
+                    UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [collectionLiteral["a", "b", "c"]] = external collectionLiteral["a", "b", "c"]("a", "b", "c")
+                        UIdentifier (Identifier ([)) [UIdentifier (Identifier ([))]
+                        ULiteralExpression (value = "a") ["a"] = "a"
+                        ULiteralExpression (value = "b") ["b"] = "b"
+                        ULiteralExpression (value = "c") ["c"] = "c"
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return 3] = Nothing
                     ULiteralExpression (value = 3) [3] = (long)3

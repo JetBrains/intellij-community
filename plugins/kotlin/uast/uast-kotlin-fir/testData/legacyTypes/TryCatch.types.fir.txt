@@ -27,7 +27,10 @@ UFile (package = ) [public final class TryCatch {...]
             UBlockExpression [{...}] : PsiType:Unit
     UClass (name = TryCatchAnnotations) [public final class TryCatchAnnotations {...}]
         UMethod (name = TryCatchAnnotations) [public fun TryCatchAnnotations() = UastEmptyExpression]
-        UMethod (name = catches) [public final fun catches() : void {...}]
+        UMethod (name = catches) [@java.lang.SuppressWarnings(value = "Something")...}]
+            UAnnotation (fqName = java.lang.SuppressWarnings) [@java.lang.SuppressWarnings(value = "Something")]
+                UNamedExpression (name = value) [value = "Something"]
+                    ULiteralExpression (value = "Something") ["Something"] : PsiType:String
             UBlockExpression [{...}] : PsiType:Unit
                 UTryExpression [try {...}] : PsiType:Unit
                     UBlockExpression [{...}] : PsiType:Unit
