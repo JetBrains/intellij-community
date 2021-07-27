@@ -64,14 +64,13 @@ class TextCompletionPopup<C : JTextComponent>(
       }
 
       val hasVariances = visibleCompletionVariants[0] != null
-      val hasUncompletedVariances = visibleCompletionVariants.any { it?.text != textToComplete }
       when (type) {
         UpdatePopupType.UPDATE -> popup?.update()
         UpdatePopupType.SHOW -> showPopup()
         UpdatePopupType.HIDE -> hidePopup()
         UpdatePopupType.SHOW_IF_HAS_VARIANCES ->
           when {
-            hasVariances && hasUncompletedVariances -> showPopup()
+            hasVariances -> showPopup()
             else -> hidePopup()
           }
       }
