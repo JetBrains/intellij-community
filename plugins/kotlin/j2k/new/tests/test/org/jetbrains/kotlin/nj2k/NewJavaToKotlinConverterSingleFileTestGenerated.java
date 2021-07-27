@@ -5194,6 +5194,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/types/capturedWildcardTypeAsLambdaParameter.java");
         }
 
+        @TestMetadata("nestedArrays.java")
+        public void testNestedArrays() throws Exception {
+            runTest("testData/newJ2k/types/nestedArrays.java");
+        }
+
         @TestMetadata("nullType.java")
         public void testNullType() throws Exception {
             runTest("testData/newJ2k/types/nullType.java");

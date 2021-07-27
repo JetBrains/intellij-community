@@ -114,6 +114,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
             fromPsiType(type.representative)
         is PsiLambdaParameterType -> // Probably, means that we have erroneous Java code
             JKNoType
+        is PsiLambdaExpressionType -> type.expression.functionalInterfaceType?.let(::createPsiType) ?: JKNoType
         else -> throw Exception("Invalid PSI ${type::class.java}")
     }
 
