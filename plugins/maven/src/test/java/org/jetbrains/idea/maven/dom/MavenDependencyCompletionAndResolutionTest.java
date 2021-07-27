@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
-import com.intellij.util.PathUtil;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
@@ -33,7 +32,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -433,59 +431,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
     assertResolved(myProjectPom, findPsiFile(f));
-  }
-
-  @Test 
-  public void testResolveSystemManagedDependency() {
-    String someJarPath = PathUtil.getJarPathForClass(ArrayList.class).replace('\\', '/');
-
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<dependencyManagement>" +
-                  "  <dependencies>" +
-                  "    <dependency>" +
-                  "      <groupId>direct-system-dependency</groupId>" +
-                  "      <artifactId>direct-system-dependency</artifactId>" +
-                  "      <version>1.0</version>" +
-                  "      <scope>system</scope>" +
-                  "      <systemPath>" + someJarPath + "</systemPath>" +
-                  "    </dependency>" +
-                  "  </dependencies>" +
-                  "</dependencyManagement>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>direct-system-dependency</groupId>" +
-                  "    <artifactId>direct-system-dependency</artifactId>" +
-                  "  </dependency>" +
-                  "</dependencies>");
-
-    createProjectPom("<groupId>test</groupId>" +
-                      "<artifactId>project</artifactId>" +
-                      "<version>1</version>" +
-
-                      "<dependencyManagement>" +
-                      "  <dependencies>" +
-                      "    <dependency>" +
-                      "      <groupId>direct-system-dependency</groupId>" +
-                      "      <artifactId>direct-system-dependency</artifactId>" +
-                      "      <version>1.0</version>" +
-                      "      <scope>system</scope>" +
-                      "      <systemPath>" + someJarPath + "</systemPath>" +
-                      "    </dependency>" +
-                      "  </dependencies>" +
-                      "</dependencyManagement>" +
-
-                      "<dependencies>" +
-                      "  <dependency>" +
-                      "    <groupId>direct-system-dependency</groupId>" +
-                      "    <artifactId>direct-system-dependency</artifactId>" +
-                      "  </dependency>" +
-                      "</dependencies>");
-
-    checkHighlighting(myProjectPom, true, false, true);
   }
 
   @Test 
