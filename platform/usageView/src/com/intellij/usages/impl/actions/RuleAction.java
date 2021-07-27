@@ -57,9 +57,9 @@ public abstract class RuleAction extends ToggleAction implements DumbAware {
   }
 
   protected @NotNull UsageViewSettings getUsageViewSettings(@NotNull AnActionEvent e) {
-    UsageView plainView = e.getData(UsageView.USAGE_VIEW_KEY);
-    if (plainView instanceof UsageViewImpl) {
-      return ((UsageViewImpl)plainView).getUsageViewSettings();
+    UsageViewImpl plainView = getUsageViewImpl(e);
+    if (plainView != null) {
+      return plainView.getUsageViewSettings();
     }
     return UsageViewSettings.getInstance();
   }
