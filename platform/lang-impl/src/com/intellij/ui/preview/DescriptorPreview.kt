@@ -21,8 +21,8 @@ class DescriptorPreview(val splitter: Splitter, val editable: Boolean, val id: C
 
   fun editor() = editor
   fun close() = open(null)
-  fun open(supplier: DescriptorSupplier?) {
-    this.descriptor = supplier?.descriptor
+  fun open(descriptor: OpenFileDescriptor?) {
+    this.descriptor = descriptor
   }
 
   private var editor: Editor? by observable(null) { _, oldEditor, newEditor ->
