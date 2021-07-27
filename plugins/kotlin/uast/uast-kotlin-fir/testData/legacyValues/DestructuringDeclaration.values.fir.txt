@@ -10,10 +10,10 @@ UFile (package = ) [public final class DestructuringDeclarationKt {...]
                         UBinaryExpression (operator = <other>) ["foo" <other> 1] = Undetermined
                             ULiteralExpression (value = "foo") ["foo"] = "foo"
                             ULiteralExpression (value = 1) [1] = (long)1
-                UDeclarationsExpression [@null @not-implemented-annotation var var465978a0: kotlin.Pair<? extends java.lang.String,? extends java.lang.String> = data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>] = Undetermined
-                    ULocalVariable (name = var465978a0) [@null @not-implemented-annotation var var465978a0: kotlin.Pair<? extends java.lang.String,? extends java.lang.String> = data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>]
+                UDeclarationsExpression [@null @null var var465978a0: kotlin.Pair<? extends java.lang.String,? extends java.lang.String> = data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>] = Undetermined
+                    ULocalVariable (name = var465978a0) [@null @null var var465978a0: kotlin.Pair<? extends java.lang.String,? extends java.lang.String> = data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>]
                         UAnnotation (fqName = null) [@null]
-                        UAnnotation (fqName = not-implemented-annotation) [@not-implemented-annotation]
+                        UAnnotation (fqName = null) [@null]
                         UBinaryExpressionWithType [data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>] = Undetermined
                             USimpleNameReferenceExpression (identifier = data) [data] = Undetermined
                             UTypeReferenceExpression (name = kotlin.Pair<? extends java.lang.String,? extends java.lang.String>) [kotlin.Pair<? extends java.lang.String,? extends java.lang.String>] = Undetermined

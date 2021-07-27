@@ -1,8 +1,8 @@
 UFile (package = ) [public final class PropertyWithAnnotationKt {...]
     UClass (name = PropertyWithAnnotationKt) [public final class PropertyWithAnnotationKt {...}]
-        UField (name = prop1) [@org.jetbrains.annotations.NotNull @not-implemented-annotation private static final var prop1: int = 0]
+        UField (name = prop1) [@org.jetbrains.annotations.NotNull @TestAnnotation private static final var prop1: int = 0]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UAnnotation (fqName = not-implemented-annotation) [@not-implemented-annotation]
+            UAnnotation (fqName = TestAnnotation) [@TestAnnotation]
             ULiteralExpression (value = 0) [0] = (long)0
         UMethod (name = getProp1) [public static final fun getProp1() : int = UastEmptyExpression]
         UMethod (name = getProp2) [public static final fun getProp2() : int {...}]

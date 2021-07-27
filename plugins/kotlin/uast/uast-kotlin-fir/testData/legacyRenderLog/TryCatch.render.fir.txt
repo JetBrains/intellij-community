@@ -25,7 +25,7 @@ public final class TryCatchAnnotations {
         try {
             body()
         }
-        catch (@org.jetbrains.annotations.NotNull @not-implemented-annotation var e: java.lang.Throwable) {
+        catch (@org.jetbrains.annotations.NotNull @java.lang.SuppressWarnings(value = "Something") var e: java.lang.Throwable) {
             catcher()
         }
         finally {
