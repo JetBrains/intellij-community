@@ -68,6 +68,11 @@ public class OutOfBlockModificationTestGenerated extends AbstractOutOfBlockModif
         runTest("testData/codeInsight/outOfBlock/FunWithType_Initializer_Expression.kt");
     }
 
+    @TestMetadata("InAnnotation.kt")
+    public void testInAnnotation() throws Exception {
+        runTest("testData/codeInsight/outOfBlock/InAnnotation.kt");
+    }
+
     @TestMetadata("InAnonymousObjectDeclaration.kt")
     public void testInAnonymousObjectDeclaration() throws Exception {
         runTest("testData/codeInsight/outOfBlock/InAnonymousObjectDeclaration.kt");
