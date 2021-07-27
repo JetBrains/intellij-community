@@ -325,10 +325,10 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
 
   @NotNull
   public static Collection<PsiFile> doCopyClasses(final Map<PsiFile, PsiClass[]> fileToClasses,
-                                                  @Nullable HashMap<PsiFile, String> map, final String copyClassName,
+                                                  @Nullable HashMap<PsiFile, String> fileToRelativePath, final String copyClassName,
                                                   final PsiDirectory targetDirectory,
                                                   final Project project) throws IncorrectOperationException {
-    final Map<PsiClass, PsiElement> oldToNewMap = new HashMap<>();
+    final Map<PsiClass, PsiClass> oldToNewMap = new HashMap<>();
     for (final PsiClass[] psiClasses : fileToClasses.values()) {
       if (psiClasses != null) {
         for (PsiClass aClass : psiClasses) {
@@ -347,7 +347,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
         final PsiFile psiFile = entry.getKey();
         final PsiClass[] sources = entry.getValue();
         if (psiFile instanceof PsiClassOwner && sources != null) {
-          final PsiFile createdFile = copy(psiFile, targetDirectory, copyClassName, map == null ? null : map.get(psiFile), choice);
+          final PsiFile createdFile = copy(psiFile, targetDirectory, copyClassName, fileToRelativePath == null ? null : fileToRelativePath.get(psiFile), choice);
           if (createdFile == null) {
             //do not touch unmodified classes
             for (PsiClass aClass : ((PsiClassOwner)psiFile).getClasses()) {
@@ -371,8 +371,8 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
 
           for (final Map.Entry<PsiClass, PsiClass> classEntry : sourceToDestination.entrySet()) {
             final PsiClass copy = copy(classEntry.getKey(), sourceToDestination.size() > 1 ? null : copyClassName);
-            PsiElement newElement = WriteAction.compute(() -> classEntry.getValue().replace(copy));
-            oldToNewMap.put(classEntry.getKey(), newElement);
+            PsiClass newClass = WriteAction.compute(() -> (PsiClass) classEntry.getValue().replace(copy));
+            oldToNewMap.put(classEntry.getKey(), newClass);
           }
           createdFiles.add(createdFile);
         }
@@ -388,7 +388,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     for (PsiFile file : files) {
       try {
         PsiDirectory finalTarget = targetDirectory;
-        final String relativePath = map != null ? map.get(file) : null;
+        final String relativePath = fileToRelativePath != null ? fileToRelativePath.get(file) : null;
         if (relativePath != null && !relativePath.isEmpty()) {
           finalTarget = WriteAction.compute(() -> buildRelativeDir(targetDirectory, relativePath).findOrCreateTargetDirectory());
         }
@@ -502,7 +502,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
   }
 
   private static void rebindExternalReferences(PsiElement element,
-                                               Map<PsiClass, PsiElement> oldToNewMap,
+                                               Map<PsiClass, PsiClass> oldToNewMap,
                                                Set<? super PsiElement> rebindExpressions) {
     final LocalSearchScope searchScope = new LocalSearchScope(element);
     for (PsiClass aClass : oldToNewMap.keySet()) {
@@ -515,7 +515,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
 
 
   private static void decodeRefs(@NotNull PsiElement element,
-                                 final Map<PsiClass, PsiElement> oldToNewMap,
+                                 final Map<PsiClass, PsiClass> oldToNewMap,
                                  final Set<? super PsiElement> rebindExpressions) {
     final Map<PsiJavaCodeReferenceElement, PsiElement> rebindMap = new LinkedHashMap<>();
     element.accept(new JavaRecursiveElementVisitor() {
@@ -532,7 +532,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
   }
 
   private static void decodeRef(final PsiJavaCodeReferenceElement expression,
-                                final Map<PsiClass, PsiElement> oldToNewMap,
+                                final Map<PsiClass, PsiClass> oldToNewMap,
                                 Map<PsiJavaCodeReferenceElement, PsiElement> rebindExpressions) {
     final PsiElement resolved = expression.resolve();
     if (resolved instanceof PsiClass) {
