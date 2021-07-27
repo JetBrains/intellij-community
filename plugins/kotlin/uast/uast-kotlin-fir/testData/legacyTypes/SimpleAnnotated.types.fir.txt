@@ -7,10 +7,16 @@ UFile (package = ) [public final class SimpleAnnotated {...]
                     ULiteralExpression (value = "1.0") ["1.0"] : PsiType:String
             ULiteralExpression (value = "Mary") ["Mary"] : PsiType:String
         UMethod (name = SimpleAnnotated) [public fun SimpleAnnotated() = UastEmptyExpression]
-        UMethod (name = method) [public final fun method() : void {...}]
+        UMethod (name = method) [@kotlin.Suppress(names = "abc")...}]
+            UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "abc")]
+                UNamedExpression (name = names) [names = "abc"]
+                    ULiteralExpression (value = "abc") ["abc"] : PsiType:String
             UBlockExpression [{...}] : PsiType:Unit
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("Hello, world!")] : PsiType:Unit
                     UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
                     USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:Unit
                     ULiteralExpression (value = "Hello, world!") ["Hello, world!"] : PsiType:String
-        UMethod (name = getProperty) [public final fun getProperty() : java.lang.String = UastEmptyExpression]
+        UMethod (name = getProperty) [@kotlin.SinceKotlin(version = "1.0")...public final fun getProperty() : java.lang.String = UastEmptyExpression]
+            UAnnotation (fqName = kotlin.SinceKotlin) [@kotlin.SinceKotlin(version = "1.0")]
+                UNamedExpression (name = version) [version = "1.0"]
+                    ULiteralExpression (value = "1.0") ["1.0"] : PsiType:String

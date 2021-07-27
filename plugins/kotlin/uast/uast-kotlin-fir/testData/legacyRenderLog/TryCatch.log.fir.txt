@@ -28,6 +28,9 @@ UFile (package = )
     UClass (name = TryCatchAnnotations)
         UMethod (name = TryCatchAnnotations)
         UMethod (name = catches)
+            UAnnotation (fqName = java.lang.SuppressWarnings)
+                UNamedExpression (name = value)
+                    ULiteralExpression (value = "Something")
             UBlockExpression
                 UTryExpression
                     UBlockExpression
