@@ -31,6 +31,141 @@ class FE1UastApiTest : AbstractFE1UastTest() {
             // Bogus
         }
 
+        @TestMetadata("AnnotationParameters.kt")
+        fun testAnnotationParameters() {
+            doTest("AnnotationParameters", ::checkCallbackForAnnotationParameters)
+        }
+
+        @TestMetadata("StringTemplateInClass.kt")
+        fun testStringTemplateInClass() {
+            doTest("StringTemplateInClass", ::checkCallbackForStringTemplateInClass)
+        }
+
+        @TestMetadata("StringTemplateWithVar.kt")
+        fun testStringTemplateWithVar() {
+            doTest("StringTemplateWithVar", ::checkCallbackForStringTemplateWithVar)
+        }
+
+        @TestMetadata("NameContainingFile.kt")
+        fun testNameContainingFile() {
+            doTest("NameContainingFile", ::checkCallbackForNameContainingFile)
+        }
+
+        @TestMetadata("DefaultImpls.kt")
+        fun testDefaultImpls() {
+            doTest("DefaultImpls", ::checkCallbackForDefaultImpls)
+        }
+
+        @TestMetadata("ParameterPropertyWithAnnotation.kt")
+        fun testParameterPropertyWithAnnotation() {
+            doTest("ParameterPropertyWithAnnotation", ::checkCallbackForParameterPropertyWithAnnotation)
+        }
+
+        @TestMetadata("TypeInAnnotation.kt")
+        fun testTypeInAnnotation() {
+            doTest("TypeInAnnotation", ::checkCallbackForTypeInAnnotation)
+        }
+
+        @TestMetadata("ElvisType.kt")
+        fun testElvisType() {
+            doTest("ElvisType", ::checkCallbackForElvisType)
+        }
+
+        @TestMetadata("IfStatement.kt")
+        fun testIfStatement() {
+            doTest("IfStatement", ::checkCallbackForIfStatement)
+        }
+
+        @TestMetadata("WhenStringLiteral.kt")
+        fun testWhenStringLiteral() {
+            doTest("WhenStringLiteral", ::checkCallbackForWhenStringLiteral)
+        }
+
+        @TestMetadata("WhenAndDestructing.kt")
+        fun testWhenAndDestructing() {
+            doTest("WhenAndDestructing", ::checkCallbackForWhenAndDestructing)
+        }
+
+        @TestMetadata("BrokenMethod.kt")
+        fun testBrokenMethod() {
+            doTest("BrokenMethod", ::checkCallbackForBrokenMethod)
+        }
+
+        @TestMetadata("EnumValuesConstructors.kt")
+        fun testEnumValuesConstructors() {
+            doTest("EnumValuesConstructors", ::checkCallbackForEnumValuesConstructors)
+        }
+
+        @TestMetadata("EnumValueMembers.kt")
+        fun testEnumValueMembers() {
+            doTest("EnumValueMembers", ::checkCallbackForEnumValueMembers)
+        }
+
+        @TestMetadata("SimpleAnnotated.kt")
+        fun testSimpleAnnotated() {
+            doTest("SimpleAnnotated", ::checkCallbackForSimpleAnnotated)
+        }
+
+        @TestMetadata("SuperCalls.kt")
+        fun testSuperCalls() {
+            doTest("SuperCalls", ::checkCallbackForSuperCalls)
+        }
+
+        @TestMetadata("Anonymous.kt")
+        fun testAnonymous() {
+            doTest("Anonymous", ::checkCallbackForAnonymous)
+        }
+
+        @TestMetadata("TypeAliases.kt")
+        fun testTypeAliases() {
+            doTest("TypeAliases", ::checkCallbackForTypeAliases)
+        }
+
+        @TestMetadata("AnnotationComplex.kt")
+        fun testAnnotationComplex() {
+            doTest("AnnotationComplex", ::checkCallbackForAnnotationComplex)
+        }
+
+        @TestMetadata("ParametersDisorder.kt")
+        fun testParametersDisorder() {
+            doTest("ParametersDisorder", ::checkCallbackForParametersDisorder)
+        }
+
+        @TestMetadata("Resolve.kt")
+        fun testResolve() {
+            doTest("Resolve", ::checkCallbackForResolve)
+        }
+
+        @TestMetadata("Lambdas.kt")
+        fun testLambdas() {
+            doTest("Lambdas", ::checkCallbackForLambdas)
+        }
+
+        @TestMetadata("LocalDeclarations.kt")
+        fun testLocalDeclarations() {
+            doTest("LocalDeclarations", ::checkCallbackForLocalDeclarations)
+        }
+
+        @TestMetadata("Elvis.kt")
+        fun testElvis() {
+            doTest("Elvis", ::checkCallbackForElvis)
+        }
+
+        @TestMetadata("TypeReferences.kt")
+        fun testTypeReferences() {
+            doTest("TypeReferences", ::checkCallbackForTypeReferences)
+        }
+
+        @TestMetadata("ReifiedReturnType.kt")
+        fun testReifiedReturnType() {
+            doTest("ReifiedReturnType", ::checkCallbackForReifiedReturnType)
+        }
+
+        @TestMetadata("ReifiedParameters.kt")
+        fun testReifiedParameters() {
+            doTest("ReifiedParameters", ::checkCallbackForReifiedParameters)
+        }
+
         @TestMetadata("SAM.kt")
         fun testSAM() {
             doTest("SAM", ::checkCallbackForSAM)
