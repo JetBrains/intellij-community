@@ -8,8 +8,8 @@ import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableRootModelBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.storage.toBuilder
 import org.junit.ClassRule
 import org.junit.Rule
@@ -36,7 +36,7 @@ class ModifiableRootModelBridgeTest {
       val diff = initialStore.toBuilder()
 
       val modifiableModel = moduleRootManager.getModifiableModel(diff, initialStore,
-                                                                 RootConfigurationAccessor.DEFAULT_INSTANCE) as ModifiableRootModelBridgeImpl
+                                                                 RootConfigurationAccessor.DEFAULT_INSTANCE) as ModifiableRootModelBridge
 
       (ModuleManager.getInstance(projectModel.project) as ModuleManagerBridgeImpl).getModifiableModel(diff).disposeModule(module)
 

@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.configurationStore.serializeStateInto
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
@@ -41,7 +40,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.concurrent.ConcurrentHashMap
 
-class ModifiableRootModelBridgeImpl(
+internal class ModifiableRootModelBridgeImpl(
   diff: WorkspaceEntityStorageBuilder,
   override val moduleBridge: ModuleBridge,
   override val accessor: RootConfigurationAccessor,
