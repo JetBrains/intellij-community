@@ -48,6 +48,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SmartHashSet;
@@ -87,6 +88,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -129,6 +131,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private @Nullable Runnable myShutDownTask;
   private @Nullable ScheduledFuture<?> myFlushingFuture;
+  private @Nullable ScheduledFuture<?> myHealthСheckFuture;
 
   private final AtomicInteger myLocalModCount = new AtomicInteger();
   private final AtomicInteger myFilesModCount = new AtomicInteger();
@@ -352,6 +355,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     synchronized (myStaleIds) {
       myStaleIds.addAll(staleIds);
     }
+  }
+
+  void setUpHealthCheck() {
+    myHealthСheckFuture = AppExecutorUtil
+      .getAppScheduledExecutorService()
+      .scheduleWithFixedDelay(ConcurrencyUtil.underThreadNameRunnable("Index Healthcheck", () -> {
+        myIndexableFilesFilterHolder.runHealthCheck();
+      }), 5, 5, TimeUnit.MINUTES);
   }
 
   static class MyShutDownTask implements Runnable {
@@ -593,6 +604,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       if (myFlushingFuture != null) {
         myFlushingFuture.cancel(false);
         myFlushingFuture = null;
+      }
+      if (myHealthСheckFuture != null) {
+        myHealthСheckFuture.cancel(false);
+        myHealthСheckFuture = null;
       }
     }
     finally {
