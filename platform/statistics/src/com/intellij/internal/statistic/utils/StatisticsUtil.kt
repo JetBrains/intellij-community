@@ -73,20 +73,24 @@ object StatisticsUtil {
 
   /**
    * Anonymizes value by finding upper bound in provided bounds.
-   * Allows more fine tuning then `com.intellij.internal.statistic.utils.StatisticsUtil#getNextPowerOfTwo`
+   * Allows more fine tuning then `com.intellij.internal.statistic.utils.StatisticsUtil#roundToPowerOfTwo`
    * but requires manual maintaining.
    *
    * @param bounds is an integer array sorted in ascending order (required, but not checked)
    * @return value upper bound or next power of two if no bounds were provided (as fallback)
    * */
   @JvmStatic
-  fun getUpperBound(value: Int, bounds: IntArray): Int {
+  fun roundToUpperBound(value: Int, bounds: IntArray): Int {
     if (bounds.isEmpty()) return roundToPowerOfTwo(value)
 
     for (bound in bounds)
       if (value <= bound) return bound
     return bounds.last()
   }
+
+  @JvmStatic
+  @Deprecated(message = "Use roundToUpperBound instead", replaceWith = ReplaceWith("roundToUpperBound"))
+  fun getUpperBound(value: Int, bounds: IntArray): Int = roundToUpperBound(value, bounds)
 
   /**
    * Anonymizes sensitive project properties by rounding it to the next value in steps list.

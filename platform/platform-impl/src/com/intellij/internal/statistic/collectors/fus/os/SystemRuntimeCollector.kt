@@ -28,12 +28,12 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
 
   override fun getMetrics(): Set<MetricEvent> {
     val result = HashSet<MetricEvent>()
-    result.add(CORES.metric(StatisticsUtil.getUpperBound(Runtime.getRuntime().availableProcessors(),
-                                                         intArrayOf(1, 2, 4, 6, 8, 12, 16, 20, 24, 32, 64))))
+    result.add(CORES.metric(StatisticsUtil.roundToUpperBound(Runtime.getRuntime().availableProcessors(),
+                                                             intArrayOf(1, 2, 4, 6, 8, 12, 16, 20, 24, 32, 64))))
 
     val osMxBean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
-    val totalPhysicalMemory = StatisticsUtil.getUpperBound((osMxBean.totalPhysicalMemorySize.toDouble() / (1 shl 30)).roundToInt(),
-                                                           intArrayOf(1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 128, 256))
+    val totalPhysicalMemory = StatisticsUtil.roundToUpperBound((osMxBean.totalPhysicalMemorySize.toDouble() / (1 shl 30)).roundToInt(),
+                                                               intArrayOf(1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 128, 256))
     result.add(MEMORY_SIZE.metric(totalPhysicalMemory))
 
     var totalSwapSize = (osMxBean.totalSwapSpaceSize.toDouble() / (1 shl 30)).roundToInt()
