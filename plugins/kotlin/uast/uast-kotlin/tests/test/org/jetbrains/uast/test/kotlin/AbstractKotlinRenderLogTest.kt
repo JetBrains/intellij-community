@@ -4,13 +4,7 @@ package org.jetbrains.uast.test.kotlin
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.util.PairProcessor
-import com.intellij.util.ref.DebugReflectionUtil
-import junit.framework.TestCase
 import junit.framework.TestCase.*
-import org.jetbrains.kotlin.cli.jvm.compiler.CliTraceHolder
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
@@ -19,6 +13,7 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.kotlin.KotlinUastLanguagePlugin
 import org.jetbrains.uast.sourcePsiElement
+import org.jetbrains.uast.test.common.kotlin.checkDescriptorsLeak
 import org.jetbrains.uast.test.common.kotlin.RenderLogTestBase
 import org.jetbrains.uast.visitor.UastVisitor
 import org.junit.Assert
@@ -141,20 +136,3 @@ interface AbstractKotlinRenderLogTest : RenderLogTestBase {
         })
     }
 }
-
-private val descriptorsClasses = listOf(AnnotationDescriptor::class, DeclarationDescriptor::class)
-
-fun checkDescriptorsLeak(node: UElement) {
-    DebugReflectionUtil.walkObjects(
-        10,
-        mapOf(node to node.javaClass.name),
-        Any::class.java,
-        { it !is CliTraceHolder },
-        PairProcessor { value, backLink ->
-            descriptorsClasses.find { it.isInstance(value) }?.let {
-                TestCase.fail("""Leaked descriptor ${it.qualifiedName} in ${node.javaClass.name}\n$backLink""")
-                false
-            } ?: true
-        })
-}
-
