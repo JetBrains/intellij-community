@@ -14,7 +14,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JBProtocolCommand
-import com.intellij.openapi.application.JetBrainsProtocolHandler.FRAGMENT_PARAM_NAME
+import com.intellij.openapi.application.JBProtocolCommand.FRAGMENT_PARAM_NAME
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ScrollType
