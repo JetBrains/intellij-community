@@ -3,13 +3,13 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] = Undetermined
                 [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) [[!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)] = Undetermined
-                UDeclarationsExpression [@not-implemented-annotation var a: int = 1] = Undetermined
-                    ULocalVariable (name = a) [@not-implemented-annotation var a: int = 1]
-                        UAnnotation (fqName = not-implemented-annotation) [@not-implemented-annotation]
+                UDeclarationsExpression [@kotlin.Suppress var a: int = 1] = Undetermined
+                    ULocalVariable (name = a) [@kotlin.Suppress var a: int = 1]
+                        UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
                         ULiteralExpression (value = 1) [1] = (long)1
-                UDeclarationsExpression [@not-implemented-annotation var b: int = 2] = Undetermined
-                    ULocalVariable (name = b) [@not-implemented-annotation var b: int = 2]
-                        UAnnotation (fqName = not-implemented-annotation) [@not-implemented-annotation]
+                UDeclarationsExpression [@kotlin.Suppress var b: int = 2] = Undetermined
+                    ULocalVariable (name = b) [@kotlin.Suppress var b: int = 2]
+                        UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
                         ULiteralExpression (value = 2) [2] = (long)2
                 [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) [[!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)] = Undetermined
                 [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) [[!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)] = Undetermined
