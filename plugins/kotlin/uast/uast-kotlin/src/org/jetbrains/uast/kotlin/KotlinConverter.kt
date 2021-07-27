@@ -367,7 +367,7 @@ object KotlinConverter : BaseKotlinConverter {
                     if (requiredTypes.isAssignableFrom(KotlinUNestedAnnotation::class.java) &&
                         !requiredTypes.isAssignableFrom(UCallExpression::class.java)
                     ) {
-                        el<UAnnotation> { KotlinUNestedAnnotation.tryCreate(element, givenParent) }
+                        el<UAnnotation> { KotlinUNestedAnnotation.create(element, givenParent) }
                     } else null
                 is KtLightAnnotationForSourceEntry -> convertDeclarationOrElement(element.kotlinOrigin, givenParent, requiredTypes)
                 is KtDelegatedSuperTypeEntry -> el<KotlinSupertypeDelegationUExpression> {
