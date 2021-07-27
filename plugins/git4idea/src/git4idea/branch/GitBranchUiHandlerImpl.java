@@ -51,12 +51,18 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   @NonNls private static final String RESOLVE_HREF_ATTRIBUTE = "resolve";
 
   @NotNull private final Project myProject;
-  @NotNull private final Git myGit;
   @NotNull private final ProgressIndicator myProgressIndicator;
 
+  /**
+   * @deprecated Git no longer required
+   */
+  @Deprecated
   public GitBranchUiHandlerImpl(@NotNull Project project, @NotNull Git git, @NotNull ProgressIndicator indicator) {
+    this(project, indicator);
+  }
+
+  public GitBranchUiHandlerImpl(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     myProject = project;
-    myGit = git;
     myProgressIndicator = indicator;
   }
 
