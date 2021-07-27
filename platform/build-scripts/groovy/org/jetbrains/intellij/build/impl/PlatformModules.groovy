@@ -238,6 +238,8 @@ final class PlatformModules {
         "netty-handler-proxy",
         "Log4J",
         "fastutil-min",
+        // used in JPS
+        "maven-resolver-provider"
       ))
 
       for (JpsLibrary library in additionalProjectLevelLibraries) {
