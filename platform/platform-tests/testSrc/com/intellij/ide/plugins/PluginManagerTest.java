@@ -161,7 +161,7 @@ public class PluginManagerTest {
     assertPluginPreInstalled(loadingResult, descriptorInstalled.getPluginId());
   }
 
-  private @NotNull static PluginLoadingResult createPluginLoadingResult(boolean checkModuleDependencies) {
+  private static @NotNull PluginLoadingResult createPluginLoadingResult(boolean checkModuleDependencies) {
     BuildNumber buildNumber = BuildNumber.fromString("2042.42");
     return new PluginLoadingResult(Collections.emptyMap(), () -> buildNumber, checkModuleDependencies);
   }
@@ -215,8 +215,7 @@ public class PluginManagerTest {
     assertNotNull(checkCompatibility(ideVersion, sinceBuild, untilBuild));
   }
 
-  @Nullable
-  private static String checkCompatibility(String ideVersion, String sinceBuild, String untilBuild) {
+  private static @Nullable String checkCompatibility(String ideVersion, String sinceBuild, String untilBuild) {
     IdeaPluginDescriptor mock = EasyMock.niceMock(IdeaPluginDescriptor.class);
     expect(mock.getSinceBuild()).andReturn(sinceBuild).anyTimes();
     expect(mock.getUntilBuild()).andReturn(untilBuild).anyTimes();
@@ -230,8 +229,7 @@ public class PluginManagerTest {
     assertNull(checkCompatibility(ideVersion, sinceBuild, untilBuild));
   }
 
-  private static @NotNull PluginManagerState loadAndInitializeDescriptors(@NotNull String testDataName, boolean isBundled)
-    throws IOException, XMLStreamException {
+  private static PluginManagerState loadAndInitializeDescriptors(String testDataName, boolean isBundled) throws IOException, XMLStreamException {
     Path file = Path.of(getTestDataPath(), testDataName);
     DescriptorListLoadingContext parentContext =
       new DescriptorListLoadingContext(Collections.emptySet(), createPluginLoadingResult(true), false, false, false, false);
@@ -273,12 +271,11 @@ public class PluginManagerTest {
         throw new AssertionError("Unexpected: " + relativePath);
       }
 
-      @NotNull
       @Override
-      public RawPluginDescriptor resolveModuleFile(@NotNull ReadModuleContext readContext,
-                                                   @NotNull DataLoader dataLoader,
-                                                   @NotNull String path,
-                                                   @Nullable RawPluginDescriptor readInto) {
+      public @NotNull RawPluginDescriptor resolveModuleFile(@NotNull ReadModuleContext readContext,
+                                                            @NotNull DataLoader dataLoader,
+                                                            @NotNull String path,
+                                                            @Nullable RawPluginDescriptor readInto) {
         return resolvePath(readContext, dataLoader, path, readInto);
       }
     };
