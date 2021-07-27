@@ -142,9 +142,7 @@ class ClassLoaderConfigurator(
       }
       else if (loader !== coreLoader) {
         // e.g. `.env` plugin in an old format and doesn't explicitly specify dependency on a new extracted modules
-        if (!plugin.isBundled) {
-          p.content.modules.mapTo(dependencies) { it.requireDescriptor() }
-        }
+        p.content.modules.mapTo(dependencies) { it.requireDescriptor() }
         // must be after adding implicit module class loaders
         dependencies.add(p)
       }
