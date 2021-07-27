@@ -95,7 +95,6 @@ class ProjectTemplateSettingComponent(
 
 private val ProjectTemplate.icon: Icon?
     get() = when (this) {
-        MultiplatformApplicationProjectTemplate -> KotlinIcons.Wizard.MULTIPLATFORM
         ConsoleApplicationProjectTemplate -> KotlinIcons.Wizard.CONSOLE
         MultiplatformLibraryProjectTemplate -> KotlinIcons.Wizard.MULTIPLATFORM_LIBRARY
         FullStackWebApplicationProjectTemplate -> KotlinIcons.Wizard.WEB

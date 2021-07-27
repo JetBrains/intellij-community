@@ -74,7 +74,6 @@ abstract class ProjectTemplate : DisplayableSettingItem {
         val ALL = listOf(
             ConsoleApplicationProjectTemplate,
             MultiplatformMobileApplicationProjectTemplate,
-            MultiplatformApplicationProjectTemplate,
             MultiplatformLibraryProjectTemplate,
             NativeApplicationProjectTemplate,
             FrontendApplicationProjectTemplate,
@@ -141,24 +140,6 @@ private fun createDefaultSourcesets() =
 private fun ModuleType.createDefaultTarget(
     name: String = this.name
 ) = MultiplatformTargetModule(name, defaultTarget, createDefaultSourcesets())
-
-object MultiplatformApplicationProjectTemplate : ProjectTemplate() {
-    override val title = KotlinNewProjectWizardBundle.message("project.template.empty.mpp.title")
-    override val description = KotlinNewProjectWizardBundle.message("project.template.empty.mpp.description")
-    override val id = "multiplatformApplication"
-
-    @NonNls
-    override val suggestedProjectName = "myKotlinMultiplatformProject"
-    override val projectKind = ProjectKind.Multiplatform
-
-    override val setsPluginSettings: List<SettingWithValue<*, *>>
-        get() = listOf(
-            KotlinPlugin.modules.reference withValue listOf(
-                MultiplatformModule("mainModule", targets = listOf(
-                    ModuleType.common.createDefaultTarget(), ModuleType.jvm.createDefaultTarget()))
-            )
-        )
-}
 
 object ConsoleApplicationProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.empty.jvm.console.title")
