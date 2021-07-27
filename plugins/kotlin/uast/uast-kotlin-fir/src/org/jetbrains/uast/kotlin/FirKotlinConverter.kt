@@ -465,6 +465,11 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                         expr<UDeclarationsExpression>(build(::createLocalFunctionDeclaration))
                     }
                 }
+                is KtAnnotatedExpression -> {
+                    expression.baseExpression
+                        ?.let { convertExpression(it, givenParent, requiredTypes) }
+                        ?: expr<UExpression>(build(::UnknownKotlinExpression))
+                }
 
                 else -> expr<UExpression>(build(::UnknownKotlinExpression))
             }
