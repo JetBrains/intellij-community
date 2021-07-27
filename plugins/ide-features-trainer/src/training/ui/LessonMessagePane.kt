@@ -12,6 +12,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.WatermarkIcon
 import training.FeaturesTrainerIcons
 import training.learn.lesson.LessonManager
 import java.awt.*
@@ -536,14 +537,20 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
           }
           MessagePart.MessageType.ICON_IDX -> {
             val rect = modelToView2D(myMessage.startOffset + 1)
-            val icon = LearningUiManager.iconMap[myMessage.text]
-            icon?.paintIcon(this, g2d, rect.x.toInt(), rect.y.toInt())
+            var icon = LearningUiManager.iconMap[myMessage.text] ?: continue
+            if (inactiveMessages.contains(lessonMessage)) {
+              icon = getInactiveIcon(icon)
+            }
+            icon.paintIcon(this, g2d, rect.x.toInt(), rect.y.toInt())
           }
           MessagePart.MessageType.ILLUSTRATION -> {
             val x = modelToView2D(myMessage.startOffset).x.toInt()
             val y = modelToView2D(myMessage.endOffset - 1).y.toInt()
-            val icon = LearningUiManager.iconMap[myMessage.text]
-            icon?.paintIcon(this, g2d, x, y - spaceAboveIllustrationParagraph(icon))
+            var icon = LearningUiManager.iconMap[myMessage.text] ?: continue
+            if (inactiveMessages.contains(lessonMessage)) {
+              icon = getInactiveIcon(icon)
+            }
+            icon.paintIcon(this, g2d, x, y - spaceAboveIllustrationParagraph(icon))
           }
         }
       }
@@ -557,6 +564,8 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
       drawRectangleAroundMessage(firstActiveMessage, lastActiveMessage, g2d, needColor)
     }
   }
+
+  private fun getInactiveIcon(icon: Icon) = WatermarkIcon(icon, UISettings.instance.transparencyInactiveFactor.toFloat())
 
   private fun firstActiveMessage(): LessonMessage? = activeMessages.indexOfLast { it.state == MessageState.PASSED }
                                                        .takeIf { it != -1 && it < activeMessages.size - 1 }

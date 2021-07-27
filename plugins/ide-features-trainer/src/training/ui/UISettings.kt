@@ -39,6 +39,8 @@ internal class UISettings {
   fun getFont(relatedUnscaledSize: Int): Font = plainFont.deriveFont(fontSize + JBUI.scale(relatedUnscaledSize))
 
   //COLORS
+  val transparencyInactiveFactor: Double = 0.3
+
   val defaultTextColor: Color = JBUI.CurrentTheme.Label.foreground()
   val lessonLinkColor: Color = JBUI.CurrentTheme.Link.Foreground.ENABLED
   val shortcutTextColor: Color = defaultTextColor
@@ -46,7 +48,7 @@ internal class UISettings {
   val shortcutBackgroundColor: Color = JBColor.namedColor("Lesson.shortcutBackground", 0xE6EEF7, 0x333638)
   val codeForegroundColor: Color = defaultTextColor
   val codeBorderColor: Color = JBUI.CurrentTheme.Button.buttonOutlineColorEnd(false)
-  val inactiveColor: Color = defaultTextColor.addAlpha(0.3)
+  val inactiveColor: Color = defaultTextColor.addAlpha(transparencyInactiveFactor)
   val moduleProgressColor: Color = JBColor.namedColor("Label.infoForeground", 0x808080, 0x8C8C8C)
   val backgroundColor: Color = UIUtil.getTreeBackground()
   val completedColor: Color = JBColor.namedColor("Label.successForeground", 0x368746, 0x50A661)
@@ -57,7 +59,7 @@ internal class UISettings {
   val tooltipTextColor: Color = JBColor.namedColor("Lesson.Tooltip.foreground", 0xF5F5F5)
 
   val activeTaskNumberColor: Color = JBColor.namedColor("Lesson.stepNumberForeground", 0x808080, 0xFEFEFE)
-  val futureTaskNumberColor: Color = activeTaskNumberColor.addAlpha(0.3)
+  val futureTaskNumberColor: Color = activeTaskNumberColor.addAlpha(transparencyInactiveFactor)
   val tooltipTaskNumberColor: Color = JBColor.namedColor("Lesson.Tooltip.stepNumberForeground", 0x6CA6ED, 0x6A9DDE)
 
   //BORDERS
