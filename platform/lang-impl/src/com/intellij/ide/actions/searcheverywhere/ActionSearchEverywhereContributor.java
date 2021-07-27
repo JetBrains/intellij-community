@@ -4,8 +4,6 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionAction;
 import com.intellij.ide.actions.SetShortcutAction;
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLSearchSession;
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -110,8 +108,8 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
       }
 
       final FoundItemDescriptor<GotoActionModel.MatchedValue> descriptor;
-      SearchEverywhereMlSessionService mlService = SearchEverywhereMlSessionService.getInstance();
-      if (mlService.shouldOrderByML()) {
+      SearchEverywhereMlService mlService = SearchEverywhereMlService.getInstance();
+      if (mlService != null && mlService.shouldOrderByMl()) {
         descriptor = getMLWeightedItemDescriptor(mlService, element);
       }
       else {
@@ -232,13 +230,13 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
     });
   }
 
-  private FoundItemDescriptor<GotoActionModel.MatchedValue> getMLWeightedItemDescriptor(@NotNull SearchEverywhereMlSessionService service,
+  private FoundItemDescriptor<GotoActionModel.MatchedValue> getMLWeightedItemDescriptor(@NotNull SearchEverywhereMlService service,
                                                                                         @NotNull GotoActionModel.MatchedValue element) {
     if (element.isAbbreviation()) {
       return new FoundItemDescriptor<>(element, element.getMatchingDegree(), 1.0);
     }
-    SearchEverywhereMLSearchSession session = service.getCurrentSession();
-    double mlWeight = session != null ? session.getMLWeight(this, element) : -1.0;
+
+    double mlWeight = service.getMlWeight(this, element);
     if (mlWeight > 0) {
       return new FoundItemDescriptor<>(element, element.getMatchingDegree(), mlWeight);
     }
