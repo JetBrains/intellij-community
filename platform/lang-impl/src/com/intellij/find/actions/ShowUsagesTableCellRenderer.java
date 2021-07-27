@@ -20,7 +20,6 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsagePresentation;
 import com.intellij.usages.impl.GroupNode;
 import com.intellij.usages.impl.UsageNode;
-import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.ui.EmptyIcon;
@@ -34,15 +33,23 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 final class ShowUsagesTableCellRenderer implements TableCellRenderer {
 
-  private final @NotNull UsageViewImpl myUsageView;
+  private final @NotNull Project myProject;
+  private final @NotNull Predicate<? super Usage> myOriginUsageCheck;
   private final @NotNull AtomicInteger myOutOfScopeUsages;
   private final @NotNull SearchScope mySearchScope;
 
-  ShowUsagesTableCellRenderer(@NotNull UsageViewImpl usageView, @NotNull AtomicInteger outOfScopeUsages, @NotNull SearchScope searchScope) {
-    myUsageView = usageView;
+  ShowUsagesTableCellRenderer(
+    @NotNull Project project,
+    @NotNull Predicate<? super Usage> originUsageCheck,
+    @NotNull AtomicInteger outOfScopeUsages,
+    @NotNull SearchScope searchScope
+  ) {
+    myProject = project;
+    myOriginUsageCheck = originUsageCheck;
     myOutOfScopeUsages = outOfScopeUsages;
     mySearchScope = searchScope;
   }
@@ -126,7 +133,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     panel.setFont(null);
 
     // greying the current usage the "find usages" was originated from
-    boolean isOriginUsage = myUsageView.isOriginUsage(usage);
+    boolean isOriginUsage = myOriginUsageCheck.test(usage);
     if (isOriginUsage) {
       rowBackground = slightlyDifferentColor(rowBackground);
       if (fileBgColor != null) {
@@ -280,8 +287,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     else {
       VirtualFile virtualFile = usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() : null;
       if (virtualFile != null) {
-        Project project = myUsageView.getProject();
-        Color color = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile);
+        Color color = VfsPresentationUtil.getFileBackgroundColor(myProject, virtualFile);
         if (color != null) fileBgColor = color;
       }
     }

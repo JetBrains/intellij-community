@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -385,7 +385,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     final AtomicInteger outOfScopeUsages = new AtomicInteger();
     AtomicBoolean manuallyResized = new AtomicBoolean();
 
-    ShowUsagesTable table = new ShowUsagesTable(new ShowUsagesTableCellRenderer(usageView, outOfScopeUsages, searchScope), usageView);
+    var renderer = new ShowUsagesTableCellRenderer(project, usageView::isOriginUsage, outOfScopeUsages, searchScope);
+    ShowUsagesTable table = new ShowUsagesTable(renderer, usageView);
     AsyncProcessIcon processIcon = new AsyncProcessIcon("xxx");
     TitlePanel statusPanel = new TitlePanel();
     statusPanel.add(processIcon, BorderLayout.WEST);
