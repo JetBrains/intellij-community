@@ -51,7 +51,7 @@ class CommandLineField(
       textCompletetionPopup.updatePopup(TextCompletionPopup.UpdatePopupType.HIDE)
       val dialog = CommandLineDialog(project, commandLineInfo)
       dialog.whenVariantChosen {
-        val separator = if (text.endsWith(" ")) "" else " "
+        val separator = if (text.endsWith(" ") || text.isEmpty()) "" else " "
         document.insertString(document.length, separator + it.text, null)
       }
       dialog.show()
