@@ -11,9 +11,10 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
 import com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.packageSearchGradleConfigurationForProject
 
+private const val FILE_TYPE_GROOVY = "groovy"
+private const val FILE_TYPE_KOTLIN = "kotlin"
 private const val EXTENSION_GRADLE = "gradle"
-private const val FILENAME_GRADLE_PROPERTIES = "gradle.properties"
-private const val FILENAME_GRADLE_WRAPPER_PROPERTIES = "gradle-wrapper.properties"
+private const val EXTENSION_GRADLE_KTS = "gradle.kts"
 
 internal open class GradleProjectModuleOperationProvider : AbstractProjectModuleOperationProvider() {
 
@@ -21,12 +22,13 @@ internal open class GradleProjectModuleOperationProvider : AbstractProjectModule
 
     override fun hasSupportFor(project: Project, psiFile: PsiFile?): Boolean {
         // Logic based on com.android.tools.idea.gradle.project.sync.GradleFiles.isGradleFile()
-
         val file = psiFile?.virtualFile ?: return false
 
-        return EXTENSION_GRADLE.equals(file.extension, ignoreCase = true) ||
-            FILENAME_GRADLE_PROPERTIES.equals(file.name, ignoreCase = true) ||
-            FILENAME_GRADLE_WRAPPER_PROPERTIES.equals(file.name, ignoreCase = true)
+        val isGroovyFile = FILE_TYPE_GROOVY.equals(psiFile.fileType.name, ignoreCase = true)
+        val isKotlinFile = FILE_TYPE_KOTLIN.equals(psiFile.fileType.name, ignoreCase = true)
+
+        if (!isGroovyFile && !isKotlinFile) return false
+        return file.name.endsWith(EXTENSION_GRADLE, ignoreCase = true) || file.name.endsWith(EXTENSION_GRADLE_KTS, ignoreCase = true)
     }
 
     override fun hasSupportFor(projectModuleType: ProjectModuleType): Boolean =
@@ -37,7 +39,7 @@ internal open class GradleProjectModuleOperationProvider : AbstractProjectModule
         module: ProjectModule
     ): List<OperationFailure<out OperationItem>> {
         requireNotNull(operationMetadata.newScope) {
-            PackageSearchBundle.getMessage("packagesearch.packageoperation.error.gradle.missing.configuration")
+            PackageSearchBundle.getMessage("packagesearch.operation.error.gradle.missing.configuration")
         }
         saveAdditionalScopeToConfigurationIfNeeded(module.nativeModule.project, operationMetadata.newScope)
 
@@ -49,7 +51,7 @@ internal open class GradleProjectModuleOperationProvider : AbstractProjectModule
         module: ProjectModule
     ): List<OperationFailure<out OperationItem>> {
         requireNotNull(operationMetadata.currentScope) {
-            PackageSearchBundle.getMessage("packagesearch.packageoperation.error.gradle.missing.configuration")
+            PackageSearchBundle.getMessage("packagesearch.operation.error.gradle.missing.configuration")
         }
         return super.removeDependencyFromModule(operationMetadata, module)
     }
