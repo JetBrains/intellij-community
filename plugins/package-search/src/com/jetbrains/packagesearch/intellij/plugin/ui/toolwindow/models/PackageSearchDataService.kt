@@ -4,11 +4,11 @@ import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiManager
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.jetbrains.packagesearch.api.v2.ApiPackagesResponse
 import com.jetbrains.packagesearch.api.v2.ApiRepository
 import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
@@ -30,6 +30,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.ReadActions
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.combine
+import com.jetbrains.packagesearch.intellij.plugin.util.getPackageSearchModulesChangesFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.launchLoop
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
@@ -37,13 +38,14 @@ import com.jetbrains.packagesearch.intellij.plugin.util.logError
 import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchModulesChangesFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.replayOnSignal
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -54,7 +56,9 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.newCoroutineContext
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.apache.commons.lang3.StringUtils
 import org.jetbrains.annotations.Nls
 import java.net.SocketTimeoutException
@@ -66,7 +70,9 @@ import kotlin.time.toDuration
 
 internal class PackageSearchDataService(
     override val project: Project
-) : RootDataModelProvider, SearchClient, TargetModuleSetter, SelectedPackageSetter, OperationExecutor, CoroutineScope by project.lifecycleScope {
+) : RootDataModelProvider, SearchClient, TargetModuleSetter, SelectedPackageSetter, OperationExecutor, CoroutineScope {
+
+    override val coroutineContext = project.lifecycleScope.newCoroutineContext(CoroutineName("PackageSearchDataService"))
 
     private val configuration = PackageSearchGeneralConfiguration.getInstance(project)
 
@@ -95,12 +101,14 @@ internal class PackageSearchDataService(
 
     private val highlightEvents = Channel<Unit>()
 
+    private val replayFromErrorChannel = Channel<Unit>()
+
     override val dataModelFlow: StateFlow<RootDataModel> = combine(
         searchQueryState,
         searchResultsState,
         targetModulesState,
         filterOptionsState,
-        project.packageSearchModulesChangesFlow,
+        project.getPackageSearchModulesChangesFlow(replayFromErrorChannel.consumeAsFlow()),
         knownRepositoriesRemoteInfo,
         selectedPackageModelState
     ) { searchQuery, searchResult, targetModules,
@@ -119,7 +127,10 @@ internal class PackageSearchDataService(
         .mapLatest { it.toRootDataModel() }
         .onEach { highlightEvents.send(Unit) }
         .catch {
-            logError(contextName = "dataModelFlow", throwable = it) { "Error while processing latest model change." }
+            if (it !is AlreadyDisposedException)
+                logError(contextName = "dataModelFlow", throwable = it) { "Error while processing latest model change." }
+            delay(250)
+            replayFromErrorChannel.send(Unit)
         }
         .stateIn(this, SharingStarted.Lazily, RootDataModel.EMPTY)
 
@@ -314,14 +325,15 @@ internal class PackageSearchDataService(
     private suspend fun fetchProjectDependencies(modules: List<ProjectModule>, traceInfo: TraceInfo): Map<ProjectModule, List<UnifiedDependency>> =
         modules.associateWith { module -> module.installedDependencies(traceInfo) }
 
-    private suspend fun ProjectModule.installedDependencies(traceInfo: TraceInfo): List<UnifiedDependency> = readAction { progress ->
-        logDebug(traceInfo, "PKGSDataService#installedDependencies()") { "Fetching installed dependencies for module $name..." }
-        ProjectModuleOperationProvider.forProjectModuleType(moduleType)
-            ?.also { progress.checkCancelled() }
-            ?.listDependenciesInModule(this)
-            ?.toList()
-            ?: emptyList()
-    }
+    private suspend fun ProjectModule.installedDependencies(traceInfo: TraceInfo): List<UnifiedDependency> =
+        withContext(Dispatchers.ReadActions) {
+            logDebug(traceInfo, "PKGSDataService#installedDependencies()") { "Fetching installed dependencies for module $name..." }
+            ProjectModuleOperationProvider.forProjectModuleType(moduleType)
+                ?.also { yield() }
+                ?.listDependenciesInModule(this@installedDependencies)
+                ?.toList()
+                ?: emptyList()
+        }
 
     private fun PackageModel.matches(query: String, onlyKotlinMultiplatform: Boolean): Boolean {
         if (onlyKotlinMultiplatform && !isKotlinMultiplatform) {
