@@ -3,28 +3,42 @@ package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-open class CompositeDeclarativeInsertHandler(val handlers: Map<Char, Lazy<DeclarativeInsertHandler2>>,
+open class CompositeDeclarativeInsertHandler(val handlers: Map<String, Lazy<DeclarativeInsertHandler2>>,
                                              val fallbackInsertHandler: InsertHandler<LookupElement>?)
   : InsertHandler<LookupElement> {
+
+  init {
+    // check `handlers` to make sure we do not have multiple keys sharing the same completionChar
+    val allKeysConcatenated = handlers.keys.fold(StringBuilder()) { stringBuilder, key ->
+      stringBuilder.append(key)
+    }
+
+    val allCharsUnique = allKeysConcatenated.all(HashSet<Char>()::add)
+    assert(allCharsUnique)
+  }
+
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
-    (handlers[context.completionChar]?.value ?: fallbackInsertHandler)?.handleInsert(context, item)
+    val declarativeHandler = handlers
+      .filterKeys { key -> key.contains(context.completionChar) }
+      .values.firstOrNull()?.value
+
+    (declarativeHandler ?: fallbackInsertHandler)?.handleInsert(context, item)
   }
 
   companion object {
-    fun withUniversalHandler(completionChars: CharArray,
+    fun withUniversalHandler(completionChars: String,
                              handler: Lazy<DeclarativeInsertHandler2>): CompositeDeclarativeInsertHandler {
-      val handlersMap = completionChars.associate { it to handler }
+      val handlersMap = mapOf(completionChars to handler)
       // it's important not to provide a fallbackInsertHandler
       return CompositeDeclarativeInsertHandler(handlersMap, null)
     }
 
-    fun withUniversalHandler(completionChars: CharArray,
+    fun withUniversalHandler(completionChars: String,
                              handler: DeclarativeInsertHandler2): CompositeDeclarativeInsertHandler {
       val lazyHandler = lazy { handler }
       return withUniversalHandler(completionChars, lazyHandler)

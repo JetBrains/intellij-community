@@ -18,13 +18,13 @@ public class AddSpaceInsertHandler implements InsertHandler<LookupElement> {
   private final static String VALID_COMPLETION_CHARS = "\u0000\n\t\r(,.:=";
 
   public final static InsertHandler<LookupElement> INSTANCE = CompositeDeclarativeInsertHandler.Companion
-    .withUniversalHandler(VALID_COMPLETION_CHARS.toCharArray(),
+    .withUniversalHandler(VALID_COMPLETION_CHARS,
                           new SingleInsertionDeclarativeInsertHandler(" ",
                                                                       DeclarativeInsertHandler2.PopupOptions.DoNotShow.INSTANCE)
     );
 
   public final static InsertHandler<LookupElement> INSTANCE_WITH_AUTO_POPUP = CompositeDeclarativeInsertHandler.Companion
-    .withUniversalHandler(VALID_COMPLETION_CHARS.toCharArray(),
+    .withUniversalHandler(VALID_COMPLETION_CHARS,
                           new SingleInsertionDeclarativeInsertHandler(" ",
                                                                       DeclarativeInsertHandler2.PopupOptions.MemberLookup.INSTANCE)
     );

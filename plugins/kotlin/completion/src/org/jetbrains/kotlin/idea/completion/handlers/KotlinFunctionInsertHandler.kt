@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.types.KotlinType
 class GenerateLambdaInfo(val lambdaType: KotlinType, val explicitParameters: Boolean)
 
 class KotlinFunctionCompositeDeclarativeInsertHandler(
-    handlers: Map<Char, Lazy<DeclarativeInsertHandler2>>,
+    handlers: Map<String, Lazy<DeclarativeInsertHandler2>>,
     fallbackInsertHandler: InsertHandler<LookupElement>?,
     val isLambda: Boolean,
     val inputValueArguments: Boolean,
@@ -38,10 +38,10 @@ class KotlinFunctionCompositeDeclarativeInsertHandler(
 
     companion object {
         fun withUniversalHandler(
-            completionChars: CharArray,
+            completionChars: String,
             handler: DeclarativeInsertHandler2.LazyBuilder
         ): CompositeDeclarativeInsertHandler {
-            val handlersMap = completionChars.associate { it to handler }
+            val handlersMap = mapOf(completionChars to handler)
             // it's important not to provide a fallbackInsertHandler here
             return KotlinFunctionCompositeDeclarativeInsertHandler(handlersMap, null, false, false, false)
         }
@@ -61,12 +61,12 @@ fun createNormalFunctionInsertHandler(
         assert(argumentText == "")
     }
 
-    val lazyHandlers = mutableMapOf<Char, Lazy<DeclarativeInsertHandler2>>()
+    val lazyHandlers = mutableMapOf<String, Lazy<DeclarativeInsertHandler2>>()
 
     val chars = editor.document.charsSequence
 
     // \n - NormalCompletion
-    lazyHandlers[Lookup.NORMAL_SELECT_CHAR] = DeclarativeInsertHandler2.LazyBuilder { builder ->
+    lazyHandlers[Lookup.NORMAL_SELECT_CHAR.toString()] = DeclarativeInsertHandler2.LazyBuilder { builder ->
         val stringToInsert = StringBuilder()
 
         val offset = editor.caretModel.offset
@@ -90,21 +90,17 @@ fun createNormalFunctionInsertHandler(
             var lambdaCaseInsideBracketOffset = 0
             var noLambdaCaseInsideBracketOffset = 0
             if (insertLambda) {
-                // todo: get file outside
                 val file = PsiDocumentManager.getInstance(editor.project!!).getPsiFile(editor.document)!!
                 if (file.kotlinCustomSettings.INSERT_WHITESPACES_IN_SIMPLE_ONE_LINE_METHOD) {
-                    //builder.offsetToPutCaret = stringToInsert.length + 4
                     stringToInsert.append(" {  }")
                     lambdaCaseInsideBracketOffset = 3
                 } else {
-                    //builder.offsetToPutCaret = stringToInsert.length + 3
                     stringToInsert.append(" {}")
                     lambdaCaseInsideBracketOffset = 2
                 }
             } else {
                 stringToInsert.append("($argumentText)")
                 noLambdaCaseInsideBracketOffset = 1
-                //builder.offsetToPutCaret = stringToInsert.length + 1
             }
             val shouldPlaceCaretInBrackets = inputValueArguments || lambdaInfo != null
             if (!insertTypeArguments) {
@@ -137,8 +133,8 @@ fun createNormalFunctionInsertHandler(
         builder.withPostInsertHandler(InsertHandler<LookupElement> { context, item ->
             var renderedText = item.lookupString
 
-            // TODO: maybe there is a way to detect this at declarative stage
             if (!argumentsOnly) {
+                // TODO: maybe there is a way to perform all this at declarative stage
                 surroundWithBracesIfInStringTemplate(context)
 
                 val name = (item.`object` as? DeclarationLookupObject)?.name
@@ -178,44 +174,7 @@ fun createNormalFunctionInsertHandler(
                     }
             }
         })
-
     }
-
-    // \t
-    /*
-        run {
-            // identifier123| ***
-            val replaceInsertHandler = DeclarativeInsertHandler2(
-                insertOperations = insertOperations,
-                offsetToPutCaret = offsetToPutCaret,
-                postInsertHandler = postInsertHandler
-            )
-
-            var offset = context.replacementOffset
-
-            val insertLambda = lambdaInfo != null && !chars.isCharAt(offset, '(')
-            var insertTypeArguments = inputTypeArguments && !(insertLambda && lambdaInfo!!.explicitParameters)
-
-
-            val offset1 = chars.skipSpaces(offset)
-            if (offset1 < chars.length) {
-                if (chars[offset1] == '<') {
-                    val token = context.file.findElementAt(offset1)!!
-                    if (token.node.elementType == KtTokens.LT) {
-                        val parent = token.parent
-                        */
-    /* if type argument list is on multiple lines this is more likely wrong parsing*//*
-
-                    if (parent is KtTypeArgumentList && parent.getText().indexOf('\n') < 0) {
-                        offset = parent.endOffset
-                        insertTypeArguments = false
-                    }
-                }
-            }
-        }
-
-    }
-*/
 
     val fallbackHandler =
         KotlinFunctionInsertHandler.Normal(callType, inputTypeArguments, inputValueArguments, argumentText, lambdaInfo, argumentsOnly)
