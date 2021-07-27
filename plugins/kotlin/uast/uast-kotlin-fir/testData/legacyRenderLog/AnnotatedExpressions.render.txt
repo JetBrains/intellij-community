@@ -1,18 +1,18 @@
 public final class AnnotatedExpressionsKt {
     public static final fun foo() : void {
-        [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
+        foo()
         @kotlin.Suppress var a: int = 1
         @kotlin.Suppress var b: int = 2
-        [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
-        [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
+        b = a
+        if (a > 2) a else b
         var c: int = elvis {
-            var varae507364: int = [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
+            var varae507364: int = a
             if (varae507364 != null) varae507364 else b
         }
     }
     public static final fun annotatedSwitch(@org.jetbrains.annotations.NotNull str: java.lang.String) : java.lang.Integer {
         return switch  {
-            [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) -> {
+            str.isBlank() -> {
                 yield null
             }
 

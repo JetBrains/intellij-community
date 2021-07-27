@@ -2,7 +2,10 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
     UClass (name = AnnotatedExpressionsKt) [public final class AnnotatedExpressionsKt {...}]
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] = Undetermined
-                [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) [[!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)] = Undetermined
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] = external foo()()
+                    UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
+                    UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
+                    USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] = external foo()()
                 UDeclarationsExpression [@kotlin.Suppress var a: int = 1] = Undetermined
                     ULocalVariable (name = a) [@kotlin.Suppress var a: int = 1]
                         UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
@@ -11,14 +14,24 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                     ULocalVariable (name = b) [@kotlin.Suppress var b: int = 2]
                         UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
                         ULiteralExpression (value = 2) [2] = (long)2
-                [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) [[!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)] = Undetermined
-                [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) [[!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)] = Undetermined
+                UBinaryExpression (operator = =) [b = a] = Undetermined
+                    UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
+                    USimpleNameReferenceExpression (identifier = b) [b] = (var b = (long)2)
+                    USimpleNameReferenceExpression (identifier = a) [a] = (var a = (long)1)
+                UIfExpression [if (a > 2) a else b] = (var b = (long)2)
+                    UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
+                    UBinaryExpression (operator = >) [a > 2] = false (depending on: (var a = (long)1))
+                        USimpleNameReferenceExpression (identifier = a) [a] = (var a = (long)1)
+                        ULiteralExpression (value = 2) [2] = (long)2
+                    USimpleNameReferenceExpression (identifier = a) [a] = (var a = (long)1)
+                    USimpleNameReferenceExpression (identifier = b) [b] = (var b = (long)2)
                 UDeclarationsExpression [var c: int = elvis {...}] = Undetermined
                     ULocalVariable (name = c) [var c: int = elvis {...}]
                         UExpressionList (elvis) [elvis {...}] = Undetermined
-                            UDeclarationsExpression [var varae507364: int = [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)] = Undetermined
-                                ULocalVariable (name = varae507364) [var varae507364: int = [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)]
-                                    [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) [[!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)] = Undetermined
+                            UDeclarationsExpression [var varae507364: int = a] = Undetermined
+                                ULocalVariable (name = varae507364) [var varae507364: int = a]
+                                    USimpleNameReferenceExpression (identifier = a) [a] = Undetermined
+                                        UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
                             UIfExpression [if (varae507364 != null) varae507364 else b] = Undetermined
                                 UBinaryExpression (operator = !=) [varae507364 != null] = Undetermined
                                     USimpleNameReferenceExpression (identifier = varae507364) [varae507364] = Undetermined
@@ -31,9 +44,16 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return switch  {...] = Nothing
                     USwitchExpression [switch  {...] = null
-                        UExpressionList (when) [    [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) -> {...    ] = null
-                            USwitchClauseExpressionWithBody [[!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) -> {...] = Undetermined
-                                [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION) [[!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)] = Undetermined
+                        UExpressionList (when) [    str.isBlank() -> {...    ] = null
+                            USwitchClauseExpressionWithBody [str.isBlank() -> {...] = Undetermined
+                                UQualifiedReferenceExpression [str.isBlank()] = external isBlank()()
+                                    UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "DEPRECATION")]
+                                        UNamedExpression (name = names) [names = "DEPRECATION"] = Nothing
+                                            ULiteralExpression (value = "DEPRECATION") ["DEPRECATION"] = "DEPRECATION"
+                                    USimpleNameReferenceExpression (identifier = str) [str] = Undetermined
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [isBlank()] = external isBlank()()
+                                        UIdentifier (Identifier (isBlank)) [UIdentifier (Identifier (isBlank))]
+                                        USimpleNameReferenceExpression (identifier = isBlank, resolvesTo = null) [isBlank] = external isBlank()()
                                 UExpressionList (when_entry) [{...] = Undetermined
                                     UYieldExpression [yield null] = UYieldResult(null)
                                         ULiteralExpression (value = null) [null] = null
