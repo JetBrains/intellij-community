@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
+import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
@@ -52,11 +53,48 @@ internal class ClassLoaderConfiguratorTest {
     assertThat(plugin.content.modules.get(0).requireDescriptor().classLoader).isInstanceOf(PluginAwareClassLoader::class.java)
   }
 
+  @Test
+  @Suppress("PluginXmlValidity")
+  fun `inject content module if another plugin specifies dependency in old format`() {
+    val rootDir = inMemoryFs.fs.getPath("/")
+
+    plugin(rootDir, """
+    <idea-plugin package="com.foo">
+      <id>1-foo</id>
+      <content>
+        <module name="com.example.sub"/>
+      </content>
+    </idea-plugin>
+    """)
+    module(rootDir, "1-foo", "com.example.sub", """
+      <idea-plugin package="com.foo.sub">
+      </idea-plugin>
+    """)
+
+    plugin(rootDir, """
+    <idea-plugin>
+      <id>2-bar</id>
+      <depends>1-foo</depends>
+    </idea-plugin>
+    """)
+
+    val plugins = loadDescriptors(rootDir).getEnabledPlugins()
+    assertThat(plugins).hasSize(2)
+    val barPlugin = plugins[1]
+    assertThat(barPlugin.id.idString).isEqualTo("2-bar")
+
+    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSet.createPluginSet(plugins, plugins))
+    plugins.forEach(classLoaderConfigurator::configure)
+
+    assertThat((barPlugin.classLoader as PluginClassLoader)._getParents().map { it.descriptorPath })
+      .containsExactly("com.example.sub.xml", null)
+  }
+
   @Suppress("PluginXmlValidity")
   private fun loadPlugins(modulePackage: String?): PluginLoadingResult {
     val rootDir = inMemoryFs.fs.getPath("/")
 
-    // toUnsignedLong - avoid - symbol
+    // toUnsignedLong - avoid `-` symbol
     val pluginIdSuffix = Integer.toUnsignedLong(Murmur3_32Hash.MURMUR3_32.hashString(javaClass.name + name.methodName)).toString(36)
     val dependencyId = "p_dependency_$pluginIdSuffix"
     plugin(rootDir, """
