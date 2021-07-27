@@ -13,7 +13,7 @@ UFile (package = )
                 UDeclarationsExpression
                     ULocalVariable (name = var465978a0)
                         UAnnotation (fqName = null)
-                        UAnnotation (fqName = not-implemented-annotation)
+                        UAnnotation (fqName = null)
                         UBinaryExpressionWithType
                             USimpleNameReferenceExpression (identifier = data)
                             UTypeReferenceExpression (name = kotlin.Pair<? extends java.lang.String,? extends java.lang.String>)
