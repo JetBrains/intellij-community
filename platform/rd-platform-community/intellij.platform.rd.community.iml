@@ -14,5 +14,7 @@
     <orderEntry type="library" name="rd-framework" level="project" />
     <orderEntry type="library" name="rd-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
   </component>
 </module>
