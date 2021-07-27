@@ -26,7 +26,6 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.preview.DescriptorPreview;
-import com.intellij.ui.preview.DescriptorSupplier;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.treeStructure.Tree;
@@ -371,8 +370,8 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   }
 
   protected void updatePreview() {
-    DescriptorSupplier supplier = isNotNullAndSelected(getShowPreview()) ? getSelectedNode() : null;
-    myPreview.open(supplier == null ? null : supplier.getDescriptor());
+    Node node = isNotNullAndSelected(getShowPreview()) ? getSelectedNode() : null;
+    myPreview.open(node == null ? null : node.getDescriptor());
   }
 
   private void invokeLater(@NotNull Runnable runnable) {

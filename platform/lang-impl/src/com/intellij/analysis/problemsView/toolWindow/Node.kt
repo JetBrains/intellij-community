@@ -3,16 +3,19 @@ package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
-import com.intellij.ui.preview.DescriptorSupplier
 import com.intellij.ui.tree.LeafState
 import com.intellij.ui.tree.TreePathUtil.pathToCustomNode
 
-abstract class Node : PresentableNodeDescriptor<Node?>, DescriptorSupplier, LeafState.Supplier {
+abstract class Node : PresentableNodeDescriptor<Node?>, LeafState.Supplier {
   protected constructor(project: Project) : super(project, null)
   protected constructor(parent: Node) : super(parent.project, parent)
+
+  open val descriptor: OpenFileDescriptor?
+    get() = null
 
   protected abstract fun update(project: Project, presentation: PresentationData)
 
