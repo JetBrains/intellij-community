@@ -159,11 +159,13 @@ Includes the following features:</p>
 
     <intentionAction>
       <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
-      <category>Markdown</category>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>org.intellij.plugins.markdown.editor.images.MarkdownConfigureImageIntention</className>
-      <category>Markdown</category>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
     <notificationGroup id="Markdown" displayType="BALLOON"/>
 
