@@ -890,12 +890,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       builder.setAutoselectOnMouseMove(true).setItemChoosenCallback(itemChoseCallback).setCloseOnEnter(true);
     }
 
-    popupRef.set((AbstractPopup)builder.createPopup());
-    JComponent content = popupRef.get().getContent();
-    Disposer.register(popupRef.get(), contentDisposable);
+    AbstractPopup popup = (AbstractPopup)builder.createPopup();
+    JComponent content = popup.getContent();
+    Disposer.register(popup, contentDisposable);
 
     // Set title text alignment
-    CaptionPanel caption = popupRef.get().getTitle();
+    CaptionPanel caption = popup.getTitle();
     if (caption instanceof TitlePanel) {
       TitlePanel titlePanel = (TitlePanel)caption;
       titlePanel.getLabel().setHorizontalAlignment(SwingConstants.LEFT);
@@ -913,8 +913,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       action.registerCustomShortcutSet(action.getShortcutSet(), content);
     }
     /* save toolbar actions for using later, in automatic filter toggling in {@link #restartShowUsagesWithFiltersToggled(List} */
-    popupRef.get().setUserData(addCodePreview ? Arrays.asList(filteringGroup, contentSplitter) : Collections.singletonList(filteringGroup));
-    return popupRef.get();
+    popup.setUserData(addCodePreview ? Arrays.asList(filteringGroup, contentSplitter) : Collections.singletonList(filteringGroup));
+    popupRef.set(popup);
+    return popup;
   }
 
   @NotNull
