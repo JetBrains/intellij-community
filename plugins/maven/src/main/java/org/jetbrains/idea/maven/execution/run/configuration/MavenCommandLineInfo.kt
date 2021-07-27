@@ -1,9 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution.run.configuration
 
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineInfo
 import com.intellij.openapi.externalSystem.service.ui.command.line.CompletionTableInfo
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
+import com.intellij.openapi.externalSystem.service.ui.getActionShortcutText
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -16,7 +18,10 @@ import javax.swing.Icon
 
 class MavenCommandLineInfo(project: Project, projectPathField: WorkingDirectoryField) : CommandLineInfo {
   override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.command.line.name")
-  override val settingsHint: String = MavenConfigurableBundle.message("maven.run.configuration.command.line.hint")
+  override val settingsHint: String = MavenConfigurableBundle.message(
+    "maven.run.configuration.command.line.hint",
+    getActionShortcutText(IdeActions.ACTION_CODE_COMPLETION)
+  )
 
   override val dialogTitle: String = MavenConfigurableBundle.message("maven.run.configuration.command.line.title")
   override val dialogTooltip: String = MavenConfigurableBundle.message("maven.run.configuration.command.line.tooltip")
