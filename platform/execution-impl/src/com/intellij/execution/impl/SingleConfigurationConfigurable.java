@@ -106,7 +106,6 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     });
 
     myRunOnTargetPanel = new RunOnTargetPanel(settings, getEditor());
-    myRunOnTargetPanel.addChangeListener(e -> setModified(true));
   }
 
   @NotNull
@@ -128,7 +127,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
   @Override
   boolean isSpecificallyModified() {
-    return myComponent != null && myComponent.myRCStorageUi != null && myComponent.myRCStorageUi.isModified();
+    return myComponent != null && myComponent.myRCStorageUi != null && myComponent.myRCStorageUi.isModified() ||
+           myRunOnTargetPanel.isModified();
   }
 
   @Override

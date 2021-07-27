@@ -11,19 +11,16 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.ActionLink;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.List;
+import java.util.Objects;
 
 public class RunOnTargetPanel {
 
@@ -33,11 +30,6 @@ public class RunOnTargetPanel {
   private final JPanel myPanel;
   private final RunOnTargetComboBox myRunOnComboBox;
   private String myDefaultTargetName;
-  private final List<ChangeListener> myChangeListeners = new SmartList<>();
-  /**
-   * Allows to skip "target is changed" event propagation during the execution of {@link #resetRunOnComboBox(String)}.
-   */
-  private boolean myIsResetOngoing = false;
 
   public RunOnTargetPanel(RunnerAndConfigurationSettings settings, SettingsEditor<RunnerAndConfigurationSettings> editor) {
     mySettings = settings;
@@ -84,16 +76,7 @@ public class RunOnTargetPanel {
       if (!StringUtil.equals(myDefaultTargetName, chosenTarget)) {
         setTargetName(chosenTarget);
       }
-      if (!myIsResetOngoing) {
-        fireChangeListeners(new ChangeEvent(e.getSource()));
-      }
     });
-  }
-
-  private void fireChangeListeners(ChangeEvent e) {
-    for (ChangeListener listener : myChangeListeners) {
-      listener.stateChanged(e);
-    }
   }
 
   public void reset() {
@@ -119,6 +102,12 @@ public class RunOnTargetPanel {
     }
   }
 
+  boolean isModified() {
+    RunConfiguration runConfiguration = mySettings.getConfiguration();
+    return runConfiguration instanceof TargetEnvironmentAwareRunProfile &&
+           !Objects.equals(myDefaultTargetName, ((TargetEnvironmentAwareRunProfile)runConfiguration).getDefaultTargetName());
+  }
+
   /**
    * Returns the identifier of the currently selected target.
    *
@@ -137,21 +126,11 @@ public class RunOnTargetPanel {
   }
 
   private void resetRunOnComboBox(@Nullable String targetNameToChoose) {
-    myIsResetOngoing = true;
-    try {
-      myRunOnComboBox.initModel();
-      List<TargetEnvironmentConfiguration> configs = TargetEnvironmentsManager.getInstance(myProject).getTargets().resolvedConfigs();
-      myRunOnComboBox.addTargets(ContainerUtil.filter(configs, configuration -> {
-        return TargetEnvironmentConfigurationKt.getTargetType(configuration).isSystemCompatible();
-      }));
-      myRunOnComboBox.selectTarget(targetNameToChoose);
-    }
-    finally {
-      myIsResetOngoing = false;
-    }
-  }
-
-  public void addChangeListener(@NotNull ChangeListener changeListener) {
-    myChangeListeners.add(changeListener);
+    myRunOnComboBox.initModel();
+    List<TargetEnvironmentConfiguration> configs = TargetEnvironmentsManager.getInstance(myProject).getTargets().resolvedConfigs();
+    myRunOnComboBox.addTargets(ContainerUtil.filter(configs, configuration -> {
+      return TargetEnvironmentConfigurationKt.getTargetType(configuration).isSystemCompatible();
+    }));
+    myRunOnComboBox.selectTarget(targetNameToChoose);
   }
 }
