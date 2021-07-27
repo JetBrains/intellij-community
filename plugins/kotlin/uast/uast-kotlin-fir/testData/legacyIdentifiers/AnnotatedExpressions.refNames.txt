@@ -9,10 +9,13 @@ Suppress -> UAnnotation (fqName = kotlin.Suppress) from KtNameReferenceExpressio
 a -> USimpleNameReferenceExpression (identifier = a) from KtNameReferenceExpression
 a -> USimpleNameReferenceExpression (identifier = a) from KtNameReferenceExpression
 b -> USimpleNameReferenceExpression (identifier = b) from KtNameReferenceExpression
+a -> USimpleNameReferenceExpression (identifier = a) from KtAnnotatedExpression
 Suppress -> UAnnotation (fqName = kotlin.Suppress) from KtNameReferenceExpression
 a -> USimpleNameReferenceExpression (identifier = a) from KtNameReferenceExpression
 b -> USimpleNameReferenceExpression (identifier = b) from KtNameReferenceExpression
 String -> USimpleNameReferenceExpression (identifier = String) from KtNameReferenceExpression
+isBlank -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtWhenConditionWithExpression
+isBlank -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtAnnotatedExpression
 Suppress -> UAnnotation (fqName = kotlin.Suppress) from KtNameReferenceExpression
 isBlank -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtDotQualifiedExpression
 str -> USimpleNameReferenceExpression (identifier = str) from KtNameReferenceExpression
