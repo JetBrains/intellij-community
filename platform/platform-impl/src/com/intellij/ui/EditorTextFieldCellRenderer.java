@@ -151,10 +151,6 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       return myEditor;
     }
 
-    public void setBackgroundColor(Color color) {
-      myEditor.setBackgroundColor(color);
-    }
-
     @NotNull
     private static EditorEx createEditor(Project project, @Nullable Language language, boolean inheritFontFromLaF) {
       Language adjustedLanguage = language != null ? language : PlainTextLanguage.INSTANCE;
