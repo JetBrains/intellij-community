@@ -313,6 +313,11 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
         if (t != null) return t;
       }
     }
+    return getDefaultNewMapping(file);
+  }
+
+  @Nullable
+  protected T getDefaultNewMapping(@Nullable VirtualFile file) {
     return myMappings.getDefaultMapping(file);
   }
 
