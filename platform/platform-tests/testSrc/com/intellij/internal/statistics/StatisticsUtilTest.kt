@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.StatisticsUtil.getCurrentHourInUTC
 import com.intellij.internal.statistic.utils.StatisticsUtil.getNextPowerOfTwo
 import com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo
+import com.intellij.internal.statistic.utils.StatisticsUtil.roundToUpperBound
 import com.intellij.testFramework.LightPlatformTestCase
 import junit.framework.TestCase
 import org.junit.Test
@@ -119,6 +120,37 @@ class StatisticsUtilTest : LightPlatformTestCase() {
     assertEquals(expected, roundToPowerOfTwo(value), "Incorrect key for value `$value`")
   }
 
+  @Test
+  fun `test round to upper bound`() {
+    // Test empty bounds return next power of two
+    testRoundToUpperBound(0, intArrayOf(), 0)
+    testRoundToUpperBound(1, intArrayOf(), 1)
+    testRoundToUpperBound(2, intArrayOf(), 2)
+    testRoundToUpperBound(3, intArrayOf(), 4)
+    testRoundToUpperBound(10, intArrayOf(), 16)
+    testRoundToUpperBound(Int.MAX_VALUE, intArrayOf(), Int.MAX_VALUE)
+
+    // Test with bounds
+    // on the edge
+    testRoundToUpperBound(0, intArrayOf(0, 1, 2), 0)
+    testRoundToUpperBound(1, intArrayOf(0, 1, 2), 1)
+    testRoundToUpperBound(2, intArrayOf(0, 1, 2), 2)
+    // between bounds
+    testRoundToUpperBound(5, intArrayOf(1, 10, 100), 10)
+    testRoundToUpperBound(50, intArrayOf(1, 10, 100), 100)
+    // out of bounds
+    testRoundToUpperBound(-1, intArrayOf(0, 1, 2), 0)
+    testRoundToUpperBound(3, intArrayOf(0, 1, 2), 2)
+    // corner cases
+    testRoundToUpperBound(Int.MIN_VALUE, intArrayOf(0, 1, 2), 0)
+    testRoundToUpperBound(Int.MAX_VALUE, intArrayOf(0, 1, 2), 2)
+
+  }
+
+  private fun testRoundToUpperBound(value: Int, bounds: IntArray, expected: Int) {
+    assertEquals(expected, roundToUpperBound(value, bounds), "Incorrect key for value `$value`")
+  }
+  
 
   @Test
   fun `test hash sensitive data`() {
