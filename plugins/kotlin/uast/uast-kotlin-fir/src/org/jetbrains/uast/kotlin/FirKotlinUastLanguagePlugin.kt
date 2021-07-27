@@ -55,7 +55,7 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
             element is KtClassOrObject ->
                 FirKotlinConverter.convertClassOrObject(element, null, requiredTypes) as Sequence<T>
             element is KtProperty && !element.isLocal ->
-                FirKotlinConverter.convertPsiElement(element, null, requiredTypes) as Sequence<T>
+                FirKotlinConverter.convertNonLocalProperty(element, null, requiredTypes) as Sequence<T>
             element is KtParameter ->
                 FirKotlinConverter.convertParameter(element, null, requiredTypes) as Sequence<T>
             else ->
