@@ -106,7 +106,8 @@ open class DeclarativeInsertHandler2 protected constructor(
   fun interface HandlerProducer {
     fun produce(builder: Builder)
   }
-  class LazyBuilder(private val block: HandlerProducer): Lazy<DeclarativeInsertHandler2> {
+
+  class LazyBuilder(private val block: HandlerProducer) : Lazy<DeclarativeInsertHandler2> {
     private val delegate = lazy { Builder().also(block::produce).build() }
 
     override val value: DeclarativeInsertHandler2
