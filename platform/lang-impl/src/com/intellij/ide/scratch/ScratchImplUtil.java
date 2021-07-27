@@ -2,11 +2,9 @@
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
@@ -22,7 +20,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.TerminalUtils;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
@@ -43,7 +41,6 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
-import java.util.function.Supplier;
 
 /**
  * @author gregsh
@@ -271,15 +268,11 @@ final class ScratchImplUtil {
   }
 
   static @Nullable TextExtractor getTextExtractor(@Nullable Component component) {
-    TextExtractor extractor = component instanceof JTextComponent ? new TextComponentExtractor((JTextComponent)component) :
-                              component instanceof JList ? new ListExtractor((JList<?>)component) :
-                              component instanceof JTree ? new TreeExtractor((JTree)component) : null;
-    if (extractor != null) return extractor;
-    DataContext dataContext = DataManager.getInstance().getDataContext(component);
-    if (JBTerminalWidget.TERMINAL_DATA_KEY.getData(dataContext) != null) {
-      return new TerminalExtractor(dataContext);
-    }
-    return null;
+    return component instanceof JTextComponent ? new TextComponentExtractor((JTextComponent)component) :
+           component instanceof JList ? new ListExtractor((JList<?>)component) :
+           component instanceof JTree ? new TreeExtractor((JTree)component) :
+           TerminalUtils.isTerminalComponent(component) ? new TerminalExtractor(component) :
+           null;
   }
 
   interface TextExtractor {
@@ -288,23 +281,23 @@ final class ScratchImplUtil {
   }
 
   private static class TerminalExtractor implements TextExtractor {
-    final DataContext context;
+    final Component component;
 
-    TerminalExtractor(DataContext dataContext) {
-      context = dataContext;
+    TerminalExtractor(@Nullable Component dataContext) {
+      component = dataContext;
     }
 
     @Override
     public boolean hasSelection() {
-      return StringUtil.isNotEmpty(JBTerminalWidget.SELECTED_TEXT_DATA_KEY.getData(context));
+      return TerminalUtils.hasSelectionInTerminal(component);
     }
 
     @Override
     public String extractText() {
-      String selection = JBTerminalWidget.SELECTED_TEXT_DATA_KEY.getData(context);
-      if (StringUtil.isNotEmpty(selection)) return selection;
-      Supplier<String> supplier = JBTerminalWidget.TEXT_SUPPLIER_DATA_KEY.getData(context);
-      String text = supplier != null ? supplier.get() : null;
+      if (TerminalUtils.hasSelectionInTerminal(component)) {
+        return TerminalUtils.getSelectedTextInTerminal(component);
+      }
+      String text = TerminalUtils.getTextInTerminal(component);
       return StringUtil.isEmptyOrSpaces(text) ? null : text;
     }
   }
@@ -316,7 +309,7 @@ final class ScratchImplUtil {
 
     @Override
     public boolean hasSelection() {
-      return !StringUtil.isEmpty(comp.getSelectedText());
+      return comp.getSelectionStart() != comp.getSelectionEnd();
     }
 
     @Override

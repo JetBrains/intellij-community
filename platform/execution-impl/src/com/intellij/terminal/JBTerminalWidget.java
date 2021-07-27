@@ -51,14 +51,12 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
-import java.util.function.Supplier;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable, DataProvider {
   private static final Logger LOG = Logger.getInstance(JBTerminalWidget.class);
 
   public static final DataKey<JBTerminalWidget> TERMINAL_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName());
   public static final DataKey<String> SELECTED_TEXT_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName() + " selected text");
-  public static final DataKey<Supplier<String>> TEXT_SUPPLIER_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName() + " text");
 
   private final CompositeFilterWrapper myCompositeFilterWrapper;
   private JBTerminalWidgetListener myListener;
@@ -316,10 +314,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   @Override
   public Object getData(@NotNull String dataId) {
     if (SELECTED_TEXT_DATA_KEY.is(dataId)) {
-      return getSelectedText();
-    }
-    if (TEXT_SUPPLIER_DATA_KEY.is(dataId)) {
-      return (Supplier<String>)this::getText;
+      return getSelectedText(getTerminalPanel());
     }
     if (TERMINAL_DATA_KEY.is(dataId)) {
       return this;
@@ -327,9 +322,8 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     return null;
   }
 
-  private @Nullable String getSelectedText() {
-    JBTerminalPanel terminalPanel = getTerminalPanel();
-    TerminalSelection selection = getTerminalPanel().getSelection();
+  static @Nullable String getSelectedText(@NotNull TerminalPanel terminalPanel) {
+    TerminalSelection selection = terminalPanel.getSelection();
     if (selection == null) return null;
     TerminalTextBuffer buffer = terminalPanel.getTerminalTextBuffer();
     buffer.lock();
@@ -342,8 +336,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     }
   }
 
-  private String getText() {
-    TerminalPanel terminalPanel = getTerminalPanel();
+  static @NotNull String getText(@NotNull TerminalPanel terminalPanel) {
     TerminalTextBuffer buffer = terminalPanel.getTerminalTextBuffer();
     buffer.lock();
     try {
