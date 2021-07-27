@@ -95,7 +95,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
     fun promoteToLiteral(expression: PyExpression,
                          expected: PyType?,
                          context: TypeEvalContext,
-                         substitutions: Map<PyGenericType, PyType>?): PyType? {
+                         substitutions: PyTypeChecker.GenericSubstitutions?): PyType? {
       if (expected is PyTypedDictType) {
         return null
       }

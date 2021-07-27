@@ -1062,6 +1062,267 @@ public class Py3TypeTest extends PyTestCase {
            "        expr = m");
   }
 
+  // PY-49935
+  public void testParamSpecExample() {
+    doTest("(str, bool) -> str",
+           "from collections.abc import Callable\n" +
+           "from typing import ParamSpec\n" +
+           "\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "\n" +
+           "\n" +
+           "def changes_return_type_to_str(x: Callable[P, int]) -> Callable[P, str]: ...\n" +
+           "\n" +
+           "\n" +
+           "def returns_int(a: str, b: bool) -> int:\n" +
+           "    return 42\n" +
+           "\n" +
+           "\n" +
+           "expr = changes_return_type_to_str(returns_int)");
+  }
+
+  // PY-49935
+  public void testParamSpecSeveral() {
+    doTest("(int, str) -> bool",
+           "from typing import ParamSpec, Callable\n" +
+           "\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "\n" +
+           "\n" +
+           "def foo(x: Callable[P, int], y: Callable[P, int]) -> Callable[P, bool]: ...\n" +
+           "\n" +
+           "\n" +
+           "def x_y(x: int, y: str) -> int: ...\n" +
+           "\n" +
+           "\n" +
+           "def y_x(y: int, x: str) -> int: ...\n" +
+           "\n" +
+           "\n" +
+           "expr = foo(x_y, y_x)");
+  }
+
+  // PY-49935
+  public void testParamSpecUserGenericClass() {
+    doTest("Y[int, [int, str, bool]]",
+           "from typing import TypeVar, Generic, Callable, ParamSpec\n" +
+           "\n" +
+           "U = TypeVar(\"U\")\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "\n" +
+           "\n" +
+           "class Y(Generic[U, P]):\n" +
+           "    f: Callable[P, str]\n" +
+           "    attr: U\n" +
+           "\n" +
+           "    def __init__(self, f: Callable[P, str], attr: U) -> None:\n" +
+           "        self.f = f\n" +
+           "        self.attr = attr\n" +
+           "\n" +
+           "\n" +
+           "def a(q: int, p: str, r: bool) -> str: ...\n" +
+           "\n" +
+           "\n" +
+           "expr = Y(a, 1)\n");
+  }
+
+  // PY-49935
+  public void testParamSpecUserGenericClassMethod() {
+    doTest("(int) -> str",
+           "from typing import TypeVar, Generic, Callable, ParamSpec\n" +
+           "\n" +
+           "U = TypeVar(\"U\")\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "\n" +
+           "\n" +
+           "class Y(Generic[U, P]):\n" +
+           "    f: Callable[P, U]\n" +
+           "    attr: U\n" +
+           "\n" +
+           "    def __init__(self, f: Callable[P, U], attr: U) -> None:\n" +
+           "        self.f = f\n" +
+           "        self.attr = attr\n" +
+           "\n" +
+           "\n" +
+           "def a(q: int) -> str: ...\n" +
+           "\n" +
+           "\n" +
+           "expr = Y(a, '1').f\n");
+  }
+
+  // PY-49935
+  public void testParamSpecUserGenericClassMethodConcatenate() {
+    doTest("(int, str, bool) -> str",
+           "from typing import TypeVar, Generic, Callable, ParamSpec, Concatenate\n" +
+           "\n" +
+           "U = TypeVar(\"U\")\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "\n" +
+           "\n" +
+           "class Y(Generic[U, P]):\n" +
+           "    f: Callable[Concatenate[int, P], U]\n" +
+           "    attr: U\n" +
+           "\n" +
+           "    def __init__(self, f: Callable[Concatenate[int, P], U], attr: U) -> None:\n" +
+           "        self.f = f\n" +
+           "        self.attr = attr\n" +
+           "\n" +
+           "\n" +
+           "def a(q: int, s: str, b: bool) -> str: ...\n" +
+           "\n" +
+           "\n" +
+           "expr = Y(a, '1').f\n");
+  }
+
+  // PY-49935
+  public void testParamSpecUserGenericClassMethodConcatenateSeveralParameters() {
+    doTest("(int, bool, str, bool) -> str",
+           "from typing import TypeVar, Generic, Callable, ParamSpec, Concatenate\n" +
+           "\n" +
+           "U = TypeVar(\"U\")\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "\n" +
+           "\n" +
+           "class Y(Generic[U, P]):\n" +
+           "    f: Callable[Concatenate[int, bool, P], U]\n" +
+           "    attr: U\n" +
+           "\n" +
+           "    def __init__(self, f: Callable[Concatenate[int, bool, P], U], attr: U) -> None:\n" +
+           "        self.f = f\n" +
+           "        self.attr = attr\n" +
+           "\n" +
+           "\n" +
+           "def a(q: int, r: bool, s: str, b: bool) -> str: ...\n" +
+           "\n" +
+           "\n" +
+           "expr = Y(a, '1').f\n");
+  }
+
+  // PY-49935
+  public void testParamSpecUserGenericClassMethodConcatenateOtherFunction() {
+    doTest("(bool, dict[str, list[str]], str, bool) -> str",
+           "from typing import TypeVar, Generic, Callable, ParamSpec, Concatenate\n" +
+           "\n" +
+           "U = TypeVar(\"U\")\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "\n" +
+           "\n" +
+           "class Y(Generic[U, P]):\n" +
+           "    f: Callable[Concatenate[int, bool, P], U]\n" +
+           "    g: Callable[Concatenate[bool, dict[str, list[str]], P], U]\n" +
+           "    attr: U\n" +
+           "\n" +
+           "    def __init__(self, f: Callable[Concatenate[int, bool, P], U], attr: U) -> None:\n" +
+           "        self.f = f\n" +
+           "        self.attr = attr\n" +
+           "\n" +
+           "\n" +
+           "def a(q: int, r: bool, s: str, b: bool) -> str: ...\n" +
+           "\n" +
+           "\n" +
+           "expr = Y(a, '1').g\n");
+  }
+
+  // PY-49935
+  public void testParamSpecUserGenericClassAttribute() {
+    doTest("str",
+           "from typing import TypeVar, Generic, Callable, ParamSpec\n" +
+           "\n" +
+           "U = TypeVar(\"U\")\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "\n" +
+           "\n" +
+           "class Y(Generic[U, P]):\n" +
+           "    f: Callable[P, U]\n" +
+           "    attr: U\n" +
+           "\n" +
+           "    def __init__(self, f: Callable[P, U], attr: U) -> None:\n" +
+           "        self.f = f\n" +
+           "        self.attr = attr\n" +
+           "\n" +
+           "\n" +
+           "def a(q: int) -> str: ...\n" +
+           "\n" +
+           "\n" +
+           "expr = Y(a, '1').attr\n");
+  }
+
+  // PY-49935
+  public void testParamSpecConcatenateAdd() {
+    doTest("(str, int, tuple[bool, ...]) -> bool",
+           "from collections.abc import Callable\n" +
+           "from typing import Concatenate, ParamSpec\n" +
+           "\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "\n" +
+           "\n" +
+           "def bar(x: int, *args: bool) -> int: ...\n" +
+           "\n" +
+           "\n" +
+           "def add(x: Callable[P, int]) -> Callable[Concatenate[str, P], bool]: ...\n" +
+           "\n" +
+           "\n" +
+           "expr = add(bar)  # Should return (__a: str, x: int, *args: bool) -> bool");
+  }
+
+  // PY-49935
+  public void testParamSpecConcatenateAddSeveralParameters() {
+    doTest("(str, bool, int, tuple[bool, ...]) -> bool",
+           "from collections.abc import Callable\n" +
+           "from typing import Concatenate, ParamSpec\n" +
+           "\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "\n" +
+           "\n" +
+           "def bar(x: int, *args: bool) -> int: ...\n" +
+           "\n" +
+           "\n" +
+           "def add(x: Callable[P, int]) -> Callable[Concatenate[str, bool, P], bool]: ...\n" +
+           "\n" +
+           "\n" +
+           "expr = add(bar)  # Should return (__a: str, x: int, *args: bool) -> bool");
+  }
+
+  // PY-49935
+  public void testParamSpecConcatenateRemove() {
+    doTest("(tuple[bool, ...]) -> bool",
+           "from collections.abc import Callable\n" +
+           "from typing import Concatenate, ParamSpec\n" +
+           "\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "\n" +
+           "\n" +
+           "def bar(x: int, *args: bool) -> int: ...\n" +
+           "\n" +
+           "\n" +
+           "def remove(x: Callable[Concatenate[int, P], int]) -> Callable[P, bool]: ...\n" +
+           "\n" +
+           "\n" +
+           "expr = remove(bar)");
+  }
+
+  // PY-49935
+  public void testParamSpecConcatenateTransform() {
+    doTest("(str, tuple[bool, ...]) -> bool",
+           "from collections.abc import Callable\n" +
+           "from typing import Concatenate, ParamSpec\n" +
+           "\n" +
+           "P = ParamSpec(\"P\")\n" +
+           "\n" +
+           "\n" +
+           "def bar(x: int, *args: bool) -> int: ...\n" +
+           "\n" +
+           "\n" +
+           "def transform(\n" +
+           "        x: Callable[Concatenate[int, P], int]\n" +
+           ") -> Callable[Concatenate[str, P], bool]:\n" +
+           "    def inner(s: str, *args: P.args):\n" +
+           "        return True\n" +
+           "    return inner\n" +
+           "\n" +
+           "\n" +
+           "expr = transform(bar)");
+  }
+
   /**
    * @see #testRecursiveDictTopDown()
    * @see PyTypeCheckerInspectionTest#testRecursiveDictAttribute()

@@ -4,6 +4,7 @@ package com.jetbrains.python.inspections
 import com.intellij.codeInsight.controlflow.ControlFlowUtil
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -32,6 +33,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.*
+import com.jetbrains.python.sdk.PythonSdkUtil
 
 class PyTypeHintsInspection : PyInspection() {
 
@@ -612,7 +614,7 @@ class PyTypeHintsInspection : PyInspection() {
 
     private fun checkGenericParameters(index: PyExpression) {
       val parameters = (index as? PyTupleExpression)?.elements ?: arrayOf(index)
-      val typeVars = mutableSetOf<PsiElement>()
+      val genericParameters = mutableSetOf<PsiElement>()
 
       parameters.forEach {
         if (it !is PyReferenceExpression) {
@@ -623,8 +625,8 @@ class PyTypeHintsInspection : PyInspection() {
           val type = myTypeEvalContext.getType(it)
 
           if (type != null) {
-            if (type is PyGenericType) {
-              if (!typeVars.addAll(multiFollowAssignmentsChain(it))) {
+            if (type is PyGenericType || isParamSpecOrConcatenate(it, myTypeEvalContext)) {
+              if (!genericParameters.addAll(multiFollowAssignmentsChain(it))) {
                 registerProblem(it, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.unique"),
                                 ProblemHighlightType.GENERIC_ERROR)
               }
@@ -661,16 +663,23 @@ class PyTypeHintsInspection : PyInspection() {
       }
       else {
         val first = parameters.first()
+        if (!isSdkAvailable(first) || isParamSpecOrConcatenate(first, myTypeEvalContext)) return
 
         if (first !is PyListLiteralExpression && !(first is PyNoneLiteralExpression && first.isEllipsis)) {
           registerProblem(first,
-                          PyPsiBundle.message("INSP.type.hints.illegal.callable.format"),
+                          PyPsiBundle.message("INSP.type.hints.illegal.first.parameter"),
                           ProblemHighlightType.GENERIC_ERROR,
                           null,
                           if (first is PyParenthesizedExpression) ReplaceWithListQuickFix() else SurroundElementWithSquareBracketsQuickFix())
         }
       }
     }
+
+    private fun isSdkAvailable(element: PsiElement): Boolean =
+      PythonSdkUtil.findPythonSdk(ModuleUtilCore.findModuleForPsiElement(element)) != null
+
+    private fun isParamSpecOrConcatenate(expression: PyExpression, context: TypeEvalContext) : Boolean =
+      PyTypingTypeProvider.isConcatenate(expression, context) || PyTypingTypeProvider.isParamSpec(expression, context)
 
     private fun checkTypingMemberParameters(index: PyExpression, isCallable: Boolean) {
       val parameters = if (index is PyTupleExpression) index.elements else arrayOf(index)
