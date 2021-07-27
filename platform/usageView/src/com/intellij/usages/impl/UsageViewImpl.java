@@ -462,28 +462,7 @@ public class UsageViewImpl implements UsageViewEx {
     public int hashCode() {
       return Objects.hash(nodeChangeType, parentNode, childNode);
     }
-
-    private boolean isValid() {
-      boolean parentValid = !parentNode.isStructuralChangeDetected();
-
-      boolean childValid = true;
-      if (childNode != null) {
-        childValid = !childNode.isStructuralChangeDetected();
-      }
-
-      return parentValid && childValid;
-    }
   }
-
-  /**
-   * Executes a new appendUsage request with the updateRequests executor
-   */
-  private final Consumer<Usage> invalidatedUsagesConsumer = (@NotNull Usage usage) -> {
-    if (!getPresentation().isDetachedMode() && !isDisposed) {
-      myUsageNodes.remove(usage);
-      addUpdateRequest(() -> ReadAction.run(() -> doAppendUsage(usage)));
-    }
-  };
 
 
   /**
@@ -590,9 +569,6 @@ public class UsageViewImpl implements UsageViewEx {
 
         if (!addedToThisNode.isEmpty()) {
           for (NodeChange change : addedToThisNode) {
-            if (!change.isValid()) {
-              continue;
-            }
             Node childNode = change.childNode;
             if (childNode == null) {
               continue;
@@ -1377,7 +1353,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
     reportToFUS(usage);
 
-    UsageNode child = myBuilder.appendOrGet(usage, isFilterDuplicateLines(), edtModelToSwingNodeChangesQueue, invalidatedUsagesConsumer);
+    UsageNode child = myBuilder.appendOrGet(usage, isFilterDuplicateLines(), edtModelToSwingNodeChangesQueue);
     myUsageNodes.put(usage, child == null ? NULL_NODE : child);
 
     if (child != null && getPresentation().isExcludeAvailable()) {
