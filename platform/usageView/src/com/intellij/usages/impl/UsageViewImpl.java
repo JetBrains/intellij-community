@@ -42,7 +42,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
-import com.intellij.usages.impl.actions.RuleAction;
+import com.intellij.usages.impl.actions.MergeSameLineUsagesAction;
 import com.intellij.usages.rules.*;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -71,7 +71,10 @@ import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
@@ -911,7 +914,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   protected void addFilteringActions(@NotNull DefaultActionGroup group, boolean includeExtensionPoints) {
     if (getPresentation().isMergeDupLinesAvailable()) {
-      MergeDupLines mergeDupLines = new MergeDupLines();
+      MergeSameLineUsagesAction mergeDupLines = new MergeSameLineUsagesAction();
       JComponent component = myRootPanel;
       if (component != null) {
         mergeDupLines.registerCustomShortcutSet(mergeDupLines.getShortcutSet(), component, this);
@@ -1238,23 +1241,6 @@ public class UsageViewImpl implements UsageViewEx {
   @Override
   public void associateProgress(@NotNull ProgressIndicator indicator) {
     associatedProgress = indicator;
-  }
-
-  private static final class MergeDupLines extends RuleAction {
-    private MergeDupLines() {
-      super(UsageViewBundle.message("action.merge.same.line"), AllIcons.Toolbar.Filterdups);
-      setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK)));
-    }
-
-    @Override
-    protected boolean getOptionValue(@NotNull AnActionEvent e) {
-      return getUsageViewSettings(e).isFilterDuplicatedLine();
-    }
-
-    @Override
-    protected void setOptionValue(@NotNull AnActionEvent e, boolean value) {
-      getUsageViewSettings(e).setFilterDuplicatedLine(value);
-    }
   }
 
   private final class ShowSettings extends AnAction implements UpdateInBackground {
