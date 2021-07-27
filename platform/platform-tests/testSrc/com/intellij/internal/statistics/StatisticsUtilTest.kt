@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.StatisticsUtil.getCurrentHourInUTC
 import com.intellij.internal.statistic.utils.StatisticsUtil.getNextPowerOfTwo
+import com.intellij.internal.statistic.utils.StatisticsUtil.roundToHighestDigit
 import com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo
 import com.intellij.internal.statistic.utils.StatisticsUtil.roundToUpperBound
 import com.intellij.testFramework.LightPlatformTestCase
@@ -121,6 +122,94 @@ class StatisticsUtilTest : LightPlatformTestCase() {
   }
 
   @Test
+  fun `test round to highest digit int`() {
+    // Test from -10..10
+    for (i in -10..-5) {
+      testRoundToHighestDigit(i, -10)
+    }
+    for (i in -4..-1) {
+      testRoundToHighestDigit(i, -1)
+    }
+    testRoundToHighestDigit(0, 0)
+    for (i in 1..4) {
+      testRoundToHighestDigit(i, 1)
+    }
+    for (i in 5..10) {
+      testRoundToHighestDigit(i, 10)
+    }
+
+    testRoundToHighestDigit(11, 10)
+    testRoundToHighestDigit(16, 20)
+    testRoundToHighestDigit(64, 60)
+    testRoundToHighestDigit(65, 70)
+
+    testRoundToHighestDigit(94, 90)
+    testRoundToHighestDigit(95, 100)
+    testRoundToHighestDigit(99, 100)
+
+    for (i in 1..9) {
+      val expected = i * 1000
+      testRoundToHighestDigit(expected, expected)
+    }
+
+    testRoundToHighestDigit(1024, 1000)
+    testRoundToHighestDigit(1500, 2000)
+    testRoundToHighestDigit(1999, 2000)
+
+    testRoundToHighestDigit(Int.MAX_VALUE, 2000000000)
+    testRoundToHighestDigit(Int.MIN_VALUE + 1, -2000000000)
+    testRoundToHighestDigit(Int.MIN_VALUE, -2000000000)
+  }
+
+  private fun testRoundToHighestDigit(value: Int, expected: Int) {
+    assertEquals(expected, roundToHighestDigit(value), "Incorrect key for value `$value`")
+  }
+
+  @Test
+  fun `test round to highest digit long`() {
+    // Test from -10..10
+    for (i in -10L..-5L) {
+      testRoundToHighestDigit(i, -10L)
+    }
+    for (i in -4L..-1L) {
+      testRoundToHighestDigit(i, -1L)
+    }
+    testRoundToHighestDigit(0L, 0L)
+    for (i in 1L..4L) {
+      testRoundToHighestDigit(i, 1L)
+    }
+    for (i in 5L..10L) {
+      testRoundToHighestDigit(i, 10L)
+    }
+
+    testRoundToHighestDigit(11L, 10L)
+    testRoundToHighestDigit(16L, 20L)
+    testRoundToHighestDigit(64L, 60L)
+    testRoundToHighestDigit(65L, 70L)
+
+    testRoundToHighestDigit(94L, 90L)
+    testRoundToHighestDigit(95L, 100L)
+    testRoundToHighestDigit(99L, 100L)
+
+    for (i in 1L..9L) {
+      val expected = i * 1000L
+      testRoundToHighestDigit(expected, expected)
+    }
+
+    testRoundToHighestDigit(1024L, 1000L)
+    testRoundToHighestDigit(1500L, 2000L)
+    testRoundToHighestDigit(1999L, 2000L)
+
+    testRoundToHighestDigit(Long.MAX_VALUE, 9000000000000000000L)
+    testRoundToHighestDigit(Long.MIN_VALUE + 1L, -9000000000000000000L)
+    testRoundToHighestDigit(Long.MIN_VALUE, -9000000000000000000L)
+  }
+
+  private fun testRoundToHighestDigit(value: Long, expected: Long) {
+    assertEquals(expected, roundToHighestDigit(value), "Incorrect key for value `$value`")
+  }
+
+  @Test
   fun `test round to upper bound`() {
     // Test empty bounds return next power of two
     testRoundToUpperBound(0, intArrayOf(), 0)
@@ -150,7 +239,7 @@ class StatisticsUtilTest : LightPlatformTestCase() {
   private fun testRoundToUpperBound(value: Int, bounds: IntArray, expected: Int) {
     assertEquals(expected, roundToUpperBound(value, bounds), "Incorrect key for value `$value`")
   }
-  
+
 
   @Test
   fun `test hash sensitive data`() {
