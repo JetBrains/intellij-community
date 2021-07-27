@@ -219,7 +219,7 @@ class WorkingDirectoryField(
   }
 
   init {
-    val textCompletionContributor = JTextCompletionContributor.create(CompletionType.REPLACE) { textToComplete ->
+    val textCompletionContributor = JTextCompletionContributor.create<WorkingDirectoryField>(CompletionType.REPLACE) { textToComplete ->
       when (mode) {
         Mode.NAME -> {
           externalProjects

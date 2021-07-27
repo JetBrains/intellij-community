@@ -54,7 +54,7 @@ class MavenProfilesFiled(project: Project, workingDirectoryField: WorkingDirecto
   }
 
   init {
-    val textCompletionContributor = JTextCompletionContributor.create {
+    val textCompletionContributor = JTextCompletionContributor.create<MavenProfilesFiled> {
       val profiles = getProfiles(project, workingDirectoryField)
         .sortedWith(NaturalComparator.INSTANCE)
       profiles.map { TextCompletionInfo(it) } +
