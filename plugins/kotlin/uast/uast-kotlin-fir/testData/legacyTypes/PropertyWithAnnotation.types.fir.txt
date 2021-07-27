@@ -4,8 +4,10 @@ UFile (package = ) [public final class PropertyWithAnnotationKt {...]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UAnnotation (fqName = TestAnnotation) [@TestAnnotation]
             ULiteralExpression (value = 0) [0] : PsiType:int
-        UMethod (name = getProp1) [public static final fun getProp1() : int = UastEmptyExpression]
-        UMethod (name = getProp2) [public static final fun getProp2() : int {...}]
+        UMethod (name = getProp1) [@TestAnnotation...public static final fun getProp1() : int = UastEmptyExpression]
+            UAnnotation (fqName = TestAnnotation) [@TestAnnotation]
+        UMethod (name = getProp2) [@TestAnnotation...}]
+            UAnnotation (fqName = TestAnnotation) [@TestAnnotation]
             UBlockExpression [{...}]
                 UReturnExpression [return 0]
                     ULiteralExpression (value = 0) [0] : PsiType:int
@@ -13,7 +15,8 @@ UFile (package = ) [public final class PropertyWithAnnotationKt {...]
             UBlockExpression [{...}]
                 UReturnExpression [return 0]
                     ULiteralExpression (value = 0) [0] : PsiType:int
-        UMethod (name = setProp3) [public static final fun setProp3(@org.jetbrains.annotations.NotNull value: int) : void {...}]
+        UMethod (name = setProp3) [@TestAnnotation...}]
+            UAnnotation (fqName = TestAnnotation) [@TestAnnotation]
             UParameter (name = value) [@org.jetbrains.annotations.NotNull var value: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:Unit

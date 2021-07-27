@@ -1,5 +1,6 @@
 UFile (package = ) [public final class C {...]
     UClass (name = C) [public final class C {...}]
         UMethod (name = C) [public fun C() = UastEmptyExpression]
-        UMethod (name = foo) [public final fun foo() : void {...}]
+        UMethod (name = foo) [@null...}]
+            UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}] = Undetermined

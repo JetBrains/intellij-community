@@ -21,6 +21,7 @@ public final class TryCatch {
 
 public final class TryCatchAnnotations {
     public fun TryCatchAnnotations() = UastEmptyExpression
+    @java.lang.SuppressWarnings(value = "Something")
     public final fun catches() : void {
         try {
             body()
