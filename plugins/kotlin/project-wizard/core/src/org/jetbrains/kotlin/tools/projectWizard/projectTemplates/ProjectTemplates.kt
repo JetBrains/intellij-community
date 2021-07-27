@@ -90,56 +90,23 @@ abstract class ProjectTemplate : DisplayableSettingItem {
     }
 }
 
-class TemplateSettingsBuilder<Q : Template>(
-    val module: Module,
-    val template: Q
-) : TemplateEnvironment by ModuleBasedTemplateEnvironment(template, module) {
-    private val settings = mutableListOf<SettingWithValue<*, *>>()
-    val setsSettings: List<SettingWithValue<*, *>>
-        get() = settings
-
-    infix fun <V : Any, T : SettingType<V>> TemplateSetting<V, T>.withValue(value: V) {
-        settings += SettingWithValue(reference, value)
-    }
-}
-
-class ConfiguratorSettingsBuilder<C : ModuleConfigurator>(
-    val module: Module,
-    val configurator: C
-) : ModuleConfiguratorContext by ModuleBasedConfiguratorContext(configurator, module) {
-    init {
-        assert(module.configurator === configurator)
-    }
-
-    private val settings = mutableListOf<SettingWithValue<*, *>>()
-    val setsSettings: List<SettingWithValue<*, *>>
-        get() = settings
-
-    infix fun <V : Any, T : SettingType<V>> ModuleConfiguratorSetting<V, T>.withValue(value: V) {
-        settings += SettingWithValue(reference, value)
-    }
-
-}
-
-data class SettingWithValue<V : Any, T : SettingType<V>>(val setting: SettingReference<V, T>, val value: V)
-
-infix fun <V : Any, T : SettingType<V>> PluginSettingReference<V, T>.withValue(value: V): SettingWithValue<V, T> =
+private infix fun <V : Any, T : SettingType<V>> PluginSettingReference<V, T>.withValue(value: V): SettingWithValue<V, T> =
     SettingWithValue(this, value)
 
-inline infix fun <V : Any, reified T : SettingType<V>> PluginSetting<V, T>.withValue(value: V): SettingWithValue<V, T> =
+private inline infix fun <V : Any, reified T : SettingType<V>> PluginSetting<V, T>.withValue(value: V): SettingWithValue<V, T> =
     SettingWithValue(reference, value)
 
-private fun createDefaultSourcesets() =
-    SourcesetType.values().map { sourcesetType ->
+private fun createDefaultSourceSets() =
+    SourcesetType.values().map { sourceSetType ->
         Sourceset(
-            sourcesetType,
+            sourceSetType,
             dependencies = emptyList()
         )
     }
 
 private fun ModuleType.createDefaultTarget(
     name: String = this.name
-) = MultiplatformTargetModule(name, defaultTarget, createDefaultSourcesets())
+) = MultiplatformTargetModule(name, defaultTarget, createDefaultSourceSets())
 
 object ConsoleApplicationProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.empty.jvm.console.title")
@@ -155,7 +122,7 @@ object ConsoleApplicationProjectTemplate : ProjectTemplate() {
             KotlinPlugin.modules.reference withValue listOf(
                 SinglePlatformModule(
                     "consoleApp",
-                    createDefaultSourcesets()
+                    createDefaultSourceSets()
                 ).apply {
                     withTemplate(ConsoleJvmApplicationTemplate())
                 }
@@ -180,7 +147,7 @@ object MultiplatformLibraryProjectTemplate : ProjectTemplate() {
                     targets = listOf(
                         ModuleType.common.createDefaultTarget(),
                         ModuleType.jvm.createDefaultTarget(),
-                        MultiplatformTargetModule("js", MppLibJsBrowserTargetConfigurator, createDefaultSourcesets())
+                        MultiplatformTargetModule("js", MppLibJsBrowserTargetConfigurator, createDefaultSourceSets())
                             .withConfiguratorSettings<MppLibJsBrowserTargetConfigurator> {
                                 JSConfigurator.kind withValue JsTargetKind.LIBRARY
                             },
@@ -304,7 +271,7 @@ object MultiplatformMobileApplicationProjectTemplate : MultiplatformMobileApplic
         "androidApp",
         AndroidSinglePlatformModuleConfigurator,
         template = null,
-        sourceSets = createDefaultSourcesets(),
+        sourceSets = createDefaultSourceSets(),
         subModules = emptyList(),
         dependencies = mutableListOf(ModuleReference.ByModule(shared))
     )
@@ -313,7 +280,7 @@ object MultiplatformMobileApplicationProjectTemplate : MultiplatformMobileApplic
         "iosApp",
         IOSSinglePlatformModuleConfigurator,
         template = null,
-        sourceSets = createDefaultSourcesets(),
+        sourceSets = createDefaultSourceSets(),
         subModules = emptyList(),
         dependencies = mutableListOf(ModuleReference.ByModule(shared))
     )
@@ -337,7 +304,7 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
                     "android",
                     AndroidTargetConfigurator,
                     null,
-                    sourceSets = createDefaultSourcesets(),
+                    sourceSets = createDefaultSourceSets(),
                     subModules = emptyList()
                 ).withConfiguratorSettings<AndroidTargetConfigurator> {
                     configurator.androidPlugin withValue AndroidGradlePlugin.LIBRARY
@@ -346,7 +313,7 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
                     "ios",
                     RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.ios),
                     null,
-                    sourceSets = createDefaultSourcesets(),
+                    sourceSets = createDefaultSourceSets(),
                     subModules = emptyList()
                 )
             )
@@ -446,7 +413,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                         "android",
                         AndroidTargetConfigurator,
                         template = null,
-                        sourceSets = createDefaultSourcesets(),
+                        sourceSets = createDefaultSourceSets(),
                         subModules = emptyList()
                     ).withConfiguratorSettings<AndroidTargetConfigurator> {
                         configurator.androidPlugin withValue AndroidGradlePlugin.LIBRARY
@@ -456,7 +423,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                         "desktop",
                         JvmTargetConfigurator,
                         template = null,
-                        sourceSets = createDefaultSourcesets(),
+                        sourceSets = createDefaultSourceSets(),
                         subModules = emptyList()
                     ).withConfiguratorSettings<JvmTargetConfigurator> {
                         ModuleConfiguratorWithTests.testFramework withValue KotlinTestFramework.NONE
@@ -468,7 +435,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                 "android",
                 AndroidSinglePlatformModuleConfigurator,
                 template = ComposeAndroidTemplate(),
-                sourceSets = createDefaultSourcesets(),
+                sourceSets = createDefaultSourceSets(),
                 subModules = emptyList(),
                 dependencies = mutableListOf(ModuleReference.ByModule(common))
             ).withConfiguratorSettings<AndroidSinglePlatformModuleConfigurator> {
@@ -478,13 +445,13 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                 "desktop",
                 MppModuleConfigurator,
                 template = null,
-                sourceSets = createDefaultSourcesets(),
+                sourceSets = createDefaultSourceSets(),
                 subModules = listOf(
                     Module(
                         "jvm",
                         JvmTargetConfigurator,
                         template = ComposeJvmDesktopTemplate(),
-                        sourceSets = createDefaultSourcesets(),
+                        sourceSets = createDefaultSourceSets(),
                         subModules = emptyList(),
                         dependencies = mutableListOf(ModuleReference.ByModule(common))
                     ).withConfiguratorSettings<JvmTargetConfigurator> {
