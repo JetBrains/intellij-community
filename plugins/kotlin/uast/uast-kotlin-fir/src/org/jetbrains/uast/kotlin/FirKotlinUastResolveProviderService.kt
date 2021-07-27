@@ -163,6 +163,16 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
+    override fun isAnnotationConstructorCall(ktCallElement: KtCallElement): Boolean {
+        analyseForUast(ktCallElement) {
+            val resolvedAnnotationCall = ktCallElement.resolveCall() as? KtAnnotationCall ?: return false
+            val resolvedAnnotationConstructorSymbol =
+                resolvedAnnotationCall.targetFunction.candidates.singleOrNull() as? KtConstructorSymbol ?: return false
+            // TODO: check if the containing class's kind is Annotation
+            return false
+        }
+    }
+
     override fun resolveToClassIfConstructorCall(ktCallElement: KtCallElement, source: UElement): PsiClass? {
         analyseForUast(ktCallElement) {
             val resolvedFunctionLikeSymbol = ktCallElement.resolveCall()?.targetFunction?.candidates?.singleOrNull() ?: return null

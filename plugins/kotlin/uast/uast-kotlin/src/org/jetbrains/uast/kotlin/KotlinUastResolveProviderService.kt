@@ -9,11 +9,7 @@ import com.intellij.psi.PsiType
 import org.jetbrains.kotlin.builtins.createFunctionType
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.ParameterDescriptor
-import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -198,6 +194,11 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return CompileTimeConstantUtils.isArrayFunctionCall(resolvedCall)
     }
 
+    override fun isAnnotationConstructorCall(ktCallElement: KtCallElement): Boolean {
+        val classDescriptor = ktCallElement.resolveToClassDescriptor() ?: return false
+        return classDescriptor.kind == ClassKind.ANNOTATION_CLASS
+    }
+
     override fun resolveToClassIfConstructorCall(ktCallElement: KtCallElement, source: UElement): PsiClass? {
         return resolveToClassIfConstructorCallImpl(ktCallElement, source) as? PsiClass
     }
@@ -209,7 +210,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         }
     }
 
-    fun <T : KtCallElement> T.resolveToClassDescriptor(): ClassDescriptor? =
+    private fun <T : KtCallElement> T.resolveToClassDescriptor(): ClassDescriptor? =
         when (this) {
             is KtAnnotationEntry ->
                 this.analyze()[BindingContext.ANNOTATION, this]?.annotationClass
