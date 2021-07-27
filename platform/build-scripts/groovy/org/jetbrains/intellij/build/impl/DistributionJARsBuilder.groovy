@@ -255,10 +255,15 @@ final class DistributionJARsBuilder {
   /**
    * Build index which is used to search options in the Settings dialog.
    */
+  @Nullable
   static Path buildSearchableOptions(BuildContext buildContext,
                                      @NotNull List<String> modulesForPluginsToPublish,
                                      BuildTasksImpl.ApplicationStarterClasspathCustomizer classpathCustomizer = new BuildTasksImpl.ApplicationStarterClasspathCustomizer(buildContext),
                                      Map<String, Object> systemProperties = Collections.emptyMap()) {
+    if (buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
+      buildContext.messages.info("Skipping 'Build searchable options index'")
+      return null
+    }
     ProductModulesLayout productLayout = buildContext.productProperties.productLayout
     List<String> modulesToIndex = productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish
     modulesToIndex -= "intellij.ruby.lsp"
