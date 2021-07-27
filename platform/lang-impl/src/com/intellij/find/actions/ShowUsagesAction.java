@@ -379,7 +379,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     Predicate<? super Usage> originUsageCheck = originUsageCheck(parameters.editor);
     var renderer = new ShowUsagesTableCellRenderer(project, originUsageCheck, outOfScopeUsages, searchScope);
-    ShowUsagesTable table = new ShowUsagesTable(renderer, usageView);
+    var table = new ShowUsagesTable(renderer);
     AsyncProcessIcon processIcon = new AsyncProcessIcon("xxx");
     TitlePanel statusPanel = new TitlePanel();
     statusPanel.add(processIcon, BorderLayout.WEST);
@@ -914,6 +914,14 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     }
     /* save toolbar actions for using later, in automatic filter toggling in {@link #restartShowUsagesWithFiltersToggled(List} */
     popup.setUserData(addCodePreview ? Arrays.asList(filteringGroup, contentSplitter) : Collections.singletonList(filteringGroup));
+    popup.setDataProvider(dataId -> {
+      if (UsageView.USAGE_VIEW_SETTINGS_KEY.is(dataId)) {
+        return usageView.getUsageViewSettings();
+      }
+      else {
+        return null;
+      }
+    });
     popupRef.set(popup);
     return popup;
   }
