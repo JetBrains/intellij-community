@@ -3,6 +3,9 @@ package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -15,10 +18,16 @@ open class CompositeDeclarativeInsertHandler(val handlers: Map<Char, Lazy<Declar
 
   companion object {
     fun withUniversalHandler(completionChars: CharArray,
-                             handler: DeclarativeInsertHandler2.LazyBuilder): CompositeDeclarativeInsertHandler {
+                             handler: Lazy<DeclarativeInsertHandler2>): CompositeDeclarativeInsertHandler {
       val handlersMap = completionChars.associate { it to handler }
       // it's important not to provide a fallbackInsertHandler
       return CompositeDeclarativeInsertHandler(handlersMap, null)
+    }
+
+    fun withUniversalHandler(completionChars: CharArray,
+                             handler: DeclarativeInsertHandler2): CompositeDeclarativeInsertHandler {
+      val lazyHandler = lazy { handler }
+      return withUniversalHandler(completionChars, lazyHandler)
     }
   }
 }
@@ -31,7 +40,7 @@ open class CompositeDeclarativeInsertHandler(val handlers: Map<Char, Lazy<Declar
  *  * offsetToPutCaret - should be calculated under assumption that all operations already applied.
  */
 @ApiStatus.Experimental
-class DeclarativeInsertHandler2 private constructor(
+open class DeclarativeInsertHandler2 protected constructor(
   val textOperations: List<RelativeTextEdit>,
   val offsetToPutCaret: Int,
   val addCompletionChar: Boolean,
@@ -45,15 +54,21 @@ class DeclarativeInsertHandler2 private constructor(
   data class AbsoluteTextEdit(val rangeFrom: Int, val rangeTo: Int, val newText: String)
 
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
+    conditionalHandleInsert(context, item, applyTextOperations = true)
+  }
+
+  protected fun conditionalHandleInsert(context: InsertionContext, item: LookupElement, applyTextOperations: Boolean) {
     val baseOffset = context.editor.caretModel.offset
 
     context.setAddCompletionChar(addCompletionChar)
 
-    textOperations.sortedByDescending { (from, _, _) -> from }
-      .map { it.toAbsolute(baseOffset) }
-      .forEach { (from, to, newText) ->
-        context.document.replaceString(from, to, newText)
-      }
+    if (applyTextOperations) {
+      textOperations.sortedByDescending { (from, _, _) -> from }
+        .map { it.toAbsolute(baseOffset) }
+        .forEach { (from, to, newText) ->
+          context.document.replaceString(from, to, newText)
+        }
+    }
 
     context.editor.caretModel.currentCaret.run {
       val newOffset = offset + offsetToPutCaret
@@ -140,5 +155,27 @@ class DeclarativeInsertHandler2 private constructor(
     fun build(): DeclarativeInsertHandler2 {
       return DeclarativeInsertHandler2(textOperations, offsetToPutCaret, addCompletionChar, postInsertHandler, popupOptions)
     }
+  }
+}
+
+@ApiStatus.Experimental
+class SingleInsertionDeclarativeInsertHandler(private val stringToInsert: String,
+                                              popupOptions: PopupOptions)
+  : DeclarativeInsertHandler2(listOf(RelativeTextEdit(0, 0, stringToInsert)),
+                              stringToInsert.length,
+                              false,
+                              null,
+                              popupOptions) {
+
+  override fun handleInsert(context: InsertionContext, item: LookupElement) {
+    val applyTextOperations = !isValueAlreadyHere(context.editor)
+    conditionalHandleInsert(context, item, applyTextOperations)
+  }
+
+  private fun isValueAlreadyHere(editor: Editor): Boolean {
+    val startOffset = editor.caretModel.offset
+    val valueLength = stringToInsert.length
+    return editor.document.textLength >= startOffset + valueLength &&
+           editor.document.getText(TextRange.create(startOffset, startOffset + valueLength)) == stringToInsert
   }
 }
