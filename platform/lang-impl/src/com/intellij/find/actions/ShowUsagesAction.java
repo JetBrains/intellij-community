@@ -371,22 +371,13 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     Project project = parameters.project;
-    Editor editor = parameters.editor;
-
     UsageViewImpl usageView = createUsageView(project);
-    if (editor != null) {
-      PsiReference reference = TargetElementUtil.findReference(editor);
-      if (reference != null) {
-        UsageInfo2UsageAdapter origin = new UsageInfo2UsageAdapter(new UsageInfo(reference));
-        usageView.setOriginUsage(origin);
-      }
-    }
 
     final SearchScope searchScope = actionHandler.getSelectedScope();
     final AtomicInteger outOfScopeUsages = new AtomicInteger();
     AtomicBoolean manuallyResized = new AtomicBoolean();
 
-    Predicate<? super Usage> originUsageCheck = usageView::isOriginUsage;
+    Predicate<? super Usage> originUsageCheck = originUsageCheck(parameters.editor);
     var renderer = new ShowUsagesTableCellRenderer(project, originUsageCheck, outOfScopeUsages, searchScope);
     ShowUsagesTable table = new ShowUsagesTable(renderer, usageView);
     AsyncProcessIcon processIcon = new AsyncProcessIcon("xxx");
@@ -595,6 +586,18 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         return ShowUsagesSettings.getInstance().getState();
       }
     };
+  }
+
+  private static @NotNull Predicate<? super Usage> originUsageCheck(@Nullable Editor editor) {
+    if (editor != null) {
+      PsiReference reference = TargetElementUtil.findReference(editor);
+      if (reference != null) {
+        UsageInfo originUsageInfo = new UsageInfo(reference);
+        return usage -> usage instanceof UsageInfo2UsageAdapter &&
+                        ((UsageInfo2UsageAdapter)usage).getUsageInfo().equals(originUsageInfo);
+      }
+    }
+    return __ -> false;
   }
 
   private static boolean showPopupIfNeedTo(@NotNull JBPopup popup, @NotNull RelativePoint popupPosition) {

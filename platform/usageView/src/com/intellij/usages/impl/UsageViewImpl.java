@@ -163,7 +163,6 @@ public class UsageViewImpl implements UsageViewEx {
   // to speed up the expanding (see getExpandedDescendants() here and UsageViewTreeCellRenderer.customizeCellRenderer())
   private boolean myExpandingCollapsing;
   private final UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
-  private Usage myOriginUsage;
   @Nullable private Action myRerunAction;
   private final ExecutorService updateRequests = AppExecutorUtil
     .createBoundedApplicationPoolExecutor("Usage View Update Requests", AppExecutorUtil.getAppExecutorService(),
@@ -2280,16 +2279,27 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   /**
+   * @deprecated store origin usage elsewhere
+   */
+  @Deprecated private Usage myOriginUsage;
+
+  /**
    * The element the "find usages" action was invoked on.
    * E.g. if the "find usages" was invoked on the reference "getName(2)" pointing to the method "getName()" then the origin usage is this reference.
+   *
+   * @deprecated store origin usage elsewhere
    */
+  @Deprecated
   public void setOriginUsage(@NotNull Usage usage) {
     myOriginUsage = usage;
   }
 
   /**
    * true if the {@param usage} points to the element the "find usages" action was invoked on
+   *
+   * @deprecated store origin usage elsewhere
    */
+  @Deprecated
   public boolean isOriginUsage(@NotNull Usage usage) {
     return
       myOriginUsage instanceof UsageInfo2UsageAdapter &&
