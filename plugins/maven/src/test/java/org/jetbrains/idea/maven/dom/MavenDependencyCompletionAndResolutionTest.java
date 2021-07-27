@@ -330,9 +330,14 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
   @Test 
   public void testRemovingExistingProjects() throws IOException {
-    final VirtualFile m = createModulePom("m1",
+    final VirtualFile m1 = createModulePom("m1",
                                           "<groupId>project-group</groupId>" +
                                           "<artifactId>m1</artifactId>" +
+                                          "<version>1</version>");
+
+    final VirtualFile m2 = createModulePom("m2",
+                                          "<groupId>project-group</groupId>" +
+                                          "<artifactId>m2</artifactId>" +
                                           "<version>1</version>");
 
     configureProjectPom("<groupId>test</groupId>" +
@@ -346,28 +351,17 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                         "  </dependency>" +
                         "</dependencies>");
 
-    importProjectsWithErrors(myProjectPom, m);
+    importProjectsWithErrors(myProjectPom, m1, m2);
 
-    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "m1");
-    assertCompletionVariantsInclude(myProjectPom, LOOKUP_STRING, "project-group:m1:1");
+    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "m1", "m2");
+    assertCompletionVariantsInclude(myProjectPom, LOOKUP_STRING, "project-group:m1:1", "project-group:m2:1");
 
-    WriteAction.runAndWait(() -> m.delete(null));
+    WriteAction.runAndWait(() -> m1.delete(null));
 
     configConfirmationForYesAnswer();
-    importProject();
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>project-group</groupId>" +
-                     "    <artifactId><caret></artifactId>" +
-                     "  </dependency>" +
-                     "</dependencies>");
-
-    assertCompletionVariants(myProjectPom);
+    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "m2");
+    assertCompletionVariantsInclude(myProjectPom, LOOKUP_STRING, "project-group:m2:1");
   }
 
   @Test 
