@@ -85,6 +85,11 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
             runTest("../idea/tests/testData/indentationOnNewline/ArgumentListNormalIndent.after.kt");
         }
 
+        @TestMetadata("BlockCommentAfterCatch.after.kt")
+        public void testBlockCommentAfterCatch() throws Exception {
+            runTest("../idea/tests/testData/indentationOnNewline/BlockCommentAfterCatch.after.kt");
+        }
+
         @TestMetadata("ConsecutiveCallsAfterDot.after.kt")
         public void testConsecutiveCallsAfterDot() throws Exception {
             runTest("../idea/tests/testData/indentationOnNewline/ConsecutiveCallsAfterDot.after.kt");
@@ -100,14 +105,19 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
             runTest("../idea/tests/testData/indentationOnNewline/ConsecutiveCallsInSafeCallsEnd.after.kt");
         }
 
-        @TestMetadata("EOFCommentAfterFor.after.kt")
-        public void testEOFCommentAfterFor() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/EOFCommentAfterFor.after.kt");
+        @TestMetadata("EoLCommentAfterCatch.after.kt")
+        public void testEoLCommentAfterCatch() throws Exception {
+            runTest("../idea/tests/testData/indentationOnNewline/EoLCommentAfterCatch.after.kt");
         }
 
-        @TestMetadata("EOFCommentAfterIf.after.kt")
-        public void testEOFCommentAfterIf() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/EOFCommentAfterIf.after.kt");
+        @TestMetadata("EoLCommentAfterFor.after.kt")
+        public void testEoLCommentAfterFor() throws Exception {
+            runTest("../idea/tests/testData/indentationOnNewline/EoLCommentAfterFor.after.kt");
+        }
+
+        @TestMetadata("EoLCommentAfterIf.after.kt")
+        public void testEoLCommentAfterIf() throws Exception {
+            runTest("../idea/tests/testData/indentationOnNewline/EoLCommentAfterIf.after.kt");
         }
 
         @TestMetadata("FunctionBlock.after.kt")
