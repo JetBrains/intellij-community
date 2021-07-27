@@ -23,10 +23,6 @@ import org.jetbrains.uast.kotlin.psi.*
 
 internal object KotlinConverter : BaseKotlinConverter {
 
-    override fun convertAnnotation(annotationEntry: KtAnnotationEntry, givenParent: UElement?): UAnnotation {
-        return KotlinUAnnotation(annotationEntry, givenParent)
-    }
-
     override fun convertPsiElement(
         element: PsiElement?,
         givenParent: UElement?,

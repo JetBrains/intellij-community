@@ -5,11 +5,11 @@ UFile (package = )
                 [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
                 UDeclarationsExpression
                     ULocalVariable (name = a)
-                        UAnnotation (fqName = not-implemented-annotation)
+                        UAnnotation (fqName = kotlin.Suppress)
                         ULiteralExpression (value = 1)
                 UDeclarationsExpression
                     ULocalVariable (name = b)
-                        UAnnotation (fqName = not-implemented-annotation)
+                        UAnnotation (fqName = kotlin.Suppress)
                         ULiteralExpression (value = 2)
                 [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)
                 [!] UnknownKotlinExpression (ANNOTATED_EXPRESSION)

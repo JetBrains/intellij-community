@@ -29,10 +29,6 @@ import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiVariable
 
 internal object FirKotlinConverter : BaseKotlinConverter {
-    override fun convertAnnotation(annotationEntry: KtAnnotationEntry, givenParent: UElement?): UAnnotation {
-        // TODO: need to polish/implement annotations more
-        return FirKotlinUAnnotation(annotationEntry, givenParent)
-    }
 
     internal fun convertDeclarationOrElement(
         element: PsiElement,
@@ -161,8 +157,14 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                     }
                 }
 
-                // TODO: KtAnnotationEntry
-                // TODO: KtCallExpression (for nested annotation)
+                is KtAnnotationEntry -> el<UAnnotation>(build(::convertAnnotation))
+                is KtCallExpression ->
+                    if (requiredTypes.isAssignableFrom(KotlinUNestedAnnotation::class.java) &&
+                        !requiredTypes.isAssignableFrom(UCallExpression::class.java)
+                    ) {
+                        el<UAnnotation> { KotlinUNestedAnnotation.create(original, givenParent) }
+                    } else null
+                is KtLightAnnotationForSourceEntry -> convertDeclarationOrElement(original.kotlinOrigin, givenParent, requiredTypes)
 
                 is KtDelegatedSuperTypeEntry -> el<KotlinSupertypeDelegationUExpression> {
                     KotlinSupertypeDelegationUExpression(original, givenParent)
