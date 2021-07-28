@@ -299,6 +299,7 @@ public final class PyNames {
   private static final BuiltinDescription _self_key_descr = new BuiltinDescription("(self, key)");
   private static final BuiltinDescription _exit_descr = new BuiltinDescription("(self, exc_type, exc_val, exc_tb)");
 
+  @SuppressWarnings("JavacQuirks")
   private static final Map<String, BuiltinDescription> BuiltinMethods = Map.ofEntries(
     Map.entry(ABS, _only_self_descr),
     Map.entry("__add__", _self_other_descr),
@@ -468,7 +469,7 @@ public final class PyNames {
     "__dir__", new BuiltinDescription("()"));
 
   @SafeVarargs
-  private static <K,V> Map<K,V> concat(Map<K,V> map, Map.Entry<K,V>... additional) {
+  private static <K,V> Map<K,V> concat(Map<? extends K, ? extends V> map, Map.Entry<K,V>... additional) {
     Map<K, V> r = new HashMap<>(map);
     r.putAll(Map.ofEntries(additional));
     return Map.copyOf(r);
