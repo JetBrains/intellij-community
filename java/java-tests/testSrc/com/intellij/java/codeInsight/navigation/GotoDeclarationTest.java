@@ -132,6 +132,13 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
     doTestPatternMatchingGuard();
   }
 
+  public void testCaseNullDefaultAfterPatternMatching() {
+    configure();
+    final PsiElement patternVariable = PsiTreeUtil.findChildOfType(getFile(), PsiPatternVariable.class);
+    final PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
+    assertThat(element).isEqualTo(patternVariable);
+  }
+
   public void testGuardWithInstanceOfPatternMatchingInIf() {
     doTestGoToPatternVariable();
   }
@@ -142,8 +149,7 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
 
   private void doTestPatternMatchingGuard() {
     configure();
-    final PsiJavaFile file = (PsiJavaFile)getFile();
-    final PsiField field = PsiTreeUtil.findChildOfType(file, PsiField.class);
+    final PsiField field = PsiTreeUtil.findChildOfType(getFile(), PsiField.class);
     final PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
     assertThat(element).isEqualTo(field);
   }
