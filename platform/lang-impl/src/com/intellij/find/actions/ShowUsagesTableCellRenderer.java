@@ -3,6 +3,7 @@ package com.intellij.find.actions;
 
 import com.intellij.find.FindBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -152,7 +153,8 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
       case CURRENT_ASTERISK_COL:
         if (isOriginUsage) {
           panel.add(new JLabel(isSelected ? AllIcons.General.ModifiedSelected : AllIcons.General.Modified));
-        }
+          panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.CURRENT_ASTERISK_COL"));
+        } else panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.OTHER_ASTERISK_COL"));
         break;
       case FILE_GROUP_COL:
         appendGroupText(list, (GroupNode)usageNode.getParent(), panel, fileBgColor, isSelected);
@@ -165,6 +167,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
         SpeedSearchUtil.applySpeedSearchHighlighting(list, textChunks, false, isSelected);
 
         panel.add(textChunks);
+        panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.LINE_NUMBER_COL", textChunks.getAccessibleContext().getAccessibleName()));
         break;
 
       case USAGE_TEXT_COL:
@@ -178,6 +181,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
         SpeedSearchUtil.applySpeedSearchHighlighting(list, textChunks, false, isSelected);
 
         panel.add(textChunks);
+        panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.USAGE_TEXT_COL", textChunks.getAccessibleContext().getAccessibleName()));
 
         if (isOriginUsage) {
           SimpleColoredComponent origin = new SimpleColoredComponent();
@@ -190,6 +194,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
           origin.append("| " + FindBundle.message("show.usages.current.usage.label"), attributes);
           origin.appendTextPadding(JBUIScale.scale(45));
           panel.add(origin, BorderLayout.EAST);
+          panel.getAccessibleContext().setAccessibleName(panel.getAccessibleContext().getAccessibleName() + ", " + origin.getAccessibleContext().getAccessibleName());
         }
         break;
 
@@ -311,5 +316,6 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     renderer.append(group.getPresentableGroupText(), attributes);
     SpeedSearchUtil.applySpeedSearchHighlighting(table, renderer, false, isSelected);
     panel.add(renderer);
+    panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.FILE_GROUP_COL", renderer.getAccessibleContext().getAccessibleName()));
   }
 }
