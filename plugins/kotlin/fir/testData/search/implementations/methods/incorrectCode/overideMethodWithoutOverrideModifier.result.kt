@@ -1,0 +1,1 @@
+FirLightSimpleMethodForSymbol: B.foo
