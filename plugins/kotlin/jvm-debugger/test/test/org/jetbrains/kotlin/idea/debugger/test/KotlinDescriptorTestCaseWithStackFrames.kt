@@ -103,7 +103,7 @@ abstract class KotlinDescriptorTestCaseWithStackFrames : KotlinDescriptorTestCas
 
             out(frame)
             if (frame is CoroutinePreflightFrame) {
-                val key = frame.coroutineInfoData.key
+                val key = frame.coroutineInfoData.descriptor
                 out(0, "CoroutineInfo: ${key.id} ${key.name} ${key.state}")
             }
 

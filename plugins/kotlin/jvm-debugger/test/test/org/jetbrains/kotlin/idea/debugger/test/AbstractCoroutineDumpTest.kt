@@ -33,7 +33,7 @@ abstract class AbstractCoroutineDumpTest : KotlinDescriptorTestCaseWithStackFram
 
     private fun stringDump(infoData: List<CoroutineInfoData>) = buildString {
         infoData.forEach {
-            appendLine("\"${it.key.name}#${it.key.id}\", state: ${it.key.state}")
+            appendLine("\"${it.descriptor.name}#${it.descriptor.id}\", state: ${it.descriptor.state}")
         }
     }
 }
