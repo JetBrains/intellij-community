@@ -33,6 +33,8 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-native" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests" />
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="kotlin.j2k.idea" />
     <orderEntry type="module" module-name="kotlin.j2k.new" />

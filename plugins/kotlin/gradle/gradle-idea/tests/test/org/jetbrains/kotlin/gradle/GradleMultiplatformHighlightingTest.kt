@@ -23,6 +23,7 @@ import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.KotlinPluginInternalApi
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.TagsTestDataUtil
@@ -152,7 +153,8 @@ fun checkFiles(
     Assert.assertTrue(atLeastOneFile)
 }
 
-internal fun textWithoutTags(text: String): String {
+@KotlinPluginInternalApi
+fun textWithoutTags(text: String): String {
     val regex = "</?(error|warning|lineMarker).*?>".toRegex()
     return regex.replace(text, "")
 }

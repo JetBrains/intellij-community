@@ -3,13 +3,15 @@ package org.jetbrains.kotlin.idea.gradle.configuration
 
 import com.intellij.openapi.project.Project
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.idea.KotlinPluginInternalApi
 import org.jetbrains.kotlin.idea.extensions.gradle.GradleVersionInfo
 import org.jetbrains.kotlin.idea.extensions.gradle.GradleVersionProvider
 import org.jetbrains.kotlin.idea.extensions.gradle.MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX_RAW
 import org.jetbrains.kotlin.idea.extensions.gradle.scope
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
-internal val MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX = GradleVersion.version(MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX_RAW)
+@KotlinPluginInternalApi
+val MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX: GradleVersion = GradleVersion.version(MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX_RAW)
 
 object GradleVersionProviderImpl : GradleVersionProvider {
     fun wrapVersion(version: GradleVersion): GradleVersionInfo {
