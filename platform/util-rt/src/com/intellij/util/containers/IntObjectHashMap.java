@@ -1,28 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.lang;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.IntFunction;
 
 /**
  * Specialized memory saving map implementation for UrlClassLoader to avoid extra dependencies.
  */
-final class IntObjectHashMap<T> {
-  private final IntFunction<T[]> arrayFactory;
+public final class IntObjectHashMap<T> {
+  private final ArrayProducer<T[]> arrayFactory;
   private int size;
   private int[] keys;
   private T[] values;
   private T specialZeroValue;
   private boolean hasZeroValue;
 
-  IntObjectHashMap(IntFunction<T[]> arrayFactory) {
+  public interface ArrayProducer<T> {
+    T produce(int value);
+  }
+  public IntObjectHashMap(ArrayProducer<T[]> arrayFactory) {
     this.arrayFactory = arrayFactory;
     keys = new int[16];
-    values = arrayFactory.apply(keys.length);
+    values = arrayFactory.produce(keys.length);
   }
 
-  IntObjectHashMap(IntObjectHashMap<T> original) {
+  public IntObjectHashMap(IntObjectHashMap<T> original) {
     arrayFactory = original.arrayFactory;
     keys = original.keys.clone();
     values = original.values.clone();
@@ -31,11 +32,11 @@ final class IntObjectHashMap<T> {
     hasZeroValue = original.hasZeroValue;
   }
 
-  int size() {
+  public int size() {
     return size + (hasZeroValue ? 1 : 0);
   }
 
-  void replaceByIndex(int index, int key, @NotNull T value) {
+  public void replaceByIndex(int index, int key, @NotNull T value) {
     if (key == 0) {
       specialZeroValue = value;
       hasZeroValue = true;
@@ -45,7 +46,7 @@ final class IntObjectHashMap<T> {
     }
   }
 
-  void addByIndex(int index, int key, @NotNull T value) {
+  public void addByIndex(int index, int key, @NotNull T value) {
     if (key == 0) {
       specialZeroValue = value;
       hasZeroValue = true;
@@ -62,7 +63,7 @@ final class IntObjectHashMap<T> {
     keys[index] = key;
   }
 
-  void put(int key, @NotNull T value) {
+  public void put(int key, @NotNull T value) {
     if (key == 0) {
       specialZeroValue = value;
       hasZeroValue = true;
@@ -82,11 +83,11 @@ final class IntObjectHashMap<T> {
     }
   }
 
-  int index(int key) {
+  public int index(int key) {
     return key == 0 ? Integer.MIN_VALUE : hashIndex(keys, key);
   }
 
-  private static int hashIndex(int @NotNull [] keys, int key) {
+  private static int hashIndex(int [] keys, int key) {
     int hash = (int)((key * 0x9E3779B9L) & 0x7fffffff);
     int index = hash & (keys.length - 1);
 
@@ -106,7 +107,7 @@ final class IntObjectHashMap<T> {
 
   private void rehash() {
     int[] newKeys = new int[keys.length << 1];
-    T[] newValues = arrayFactory.apply(newKeys.length);
+    T[] newValues = arrayFactory.produce(newKeys.length);
 
     for (int i = keys.length - 1; i >= 0; i--) {
       int key = keys[i];
