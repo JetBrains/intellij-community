@@ -2,7 +2,6 @@
 // OPTIONS: usages
 // FIND_BY_REF
 // WITH_FILE_NAME
-// FIR_IGNORE
 
 package usages
 

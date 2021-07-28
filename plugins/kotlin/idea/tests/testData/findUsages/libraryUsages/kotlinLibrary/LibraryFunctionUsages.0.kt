@@ -1,7 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // OPTIONS: usages
 // FIND_BY_REF
-// FIR_IGNORE
 
 package usages
 
