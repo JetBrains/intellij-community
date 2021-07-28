@@ -1,0 +1,9 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.debugger.javascriptSupport">
+  <dependencies>
+    <plugin id="JavaScriptDebugger"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.jetbrains">
+    <javaScriptDebugAware implementation="org.jetbrains.kotlin.idea.debugger.javascriptSupport.KotlinJavaScriptDebugAware"/>
+  </extensions>
+</idea-plugin>
