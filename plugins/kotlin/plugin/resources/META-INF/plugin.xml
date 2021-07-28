@@ -135,6 +135,7 @@ The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
     <module name="kotlin.groovy"/>
     <module name="kotlin.gradle.gradle-idea"/>
     <module name="kotlin.gradle.gradle-java"/>
+    <module name="kotlin.gradle.gradle-native"/>
     <module name="kotlin.maven"/>
     <module name="kotlin.properties"/>
     <module name="kotlin.jvm-decompiler"/>

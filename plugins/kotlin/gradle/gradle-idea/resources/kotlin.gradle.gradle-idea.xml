@@ -3,7 +3,6 @@
     <plugin id="com.intellij.gradle"/>
   </dependencies>
 
-  <xi:include href="native-dep-gradle.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="project-wizard-dep-gradle.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensionPoints>
