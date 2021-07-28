@@ -36,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.util.*;
 
 public class CopyClassesHandler extends CopyHandlerDelegateBase {
@@ -350,19 +349,17 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     final Map<PsiClass, PsiClass> oldToNewMap = new HashMap<>();
     final List<PsiFile> createdFiles = new ArrayList<>(fileToClasses.size());
     int[] choice = fileToClasses.size() > 1 ? new int[]{-1} : null;
-    List<PsiFile> files = new ArrayList<>();
     for (final Map.Entry<PsiFile, PsiClass[]> entry : fileToClasses.entrySet()) {
       final PsiFile psiFile = entry.getKey();
       final PsiClass[] sources = entry.getValue();
-      if (psiFile instanceof PsiClassOwner && sources != null) {
-        final String relativePath = fileToRelativePath != null ? fileToRelativePath.get(psiFile) : null;
-        final PsiDirectoryImpl directory = (PsiDirectoryImpl) getOrCreateRelativeDirectory(targetDirectory, relativePath);
-        final PsiFile createdFile = executeWithUpdatingAddedFilesDisabled(directory, () -> copy(directory, psiFile, copyClassName, choice));
-        if (createdFile == null) {
-          //do not touch unmodified classes
-          continue;
-        }
 
+      final String relativePath = fileToRelativePath != null ? fileToRelativePath.get(psiFile) : null;
+      final PsiDirectoryImpl directory = (PsiDirectoryImpl) getOrCreateRelativeDirectory(targetDirectory, relativePath);
+      final PsiFile createdFile = executeWithUpdatingAddedFilesDisabled(directory, () -> copy(directory, psiFile, copyClassName, choice));
+      if (createdFile == null) continue;
+      createdFiles.add(createdFile);
+
+      if (createdFile instanceof PsiClassOwner && sources != null) {
         Map<PsiClass, PsiClass> sourceToDestination = new LinkedHashMap<>();
         for (final PsiClass destination : ((PsiClassOwner)createdFile).getClasses()) {
           if (!isSynthetic(destination)) {
@@ -381,29 +378,11 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
           PsiClass newClass = WriteAction.compute(() -> (PsiClass) classEntry.getValue().replace(copy));
           oldToNewMap.put(classEntry.getKey(), newClass);
         }
-        createdFiles.add(createdFile);
-      }
-      else {
-        files.add(psiFile);
       }
     }
 
     DumbService.getInstance(project).completeJustSubmittedTasks();
     CopyFilesOrDirectoriesHandler.updateAddedFiles(createdFiles);
-
-    for (PsiFile file : files) {
-      try {
-        final String relativePath = fileToRelativePath != null ? fileToRelativePath.get(file) : null;
-        PsiDirectory finalTarget = getOrCreateRelativeDirectory(targetDirectory,relativePath);
-        final PsiFile fileCopy = CopyFilesOrDirectoriesHandler.copyToDirectory(file, getNewFileName(file, copyClassName), finalTarget, choice, null);
-        if (fileCopy != null) {
-          createdFiles.add(fileCopy);
-        }
-      }
-      catch (IOException e) {
-        throw new IncorrectOperationException(e.getMessage());
-      }
-    }
 
     WriteAction.run(() -> {
       final Set<PsiElement> rebindExpressions = new HashSet<>();
