@@ -3,7 +3,6 @@
     <plugin id="org.jetbrains.idea.maven"/>
   </dependencies>
 
-  <xi:include href="noarg-dep-maven.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="sam-with-receiver-dep-maven.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kotlinx-serialization-dep-maven.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="project-wizard-dep-maven.xml" xpointer="xpointer(/idea-plugin/*)"/>
