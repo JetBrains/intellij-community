@@ -1493,78 +1493,78 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-        testGroup(
-            "plugins/kotlin-serialization/kotlin-serialization-ide/test",
-            "plugins/kotlin-serialization/kotlin-serialization-ide/testData"
-        ) {
-            testClass<AbstractSerializationPluginIdeDiagnosticTest> {
-                model("diagnostics")
-            }
-            testClass<AbstractSerializationQuickFixTest> {
-                model("quickfix", pattern = "^([\\w\\-_]+)\\.kt$", filenameStartsLowerCase = true)
-            }
+    testGroup(
+        "plugins/kotlin-serialization/kotlin-serialization-ide/test",
+        "plugins/kotlin-serialization/kotlin-serialization-ide/testData"
+    ) {
+        testClass<AbstractSerializationPluginIdeDiagnosticTest> {
+            model("diagnostics")
+        }
+        testClass<AbstractSerializationQuickFixTest> {
+            model("quickfix", pattern = "^([\\w\\-_]+)\\.kt$", filenameStartsLowerCase = true)
+        }
+    }
+
+    testGroup("uast/uast-kotlin-fir") {
+        testClass<AbstractFirUastDeclarationTest> {
+            model("declaration")
         }
 
-        testGroup("uast/uast-kotlin-fir") {
-            testClass<AbstractFirUastDeclarationTest> {
-                model("declaration")
-            }
+        testClass<AbstractFirUastTypesTest> {
+            model("type")
+        }
+    }
 
-            testClass<AbstractFirUastTypesTest> {
-                model("type")
-            }
+    testGroup("uast/uast-kotlin-fir", testDataPath = "../uast-kotlin/testData") {
+        testClass<AbstractFirLegacyUastDeclarationTest> {
+            model("")
         }
 
-        testGroup("uast/uast-kotlin-fir", testDataPath = "../uast-kotlin/testData") {
-            testClass<AbstractFirLegacyUastDeclarationTest> {
-                model("")
-            }
-
-            testClass<AbstractFirLegacyUastIdentifiersTest> {
-                model("")
-            }
-
-            testClass<AbstractFirLegacyUastTypesTest> {
-                model("")
-            }
-
-            testClass<AbstractFirLegacyUastValuesTest> {
-                model("")
-            }
+        testClass<AbstractFirLegacyUastIdentifiersTest> {
+            model("")
         }
 
-        testGroup("uast/uast-kotlin") {
-            testClass<AbstractFE1UastDeclarationTest> {
-                model("declaration")
-            }
-
-            testClass<AbstractFE1UastTypesTest> {
-                model("type")
-            }
+        testClass<AbstractFirLegacyUastTypesTest> {
+            model("")
         }
 
-        testGroup("uast/uast-kotlin", testDataPath = "../uast-kotlin/testData") {
-            testClass<AbstractFE1LegacyUastDeclarationTest> {
-                model("")
-            }
+        testClass<AbstractFirLegacyUastValuesTest> {
+            model("")
+        }
+    }
 
-            testClass<AbstractFE1LegacyUastIdentifiersTest> {
-                model("")
-            }
-
-            testClass<AbstractFE1LegacyUastTypesTest> {
-                model("")
-            }
-
-            testClass<AbstractFE1LegacyUastValuesTest> {
-                model("")
-            }
+    testGroup("uast/uast-kotlin") {
+        testClass<AbstractFE1UastDeclarationTest> {
+            model("declaration")
         }
 
-        testGroup("idea/performanceTests/test", "../idea/tests/testData") {
-            testClass<AbstractPerformanceJavaToKotlinCopyPasteConversionTest> {
-                model("copyPaste/conversion", testMethod = "doPerfTest", pattern = Patterns.forRegex("""^([^\.]+)\.java$"""))
-            }
+        testClass<AbstractFE1UastTypesTest> {
+            model("type")
+        }
+    }
+
+    testGroup("uast/uast-kotlin", testDataPath = "../uast-kotlin/testData") {
+        testClass<AbstractFE1LegacyUastDeclarationTest> {
+            model("")
+        }
+
+        testClass<AbstractFE1LegacyUastIdentifiersTest> {
+            model("")
+        }
+
+        testClass<AbstractFE1LegacyUastTypesTest> {
+            model("")
+        }
+
+        testClass<AbstractFE1LegacyUastValuesTest> {
+            model("")
+        }
+    }
+
+    testGroup("idea/performanceTests/test", "../idea/tests/testData") {
+        testClass<AbstractPerformanceJavaToKotlinCopyPasteConversionTest> {
+            model("copyPaste/conversion", testMethod = "doPerfTest", pattern = Patterns.forRegex("""^([^\.]+)\.java$"""))
+        }
 
         testClass<AbstractPerformanceNewJavaToKotlinCopyPasteConversionTest> {
             model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^([^\.]+)\.java$"""))
