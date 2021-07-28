@@ -22,6 +22,11 @@ class DefaultFileOperations implements FileOperations {
     public Iterator<File> iterator() {
       return Collections.<File>emptyList().iterator();
     }
+
+    @Override
+    public String toString() {
+      return "NULL_ITERABLE";
+    }
   };
   private static final Archive NULL_ARCHIVE = new Archive() {
     @NotNull
@@ -31,6 +36,11 @@ class DefaultFileOperations implements FileOperations {
     }
     @Override
     public void close(){
+    }
+
+    @Override
+    public String toString() {
+      return "NULL_ARCHIVE";
     }
   };
 
@@ -158,15 +168,19 @@ class DefaultFileOperations implements FileOperations {
   private Iterable<File> listChildren(File file) {
     Iterable<File> cached = myDirectoryCache.get(file);
     if (cached == null) {
-      try {
-        cached = listFiles(file);
+      final File parentFile = file.getParentFile();
+      final Iterable<File> parentFiles = parentFile != null? myDirectoryCache.get(parentFile) : null;
+      if (parentFiles == null || (parentFiles != NULL_ITERABLE && !Iterators.isEmptyCollection(parentFiles))) {
+        try {
+          cached = listFiles(file);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
       }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-      myDirectoryCache.put(file, cached == null ? NULL_ITERABLE : cached);
+      myDirectoryCache.put(file, cached == null? NULL_ITERABLE : cached);
     }
-    return cached == NULL_ITERABLE ? null : cached;
+    return cached == NULL_ITERABLE? null : cached;
   }
 
   @Nullable
