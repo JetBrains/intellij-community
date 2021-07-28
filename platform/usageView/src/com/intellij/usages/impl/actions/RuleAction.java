@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -57,7 +56,8 @@ public abstract class RuleAction extends ToggleAction implements DumbAware {
   }
 
   protected @NotNull UsageViewSettings getUsageViewSettings(@NotNull AnActionEvent e) {
-    return Objects.requireNonNull(getUsageViewSettingsOrNull(e), "#getUsageViewSettings must not be invoked when action is disabled");
+    UsageViewSettings settings = getUsageViewSettingsOrNull(e);
+    return settings != null ? settings : UsageViewSettings.getInstance();
   }
 
   private static @Nullable UsageViewSettings getUsageViewSettingsOrNull(@NotNull AnActionEvent e) {
