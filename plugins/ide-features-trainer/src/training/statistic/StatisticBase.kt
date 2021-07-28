@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.impl.DefaultKeymapImpl
+import com.intellij.openapi.util.Version
 import com.intellij.util.TimeoutUtil
 import training.lang.LangManager
 import training.learn.CourseManager
@@ -26,12 +27,17 @@ import training.statistic.FeatureUsageStatisticConsts.LEARN_PROJECT_OPENED_FIRST
 import training.statistic.FeatureUsageStatisticConsts.LEARN_PROJECT_OPENING_WAY
 import training.statistic.FeatureUsageStatisticConsts.LESSON_ID
 import training.statistic.FeatureUsageStatisticConsts.MODULE_NAME
+import training.statistic.FeatureUsageStatisticConsts.NEED_SHOW_NEW_LESSONS_NOTIFICATIONS
+import training.statistic.FeatureUsageStatisticConsts.NEW_LESSONS_COUNT
+import training.statistic.FeatureUsageStatisticConsts.NEW_LESSONS_NOTIFICATION_SHOWN
 import training.statistic.FeatureUsageStatisticConsts.NON_LEARNING_PROJECT_OPENED
 import training.statistic.FeatureUsageStatisticConsts.PASSED
 import training.statistic.FeatureUsageStatisticConsts.PROGRESS
 import training.statistic.FeatureUsageStatisticConsts.REASON
 import training.statistic.FeatureUsageStatisticConsts.RESTORE
 import training.statistic.FeatureUsageStatisticConsts.SHORTCUT_CLICKED
+import training.statistic.FeatureUsageStatisticConsts.SHOULD_SHOW_NEW_LESSONS
+import training.statistic.FeatureUsageStatisticConsts.SHOW_NEW_LESSONS
 import training.statistic.FeatureUsageStatisticConsts.START
 import training.statistic.FeatureUsageStatisticConsts.START_MODULE_ACTION
 import training.statistic.FeatureUsageStatisticConsts.STOPPED
@@ -75,6 +81,8 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val inputEventField = EventFields.InputEvent
     private val learnProjectOpeningWayField = EventFields.Enum<LearnProjectOpeningWay>(LEARN_PROJECT_OPENING_WAY)
     private val reasonField = EventFields.Enum<LessonStopReason>(REASON)
+    private val newLessonsCount = EventFields.Int(NEW_LESSONS_COUNT)
+    private val showNewLessonsState = EventFields.Boolean(SHOULD_SHOW_NEW_LESSONS)
 
     // EVENTS
     private val lessonStartedEvent: EventId2<String?, String?> = GROUP.registerEvent(START, lessonIdField, languageField)
@@ -92,6 +100,13 @@ internal class StatisticBase : CounterUsagesCollector() {
       GROUP.registerEvent(LEARN_PROJECT_OPENED_FIRST_TIME, learnProjectOpeningWayField, languageField)
     private val nonLearningProjectOpened: EventId1<LearnProjectOpeningWay> =
       GROUP.registerEvent(NON_LEARNING_PROJECT_OPENED, learnProjectOpeningWayField)
+
+    private val newLessonsNotificationShown =
+      GROUP.registerEvent(NEW_LESSONS_NOTIFICATION_SHOWN, newLessonsCount, EventFields.VersionByObject)
+    private val showNewLessonsEvent =
+      GROUP.registerEvent(SHOW_NEW_LESSONS, newLessonsCount, EventFields.VersionByObject)
+    private val needShowNewLessonsNotifications =
+      GROUP.registerEvent(NEED_SHOW_NEW_LESSONS_NOTIFICATIONS, newLessonsCount, EventFields.VersionByObject, showNewLessonsState)
 
     // LOGGING
     fun logLessonStarted(lesson: Lesson) {
@@ -172,6 +187,18 @@ internal class StatisticBase : CounterUsagesCollector() {
 
     fun logNonLearningProjectOpened(way: LearnProjectOpeningWay) {
       nonLearningProjectOpened.log(way)
+    }
+
+    fun logNewLessonsNotification(newLessonsCount: Int, previousOpenedVersion: Version?) {
+      newLessonsNotificationShown.log(newLessonsCount, previousOpenedVersion)
+    }
+
+    fun logShowNewLessonsEvent(newLessonsCount: Int, previousOpenedVersion: Version?) {
+      showNewLessonsEvent.log(newLessonsCount, previousOpenedVersion)
+    }
+
+    fun logShowNewLessonsNotificationState(newLessonsCount: Int, previousOpenedVersion: Version?, showNewLessons: Boolean) {
+      needShowNewLessonsNotifications.log(newLessonsCount, previousOpenedVersion, showNewLessons)
     }
 
     private fun courseLanguage() = LangManager.getInstance().getLangSupport()?.primaryLanguage?.toLowerCase() ?: ""

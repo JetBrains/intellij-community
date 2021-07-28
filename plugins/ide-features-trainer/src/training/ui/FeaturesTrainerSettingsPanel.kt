@@ -8,7 +8,9 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
 import training.lang.LangManager
+import training.learn.CourseManager
 import training.learn.LearnBundle
+import training.statistic.StatisticBase
 import training.util.SHOW_NEW_LESSONS_NOTIFICATION
 import training.util.resetPrimaryLanguage
 import javax.swing.DefaultComboBoxModel
@@ -36,6 +38,7 @@ private class FeaturesTrainerSettingsPanel : BoundConfigurable(LearnBundle.messa
       checkBox(LearnBundle.message("settings.checkbox.show.notifications.new.lessons"), {
         PropertiesComponent.getInstance().getBoolean(SHOW_NEW_LESSONS_NOTIFICATION, true)
       }, {
+        StatisticBase.logShowNewLessonsNotificationState(-1, CourseManager.instance.previousOpenedVersion, it)
         PropertiesComponent.getInstance().setValue(SHOW_NEW_LESSONS_NOTIFICATION, it, true)
       })
     }
