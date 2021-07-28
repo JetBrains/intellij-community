@@ -3,21 +3,26 @@
 package org.jetbrains.kotlinx.serialization.idea
 
 import org.jetbrains.kotlin.ObsoleteTestInfrastructure
-import org.jetbrains.kotlin.checkers.AbstractDiagnosticsTest
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
 import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
-import org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationIDEContainerContributor
+import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.compiler.extensions.SerializationIDEContainerContributor
+import org.jetbrains.kotlin.idea.test.KotlinBaseTest
+import java.io.File
 
 @OptIn(ObsoleteTestInfrastructure::class)
-abstract class AbstractSerializationPluginIdeDiagnosticTest : AbstractDiagnosticsTest() {
+abstract class AbstractSerializationPluginIdeDiagnosticTest : KotlinBaseTest<KotlinBaseTest.TestFile>() {
     private val coreLibraryPath = getSerializationCoreLibraryJar()!!
     private val jsonLibraryPath = getSerializationJsonLibraryJar()!!
 
     override fun setupEnvironment(environment: KotlinCoreEnvironment) {
-        if (!StorageComponentContainerContributor.getInstances(project).any { it is SerializationIDEContainerContributor }) {
-            StorageComponentContainerContributor.registerExtension(project, SerializationIDEContainerContributor())
+        if (!StorageComponentContainerContributor.getInstances(environment.project).any { it is SerializationIDEContainerContributor }) {
+            StorageComponentContainerContributor.registerExtension(environment.project, SerializationIDEContainerContributor())
         }
         environment.updateClasspath(listOf(JvmClasspathRoot(coreLibraryPath), JvmClasspathRoot(jsonLibraryPath)))
+    }
+
+    override fun createTestFilesFromFile(file: File, expectedText: String): List<TestFile> {
+        TODO("Not yet implemented")
     }
 }
