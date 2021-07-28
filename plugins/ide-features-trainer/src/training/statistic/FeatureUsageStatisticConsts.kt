@@ -23,4 +23,9 @@ object FeatureUsageStatisticConsts {
   const val TASK_ID = "task_id"
   const val KEYMAP_SCHEME = "keymap_scheme"
   const val REASON = "reason"
+  const val NEW_LESSONS_NOTIFICATION_SHOWN = "new_lessons_notification_shown"
+  const val SHOW_NEW_LESSONS = "show_new_lessons"
+  const val NEED_SHOW_NEW_LESSONS_NOTIFICATIONS = "need_show_new_lessons_notifications"
+  const val NEW_LESSONS_COUNT = "new_lessons_count"
+  const val SHOULD_SHOW_NEW_LESSONS = "show_it"
 }

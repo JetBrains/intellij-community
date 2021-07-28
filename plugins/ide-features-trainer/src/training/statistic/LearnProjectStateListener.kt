@@ -19,6 +19,8 @@ import training.FeaturesTrainerIcons
 import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
+import training.learn.course.Lesson
+import training.statistic.StatisticBase.Companion.logShowNewLessonsNotificationState
 import training.util.*
 
 private class LearnProjectStateListener : ProjectManagerListener {
@@ -87,11 +89,14 @@ private fun considerNotifyAboutNewLessons(project: Project) {
   if (newLessons.isEmpty() || newLessons.any { it.passed }) {
     return
   }
-  notifyAboutNewLessons(project)
+  notifyAboutNewLessons(project, newLessons)
 }
 
 
-private fun notifyAboutNewLessons(project: Project) {
+private fun notifyAboutNewLessons(project: Project, newLessons: List<Lesson>) {
+  val newLessonsCount = newLessons.filter { !it.passed }.size
+  val previousOpenedVersion = CourseManager.instance.previousOpenedVersion
+  StatisticBase.logNewLessonsNotification(newLessonsCount, previousOpenedVersion)
   val notificationGroup = NotificationGroup.findRegisteredGroup("IDE Features Trainer")
                           ?: error("Not found notificationGroup for IDE Features Trainer")
   val notification = notificationGroup.createNotification(LearnBundle.message("notification.about.new.lessons"), NotificationType.INFORMATION)
@@ -101,12 +106,14 @@ private fun notifyAboutNewLessons(project: Project) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
       notification.expire()
       val toolWindow = learningToolWindow(project) ?: return
+      StatisticBase.logShowNewLessonsEvent(newLessonsCount, previousOpenedVersion)
       toolWindow.show()
     }
   })
   notification.addAction(object : NotificationAction(LearnBundle.message("notification.do.not.show.new.lessons.notifications")) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
       PropertiesComponent.getInstance().setValue(SHOW_NEW_LESSONS_NOTIFICATION, false, true)
+      logShowNewLessonsNotificationState(newLessonsCount, previousOpenedVersion, false)
       notification.expire()
     }
   })
