@@ -7,15 +7,22 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.tools.*;
+import javax.tools.JavaFileManager;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-final class DefaultFileOperations implements FileOperations {
-  private static final File[] NULL_FILE_ARRAY = new File[0];
+class DefaultFileOperations implements FileOperations {
+  private static final Iterable<File> NULL_ITERABLE = new Iterable<File>() {
+    @NotNull
+    @Override
+    public Iterator<File> iterator() {
+      return Collections.<File>emptyList().iterator();
+    }
+  };
   private static final Archive NULL_ARCHIVE = new Archive() {
     @NotNull
     @Override
@@ -27,21 +34,20 @@ final class DefaultFileOperations implements FileOperations {
     }
   };
 
-  private final Map<File, File[]> myDirectoryCache = new HashMap<File, File[]>();
+  private final Map<File, Iterable<File>> myDirectoryCache = new HashMap<File, Iterable<File>>();
   private final Map<File, FileOperations.Archive> myArchiveCache = new HashMap<File, FileOperations.Archive>();
   private final Map<File, Boolean> myIsFile = new HashMap<File, Boolean>();
 
   @Override
   @NotNull
   public Iterable<File> listFiles(final File file, final boolean recursively) {
-    final Iterable<File> childrenIterable = new Iterable<File>() {
-      @NotNull
+    final Iterable<File> childrenIterable = Iterators.lazy(new Iterators.Provider<Iterable<File>>() {
       @Override
-      public Iterator<File> iterator() {
-        final File[] children = listChildren(file);
-        return (children == null || children.length == 0 ? Collections.<File>emptyList() : Arrays.asList(children)).iterator();
+      public Iterable<File> get() {
+        final Iterable<File> children = listChildren(file);
+        return children == null? Collections.<File>emptyList() : children;
       }
-    };
+    });
     return !recursively? childrenIterable : Iterators.flat(Iterators.map(childrenIterable, new Function<File, Iterable<File>>() {
       @Override
       public Iterable<File> fun(File ff) {
@@ -54,14 +60,14 @@ final class DefaultFileOperations implements FileOperations {
     return Iterators.flat(Iterators.map(Iterators.asIterable(file), new Function<File, Iterable<File>>() {
       @Override
       public Iterable<File> fun(File f) {
-        final File[] children = listChildren(f);
+        final Iterable<File> children = listChildren(f);
         if (children == null) { // not a dir
           return Iterators.asIterable(f);
         }
-        if (children.length == 0) {
-          return Collections.emptyList();
+        if (Iterators.isEmptyCollection(children)) {
+          return children;
         }
-        return Iterators.flat(Iterators.map(Arrays.asList(children), new Function<File, Iterable<File>>() {
+        return Iterators.flat(Iterators.map(children, new Function<File, Iterable<File>>() {
           @Override
           public Iterable<File> fun(File ff) {
             return asRecursiveIterable(ff);
@@ -75,10 +81,9 @@ final class DefaultFileOperations implements FileOperations {
   public boolean isFile(File file) {
     Boolean cachedIsFile = myIsFile.get(file);
     if (cachedIsFile == null) {
-      cachedIsFile = file.isFile();
-      myIsFile.put(file, cachedIsFile);
+      myIsFile.put(file, cachedIsFile = file.isFile());
     }
-    return cachedIsFile == Boolean.TRUE;
+    return cachedIsFile.booleanValue();
   }
 
   @Override
@@ -150,15 +155,25 @@ final class DefaultFileOperations implements FileOperations {
   }
 
   @Nullable
-  private File[] listChildren(File file) {
-    File[] cached = myDirectoryCache.get(file);
+  private Iterable<File> listChildren(File file) {
+    Iterable<File> cached = myDirectoryCache.get(file);
     if (cached == null) {
-      cached = file.listFiles();
-      myDirectoryCache.put(file, cached == null ? NULL_FILE_ARRAY : cached);
+      try {
+        cached = listFiles(file);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      myDirectoryCache.put(file, cached == null ? NULL_ITERABLE : cached);
     }
-    return cached == NULL_FILE_ARRAY ? null : cached;
+    return cached == NULL_ITERABLE ? null : cached;
   }
 
+  @Nullable
+  protected Iterable<File> listFiles(File file) throws IOException {
+    final File[] files = file.listFiles();
+    return files != null? Arrays.asList(files) : null;
+  }
 
   private static class ZipArchive implements FileOperations.Archive {
     private final ZipFile myZip;
