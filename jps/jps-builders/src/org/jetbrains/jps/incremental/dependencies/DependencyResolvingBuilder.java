@@ -37,6 +37,7 @@ import org.jetbrains.jps.model.module.JpsLibraryDependency;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.model.serialization.JpsPathVariablesConfiguration;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -287,7 +288,9 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
       final List<RemoteRepository> repositories = new SmartList<>();
       for (JpsRemoteRepositoryDescription repo : JpsRemoteRepositoryService.getInstance().getOrCreateRemoteRepositoriesConfiguration(context.getProjectDescriptor().getProject())
           .getRepositories()) {
-        repositories.add(ArtifactRepositoryManager.createRemoteRepository(repo.getId(), repo.getUrl()));
+        repositories.add(
+          ArtifactRepositoryManager.createRemoteRepository(repo.getId(), repo.getUrl(), obtainAuthenticationData(repo.getUrl()))
+        );
       }
       manager = new ArtifactRepositoryManager(getLocalArtifactRepositoryRoot(context.getProjectDescriptor().getModel().getGlobal()), repositories, new ProgressConsumer() {
         @Override
@@ -306,9 +309,20 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     return manager;
   }
 
+  private static ArtifactRepositoryManager.ArtifactAuthenticationData obtainAuthenticationData(String url) {
+    for (DependencyAuthenticationDataProvider provider : JpsServiceManager.getInstance()
+      .getExtensions(DependencyAuthenticationDataProvider.class)) {
+      DependencyAuthenticationDataProvider.AuthenticationData authData = provider.provideAuthenticationData(url);
+      if (authData != null) {
+        return new ArtifactRepositoryManager.ArtifactAuthenticationData(authData.getUserName(), authData.getPassword());
+      }
+    }
+    return null;
+  }
+
   public static @NotNull File getLocalArtifactRepositoryRoot(@NotNull JpsGlobal global) {
     final JpsPathVariablesConfiguration pvConfig = JpsModelSerializationDataService.getPathVariablesConfiguration(global);
-    final String localRepoPath = pvConfig != null? pvConfig.getUserVariableValue(MAVEN_REPOSITORY_PATH_VAR) : null;
+    final String localRepoPath = pvConfig != null ? pvConfig.getUserVariableValue(MAVEN_REPOSITORY_PATH_VAR) : null;
     if (localRepoPath != null) {
       return new File(localRepoPath);
     }
