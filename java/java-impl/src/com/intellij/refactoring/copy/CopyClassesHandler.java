@@ -345,16 +345,6 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
                                                   final PsiDirectory targetDirectory,
                                                   final Project project) throws IncorrectOperationException {
     final Map<PsiClass, PsiClass> oldToNewMap = new HashMap<>();
-    for (final PsiClass[] psiClasses : fileToClasses.values()) {
-      if (psiClasses != null) {
-        for (PsiClass aClass : psiClasses) {
-          if (isSynthetic(aClass)) {
-            continue;
-          }
-          oldToNewMap.put(aClass, null);
-        }
-      }
-    }
     final List<PsiFile> createdFiles = new ArrayList<>(fileToClasses.size());
     int[] choice = fileToClasses.size() > 1 ? new int[]{-1} : null;
     List<PsiFile> files = new ArrayList<>();
@@ -367,9 +357,6 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
         final PsiFile createdFile = executeWithUpdatingAddedFilesDisabled(directory, () -> copy(directory, psiFile, copyClassName, choice));
         if (createdFile == null) {
           //do not touch unmodified classes
-          for (PsiClass aClass : ((PsiClassOwner)psiFile).getClasses()) {
-            oldToNewMap.remove(aClass);
-          }
           continue;
         }
 
