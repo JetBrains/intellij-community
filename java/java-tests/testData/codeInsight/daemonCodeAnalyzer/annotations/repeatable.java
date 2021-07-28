@@ -64,4 +64,53 @@ class C8 {
 
 @Documented
 @Repeatable(<error descr="Container annotation 'AA11' does not have required @Documented annotation">AA11.class</error>)
-@interface A11 {}
+@interface A11 {
+}
+
+class ElementTypeContainerRules {
+  @Repeatable(Tags1.class)
+  @Target(TYPE_USE)
+  @interface Tag1 {
+    String value();
+  }
+
+  @Target(TYPE)
+  @interface Tags1 {
+    Tag1[] value();
+  }
+
+  
+  @Repeatable(Tags2.class)
+  @Target(TYPE)
+  @interface Tag2 {
+    String value();
+  }
+
+  @Target(ANNOTATION_TYPE)
+  @interface Tags2 {
+    Tag2[] value();
+  }
+  
+  @Repeatable(Tags3.class)
+  @Target(TYPE_USE)
+  @interface Tag3 {
+    String value();
+  }
+
+  @Target(TYPE_PARAMETER)
+  @interface Tags3 {
+    Tag3[] value();
+  }
+  
+  @Repeatable(Tags4.class)
+  @Target(TYPE_USE)
+  @interface Tag4 {
+    String value();
+  }
+
+  @Target(ANNOTATION_TYPE)
+  @interface Tags4 {
+    Tag4[] value();
+  }
+
+}

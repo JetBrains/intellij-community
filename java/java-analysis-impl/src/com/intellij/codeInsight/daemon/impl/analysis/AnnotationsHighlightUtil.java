@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -698,8 +698,21 @@ public final class AnnotationsHighlightUtil {
     Set<PsiAnnotation.TargetType> repeatableTargets = AnnotationTargetUtil.getAnnotationTargets((PsiClass)target);
     if (repeatableTargets != null) {
       Set<PsiAnnotation.TargetType> containerTargets = AnnotationTargetUtil.getAnnotationTargets(container);
-      if (containerTargets != null && !repeatableTargets.containsAll(containerTargets)) {
-        return JavaErrorBundle.message("annotation.container.wide.target", container.getQualifiedName());
+      if (containerTargets != null) {
+        for (PsiAnnotation.TargetType containerTarget : containerTargets) {
+          if (repeatableTargets.contains(containerTarget)) {
+            continue;
+          }
+          if (containerTarget == PsiAnnotation.TargetType.ANNOTATION_TYPE && 
+              (repeatableTargets.contains(PsiAnnotation.TargetType.TYPE) || repeatableTargets.contains(PsiAnnotation.TargetType.TYPE_USE))) {
+            continue;
+          }
+          if ((containerTarget == PsiAnnotation.TargetType.TYPE || containerTarget == PsiAnnotation.TargetType.TYPE_PARAMETER) && 
+              repeatableTargets.contains(PsiAnnotation.TargetType.TYPE_USE)) {
+            continue;
+          }
+          return JavaErrorBundle.message("annotation.container.wide.target", container.getQualifiedName());
+        }
       }
     }
 
