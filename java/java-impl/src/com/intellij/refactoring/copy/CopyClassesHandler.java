@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.file.PsiDirectoryImpl;
-import com.intellij.psi.impl.file.UpdateAddedFileProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtilCore;
@@ -390,7 +389,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     }
 
     DumbService.getInstance(project).completeJustSubmittedTasks();
-    WriteAction.run(() -> UpdateAddedFileProcessor.updateAddedFiles(createdFiles));
+    CopyFilesOrDirectoriesHandler.updateAddedFiles(createdFiles);
 
     for (PsiFile file : files) {
       try {
