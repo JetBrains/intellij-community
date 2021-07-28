@@ -1,9 +1,7 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.maven" xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin package="org.jetbrains.kotlin.idea.maven">
   <dependencies>
     <plugin id="org.jetbrains.idea.maven"/>
   </dependencies>
-
-  <xi:include href="project-wizard-dep-maven.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.maven.configuration.KotlinJavaMavenConfigurator"/>
