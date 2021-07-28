@@ -93,5 +93,6 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.maven" />
     <orderEntry type="module" module-name="kotlin.project-wizard.gradle" />
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" />
+    <orderEntry type="module" module-name="kotlin.copyright.tests" />
   </component>
 </module>
