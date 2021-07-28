@@ -1,6 +1,0 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true" implementation-detail="true">
-  <name>Inlay Visualisation</name>
-  <id>org.intellij.datavis.r.inlays.visualisation</id>
-  <vendor>JetBrains</vendor>
-  <xi:include href="/META-INF/visualisation.xml" xpointer="xpointer(/idea-plugin/*)"/>
-</idea-plugin>

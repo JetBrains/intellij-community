@@ -20,7 +20,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     useSplash = true
     buildCrossPlatformDistribution = true
 
-    productLayout.productImplementationModules = ["intellij.platform.main"]
+    productLayout.productImplementationModules = ["intellij.platform.main"] + NotebookProperties.NOTEBOOK_IMPLEMENTATION_MODULES
     productLayout.additionalPlatformJars.put(BaseLayout.PLATFORM_JAR, "intellij.idea.community.resources")
     productLayout.bundledPluginModules += BUNDLED_PLUGIN_MODULES
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false

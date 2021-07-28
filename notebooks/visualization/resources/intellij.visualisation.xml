@@ -1,4 +1,5 @@
-<idea-plugin allow-bundled-update="true">
+<idea-plugin>
+  <module value="org.intellij.datavis.r.inlays.visualisation" />
   <depends>com.intellij.platform.images</depends>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.datavis.inlays.inlayDescriptorProvider"
@@ -40,7 +41,7 @@
                     dynamic="true"/>
   </extensionPoints>
 
-  <actions>
+  <actions resource-bundle="messages.VisualizationBundle">
     <group id="org.intellij.datavis.r.inlays.components.InlayOutputToolbarActions">
       <action id="org.intellij.datavis.r.inlays.components.ClearOutputAction"
               class="org.intellij.datavis.r.inlays.components.ClearOutputAction"
@@ -110,6 +111,4 @@
     <notebookCellInlayController
       implementation="org.jetbrains.plugins.notebooks.editor.outputs.NotebookOutputInlayController$Factory"/>
   </extensions>
-
-  <resource-bundle>messages.VisualizationBundle</resource-bundle>
 </idea-plugin>

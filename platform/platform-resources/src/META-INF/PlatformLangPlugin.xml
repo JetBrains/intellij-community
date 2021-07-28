@@ -149,4 +149,8 @@
   <xi:include href="/META-INF/ExternalSystem.xml">
     <xi:fallback/>
   </xi:include>
+
+  <xi:include href="intellij.visualisation.xml">
+    <xi:fallback/>
+  </xi:include>
 </idea-plugin>
