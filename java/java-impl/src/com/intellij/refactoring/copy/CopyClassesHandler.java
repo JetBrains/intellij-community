@@ -16,6 +16,8 @@ import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -323,6 +325,20 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     return doCopyClasses(fileToClasses, null, copyClassName, targetDirectory, project);
   }
 
+  private static PsiDirectory getOrCreateRelativeDirectory(@NotNull PsiDirectory directory, @Nullable String relativePath) {
+    return StringUtil.isNotEmpty(relativePath) ? buildRelativeDir(directory, relativePath).findOrCreateTargetDirectory() : directory;
+  }
+
+  private static <T, E extends Throwable> T executeWithUpdatingAddedFilesDisabled(PsiDirectoryImpl directory,
+                                                                                  ThrowableComputable<T, E> computable) throws E {
+    Ref<T> ref = new Ref<>();
+    directory.executeWithUpdatingAddedFilesDisabled(() ->{
+      T result = computable.compute();
+      ref.set(result);
+    });
+    return ref.get();
+  }
+
   @NotNull
   public static Collection<PsiFile> doCopyClasses(final Map<PsiFile, PsiClass[]> fileToClasses,
                                                   @Nullable HashMap<PsiFile, String> fileToRelativePath, final String copyClassName,
@@ -342,45 +358,45 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     final List<PsiFile> createdFiles = new ArrayList<>(fileToClasses.size());
     int[] choice = fileToClasses.size() > 1 ? new int[]{-1} : null;
     List<PsiFile> files = new ArrayList<>();
-    ((PsiDirectoryImpl)targetDirectory).executeWithUpdatingAddedFilesDisabled(() -> {
-      for (final Map.Entry<PsiFile, PsiClass[]> entry : fileToClasses.entrySet()) {
-        final PsiFile psiFile = entry.getKey();
-        final PsiClass[] sources = entry.getValue();
-        if (psiFile instanceof PsiClassOwner && sources != null) {
-          final PsiFile createdFile = copy(psiFile, targetDirectory, copyClassName, fileToRelativePath == null ? null : fileToRelativePath.get(psiFile), choice);
-          if (createdFile == null) {
-            //do not touch unmodified classes
-            for (PsiClass aClass : ((PsiClassOwner)psiFile).getClasses()) {
-              oldToNewMap.remove(aClass);
-            }
-            continue;
+    for (final Map.Entry<PsiFile, PsiClass[]> entry : fileToClasses.entrySet()) {
+      final PsiFile psiFile = entry.getKey();
+      final PsiClass[] sources = entry.getValue();
+      if (psiFile instanceof PsiClassOwner && sources != null) {
+        final String relativePath = fileToRelativePath != null ? fileToRelativePath.get(psiFile) : null;
+        final PsiDirectoryImpl directory = (PsiDirectoryImpl) WriteAction.compute(() -> getOrCreateRelativeDirectory(targetDirectory, relativePath));
+        final PsiFile createdFile = executeWithUpdatingAddedFilesDisabled(directory, () -> copy(directory, psiFile, copyClassName, choice));
+        if (createdFile == null) {
+          //do not touch unmodified classes
+          for (PsiClass aClass : ((PsiClassOwner)psiFile).getClasses()) {
+            oldToNewMap.remove(aClass);
           }
-
-          Map<PsiClass, PsiClass> sourceToDestination = new LinkedHashMap<>();
-          for (final PsiClass destination : ((PsiClassOwner)createdFile).getClasses()) {
-            if (!isSynthetic(destination)) {
-              PsiClass source = findByName(sources, destination.getName());
-              if (source == null) {
-                WriteAction.run(() -> destination.delete());
-              }
-              else {
-                sourceToDestination.put(source, destination);
-              }
-            }
-          }
-
-          for (final Map.Entry<PsiClass, PsiClass> classEntry : sourceToDestination.entrySet()) {
-            final PsiClass copy = copy(classEntry.getKey(), sourceToDestination.size() > 1 ? null : copyClassName);
-            PsiClass newClass = WriteAction.compute(() -> (PsiClass) classEntry.getValue().replace(copy));
-            oldToNewMap.put(classEntry.getKey(), newClass);
-          }
-          createdFiles.add(createdFile);
+          continue;
         }
-        else {
-          files.add(psiFile);
+
+        Map<PsiClass, PsiClass> sourceToDestination = new LinkedHashMap<>();
+        for (final PsiClass destination : ((PsiClassOwner)createdFile).getClasses()) {
+          if (!isSynthetic(destination)) {
+            PsiClass source = findByName(sources, destination.getName());
+            if (source == null) {
+              WriteAction.run(() -> destination.delete());
+            }
+            else {
+              sourceToDestination.put(source, destination);
+            }
+          }
         }
+
+        for (final Map.Entry<PsiClass, PsiClass> classEntry : sourceToDestination.entrySet()) {
+          final PsiClass copy = copy(classEntry.getKey(), sourceToDestination.size() > 1 ? null : copyClassName);
+          PsiClass newClass = WriteAction.compute(() -> (PsiClass) classEntry.getValue().replace(copy));
+          oldToNewMap.put(classEntry.getKey(), newClass);
+        }
+        createdFiles.add(createdFile);
       }
-    });
+      else {
+        files.add(psiFile);
+      }
+    }
 
     DumbService.getInstance(project).completeJustSubmittedTasks();
     WriteAction.run(() -> UpdateAddedFileProcessor.updateAddedFiles(createdFiles));
@@ -435,13 +451,10 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     return aClass instanceof SyntheticElement || !aClass.isPhysical();
   }
 
-  private static PsiFile copy(@NotNull PsiFile file, PsiDirectory directory, String name, String relativePath, int[] choice) {
+  private static PsiFile copy(@NotNull PsiDirectory directory, @NotNull PsiFile file, String name, int[] choice) {
     final String fileName = getNewFileName(file, name);
-    if (relativePath != null && !relativePath.isEmpty()) {
-      return WriteAction.compute(() -> buildRelativeDir(directory, relativePath).findOrCreateTargetDirectory().copyFileFrom(fileName, file));
-    }
-    if (CopyFilesOrDirectoriesHandler.checkFileExist(directory, choice, file, fileName,
-                                                     ExecutionBundle.message("copy.classes.command.name"))) return null;
+    final String errorMessage = ExecutionBundle.message("copy.classes.command.name");
+    if (CopyFilesOrDirectoriesHandler.checkFileExist(directory, choice, file, fileName, errorMessage)) return null;
     return WriteAction.compute(() -> directory.copyFileFrom(fileName, file));
   }
 
