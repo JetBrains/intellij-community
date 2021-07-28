@@ -190,6 +190,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     if (aClass instanceof PsiAnonymousClass) return JavaElementKind.ANONYMOUS_CLASS.subject();
 
     generateOrderEntryAndPackageInfo(buffer, aClass);
+    JavaDocInfoGenerator.generateTooltipAnnotations(aClass, buffer);
     generateModifiers(buffer, aClass);
 
     final String classString = aClass.isAnnotationType() ? '@' + PsiKeyword.INTERFACE :
@@ -291,6 +292,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       newLine(buffer);
     }
 
+    JavaDocInfoGenerator.generateTooltipAnnotations(method, buffer);
     generateModifiers(buffer, method);
 
     generateTypeParameters(method, buffer);
@@ -348,6 +350,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       newLine(buffer);
     }
 
+    JavaDocInfoGenerator.generateTooltipAnnotations(field, buffer);
     generateModifiers(buffer, field);
 
     JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(field.getType()), field, false, true);

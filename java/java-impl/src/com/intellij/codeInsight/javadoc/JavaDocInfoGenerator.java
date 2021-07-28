@@ -518,7 +518,7 @@ public class JavaDocInfoGenerator {
 
   private static boolean generateClassSignature(StringBuilder buffer, PsiClass aClass, SignaturePlace place) {
     boolean generateLink = place == SignaturePlace.Javadoc;
-    generateAnnotations(buffer, aClass, place, true);
+    generateAnnotations(buffer, aClass, place, true, false);
     generateModifiers(buffer, aClass, false);
     buffer.append(aClass.isInterface() ? PsiKeyword.INTERFACE :
                   aClass.isEnum() ? PsiKeyword.ENUM :
@@ -677,7 +677,7 @@ public class JavaDocInfoGenerator {
   }
 
   private static void generateFieldSignature(StringBuilder buffer, PsiField field, SignaturePlace place) {
-    generateAnnotations(buffer, field, place, true);
+    generateAnnotations(buffer, field, place, true, false);
     generateModifiers(buffer, field, false);
     generateType(buffer, field.getType(), field, place == SignaturePlace.Javadoc);
     buffer.append(" <b>");
@@ -741,7 +741,7 @@ public class JavaDocInfoGenerator {
 
     if (!rendered) {
       buffer.append(DocumentationMarkup.DEFINITION_START);
-      generateAnnotations(buffer, module, SignaturePlace.Javadoc, true);
+      generateAnnotations(buffer, module, SignaturePlace.Javadoc, true, false);
       buffer.append("module <b>").append(module.getName()).append("</b>");
       buffer.append(DocumentationMarkup.DEFINITION_END);
     }
@@ -930,9 +930,11 @@ public class JavaDocInfoGenerator {
   private static void generateAnnotations(StringBuilder buffer,
                                           PsiModifierListOwner owner,
                                           SignaturePlace place,
-                                          boolean splitAnnotations) {
+                                          boolean splitAnnotations,
+                                          boolean ignoreNonSourceAnnotations) {
     AnnotationFormat format = place == SignaturePlace.Javadoc ? AnnotationFormat.JavaDocShort : AnnotationFormat.ToolTip;
     for (AnnotationDocGenerator anno : AnnotationDocGenerator.getAnnotationsToShow(owner)) {
+      if (ignoreNonSourceAnnotations && (anno.isInferred() || anno.isExternal())) continue;
       anno.generateAnnotation(buffer, format);
 
       buffer.append(NBSP);
@@ -953,7 +955,7 @@ public class JavaDocInfoGenerator {
     buffer.append(DocumentationMarkup.DEFINITION_START);
     generateModifiers(buffer, variable, false);
     if (annotations) {
-      generateAnnotations(buffer, variable, SignaturePlace.Javadoc, true);
+      generateAnnotations(buffer, variable, SignaturePlace.Javadoc, true, false);
     }
     generateType(buffer, variable.getType(), variable);
     buffer.append(" <b>");
@@ -1140,7 +1142,7 @@ public class JavaDocInfoGenerator {
     boolean isTooltip = place == SignaturePlace.ToolTip;
     boolean generateLink = place == SignaturePlace.Javadoc;
 
-    generateAnnotations(buffer, method, place, true);
+    generateAnnotations(buffer, method, place, true, false);
 
     int modLength = isTooltip ? 0 : generateModifiers(buffer, method, true);
     int indent = modLength == 0 ? 0 : modLength + 1;
@@ -1168,7 +1170,7 @@ public class JavaDocInfoGenerator {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parm = parameters[i];
-      generateAnnotations(buffer, parm, place, false);
+      generateAnnotations(buffer, parm, place, false, false);
       generateType(buffer, parm.getType(), method, generateLink, isTooltip);
       if (!isTooltip) {
         buffer.append(NBSP);
@@ -2287,6 +2289,10 @@ public class JavaDocInfoGenerator {
     }
   }
 
+  public static void generateTooltipAnnotations(PsiModifierListOwner owner, @Nls StringBuilder buffer) {
+    generateAnnotations(buffer, owner, SignaturePlace.ToolTip, true, true);
+  }
+  
   private enum SignaturePlace {
     Javadoc, ToolTip
   }
