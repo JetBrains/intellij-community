@@ -66,7 +66,7 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
       if (!(file instanceof PsiFile)) {
         return;
       }
-      CodeStyleManager.getInstance(project).reformat(file);
+      CodeStyleManager.getInstance(project).reformat(file, true);
     }
   }
 
