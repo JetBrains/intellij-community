@@ -16,9 +16,11 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -177,6 +179,14 @@ public final class ControlFlowUtils {
     if (statementIsBreakTarget(switchStatement)) {
       return true;
     }
+    final PsiExpression selectorExpression = switchStatement.getExpression();
+    if (selectorExpression == null) {
+      return true;
+    }
+    final PsiType selectorType = selectorExpression.getType();
+    if (selectorType == null) {
+      return true;
+    }
     final PsiCodeBlock body = switchStatement.getBody();
     if (body == null) {
       return true;
@@ -186,42 +196,69 @@ public final class ControlFlowUtils {
       return true;
     }
     int numCases = 0;
-    boolean hasDefaultCase = false;
+    boolean hasDefaultCase = false, hasTotalPattern = false;
     for (PsiStatement statement : statements) {
-      if (statement instanceof PsiSwitchLabelStatement) {
-        numCases++;
-        final PsiSwitchLabelStatement switchLabelStatement = (PsiSwitchLabelStatement)statement;
+      if (statement instanceof PsiSwitchLabelStatementBase) {
+        if (statement instanceof PsiSwitchLabelStatement) {
+          numCases++;
+        }
+        if (hasDefaultCase || hasTotalPattern) {
+          continue;
+        }
+        PsiSwitchLabelStatementBase switchLabelStatement = (PsiSwitchLabelStatementBase)statement;
         if (switchLabelStatement.isDefaultCase()) {
           hasDefaultCase = true;
+          continue;
+        }
+        // this information doesn't exist in spec draft (14.22) for pattern in switch as expected
+        // but for now javac considers the switch statement containing at least either case default label element or total pattern "incomplete normally"
+        if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(switchLabelStatement)) {
+          PsiCaseLabelElementList labelElementList = switchLabelStatement.getCaseLabelElementList();
+          if (labelElementList == null) {
+            continue;
+          }
+          for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
+            if (labelElement instanceof PsiDefaultCaseLabelElement) {
+              hasDefaultCase = true;
+            }
+            else if (labelElement instanceof PsiPattern) {
+              hasTotalPattern = JavaPsiPatternUtil.isTotalForType(((PsiPattern)labelElement), selectorType);
+            }
+          }
         }
       }
-      if (statement instanceof PsiBreakStatement) {
+      else if (statement instanceof PsiBreakStatement) {
         final PsiBreakStatement breakStatement = (PsiBreakStatement)statement;
         if (breakStatement.getLabelIdentifier() == null) {
           return true;
         }
       }
     }
+    // todo actually there is no information about an impact of enum constants on switch statements being complete normally in spec (Unreachable statements)
+    // todo comparing to javac that produces some false-negative highlighting in enum switch statements containing all possible constants
     final boolean isEnum = isEnumSwitch(switchStatement);
-    if (!hasDefaultCase && !isEnum) {
+    if (!hasDefaultCase && !hasTotalPattern && !isEnum) {
       return true;
     }
-    if (!hasDefaultCase) {
-      final PsiExpression expression = switchStatement.getExpression();
-      if (expression == null) {
-        return true;
-      }
-      final PsiClassType type = (PsiClassType)expression.getType();
-      if (type == null) {
-        return true;
-      }
-      final PsiClass aClass = type.resolve();
+    if (!hasDefaultCase && !hasTotalPattern) {
+      final PsiClass aClass = ((PsiClassType)selectorType).resolve();
       if (aClass == null) {
         return true;
       }
       if (!hasChildrenOfTypeCount(aClass, numCases, PsiEnumConstant.class)) {
         return true;
       }
+    }
+    // 14.22. Unreachable Statements
+    // We need to check every rule's body not just the last one if the switch block includes the switch rules
+    boolean isLabeledRuleSwitch = statements[0] instanceof PsiSwitchLabeledRuleStatement;
+    if (isLabeledRuleSwitch) {
+      for (PsiStatement statement : statements) {
+        if (statementMayCompleteNormally(statement)) {
+          return true;
+        }
+      }
+      return false;
     }
     return statementMayCompleteNormally(statements[statements.length - 1]);
   }

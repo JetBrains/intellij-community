@@ -2127,6 +2127,7 @@ public final class HighlightUtil {
             hasResult = true;
           }
           // the expression and throw statements are fine, only the block statement could be an issue
+          // 15.28.1 If the switch block consists of switch rules, then any switch rule block cannot complete normally
           if (ruleBody instanceof PsiBlockStatement) {
             if (ControlFlowUtils.statementMayCompleteNormally(ruleBody)) {
               PsiElement target = ObjectUtils.notNull(tryCast(rule.getFirstChild(), PsiKeyword.class), rule);
