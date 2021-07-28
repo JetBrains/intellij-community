@@ -70,7 +70,7 @@ Includes the following features:</p>
     <multiHostInjector implementation="org.intellij.plugins.markdown.injection.CodeFenceInjector"/>
 
     <completion.contributor language="Markdown"
-                            implementationClass="org.intellij.plugins.markdown.injection.LanguageListCompletionContributor"/>
+                            implementationClass="org.intellij.plugins.markdown.editor.MarkdownCompletionContributor"/>
 
     <fileEditorProvider implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
 
