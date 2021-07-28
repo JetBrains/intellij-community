@@ -50,30 +50,12 @@
           <option name="issueRegexp" value="(?i:bug|bugfix|issue|fix|fixes|fixing|fixed|google-bug-id):? ?(?:(?:https?://)?(?:b|b.android.com|issuetracker.google.com)/)?(\d+)" />
           <option name="linkRegexp" value="http://issuetracker.google.com/$1" />
         </IssueNavigationLink>
-        <IssueNavigationLink>
-          <option name="issueRegexp" value="Change-Id: (.+)" />
-          <option name="linkRegexp" value="http://ag/$1" />
-        </IssueNavigationLink>
-        <IssueNavigationLink>
-          <option name="issueRegexp" value="PiperOrigin-RevId: (.+)" />
-          <option name="linkRegexp" value="http://cl/$1" />
-        </IssueNavigationLink>
       </list>
     </option>
   </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/../adt/idea" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/../analytics-library" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/../base" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/../data-binding" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/../studio/google/appindexing" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/../studio/google/cloud/testing" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/../studio/google/cloud/tools" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/../studio/google/samples" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/../swing-testing" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/../vendor/google" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/../vendor/google3/blaze" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/android" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../vendor/intellij/cidr" vcs="Git" />
   </component>
 </project>

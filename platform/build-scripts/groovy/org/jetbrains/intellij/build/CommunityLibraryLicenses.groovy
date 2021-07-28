@@ -439,8 +439,6 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "JGoodies Forms", libraryName: "jgoodies-forms", license: "BSD",
                        url: "http://www.jgoodies.com/freeware/libraries/forms/",
                        licenseUrl: "https://opensource.org/licenses/bsd-license.html"),
-    new LibraryLicense(name: "jgraphx", libraryName: "jgraphx", license: "BSD",
-                       url: "https://github.com/jgraph/jgraphx"),
     new LibraryLicense(name: "Jing", libraryName: "jing", url: 'http://thaiopensource.com/relaxng/jing.html',
                        license: "New BSD", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
     /* Android Studio: added by Change I38bafaf1 / commit 0c703f7 */

@@ -350,7 +350,6 @@ Android Studio: exclude intellij.android.jpsBuildPlugin */
       withModule("intellij.android.designer", "android.jar")
       withModule("intellij.android.compose-designer", "android.jar")
       withModule("intellij.android.designer.customview", "android.jar")
-      withModule("intellij.android.naveditor", "android.jar")
       withModule("intellij.android.nav.editor", "android.jar")
       withModule("intellij.android.nav.safeargs", "android.jar")
       withModule("intellij.android.sdkUpdates", "android.jar")

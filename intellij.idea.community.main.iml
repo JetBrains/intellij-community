@@ -97,13 +97,6 @@
     <orderEntry type="module" module-name="intellij.tasks.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.guiForms.jps" scope="TEST" />
-    <orderEntry type="module" module-name="google-cloud-tools-as" />
-    <orderEntry type="module" module-name="firebase-testing" />
-    <orderEntry type="module" module-name="test-recorder" />
-    <orderEntry type="module" module-name="google-samples" />
-    <orderEntry type="module" module-name="google-services" />
-    <orderEntry type="module" module-name="google-appindexing" />
-    <orderEntry type="module" module-name="url-assistant" />
     <orderEntry type="module" module-name="intellij.tasks.jira" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.decompiler" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.structuralSearch" scope="RUNTIME" />
@@ -114,11 +107,6 @@
     <orderEntry type="module" module-name="intellij.json.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.typeMigration" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.android.sdkUpdates" />
-    <orderEntry type="module" module-name="android-ndk" />
-    <orderEntry type="module" module-name="android-apk" />
-    <orderEntry type="module" module-name="firebase" />
-    <orderEntry type="module" module-name="intellij.android.core" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diff.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.tests" scope="TEST" />
@@ -158,10 +146,5 @@
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" scope="TEST" />
     <orderEntry type="module" module-name="intellij.junit.v5.rt.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.ml.models.local" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.android.kotlin.idea" />
-    <orderEntry type="module" module-name="intellij.android.kotlin.extensions" />
-    <orderEntry type="module" module-name="intellij.android.kotlin.output.parser" />
-    <orderEntry type="module" module-name="intellij.android.compose-ide-plugin" />
-    <orderEntry type="module" module-name="intellij.android.layoutlib-native" />
   </component>
 </module>
