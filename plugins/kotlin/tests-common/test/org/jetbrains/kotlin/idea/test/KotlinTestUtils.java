@@ -7,6 +7,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import kotlin.io.path.PathsKt;
+import kotlin.text.StringsKt;
 import org.jetbrains.kotlin.test.KotlinRoot;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -356,6 +358,12 @@ public class KotlinTestUtils {
 
     public static void assertEqualsToFile(@NotNull Path expectedFile, @NotNull String actual) {
         assertEqualsToFile(expectedFile.toFile(), actual);
+    }
+
+    public static void assertEqualsToSibling(@NotNull Path originalFile, @NotNull String expectedExtension, @NotNull String actual) {
+        String nameWithoutExtension = PathsKt.getNameWithoutExtension(originalFile);
+        Path expectedFile = originalFile.resolveSibling(nameWithoutExtension + '.' + StringsKt.removePrefix(expectedExtension, "."));
+        assertEqualsToFile(expectedFile, actual);
     }
 
     public static void assertEqualsToFile(@NotNull File expectedFile, @NotNull String actual) {
