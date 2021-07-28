@@ -94,7 +94,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
     return new DaemonTooltipRendererProvider(myProject, editor);
   }
 
-  private TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {
+  private @NotNull TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {
     for (TrafficLightRendererContributor contributor : TrafficLightRendererContributor.EP_NAME.getExtensionList()) {
       TrafficLightRenderer renderer = contributor.createRenderer(editor, file);
       if (renderer != null) return renderer;
@@ -102,7 +102,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
     return createFallbackRenderer(editor);
   }
 
-  private TrafficLightRenderer createFallbackRenderer(@NotNull Editor editor) {
+  private @NotNull TrafficLightRenderer createFallbackRenderer(@NotNull Editor editor) {
     return new TrafficLightRenderer(myProject, editor.getDocument()) {
       @Override
       protected @NotNull UIController createUIController() {
