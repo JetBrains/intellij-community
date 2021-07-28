@@ -1,4 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
@@ -26,7 +27,7 @@ class PluginSet internal constructor(
       for (descriptor in plugins) {
         addWithV1Modules(enabledPluginAndModuleV1Map, descriptor)
         for (item in descriptor.content.modules) {
-          enabledModuleV2Ids[item.name] = item
+          enabledModuleV2Ids.put(item.name, item)
         }
       }
       return PluginSet(
@@ -58,9 +59,9 @@ class PluginSet internal constructor(
     }
 
     fun addWithV1Modules(result: MutableMap<PluginId, IdeaPluginDescriptorImpl>, descriptor: IdeaPluginDescriptorImpl) {
-      result[descriptor.id] = descriptor
+      result.put(descriptor.id, descriptor)
       for (module in descriptor.modules) {
-        result[module] = descriptor
+        result.put(module, descriptor)
       }
     }
 
@@ -90,7 +91,7 @@ class PluginSet internal constructor(
             continue@m
           }
         }
-        enabledModuleV2Ids[item.name] = item
+        enabledModuleV2Ids.put(item.name, item)
       }
     }
   }
@@ -100,9 +101,9 @@ class PluginSet internal constructor(
 
   fun isPluginEnabled(id: PluginId) = enabledPluginAndV1ModuleMap.containsKey(id)
 
-  fun findEnabledPlugin(id: PluginId): IdeaPluginDescriptorImpl? = enabledPluginAndV1ModuleMap[id]
+  fun findEnabledPlugin(id: PluginId): IdeaPluginDescriptorImpl? = enabledPluginAndV1ModuleMap.get(id)
 
-  fun findEnabledModule(id: String): IdeaPluginDescriptorImpl? = enabledModuleMap[id]?.requireDescriptor()
+  fun findEnabledModule(id: String): IdeaPluginDescriptorImpl? = enabledModuleMap.get(id)?.requireDescriptor()
 
   fun isModuleEnabled(id: String) = enabledModuleMap.containsKey(id)
 
@@ -117,10 +118,7 @@ class PluginSet internal constructor(
     )
   }
 
-  fun sortTopologically(
-    descriptors: List<IdeaPluginDescriptorImpl>,
-    withOptional: Boolean = true,
-  ): List<IdeaPluginDescriptorImpl> {
+  fun sortTopologically(descriptors: List<IdeaPluginDescriptorImpl>, withOptional: Boolean = true): List<IdeaPluginDescriptorImpl> {
     val graph = CachingSemiGraph.createPluginIdGraph(descriptors, pluginSet = this, withOptional)
 
     val comparator = DFSTBuilder(graph).comparator()
@@ -139,17 +137,14 @@ class PluginSet internal constructor(
     return Java11Shim.INSTANCE.listOf(sortedRequired)
   }
 
-  fun updateEnabledPlugins(): PluginSet = updateEnabledPlugins(allPlugins)
+  fun updateEnabledPlugins() = updateEnabledPlugins(allPlugins)
 
   fun removePluginAndUpdateEnabledPlugins(descriptor: IdeaPluginDescriptorImpl): PluginSet {
     // not just remove from enabledPlugins - maybe another plugins in list also disabled as result of plugin unloading
-    return updateEnabledPlugins(allPlugins - descriptor)
+    return updateEnabledPlugins(allPlugins = allPlugins - descriptor)
   }
 
   private fun updateEnabledPlugins(allPlugins: List<IdeaPluginDescriptorImpl>): PluginSet {
-    return createPluginSet(
-      allPlugins,
-      enabledPlugins = getOnlyEnabledPlugins(allPlugins),
-    )
+    return createPluginSet(allPlugins = allPlugins, enabledPlugins = getOnlyEnabledPlugins(allPlugins))
   }
 }

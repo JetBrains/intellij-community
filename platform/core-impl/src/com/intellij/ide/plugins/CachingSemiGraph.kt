@@ -1,4 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplacePutWithAssignment")
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
@@ -28,21 +29,7 @@ class CachingSemiGraph<Node> private constructor(
     }
   }
 
-  override fun getOut(n: Node): Iterator<Node> = outs[n]?.iterator() ?: Collections.emptyIterator()
-
-  override fun getNodes() = nodes
-
-  override fun getIn(node: Node): Iterator<Node> {
-    return pluginToDirectDependencies[node]?.iterator() ?: Collections.emptyIterator()
-  }
-
-  fun getInStream(node: Node): Stream<Node> {
-    return pluginToDirectDependencies[node]?.stream() ?: Stream.empty()
-  }
-
   companion object {
-
-    @ApiStatus.Internal
     fun createPluginIdGraph(
       descriptors: Collection<IdeaPluginDescriptorImpl>,
       pluginSet: PluginSet,
@@ -56,20 +43,34 @@ class CachingSemiGraph<Node> private constructor(
       val uniqueCheck = Collections.newSetFromMap<PluginId>(IdentityHashMap())
       val pluginToDirectDependencies = IdentityHashMap<PluginId, List<PluginId>>(descriptors.size)
       val list = ArrayList<PluginId>(32)
-      val ids = TreeSet<PluginId>()
+      val ids = arrayOfNulls<PluginId>(descriptors.size)
+      var index = 0
       for (descriptor in descriptors) {
-        ids += descriptor.id
+        ids[index++] = descriptor.id
         collectDirectDependencies(descriptor, pluginSet, withOptional, hasAllModules, javaDep, uniqueCheck, list)
         if (!list.isEmpty()) {
-          pluginToDirectDependencies[descriptor.id] = Java11Shim.INSTANCE.copyOf(list)
+          pluginToDirectDependencies.put(descriptor.id, Java11Shim.INSTANCE.copyOf(list))
           list.clear()
         }
       }
+      Arrays.sort(ids)
       return CachingSemiGraph(
-        Java11Shim.INSTANCE.copyOf(ids),
+        Java11Shim.INSTANCE.listOf<PluginId>(ids),
         pluginToDirectDependencies,
       )
     }
+  }
+
+  override fun getOut(n: Node): Iterator<Node> = outs.get(n)?.iterator() ?: Collections.emptyIterator()
+
+  override fun getNodes() = nodes
+
+  override fun getIn(node: Node): Iterator<Node> {
+    return pluginToDirectDependencies.get(node)?.iterator() ?: Collections.emptyIterator()
+  }
+
+  fun getInStream(node: Node): Stream<Node> {
+    return pluginToDirectDependencies.get(node)?.stream() ?: Stream.empty()
   }
 }
 
