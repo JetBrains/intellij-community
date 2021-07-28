@@ -1,5 +1,5 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="parcelize-dep-gradle.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="parcelize-dep-gradle-java.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="scripting-dep-gradle.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="allopen-dep-gradle.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="noarg-dep-gradle.xml" xpointer="xpointer(/idea-plugin/*)"/>
