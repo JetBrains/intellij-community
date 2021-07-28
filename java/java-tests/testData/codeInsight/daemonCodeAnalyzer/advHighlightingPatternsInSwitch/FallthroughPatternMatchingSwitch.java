@@ -5,12 +5,12 @@ class Main {
       case String s:
       case null:
       case <error descr="Illegal fall-through to a pattern">Integer i</error>:
-        System.out.println(<error descr="Cannot resolve symbol 'i'">i</error> + 1);
+        System.out.println(i + 1);
         break;
       case Long l:
         System.out.println(l);
       case <error descr="Illegal fall-through to a pattern">Character c</error>:
-        System.out.println(<error descr="Cannot resolve symbol 'c'">c</error>);
+        System.out.println(c);
       default:
         throw new IllegalStateException("Unexpected value: " + o);
     }
@@ -90,7 +90,7 @@ class Main {
     switch (o) {
       case String s:
       case <error descr="Illegal fall-through to a pattern">Integer i</error>:
-        System.out.println(<error descr="Cannot resolve symbol 'i'">i</error> + 1);
+        System.out.println(i + 1);
       default:
         throw new IllegalStateException("Unexpected value: " + o);
     }
