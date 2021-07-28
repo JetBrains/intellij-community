@@ -85,6 +85,26 @@ final class BuildDependenciesUtil {
     return result.first()
   }
 
+  static String getLibraryMavenId(Path libraryXml) {
+    try {
+      def documentBuilder = createDocumentBuilder()
+      def document = documentBuilder.parse(libraryXml.toFile())
+
+      def libraryElement = getSingleChildElement(document.documentElement, "library")
+      def propertiesElement = getSingleChildElement(libraryElement, "properties")
+      def mavenId = propertiesElement.getAttribute("maven-id")
+      if (mavenId == null || mavenId.isBlank()) {
+        throw new IllegalStateException("Invalid maven-id")
+      }
+
+      return mavenId
+    }
+    catch (Throwable t) {
+      throw new IllegalStateException("Unable to load maven-id from ${libraryXml}: ${t.message}", t)
+    }
+  }
+
+
   static void deleteRecursively(Path path) {
     if (!Files.exists(path)) {
       throw new IOException("Path does not exist: $path")
