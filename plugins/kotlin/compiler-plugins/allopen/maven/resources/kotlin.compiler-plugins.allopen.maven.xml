@@ -1,0 +1,10 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.allopen.maven">
+  <dependencies>
+    <plugin id="org.jetbrains.idea.maven"/>
+    <module name="kotlin.maven"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <mavenProjectImportHandler implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.maven.AllOpenMavenProjectImportHandler"/>
+  </extensions>
+</idea-plugin>
