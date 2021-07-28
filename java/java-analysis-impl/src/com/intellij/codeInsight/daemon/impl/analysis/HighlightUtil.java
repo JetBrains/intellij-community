@@ -2958,7 +2958,7 @@ public final class HighlightUtil {
 
     PsiElement refParent = ref.getParent();
 
-    if (isCallToStaticMember(refParent)) {
+    if (!(resolved instanceof PsiClass) && isCallToStaticMember(refParent)) {
       final String text = JavaErrorBundle.message("cannot.resolve.symbol", refName.getText());
       final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(text).create();
       QuickFixAction.registerQuickFixAction(info, new RemoveNewKeywordFix(refParent));
@@ -3000,6 +3000,12 @@ public final class HighlightUtil {
       }
       else {
         description = JavaErrorBundle.message("cannot.resolve.symbol", refName.getText());
+        if (isCallToStaticMember(refParent)) {
+          final String text = JavaErrorBundle.message("cannot.resolve.symbol", refName.getText());
+          final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(text).create();
+          QuickFixAction.registerQuickFixAction(info, new RemoveNewKeywordFix(refParent));
+          return info;
+        }
       }
 
       HighlightInfo info =
