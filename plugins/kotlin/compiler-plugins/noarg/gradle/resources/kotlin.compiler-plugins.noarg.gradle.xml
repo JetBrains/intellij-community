@@ -1,0 +1,13 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.noarg.gradleJava">
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.gradle"/>
+    <module name="kotlin.gradle.gradle-idea"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <gradleProjectImportHandler implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.gradleJava.NoArgGradleProjectImportHandler"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <projectResolve implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.gradleJava.NoArgProjectResolverExtension" order="last"/>
+  </extensions>
+</idea-plugin>
