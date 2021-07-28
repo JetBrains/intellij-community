@@ -16,7 +16,10 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
+import org.jetbrains.kotlin.idea.frontend.api.analyse
 import org.jetbrains.kotlin.idea.frontend.api.analyseWithReadAction
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtFunctionSymbol
@@ -24,10 +27,12 @@ import org.jetbrains.kotlin.idea.frontend.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.idea.frontend.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
 import org.jetbrains.kotlin.idea.frontend.api.tokens.hackyAllowRunningOnEdt
-import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
-import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
+import org.jetbrains.kotlin.idea.search.usagesSearch.getDefaultImports
+import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
+import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -64,6 +69,7 @@ class KotlinSearchUsagesSupportFirImpl : KotlinSearchUsagesSupport {
         return false
     }
 
+
     override fun isExtensionOfDeclarationClassUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
         return false
     }
@@ -81,7 +87,7 @@ class KotlinSearchUsagesSupportFirImpl : KotlinSearchUsagesSupport {
     }
 
     override fun getDefaultImports(file: KtFile): List<ImportPath> {
-        return emptyList()
+        return file.getDefaultImports()
     }
 
     override fun forEachKotlinOverride(
@@ -163,23 +169,58 @@ class KotlinSearchUsagesSupportFirImpl : KotlinSearchUsagesSupport {
     }
 
     override fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> {
-        return emptyList()
+        return when (val element = method.unwrapped) {
+            is PsiMethod -> element.findDeepestSuperMethods().toList()
+            is KtCallableDeclaration -> analyse(element) {
+                val symbol = element.getSymbol() as? KtCallableSymbol ?: return emptyList()
+                symbol.getAllOverriddenSymbols()
+                    .filter {
+                        when (it) {
+                            is KtFunctionSymbol -> it.isOverride
+                            is KtPropertySymbol -> it.isOverride
+                            else -> false
+                        }
+                    }.mapNotNull { it.psi }
+            }
+            else -> emptyList()
+        }
     }
 
     override fun findTypeAliasByShortName(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> {
-        return emptyList()
+        return KotlinTypeAliasShortNameIndex.getInstance().get(shortName, project, scope)
     }
 
     override fun isInProjectSource(element: PsiElement, includeScriptsOutsideSourceRoots: Boolean): Boolean {
-        return true
+        return ProjectRootsUtil.isInProjectSource(element, includeScriptsOutsideSourceRoots)
     }
 
     override fun isOverridable(declaration: KtDeclaration): Boolean {
-        return false
+        val parent = declaration.parent
+        if (!(parent is KtClassBody || parent is KtParameterList)) return false
+
+        val klass = if (parent.parent is KtPrimaryConstructor)
+            parent.parent.parent as? KtClass
+        else
+            parent.parent as? KtClass
+
+        if (klass == null || (!klass.isInheritable() && !klass.isEnum())) return false
+
+        if (declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
+            // 'private' is incompatible with 'open'
+            return false
+        }
+
+        return isOverridableBySymbol(declaration)
     }
 
-    override fun isInheritable(ktClass: KtClass): Boolean {
-        return false
+    override fun isInheritable(ktClass: KtClass): Boolean = isOverridableBySymbol(ktClass)
+
+    private fun isOverridableBySymbol(declaration: KtDeclaration) = analyseWithReadAction(declaration) {
+        val symbol = declaration.getSymbol() as? KtSymbolWithModality ?: return@analyseWithReadAction false
+        when (symbol.modality) {
+            Modality.OPEN, Modality.SEALED, Modality.ABSTRACT -> true
+            Modality.FINAL -> false
+        }
     }
 
     override fun formatJavaOrLightMethod(method: PsiMethod): String {
