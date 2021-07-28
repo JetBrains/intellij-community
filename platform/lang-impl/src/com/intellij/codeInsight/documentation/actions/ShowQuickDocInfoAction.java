@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.actions.BaseCodeInsightAction;
+import com.intellij.codeInsight.actions.CodeInsightAction;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -18,16 +18,25 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements HintManagerImpl.ActionToIgnore, DumbAware, PopupAction {
+public class ShowQuickDocInfoAction extends CodeInsightAction implements HintManagerImpl.ActionToIgnore, DumbAware, PopupAction {
   @SuppressWarnings("SpellCheckingInspection") public static final String CODEASSISTS_QUICKJAVADOC_FEATURE = "codeassists.quickjavadoc";
   @SuppressWarnings("SpellCheckingInspection") public static final String CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE = "codeassists.quickjavadoc.lookup";
   @SuppressWarnings("SpellCheckingInspection") public static final String CODEASSISTS_QUICKJAVADOC_CTRLN_FEATURE = "codeassists.quickjavadoc.ctrln";
 
+  private final boolean myLookForInjectedEditor;
+
   public ShowQuickDocInfoAction() {
+    this(true);
     setEnabledInModalContext(true);
     setInjectedContext(true);
+  }
+
+  protected ShowQuickDocInfoAction(boolean lookForInjectedEditor) {
+    myLookForInjectedEditor = lookForInjectedEditor;
   }
 
   @NotNull
@@ -48,7 +57,6 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
     };
   }
 
-  @Override
   protected boolean isValidForLookup() {
     return true;
   }
@@ -107,5 +115,35 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
                                                     getCommandName(),
                                                     null);
     }
+  }
+
+  @Override
+  @Nullable
+  protected Editor getEditor(@NotNull final DataContext dataContext, @NotNull final Project project, boolean forUpdate) {
+    Editor editor = getBaseEditor(dataContext, project);
+    if (!myLookForInjectedEditor) return editor;
+    return getInjectedEditor(project, editor, !forUpdate);
+  }
+
+  @Nullable
+  protected Editor getBaseEditor(@NotNull final DataContext dataContext, @NotNull final Project project) {
+    return super.getEditor(dataContext, project, true);
+  }
+
+  public static Editor getInjectedEditor(@NotNull Project project, final Editor editor) {
+    return getInjectedEditor(project, editor, true);
+  }
+
+  public static Editor getInjectedEditor(@NotNull Project project, final Editor editor, boolean commit) {
+    Editor injectedEditor = editor;
+    if (editor != null) {
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      PsiFile psiFile = documentManager.getCachedPsiFile(editor.getDocument());
+      if (psiFile != null) {
+        if (commit) documentManager.commitAllDocuments();
+        injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, psiFile);
+      }
+    }
+    return injectedEditor;
   }
 }
