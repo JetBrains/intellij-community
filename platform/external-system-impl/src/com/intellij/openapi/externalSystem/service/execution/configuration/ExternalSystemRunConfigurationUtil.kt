@@ -382,3 +382,7 @@ fun <S, C : JComponent> createSettingsEditorFragment(
     FragmentedSettingsUtil.setupPlaceholderVisibility(editorComponent)
   }
 }
+
+fun <S, C : JComponent, F : SettingsEditorFragment<S, C>> F.applyToComponent(action: C.() -> Unit): F = apply {
+  component().action()
+}

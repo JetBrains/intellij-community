@@ -56,10 +56,6 @@ class DistributionComboBox(
 
   init {
     renderer = Renderer()
-    val preferredWidth = distributionsInfo.comboBoxPreferredWidth
-    if (preferredWidth != null) {
-      setMinimumAndPreferredWidth(preferredWidth)
-    }
   }
 
   init {
