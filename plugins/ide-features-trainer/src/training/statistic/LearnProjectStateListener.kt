@@ -76,10 +76,8 @@ internal class LearnProjectState : PersistentStateComponent<LearnProjectState> {
   }
 }
 
-private const val DO_NOT_SHOW_NEW_LESSONS_NOTIFICATION = "ift.notification.new.lessons.dont.show"
-
 private fun considerNotifyAboutNewLessons(project: Project) {
-  if (PropertiesComponent.getInstance().getBoolean(DO_NOT_SHOW_NEW_LESSONS_NOTIFICATION, false)) {
+  if (!PropertiesComponent.getInstance().getBoolean(SHOW_NEW_LESSONS_NOTIFICATION, true)) {
     return
   }
   if (learningPanelWasOpenedInCurrentVersion || !iftPluginIsUsing) {
@@ -108,7 +106,7 @@ private fun notifyAboutNewLessons(project: Project) {
   })
   notification.addAction(object : NotificationAction(LearnBundle.message("notification.do.not.show.new.lessons.notifications")) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-      PropertiesComponent.getInstance().setValue(DO_NOT_SHOW_NEW_LESSONS_NOTIFICATION, true)
+      PropertiesComponent.getInstance().setValue(SHOW_NEW_LESSONS_NOTIFICATION, false, true)
       notification.expire()
     }
   })
