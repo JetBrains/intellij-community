@@ -1,4 +1,8 @@
-<idea-plugin>
+<idea-plugin package="org.jetbrains.kotlin.idea.grazie">
+  <dependencies>
+    <plugin id="tanvd.grazi"/>
+  </dependencies>
+
   <extensions defaultExtensionNs="com.intellij.grazie">
     <textExtractor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.grazie.KotlinTextExtractor"/>
     <problemFilter language="kotlin" implementationClass="org.jetbrains.kotlin.idea.grazie.KotlinProblemFilter"/>

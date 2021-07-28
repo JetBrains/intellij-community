@@ -1,4 +1,8 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin package="org.jetbrains.kotlin.idea.maven" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <dependencies>
+    <plugin id="org.jetbrains.idea.maven"/>
+  </dependencies>
+
   <xi:include href="allopen-dep-maven.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="noarg-dep-maven.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="sam-with-receiver-dep-maven.xml" xpointer="xpointer(/idea-plugin/*)"/>

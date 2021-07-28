@@ -1,4 +1,9 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin package="org.jetbrains.kotlin.idea.gradleJava" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.gradle"/>
+    <module name="kotlin.gradle.gradle-idea"/>
+  </dependencies>
+
   <xi:include href="parcelize-dep-gradle-java.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="scripting-dep-gradle-java.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="allopen-dep-gradle-java.xml" xpointer="xpointer(/idea-plugin/*)"/>

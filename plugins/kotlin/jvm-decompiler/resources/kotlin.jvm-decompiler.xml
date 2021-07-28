@@ -1,4 +1,8 @@
-<idea-plugin>
+<idea-plugin package="org.jetbrains.kotlin.idea.jvmDecompiler">
+  <dependencies>
+    <plugin id="org.jetbrains.java.decompiler"/>
+  </dependencies>
+
   <extensions defaultExtensionNs="com.intellij">
     <attachSourcesProvider implementation="org.jetbrains.kotlin.idea.jvmDecompiler.DecompileKotlinToJavaActionProvider"/>
     <writingAccessProvider implementation="org.jetbrains.kotlin.idea.jvmDecompiler.DecompiledFileWritingAccessProvider"/>
