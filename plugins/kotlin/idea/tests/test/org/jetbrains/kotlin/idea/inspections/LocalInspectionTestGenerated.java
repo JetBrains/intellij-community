@@ -6947,6 +6947,66 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
 
+                @TestMetadata("inCompanionObject.kt")
+                public void testInCompanionObject() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inCompanionObject.kt");
+                }
+
+                @TestMetadata("inCompanionObjectWithSelfClass.kt")
+                public void testInCompanionObjectWithSelfClass() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inCompanionObjectWithSelfClass.kt");
+                }
+
+                @TestMetadata("inCompanionObjectWithSelfCompanion.kt")
+                public void testInCompanionObjectWithSelfCompanion() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inCompanionObjectWithSelfCompanion.kt");
+                }
+
+                @TestMetadata("inNamedCompanionObject.kt")
+                public void testInNamedCompanionObject() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inNamedCompanionObject.kt");
+                }
+
+                @TestMetadata("inNamedCompanionObjectWithSelfClass.kt")
+                public void testInNamedCompanionObjectWithSelfClass() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inNamedCompanionObjectWithSelfClass.kt");
+                }
+
+                @TestMetadata("inNamedCompanionObjectWithSelfCompanion.kt")
+                public void testInNamedCompanionObjectWithSelfCompanion() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inNamedCompanionObjectWithSelfCompanion.kt");
+                }
+
+                @TestMetadata("inNestedClass.kt")
+                public void testInNestedClass() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inNestedClass.kt");
+                }
+
+                @TestMetadata("inNestedClassWithSelfClass.kt")
+                public void testInNestedClassWithSelfClass() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inNestedClassWithSelfClass.kt");
+                }
+
+                @TestMetadata("inNestedObject.kt")
+                public void testInNestedObject() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inNestedObject.kt");
+                }
+
+                @TestMetadata("inNestedObjectWithSelfObject.kt")
+                public void testInNestedObjectWithSelfObject() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inNestedObjectWithSelfObject.kt");
+                }
+
+                @TestMetadata("inObject.kt")
+                public void testInObject() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inObject.kt");
+                }
+
+                @TestMetadata("inObjectWithSelfObject.kt")
+                public void testInObjectWithSelfObject() throws Exception {
+                    runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/inObjectWithSelfObject.kt");
+                }
+
                 @TestMetadata("simple.kt")
                 public void testSimple() throws Exception {
                     runTest("testData/inspectionsLocal/logging/loggerInitializedWithForeignClass/util/simple.kt");
