@@ -216,6 +216,7 @@ fun String.replaceSpacesWithNonBreakSpace(): String = this.replace(" ", "\u00A0"
 
 internal val iftPluginIsUsing: Boolean get() = LessonStateManager.getPassedLessonsNumber() >= 5
 
+internal const val SHOW_NEW_LESSONS_NOTIFICATION = "ift.show.new.lessons.notification"
 internal const val LEARNING_PANEL_OPENED_IN = "ift.learning.panel.opened.in"
 internal val learningPanelWasOpenedInCurrentVersion: Boolean
   get() = PropertiesComponent.getInstance().getValue(LEARNING_PANEL_OPENED_IN) == ApplicationInfo.getInstance().strictVersion
