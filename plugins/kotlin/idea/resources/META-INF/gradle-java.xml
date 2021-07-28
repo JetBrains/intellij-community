@@ -3,7 +3,7 @@
   <xi:include href="scripting-dep-gradle-java.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="allopen-dep-gradle-java.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="noarg-dep-gradle-java.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="sam-with-receiver-dep-gradle.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="sam-with-receiver-dep-gradle-java.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kapt-dep-gradle.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kotlinx-serialization-dep-gradle.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
