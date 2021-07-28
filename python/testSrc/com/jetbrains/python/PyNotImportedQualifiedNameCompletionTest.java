@@ -136,6 +136,16 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
     doTestBasicCompletion();
   }
 
+  // PY-48220
+  public void testAttributesFromPackageStubSuggested() {
+    assertContainsElements(doBasicCompletion(), "pkg.foo");
+  }
+
+  // PY-48220
+  public void testAttributesFromModuleStubSuggested() {
+    assertContainsElements(doBasicCompletion(), "mod.foo");
+  }
+
   // PY-48219
   public void testAttributesNotLimitedByDunderAll() {
     assertContainsElements(doBasicCompletion(), "mod.foo");
@@ -144,6 +154,11 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
   // PY-48219
   public void testAliasAttributesNotLimitedByDunderAll() {
     doTestBasicCompletion();
+  }
+
+  // PY-48198
+  public void testSubpackagesAndSubmodulesOfNamespacePackages() {
+    assertContainsElements(doBasicCompletion(), "nspkg.submod", "nspkg.subpkg");
   }
 
   @Nullable
