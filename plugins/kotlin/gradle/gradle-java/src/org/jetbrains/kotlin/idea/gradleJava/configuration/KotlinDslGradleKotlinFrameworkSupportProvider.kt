@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.gradle.configuration
+package org.jetbrains.kotlin.idea.gradleJava.configuration
 
 import com.intellij.framework.FrameworkTypeEx
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider
@@ -20,6 +20,10 @@ import org.jetbrains.kotlin.idea.gradle.configuration.KotlinBuildScriptManipulat
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinBuildScriptManipulator.Companion.getKotlinModuleDependencySnippet
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
+import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade
+import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleModuleConfigurator
+import org.jetbrains.kotlin.idea.gradle.configuration.KotlinJsGradleModuleConfigurator
+import org.jetbrains.kotlin.idea.gradle.configuration.MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
 import org.jetbrains.kotlin.idea.util.isSnapshot
 import org.jetbrains.kotlin.idea.versions.*

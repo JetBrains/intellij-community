@@ -24,10 +24,6 @@
         <projectConfigurator implementation="org.jetbrains.kotlin.idea.gradle.konan.KotlinNativeGradleConfigurator"/>
     </extensions>
 
-    <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
-      <gradleBuildScriptSupport implementation="org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleBuildScriptSupport"/>
-    </extensions>
-
     <extensions defaultExtensionNs="org.jetbrains.kotlin.scripting.idea">
         <listener order="first" implementation="org.jetbrains.kotlin.idea.gradle.scripting.GradleScriptListener"/>
         <loader order="first" implementation="org.jetbrains.kotlin.idea.gradle.scripting.legacy.GradleLegacyScriptConfigurationLoader"/>
@@ -35,15 +31,7 @@
         <settings.provider implementation="org.jetbrains.kotlin.idea.gradle.scripting.settings.GradleSettingsProvider"/>
     </extensions>
 
-    <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
-        <orderEnumerationHandlerFactory implementation="org.jetbrains.kotlin.idea.gradle.execution.KotlinGradleOrderEnumerationHandler$Factory" order="first"/>
-        <projectResolve implementation="org.jetbrains.kotlin.idea.gradle.configuration.KotlinMPPGradleProjectResolver"/>
-        <projectModelContributor implementation="org.jetbrains.kotlin.idea.gradle.scripting.importing.KotlinDslScriptModelContributor"/>
-        <executionEnvironmentProvider implementation="org.jetbrains.kotlin.idea.gradle.execution.KotlinGradleAppEnvProvider"/>
-    </extensions>
-
     <extensions defaultExtensionNs="com.intellij">
-        <projectTaskRunner implementation="org.jetbrains.kotlin.idea.gradle.execution.KotlinMPPGradleProjectTaskRunner" id="gradle.mpp" order="first, before gradle"/>
         <externalProjectDataService implementation="org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetDataService"/>
         <externalProjectDataService implementation="org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleProjectSettingsDataService"/>
 
@@ -52,7 +40,6 @@
                      This setting currently affects only HMPP projects. You may need to delete existing test configurations for the change to take place."
                      defaultValue="true"
                      restartRequired="false"/>
-
         <registryKey key="kotlin.gradle.scripts.scriptConfigurationsNeedToBeUpdatedFloatingNotification"
                      description="Show floating notification in the editor when script configuration need to be updated"
                      defaultValue="true"

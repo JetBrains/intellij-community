@@ -1,46 +1,21 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.gradle.execution
+package org.jetbrains.kotlin.idea.gradleJava.execution
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
-import com.intellij.compiler.options.CompileStepBeforeRun
-import com.intellij.execution.CantRunException
-import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.Executor
 import com.intellij.execution.configurations.JavaParameters
-import com.intellij.execution.configurations.JavaRunConfigurationModule
-import com.intellij.execution.executors.DefaultRunExecutor
-import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.util.ExecutionErrorDialog
-import com.intellij.execution.util.JavaParametersUtil
 import com.intellij.execution.util.ProgramParametersUtil
-import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.project.ProjectData
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdkType
-import com.intellij.openapi.projectRoots.JavaSdkVersion
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiJavaModule
 import com.intellij.task.ExecuteRunConfigurationTask
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
-import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil
 import org.jetbrains.plugins.gradle.execution.build.GradleBaseApplicationEnvironmentProvider
-import org.jetbrains.plugins.gradle.execution.build.GradleExecutionEnvironmentProvider
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
-import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 /**
