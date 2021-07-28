@@ -4,22 +4,17 @@ package com.intellij.codeInsight.documentation.actions;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
-import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowQuickDocInfoAction extends AnAction implements HintManagerImpl.ActionToIgnore, DumbAware, PopupAction,
@@ -66,46 +61,32 @@ public class ShowQuickDocInfoAction extends AnAction implements HintManagerImpl.
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project == null) {
+      return;
+    }
 
-    if (project != null && editor != null) {
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    if (editor != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_FEATURE);
-      final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).getActiveLookup();
-      if (lookup != null) {
-        //dumpLookupElementWeights(lookup);
+      var activeLookup = LookupManager.getActiveLookup(editor);
+      if (activeLookup != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE);
       }
-      actionPerformedImpl(project, editor);
-    }
-    else if (project != null && element != null) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_CTRLN_FEATURE);
-      CommandProcessor.getInstance().executeCommand(project,
-                                                    () -> {
-                                                      DocumentationManager documentationManager = DocumentationManager.getInstance(project);
-                                                      JBPopup hint = documentationManager.getDocInfoHint();
-                                                      documentationManager.showJavaDocInfo(element, null, hint != null, null);
-                                                    },
-                                                    getCommandName(),
-                                                    null);
-    }
-  }
-
-  public void actionPerformedImpl(@NotNull final Project project, final Editor editor) {
-    if (editor == null) return;
-    final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-    if (psiFile == null) return;
-    CommandProcessor.getInstance().executeCommand(project, () -> {
-      if (!UIUtil.isShowing(editor.getContentComponent())) return;
+      PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
+      if (psiFile == null) return;
       DocumentationManager documentationManager = DocumentationManager.getInstance(project);
       JBPopup hint = documentationManager.getDocInfoHint();
-      documentationManager.showJavaDocInfo(editor, psiFile, hint != null || LookupManager.getActiveLookup(editor) == null);
-    }, getCommandName(), DocCommandGroupId.noneGroupId(editor.getDocument()), editor.getDocument());
-  }
+      documentationManager.showJavaDocInfo(editor, psiFile, hint != null || activeLookup == null);
+      return;
+    }
 
-  protected @NlsContexts.Command String getCommandName() {
-    String text = getTemplatePresentation().getText();
-    return text == null ? "" : text;
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+    if (element != null) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_CTRLN_FEATURE);
+      DocumentationManager documentationManager = DocumentationManager.getInstance(project);
+      JBPopup hint = documentationManager.getDocInfoHint();
+      documentationManager.showJavaDocInfo(element, null, hint != null, null);
+    }
   }
 }
