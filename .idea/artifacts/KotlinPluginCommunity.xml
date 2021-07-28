@@ -190,6 +190,7 @@
         </element>
         <element id="archive" name="kotlin-plugin.jar">
           <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-for-ide/1.5.10-release-941/kotlin-compiler-for-ide-1.5.10-release-941.jar" path-in-jar="/" />
+          <element id="module-output" name="kotlin.plugin" />
         </element>
         <element id="archive" name="kotlin-frontend-independent.jar">
           <element id="module-output" name="kotlin.fir.frontend-independent" />
