@@ -28,6 +28,10 @@ class C5 { }
 @A6 @A6 <error descr="Container annotation 'AA6' must not be present at the same time as the element it contains">@AA6</error> class C6 { }
 @A6 @A6 class C6bis1 { }
 @A6 @AA6 class C6bis2 { }
+@A6 
+@<error descr="Duplicate annotation. The declaration of 'AA6' does not have a valid java.lang.annotation.Repeatable annotation">AA6</error>
+@<error descr="Duplicate annotation. The declaration of 'AA6' does not have a valid java.lang.annotation.Repeatable annotation">AA6</error>
+class C6bis3 { }
 
 @Target({TYPE_USE}) @interface TA { }
 class DupTypeAnno {

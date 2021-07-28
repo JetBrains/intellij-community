@@ -229,7 +229,7 @@ public final class AnnotationsHighlightUtil {
         return annotationError(annotationToCheck, description);
       }
     }
-    else if (isAnnotationRepeatedTwice(owner, annotationType.getQualifiedName())) {
+    if (isAnnotationRepeatedTwice(owner, annotationType.getQualifiedName())) {
       if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
         String description = JavaErrorBundle.message("annotation.duplicate.annotation");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
