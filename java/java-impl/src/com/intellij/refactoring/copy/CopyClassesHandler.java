@@ -326,7 +326,11 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
   }
 
   private static PsiDirectory getOrCreateRelativeDirectory(@NotNull PsiDirectory directory, @Nullable String relativePath) {
-    return StringUtil.isNotEmpty(relativePath) ? buildRelativeDir(directory, relativePath).findOrCreateTargetDirectory() : directory;
+    if (StringUtil.isNotEmpty(relativePath)) {
+      return WriteAction.compute(() -> buildRelativeDir(directory, relativePath).findOrCreateTargetDirectory());
+    } else {
+      return directory;
+    }
   }
 
   private static <T, E extends Throwable> T executeWithUpdatingAddedFilesDisabled(PsiDirectoryImpl directory,
@@ -353,7 +357,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       final PsiClass[] sources = entry.getValue();
       if (psiFile instanceof PsiClassOwner && sources != null) {
         final String relativePath = fileToRelativePath != null ? fileToRelativePath.get(psiFile) : null;
-        final PsiDirectoryImpl directory = (PsiDirectoryImpl) WriteAction.compute(() -> getOrCreateRelativeDirectory(targetDirectory, relativePath));
+        final PsiDirectoryImpl directory = (PsiDirectoryImpl) getOrCreateRelativeDirectory(targetDirectory, relativePath);
         final PsiFile createdFile = executeWithUpdatingAddedFilesDisabled(directory, () -> copy(directory, psiFile, copyClassName, choice));
         if (createdFile == null) {
           //do not touch unmodified classes
@@ -390,11 +394,8 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
 
     for (PsiFile file : files) {
       try {
-        PsiDirectory finalTarget = targetDirectory;
         final String relativePath = fileToRelativePath != null ? fileToRelativePath.get(file) : null;
-        if (relativePath != null && !relativePath.isEmpty()) {
-          finalTarget = WriteAction.compute(() -> buildRelativeDir(targetDirectory, relativePath).findOrCreateTargetDirectory());
-        }
+        PsiDirectory finalTarget = getOrCreateRelativeDirectory(targetDirectory,relativePath);
         final PsiFile fileCopy = CopyFilesOrDirectoriesHandler.copyToDirectory(file, getNewFileName(file, copyClassName), finalTarget, choice, null);
         if (fileCopy != null) {
           createdFiles.add(fileCopy);
