@@ -1,10 +1,8 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.gradleJava" xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin package="org.jetbrains.kotlin.idea.gradleJava">
   <dependencies>
     <plugin id="org.jetbrains.plugins.gradle"/>
     <module name="kotlin.gradle.gradle-idea"/>
   </dependencies>
-
-  <xi:include href="kotlinx-serialization-dep-gradle-java.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
     <testTasksProvider implementation="org.jetbrains.kotlin.idea.gradleJava.run.KotlinMPPGradleTestTasksProvider"/>
