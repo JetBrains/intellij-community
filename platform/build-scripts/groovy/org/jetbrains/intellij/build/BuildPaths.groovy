@@ -11,7 +11,7 @@ import java.nio.file.Path
  */
 @CompileStatic
 abstract class BuildPaths {
-  BuildPaths(@NotNull Path communityHomeDir, @NotNull Path buildOutputDir) {
+  BuildPaths(@NotNull Path communityHomeDir, @NotNull Path buildOutputDir, @NotNull Path logDir) {
     this.communityHomeDir = communityHomeDir
 
     this.buildOutputRoot = FileUtilRt.toSystemIndependentName(buildOutputDir.toString())
@@ -22,6 +22,8 @@ abstract class BuildPaths {
 
     distAllDir = buildOutputDir.resolve("dist.all")
     distAll = FileUtilRt.toSystemIndependentName(distAllDir.toString())
+
+    this.logDir = logDir
   }
 
   /**
@@ -40,6 +42,11 @@ abstract class BuildPaths {
    * Path to a directory where build script will store temporary and resulting files
    */
   String buildOutputRoot
+
+  /**
+   * All log and debug files should be written to this directory. It will be automatically published to TeamCity artifacts
+   */
+  final Path logDir
 
   /**
    * Path to a directory where resulting artifacts will be placed

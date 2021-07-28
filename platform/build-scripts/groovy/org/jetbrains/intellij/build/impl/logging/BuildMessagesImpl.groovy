@@ -11,6 +11,7 @@ import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.LogMessage
 
+import java.nio.file.Path
 import java.util.function.BiFunction
 import java.util.function.Supplier
 
@@ -130,8 +131,8 @@ class BuildMessagesImpl implements BuildMessages {
     processMessage(new LogMessage(LogMessage.Kind.DEBUG, message))
   }
 
-  void setDebugLogPath(String path) {
-    debugLogger.setOutputFile(new File(path))
+  void setDebugLogPath(Path path) {
+    debugLogger.setOutputFile(path.toFile())
   }
 
   File getDebugLogFile() {

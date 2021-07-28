@@ -77,7 +77,7 @@ final class CompilationContextImpl implements CompilationContext {
     def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdkHome, kotlinBinaries, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     context.prepareForBuild()
-    messages.debugLogPath = "$context.paths.buildOutputRoot/log/debug.log"
+    messages.debugLogPath = context.paths.logDir.resolve("debug.log")
     return context
   }
 
@@ -159,7 +159,8 @@ final class CompilationContextImpl implements CompilationContext {
     this.oldToNewModuleName = oldToNewModuleName
     this.newToOldModuleName = oldToNewModuleName.collectEntries { oldName, newName -> [newName, oldName] } as Map<String, String>
     String buildOutputRoot = options.outputRootPath ?: buildOutputRootEvaluator.apply(project, messages)
-    this.paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdkHome)
+    Path logDir = options.logPath != null ? Path.of(options.logPath) : Path.of(buildOutputRoot, "log")
+    this.paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdkHome, logDir)
     this.kotlinBinaries = kotlinBinaries
   }
 
@@ -198,10 +199,9 @@ final class CompilationContextImpl implements CompilationContext {
 
   void prepareForBuild() {
     checkCompilationOptions()
-    Path logDir = Path.of(paths.buildOutputRoot, "log")
-    NioFiles.deleteRecursively(logDir)
-    Files.createDirectories(logDir)
-    compilationData = new JpsCompilationData(new File(paths.buildOutputRoot, ".jps-build-data"), logDir.resolve("compilation.log").toFile(),
+    NioFiles.deleteRecursively(paths.logDir)
+    Files.createDirectories(paths.logDir)
+    compilationData = new JpsCompilationData(new File(paths.buildOutputRoot, ".jps-build-data"), paths.logDir.resolve("compilation.log").toFile(),
                                              System.getProperty("intellij.build.debug.logging.categories", ""))
 
     def projectArtifactsDirName = "project-artifacts"
@@ -419,8 +419,8 @@ final class CompilationContextImpl implements CompilationContext {
 
 @CompileStatic
 final class BuildPathsImpl extends BuildPaths {
-  BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome) {
-    super(Path.of(communityHome).toAbsolutePath().normalize(), Path.of(buildOutputRoot).toAbsolutePath().normalize())
+  BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome, Path logDir) {
+    super(Path.of(communityHome).toAbsolutePath().normalize(), Path.of(buildOutputRoot).toAbsolutePath().normalize(), logDir.toAbsolutePath().normalize())
     this.projectHome = projectHome
     this.projectHomeDir = Path.of(projectHome).toAbsolutePath().normalize()
     this.jdkHome = jdkHome
