@@ -45,8 +45,6 @@ import java.awt.event.WindowEvent;
 
 public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextAccessor {
   public static final ExtensionPointName<WelcomeFrameProvider> EP = new ExtensionPointName<>("com.intellij.welcomeFrameProvider");
-  public static final ExtensionPointName<WelcomeFrameBehaviour> BEHAVIOUR_EP = new ExtensionPointName<>("com.intellij.welcomeFrameBehaviour");
-
   @NonNls static final String DIMENSION_KEY = "WELCOME_SCREEN";
   private static IdeFrame ourInstance;
   private static Disposable ourTouchbar;
@@ -115,7 +113,7 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     frame.addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosing(WindowEvent e) {
-        if (ProjectUtil.getOpenProjects().length == 0 && BEHAVIOUR_EP.extensions().allMatch(x -> x.getShouldCloseApplication())) {
+        if (ProjectUtil.getOpenProjects().length == 0) {
           ApplicationManager.getApplication().exit();
         }
         else {

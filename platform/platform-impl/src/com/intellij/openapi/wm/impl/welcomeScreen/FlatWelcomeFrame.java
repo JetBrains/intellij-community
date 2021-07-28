@@ -163,7 +163,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
     });
 
-    WelcomeFrame.setupCloseAction(this);
+    setupCloseAction();
     MnemonicHelper.init(this);
     Disposer.register(app, this);
 
@@ -173,6 +173,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     app.invokeLater(
       () -> ((NotificationsManagerImpl)NotificationsManager.getNotificationsManager()).dispatchEarlyNotifications(),
       ModalityState.NON_MODAL);
+  }
+
+  protected void setupCloseAction() {
+    WelcomeFrame.setupCloseAction(this);
   }
 
   private void updateComponentsAndResize() {
