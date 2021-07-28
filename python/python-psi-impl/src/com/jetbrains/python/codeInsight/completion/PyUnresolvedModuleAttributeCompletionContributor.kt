@@ -20,8 +20,9 @@ import com.jetbrains.python.codeInsight.imports.AddImportHelper
 import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.resolve.fromFoothold
+import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.search.PySearchUtilBase
-import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 import com.jetbrains.python.psi.stubs.PyQualifiedNameCompletionMatcher
 import com.jetbrains.python.psi.stubs.PyQualifiedNameCompletionMatcher.QualifiedNameMatcher
 import com.jetbrains.python.psi.types.PyModuleType
@@ -117,12 +118,12 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
         val scope = PySearchUtilBase.defaultSuggestionScope(parameters.originalFile)
         val typeContext = TypeEvalContext.userInitiated(project, originalFile)
 
-        val availableModules = PyModuleNameIndex.findByQualifiedName(packageName, project, scope)
-          .asSequence()
+        val availableModules = resolveQualifiedName(packageName, fromFoothold(originalFile))
 
         if (packageNameForAlias == null) {
-          availableModules.filter { PyUtil.isPackage(it) }
-            .flatMap { PyModuleType.getSubModuleVariants(it.containingDirectory, it, null) }
+          availableModules.asSequence()
+            .filterIsInstance<PsiDirectory>()
+            .flatMap { PyModuleType.getSubModuleVariants(it, originalFile, null) }
             .filterNot { it.lookupString.startsWith('_') }
             .mapNotNull {
               val qualifiedNameToSuggest = "$qualifier.${it.lookupString}"
@@ -138,6 +139,7 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
         }
 
         availableModules.asSequence()
+          .mapNotNull { if (it is PsiDirectory) PyUtil.getPackageElement(it, originalFile) else it }
           .filterIsInstance<PyFile>()
           .map { PyModuleType(it) }
           .flatMap { it.getCompletionVariantsAsLookupElements(parameters.position, context, false, false, typeContext) }
