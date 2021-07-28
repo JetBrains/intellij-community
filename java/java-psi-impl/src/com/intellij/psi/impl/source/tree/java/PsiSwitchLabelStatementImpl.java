@@ -96,10 +96,18 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
     final AtomicBoolean thisSwitchLabelIsImmediate = new AtomicBoolean();
 
     PsiTreeUtil.treeWalkUp(place, getParent(), (currentScope, prevScope) -> {
-      final PsiElement immediateSwitchLabel = PsiTreeUtil.findSiblingBackward(currentScope,
+      PsiElement immediateSwitchLabel = PsiTreeUtil.findSiblingBackward(currentScope,
                                                                               JavaElementType.SWITCH_LABEL_STATEMENT,
                                                                               false,
                                                                               null);
+      while (isCase(immediateSwitchLabel, JavaTokenType.NULL_KEYWORD) ||
+             isCase(immediateSwitchLabel, JavaTokenType.DEFAULT_KEYWORD) ||
+             isDefault(immediateSwitchLabel)) {
+        immediateSwitchLabel = PsiTreeUtil.findSiblingBackward(immediateSwitchLabel,
+                                                               JavaElementType.SWITCH_LABEL_STATEMENT,
+                                                               null);
+      }
+
       if (immediateSwitchLabel == this) {
         thisSwitchLabelIsImmediate.set(true);
         return false;
@@ -109,4 +117,26 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
 
     return thisSwitchLabelIsImmediate.get();
   }
+
+  private static boolean isDefault(@Nullable PsiElement item) {
+    if (item == null) return false;
+    if (!(item instanceof PsiSwitchLabelStatementBase)) return false;
+    final PsiSwitchLabelStatementBase switchLabel = (PsiSwitchLabelStatementBase)item;
+    return switchLabel.isDefaultCase();
+  }
+
+  private static boolean isCase(@Nullable PsiElement item, IElementType keyword) {
+    if (item == null) return false;
+    if (!(item instanceof PsiSwitchLabelStatementBase)) return false;
+    final PsiSwitchLabelStatementBase switchLabel = (PsiSwitchLabelStatementBase)item;
+
+    final PsiCaseLabelElementList caseElementsList = switchLabel.getCaseLabelElementList();
+    if (caseElementsList == null) return false;
+
+    final PsiCaseLabelElement[] elements = caseElementsList.getElements();
+    if (elements.length != 1) return false;
+
+    return elements[0].getNode().getFirstChildNode().getElementType() == keyword;
+  }
+
 }
