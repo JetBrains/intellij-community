@@ -4,6 +4,7 @@
     <option name="moduleNameToAnchorName">
       <map>
         <entry key="kotlinc.kotlin-compiler" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.kotlin-compiler-cli" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-scripting-compiler" value="kotlin.util.compiler-classpath" />
         <entry key="kotlin-script-runtime" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-script-util" value="kotlin.util.compiler-classpath" />
