@@ -25,7 +25,10 @@ public class MarkdownTypedHandler extends TypedHandlerDelegate {
       AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
       return Result.STOP;
     }
-
+    if (charTyped == '<') {
+      AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
+      return Result.STOP;
+    }
     return super.checkAutoPopup(charTyped, project, editor, file);
   }
 }
