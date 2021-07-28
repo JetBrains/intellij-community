@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -87,7 +87,7 @@ class CompilationContextImpl implements CompilationContext {
     def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdkHome, kotlinHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     context.prepareForBuild()
-    messages.debugLogPath = "$context.paths.buildOutputRoot/log/debug.log"
+    messages.debugLogPath = context.paths.logDir.resolve("debug.log")
     return context
   }
 
@@ -169,7 +169,8 @@ class CompilationContextImpl implements CompilationContext {
     this.oldToNewModuleName = oldToNewModuleName
     this.newToOldModuleName = oldToNewModuleName.collectEntries { oldName, newName -> [newName, oldName] } as Map<String, String>
     String buildOutputRoot = options.outputRootPath ?: buildOutputRootEvaluator.apply(project, messages)
-    this.paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdkHome, kotlinHome)
+    Path logDir = options.logPath != null ? Path.of(options.logPath) : Path.of(buildOutputRoot, "log")
+    this.paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdkHome, kotlinHome, logDir)
   }
 
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
@@ -232,9 +233,9 @@ class CompilationContextImpl implements CompilationContext {
   void prepareForBuild() {
     checkCompilationOptions()
     def dataDirName = ".jps-build-data"
-    def logDir = new File(paths.buildOutputRoot, "log")
-    FileUtil.delete(logDir)
-    compilationData = new JpsCompilationData(new File(paths.buildOutputRoot, dataDirName), new File("$logDir/compilation.log"),
+    FileUtil.delete(paths.logDir)
+    Files.createDirectories(paths.logDir)
+    compilationData = new JpsCompilationData(new File(paths.buildOutputRoot, dataDirName), paths.logDir.resolve("compilation.log").toFile(),
                                              System.getProperty("intellij.build.debug.logging.categories", ""), messages)
 
     def classesDirName = CLASSES_DIR_NAME
@@ -506,9 +507,8 @@ class CompilationContextImpl implements CompilationContext {
 
 @CompileStatic
 class BuildPathsImpl extends BuildPaths {
-  BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome, String kotlinHome) {
-    super(Paths.get(communityHome).toAbsolutePath().normalize(), Paths.get(buildOutputRoot).toAbsolutePath().normalize())
-
+  BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome, String kotlinHome, Path logDir) {
+    super(Paths.get(communityHome).toAbsolutePath().normalize(), Paths.get(buildOutputRoot).toAbsolutePath().normalize(), logDir.toAbsolutePath().normalize())
     this.projectHome = projectHome
     this.jdkHome = jdkHome
     this.kotlinHome = kotlinHome
