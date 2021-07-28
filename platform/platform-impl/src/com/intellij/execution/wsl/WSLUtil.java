@@ -6,12 +6,15 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.WindowsRegistryUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.platform.win32.Advapi32Util;
@@ -38,6 +41,7 @@ import java.util.List;
  */
 public final class WSLUtil {
   public static final Logger LOG = Logger.getInstance("#com.intellij.execution.wsl");
+  private final static String WSL_PATH_TO_REMOVE = "wsl://";
 
   /**
    * @deprecated use {@link WslDistributionManager#getInstalledDistributions} instead.
@@ -236,5 +240,21 @@ public final class WSLUtil {
       LOG.warn("Cannot read Windows version", e);
     }
     return WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId");
+  }
+
+  /**
+   * Change old (wsl://) prefix to the new one (\\wsl$\)
+   *
+   * @deprecated remove after everyone migrates to the new prefix
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated
+  public static void fixWslPrefix(@NotNull Sdk sdk) {
+    if (sdk instanceof ProjectJdkImpl) {
+      var path = sdk.getHomePath();
+      if (path != null && path.startsWith(WSL_PATH_TO_REMOVE)) {
+        ((ProjectJdkImpl)sdk).setHomePath(WslConstants.UNC_PREFIX + path.substring(WSL_PATH_TO_REMOVE.length()));
+      }
+    }
   }
 }

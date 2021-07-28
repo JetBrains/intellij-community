@@ -7,7 +7,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.remote.RemoteProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -204,7 +203,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
 
   @Override
   public boolean canKillProcess() {
-    return processCanBeKilledByOS(getProcess()) || getProcess() instanceof RemoteProcess;
+    return processCanBeKilledByOS(getProcess()) || getProcess() instanceof ProcessTreeKiller;
   }
 
   @Override
@@ -213,8 +212,8 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
       // execute 'kill -SIGKILL <pid>' on Unix
       killProcessTree(getProcess());
     }
-    else if (getProcess() instanceof RemoteProcess) {
-      ((RemoteProcess)getProcess()).killProcessTree();
+    else if (getProcess() instanceof ProcessTreeKiller) {
+      ((ProcessTreeKiller)getProcess()).killProcessTree();
     }
   }
 }

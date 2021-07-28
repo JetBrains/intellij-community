@@ -1,9 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -23,12 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Service
-public final class ColoredOutputTypeRegistry {
-  public static ColoredOutputTypeRegistry getInstance() {
-    return ApplicationManager.getApplication().getService(ColoredOutputTypeRegistry.class);
-  }
-
+public final class ColoredOutputTypeRegistryImpl extends ColoredOutputTypeRegistry {
   private final Map<String, ProcessOutputType> myStdoutAttrsToKeyMap = new ConcurrentHashMap<>();
   private final Map<String, ProcessOutputType> myStderrAttrsToKeyMap = new ConcurrentHashMap<>();
 
@@ -81,6 +74,7 @@ public final class ColoredOutputTypeRegistry {
 
      see full doc at http://en.wikipedia.org/wiki/ANSI_escape_code
   */
+  @Override
   public @NotNull ProcessOutputType getOutputType(@NonNls String attribute, @NotNull Key streamType) {
     ProcessOutputType streamOutputType = streamType instanceof ProcessOutputType ? (ProcessOutputType)streamType
                                                                                  : (ProcessOutputType)ProcessOutputTypes.STDOUT;
@@ -110,6 +104,7 @@ public final class ColoredOutputTypeRegistry {
    * Creates an {@link ProcessOutputType} from the {@link AnsiTerminalEmulator terminal emulator state} and stream type. Output type may be used
    * later to print to the console
    */
+  @Override
   public @NotNull ProcessOutputType getOutputType(@NotNull AnsiTerminalEmulator terminal, @NotNull Key streamType) {
     Map<String, ProcessOutputType> attrsToKeyMap = ProcessOutputType.isStdout(streamType) ? myStdoutAttrsToKeyMap : myStderrAttrsToKeyMap;
     String ansiSerializedState = terminal.getAnsiSerializedSGRState();
@@ -225,7 +220,7 @@ public final class ColoredOutputTypeRegistry {
     private final @Nullable Color myEnforcedBackgroundColor;
     private final @Nullable Color myEnforcedForegroundColor;
     private final boolean myInverse;
-    private final @NotNull List<EffectType> myEffectTypes;
+    private final @NotNull java.util.List<EffectType> myEffectTypes;
     private final int myFontType;
 
     private AnsiConsoleViewContentType(@NotNull String attribute,
@@ -234,7 +229,7 @@ public final class ColoredOutputTypeRegistry {
                                        @Nullable Color enforcedBackgroundColor,
                                        @Nullable Color enforcedForegroundColor,
                                        boolean inverse,
-                                       @NotNull List<EffectType> effectTypes,
+                                       @NotNull java.util.List<EffectType> effectTypes,
                                        int fontType) {
       super(attribute, new TextAttributes());
       myBackgroundColorIndex = backgroundColorIndex;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.execution.process.AnsiStreamingLexer.AnsiElementType;
@@ -57,10 +57,10 @@ public class AnsiEscapeDecoder {
     while ((elementType = effectiveLexer.getElementType()) != null) {
       String elementText = effectiveLexer.getElementTextSmart();
       assert elementText != null;
-      if (elementType == SGR) {
+      if (elementType == AnsiStreamingLexer.SGR) {
         effectiveEmulator.processSgr(elementText);
       }
-      else if (elementType == TEXT) {
+      else if (elementType == AnsiStreamingLexer.TEXT) {
         chunks = processTextChunk(chunks, elementText, outputType, textAcceptor);
       }
       else {

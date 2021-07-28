@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -14,6 +13,7 @@ import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.io.IdeUtilIoBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +64,7 @@ public final class ScriptRunnerUtil {
     });
     processHandler.startNotify();
     if (!processHandler.waitFor(timeout)) {
-      throw new ExecutionException(ExecutionBundle.message("script.execution.timeout", String.valueOf(timeout / 1000)));
+      throw new ExecutionException(IdeUtilIoBundle.message("script.execution.timeout", String.valueOf(timeout / 1000)));
     }
     return outputBuilder.toString();
   }
@@ -146,7 +146,7 @@ public final class ScriptRunnerUtil {
 
     if (!processHandler.waitFor(timeout)) {
       LOG.warn("Process did not complete in " + timeout / 1000 + "s");
-      throw new ExecutionException(ExecutionBundle.message("script.execution.timeout", String.valueOf(timeout / 1000)));
+      throw new ExecutionException(IdeUtilIoBundle.message("script.execution.timeout", String.valueOf(timeout / 1000)));
     }
     LOG.debug("script output: ", output.myFilteredOutput);
     return output;

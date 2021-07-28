@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 import java.net.NoRouteToHostException;
@@ -51,7 +50,7 @@ public class RemoteSdkException extends ExecutionException {
       return myCause.getMessage();
     }
     else if (myAuthFailed) {
-      return IdeBundle.message("authentication.failed");
+      return RemoteBundle.message("authentication.failed");
     }
     else {
       return super.getMessage();
@@ -61,7 +60,7 @@ public class RemoteSdkException extends ExecutionException {
   public static RemoteSdkException cantObtainRemoteCredentials(Throwable e) {
     // TODO needs review
     if (e.getCause() instanceof RemoteCredentialException) {
-      return new RemoteSdkException(IdeBundle.message("remote.sdk.exception.cant.obtain.remote.credentials"), e);
+      return new RemoteSdkException(RemoteBundle.message("remote.sdk.exception.cant.obtain.remote.credentials"), e);
     }
     else {
       return new RemoteSdkException(e.getMessage(), e);
