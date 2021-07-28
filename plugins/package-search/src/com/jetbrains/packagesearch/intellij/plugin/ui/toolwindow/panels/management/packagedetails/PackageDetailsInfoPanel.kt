@@ -240,7 +240,7 @@ internal class PackageDetailsInfoPanel : JPanel(), Displayable<PackageDetailsInf
             }
         )
         licensesLinkLabel.urlClickedListener = {
-            PackageSearchEventsLogger.logDetailsLinkClick(FUSGroupIds.DetailsLinkTypes.License, mainLicense.url)
+            PackageSearchEventsLogger.logDetailsLinkClick(FUSGroupIds.DetailsLinkTypes.License)
         }
     }
 
@@ -254,7 +254,7 @@ internal class PackageDetailsInfoPanel : JPanel(), Displayable<PackageDetailsInf
         projectWebsiteLinkLabel.url = projectWebsiteLink.url
         projectWebsiteLinkLabel.setDisplayText(projectWebsiteLink.displayNameCapitalized)
         projectWebsiteLinkLabel.urlClickedListener = {
-            PackageSearchEventsLogger.logDetailsLinkClick(FUSGroupIds.DetailsLinkTypes.ProjectWebsite, projectWebsiteLink.url)
+            PackageSearchEventsLogger.logDetailsLinkClick(FUSGroupIds.DetailsLinkTypes.ProjectWebsite)
         }
     }
 
@@ -268,7 +268,7 @@ internal class PackageDetailsInfoPanel : JPanel(), Displayable<PackageDetailsInf
         documentationLinkLabel.url = documentationLink.url
         documentationLinkLabel.setDisplayText(documentationLink.displayNameCapitalized)
         documentationLinkLabel.urlClickedListener = {
-            PackageSearchEventsLogger.logDetailsLinkClick(FUSGroupIds.DetailsLinkTypes.Documentation, documentationLink.url)
+            PackageSearchEventsLogger.logDetailsLinkClick(FUSGroupIds.DetailsLinkTypes.Documentation)
         }
     }
 
@@ -282,7 +282,7 @@ internal class PackageDetailsInfoPanel : JPanel(), Displayable<PackageDetailsInf
         readmeLinkLabel.url = readmeLink.url
         readmeLinkLabel.setDisplayText(readmeLink.displayNameCapitalized)
         readmeLinkLabel.urlClickedListener = {
-            PackageSearchEventsLogger.logDetailsLinkClick(FUSGroupIds.DetailsLinkTypes.Readme, readmeLink.url)
+            PackageSearchEventsLogger.logDetailsLinkClick(FUSGroupIds.DetailsLinkTypes.Readme)
         }
     }
 

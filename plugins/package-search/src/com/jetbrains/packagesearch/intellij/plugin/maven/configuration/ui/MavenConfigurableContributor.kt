@@ -9,7 +9,7 @@ import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableContributor
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableContributorDriver
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger.Companion.logPreferencesChanged
-import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger.Companion.preferencesDefaultMavenScopeField
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger.Companion.preferencesDefaultMavenScopeChangedField
 import com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSearchMavenConfigurationDefaults
 import com.jetbrains.packagesearch.intellij.plugin.maven.configuration.packageSearchMavenConfigurationForProject
 import javax.swing.JLabel
@@ -17,10 +17,12 @@ import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 
 class MavenConfigurableContributor(private val project: Project) : ConfigurableContributor {
+
     override fun createDriver() = MavenConfigurableContributorDriver(project)
 }
 
 class MavenConfigurableContributorDriver(project: Project) : ConfigurableContributorDriver {
+
     private var modified: Boolean = false
     private val configuration = packageSearchMavenConfigurationForProject(project)
 
@@ -72,7 +74,9 @@ class MavenConfigurableContributorDriver(project: Project) : ConfigurableContrib
         configuration.defaultMavenScope = mavenScopeEditor.text
 
         logPreferencesChanged(
-            preferencesDefaultMavenScopeField.with(configuration.defaultMavenScope),
+            preferencesDefaultMavenScopeChangedField.with(
+                configuration.defaultMavenScope != PackageSearchMavenConfigurationDefaults.MavenScope
+            ),
         )
     }
 }
