@@ -20,6 +20,8 @@ import java.util.*
 private val LOG: Logger
   get() = PluginManagerCore.getLogger()
 
+private val checkCompatibilityFlag = System.getProperty("idea.plugin.check.compatibility", "true") != "false"
+
 @ApiStatus.Internal
 class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
                                val path: Path,
@@ -273,7 +275,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   }
 
   private fun checkCompatibility(context: DescriptorListLoadingContext) {
-    if (isBundled || (sinceBuild == null && untilBuild == null)) {
+    if (isBundled || !checkCompatibilityFlag || (sinceBuild == null && untilBuild == null)) {
       return
     }
 
