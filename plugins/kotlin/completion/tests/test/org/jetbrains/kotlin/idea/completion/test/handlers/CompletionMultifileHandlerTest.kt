@@ -20,7 +20,7 @@ import java.io.File
 @TestRoot("idea/tests")
 @TestDataPath("\$CONTENT_ROOT")
 @TestMetadata("testData/handlers/multifile")
-class CompletionMultiFileHandlerTest22 : KotlinFixtureCompletionBaseTestCase() {
+open class CompletionMultiFileHandlerTest22 : KotlinFixtureCompletionBaseTestCase() {
     fun testExtensionFunctionImport() = doTest()
     fun testExtensionPropertyImport() = doTest()
     fun testImportAlreadyImportedObject() = doTest()
@@ -47,7 +47,7 @@ class CompletionMultiFileHandlerTest22 : KotlinFixtureCompletionBaseTestCase() {
     fun testNotImportedTypeAlias() = doTest()
     fun testKT12077() = doTest()
 
-    fun doTest(completionChar: Char = '\n', vararg extraFileNames: String, tailText: String? = null) {
+    open fun doTest(completionChar: Char = '\n', vararg extraFileNames: String, tailText: String? = null) {
         val fileNameBase = getTestName(false)
         val defaultFiles = listOf("$fileNameBase-1.kt", "$fileNameBase-2.kt")
         val filteredFiles = defaultFiles.filter { File(testDataDirectory, it).exists() }
