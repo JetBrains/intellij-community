@@ -1,0 +1,10 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.maven">
+  <dependencies>
+    <plugin id="org.jetbrains.idea.maven"/>
+    <module name="kotlin.maven"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <mavenProjectImportHandler implementation="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.maven.KotlinSerializationMavenImportHandler"/>
+  </extensions>
+</idea-plugin>
