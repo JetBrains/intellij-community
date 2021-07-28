@@ -4,7 +4,6 @@
     <module name="kotlin.gradle.gradle-idea"/>
   </dependencies>
 
-  <xi:include href="parcelize-dep-gradle-java.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="scripting-dep-gradle-java.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kapt-dep-gradle-java.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="kotlinx-serialization-dep-gradle-java.xml" xpointer="xpointer(/idea-plugin/*)"/>
