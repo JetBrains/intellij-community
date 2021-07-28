@@ -161,6 +161,11 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
     assertContainsElements(doBasicCompletion(), "nspkg.submod", "nspkg.subpkg");
   }
 
+  // PY-47941
+  public void testAttributeReExportedWithAlias() {
+    assertContainsElements(doBasicCompletion(), "pytest.mark", "pytest.param");
+  }
+
   @Nullable
   private List<String> doBasicCompletion() {
     myFixture.copyDirectoryToProject(getTestName(false), "");
