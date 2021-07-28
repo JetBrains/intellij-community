@@ -4,6 +4,8 @@ package com.intellij.openapi.externalSystem.test;
 import com.intellij.compiler.artifacts.ArtifactsTestUtil;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -35,12 +37,16 @@ import com.intellij.task.ProjectTaskManager;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.io.TestFileSystemItem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.concurrency.Promise;
 
@@ -60,7 +66,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
-import static com.intellij.compiler.artifacts.ArtifactsTestUtil.findArtifact;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 import static com.intellij.util.PathUtil.toSystemIndependentName;
 
@@ -80,18 +85,21 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected VirtualFile myProjectConfig;
   protected List<VirtualFile> myAllConfigs = new ArrayList<>();
   protected boolean useProjectTaskManager;
+  protected @Nullable WSLDistribution myWSLDistribution;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
+    setUpFixtures();
+    myProject = myTestFixture.getProject();
+
+    setupWsl();
     ensureTempDirCreated();
 
     String testDirName = "testDir" + System.currentTimeMillis();
     myTestDir = new File(ourTempDir, testDirName);
     FileUtil.ensureExists(myTestDir);
 
-    setUpFixtures();
-    myProject = myTestFixture.getProject();
 
     EdtTestUtil.runInEdtAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {
       try {
@@ -113,6 +121,15 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     if (!allowedRoots.isEmpty()) {
       VfsRootAccess.allowRootAccess(myTestFixture.getTestRootDisposable(), ArrayUtilRt.toStringArray(allowedRoots));
     }
+  }
+
+  protected void setupWsl() {
+    String wslMsId = System.getProperty("wsl.distribution.name");
+    if (wslMsId == null) return;
+    List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
+    if (distributions.isEmpty()) throw new IllegalStateException("no WSL distributions configured!");
+    myWSLDistribution = distributions.stream().filter(it -> wslMsId.equals(it.getMsId())).findFirst().orElseThrow(
+      () -> new IllegalStateException("Distribution " + wslMsId + " was not found"));
   }
 
   protected void collectAllowedRoots(List<String> roots) {
@@ -139,7 +156,14 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   private void ensureTempDirCreated() throws IOException {
     if (ourTempDir != null) return;
 
-    ourTempDir = new File(FileUtil.getTempDirectory(), getTestsTempDir());
+    if (myWSLDistribution == null) {
+      ourTempDir = new File(FileUtil.getTempDirectory(), getTestsTempDir());
+    }
+    else {
+      ourTempDir = new File(myWSLDistribution.getWindowsPath("/tmp"), getTestsTempDir());
+    }
+
+
     FileUtil.delete(ourTempDir);
     FileUtil.ensureExists(ourTempDir);
   }
