@@ -374,9 +374,14 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
         }
 
         for (final Map.Entry<PsiClass, PsiClass> classEntry : sourceToDestination.entrySet()) {
-          final PsiClass copy = copy(classEntry.getKey(), sourceToDestination.size() > 1 ? null : copyClassName);
-          PsiClass newClass = WriteAction.compute(() -> (PsiClass) classEntry.getValue().replace(copy));
-          oldToNewMap.put(classEntry.getKey(), newClass);
+          if (copyClassName != null && sourceToDestination.size() == 1) {
+            final PsiClass copy = copy(classEntry.getKey(), copyClassName);
+            PsiClass newClass = WriteAction.compute(() -> (PsiClass) classEntry.getValue().replace(copy));
+            oldToNewMap.put(classEntry.getKey(), newClass);
+          }
+          else {
+            oldToNewMap.put(classEntry.getKey(), classEntry.getValue());
+          }
         }
       }
     }
@@ -459,12 +464,10 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     return current;
   }
 
-  private static PsiClass copy(PsiClass aClass, String name) {
+  private static PsiClass copy(@NotNull PsiClass aClass, @NotNull String name) {
     final PsiClass classNavigationElement = (PsiClass)aClass.getNavigationElement();
     final PsiClass classCopy = (PsiClass)classNavigationElement.copy();
-    if (name != null) {
-      classCopy.setName(name);
-    }
+    classCopy.setName(name);
     return classCopy;
   }
 
