@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("DeprecatedCallableAddReplaceWith", "ReplaceNegatedIsEmptyWithIsNotEmpty")
+@file:Suppress("DeprecatedCallableAddReplaceWith", "ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.*
@@ -1226,7 +1226,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     }
   }
 
-  final fun unregisterComponent(componentKey: Any): ComponentAdapter? {
+  fun unregisterComponent(componentKey: Any): ComponentAdapter? {
     assertComponentsSupported()
 
     val adapter = componentKeyToAdapter.remove(componentKey) ?: return null
@@ -1250,7 +1250,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     throw UnsupportedOperationException("Do not use getComponentInstanceOfType()")
   }
 
-  final fun registerComponentInstance(componentKey: Any, componentInstance: Any): ComponentAdapter {
+  fun registerComponentInstance(componentKey: Any, componentInstance: Any): ComponentAdapter {
     assertComponentsSupported()
 
     val componentAdapter = object : ComponentAdapter {
