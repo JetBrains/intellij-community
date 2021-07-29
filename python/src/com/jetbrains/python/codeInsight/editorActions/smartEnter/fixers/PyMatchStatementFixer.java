@@ -29,10 +29,6 @@ public final class PyMatchStatementFixer extends PyFixer<PyStatement> {
     if (matchStatement != null) {
       PsiElement colon = PyPsiUtils.getFirstChildOfType(element, PyTokenTypes.COLON);
       assert colon != null;
-      if (matchStatement.getSubject() == null) {
-        processor.registerUnresolvedError(colon.getTextOffset());
-        return;
-      }
       int colonEndOffset = colon.getTextRange().getEndOffset();
       // It's not enough to check matchStatement.getCaseClauses().isEmpty()
       boolean hasEmptyBody = colonEndOffset == matchStatement.getTextRange().getEndOffset();
@@ -46,7 +42,17 @@ public final class PyMatchStatementFixer extends PyFixer<PyStatement> {
       return;
     }
 
-    Couple<PsiElement> pair = findMatchKeywordAndSubject(element);
+    PyTypeDeclarationStatement typeDeclaration = as(element, PyTypeDeclarationStatement.class);
+    // "match:" case
+    if (typeDeclaration != null && isMatchIdentifier(typeDeclaration.getTarget())) {
+      PyAnnotation annotation = typeDeclaration.getAnnotation();
+      if (annotation != null && annotation.getValue() == null) {
+        processor.registerUnresolvedError(annotation.getTextRange().getStartOffset());
+        return;
+      }
+    }
+
+    Couple<PsiElement> pair = findMatchKeywordAndSubjectInExpressionStatement(element);
     PsiElement matchKeyword = pair.getFirst();
     if (matchKeyword == null) {
       return;
@@ -68,7 +74,7 @@ public final class PyMatchStatementFixer extends PyFixer<PyStatement> {
   }
 
   @NotNull
-  private static Couple<PsiElement> findMatchKeywordAndSubject(@NotNull PyStatement statement) {
+  private static Couple<PsiElement> findMatchKeywordAndSubjectInExpressionStatement(@NotNull PyStatement statement) {
     if (!(statement instanceof PyExpressionStatement)) return Couple.getEmpty();
     // "match <caret>expr" case
     PsiElement prevSibling = PyPsiUtils.getPrevNonWhitespaceSiblingOnSameLine(statement);
