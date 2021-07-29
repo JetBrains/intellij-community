@@ -6,7 +6,7 @@ import com.intellij.ui.components.JBLabel
 import com.jetbrains.packagesearch.intellij.plugin.looksLikeGradleVariable
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.VersionViewModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.colors
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
@@ -32,7 +32,7 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
     ) = JPanel(MigLayout("al left center, insets 0 8 0 0")).apply {
         table.colors.applyTo(this, isSelected)
 
-        val bgColor = if (!isSelected && value is VersionViewModel.InstallablePackage) {
+        val bgColor = if (!isSelected && value is UiPackageModel.SearchResult) {
             PackageSearchUI.ListRowHighlightBackground
         } else {
             background
@@ -40,11 +40,11 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
 
         background = bgColor
 
-        val viewModel = checkNotNull(value as? VersionViewModel<*>)
+        val viewModel = checkNotNull(value as? UiPackageModel<*>)
         val hasVersionsToChooseFrom = viewModel.packageModel.getAvailableVersions(onlyStable).isNotEmpty()
         val labelText = when (value) {
-            is VersionViewModel.InstalledPackage -> versionMessage(value.packageModel, onlyStable)
-            is VersionViewModel.InstallablePackage -> value.selectedVersion.displayName
+            is UiPackageModel.Installed -> versionMessage(value.packageModel, onlyStable)
+            is UiPackageModel.SearchResult -> value.selectedVersion.displayName
             else -> throw IllegalArgumentException("The value is expected to be a VersionViewModel, but wasn't.")
         }
 

@@ -6,11 +6,10 @@ import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SelectedPackageModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.HeaderPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.Displayable
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
@@ -70,7 +69,7 @@ internal class PackageDetailsPanel(
     }
 
     internal data class ViewModel(
-        val selectedPackageModel: SelectedPackageModel<*>?,
+        val selectedPackageModel: UiPackageModel<*>?,
         val knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
         val allKnownRepositories: KnownRepositories.All,
         val targetModules: TargetModules,

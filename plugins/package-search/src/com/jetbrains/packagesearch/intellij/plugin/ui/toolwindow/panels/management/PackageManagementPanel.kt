@@ -14,6 +14,7 @@ import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGe
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RootDataModelProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SearchClient
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SearchResultStateSetter
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SelectedPackageSetter
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModuleSetter
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
@@ -49,6 +50,7 @@ import javax.swing.JScrollPane
 internal class PackageManagementPanel(
     rootDataModelProvider: RootDataModelProvider,
     selectedPackageSetter: SelectedPackageSetter,
+    searchResultStateSetter: SearchResultStateSetter,
     targetModuleSetter: TargetModuleSetter,
     searchClient: SearchClient,
     operationExecutor: OperationExecutor,
@@ -60,6 +62,7 @@ internal class PackageManagementPanel(
         operator fun invoke(project: Project) = PackageManagementPanel(
             rootDataModelProvider = project.packageSearchDataService,
             selectedPackageSetter = project.packageSearchDataService,
+            searchResultStateSetter = project.packageSearchDataService,
             targetModuleSetter = project.packageSearchDataService,
             searchClient = project.packageSearchDataService,
             operationExecutor = project.packageSearchDataService,
@@ -85,10 +88,12 @@ internal class PackageManagementPanel(
         project = project,
         searchClient = searchClient,
         operationExecutor = operationExecutor,
-        operationFactory = operationFactory
-    ) {
-        launch { selectedPackageSetter.setSelectedPackage(it) }
-    }
+        operationFactory = operationFactory,
+        onItemSelectionChanged = { launch { selectedPackageSetter.setSelectedPackage(it) } },
+        onSearchResultStateChanged = { searchResult, version, scope ->
+            launch { searchResultStateSetter.setSearchResultState(searchResult, version, scope) }
+        }
+    )
 
     private val packageDetailsPanel = PackageDetailsPanel(operationFactory, operationExecutor)
 
@@ -158,8 +163,7 @@ internal class PackageManagementPanel(
                 computePackagesTableItems(
                     project = project,
                     packages = data.packageModels,
-                    selectedPackageModel = data.selectedPackage,
-                    onlyStable = data.filterOptions.onlyStable,
+                    selectedPackage = data.selectedPackage,
                     targetModules = data.targetModules,
                     traceInfo = data.traceInfo
                 )
@@ -168,7 +172,6 @@ internal class PackageManagementPanel(
             packagesListPanel.display(
                 PackagesListPanel.ViewModel(
                     headerData = data.headerData,
-                    packageModels = data.packageModels,
                     targetModules = data.targetModules,
                     knownRepositoriesInTargetModules = data.knownRepositoriesInTargetModules,
                     allKnownRepositories = data.allKnownRepositories,

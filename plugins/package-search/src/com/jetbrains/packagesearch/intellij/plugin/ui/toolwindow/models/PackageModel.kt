@@ -117,7 +117,8 @@ internal sealed class PackageModel(
     class SearchResult(
         groupId: String,
         artifactId: String,
-        remoteInfo: ApiStandardPackage
+        remoteInfo: ApiStandardPackage,
+        val uiState: SearchResultUiState?
     ) : PackageModel(groupId, artifactId, remoteInfo) {
 
         override fun additionalAvailableVersions(): List<PackageVersion> = emptyList()
@@ -147,13 +148,14 @@ internal sealed class PackageModel(
 
     companion object {
 
-        fun fromSearchResult(remoteInfo: ApiStandardPackage): SearchResult? {
+        fun fromSearchResult(remoteInfo: ApiStandardPackage, uiState: SearchResultUiState? = null): SearchResult? {
             if (remoteInfo.versions.isEmpty()) return null
 
             return SearchResult(
                 remoteInfo.groupId,
                 remoteInfo.artifactId,
-                remoteInfo = remoteInfo
+                remoteInfo = remoteInfo,
+                uiState = uiState
             )
         }
 

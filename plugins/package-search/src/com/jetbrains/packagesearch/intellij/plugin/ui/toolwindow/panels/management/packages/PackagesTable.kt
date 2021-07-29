@@ -18,8 +18,8 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.Operatio
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SelectedPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ActionsColumn
@@ -50,14 +50,16 @@ import javax.swing.table.TableCellRenderer
 import javax.swing.table.TableColumn
 import kotlin.math.roundToInt
 
-internal typealias SelectedPackageModelListener = (SelectedPackageModel<*>?) -> Unit
+internal typealias SelectedPackageModelListener = (UiPackageModel<*>?) -> Unit
+internal typealias SearchResultStateChangeListener = (PackageModel.SearchResult, PackageVersion?, PackageScope?) -> Unit
 
 @Suppress("MagicNumber") // Swing dimension constants
 internal class PackagesTable(
     project: Project,
     private val operationExecutor: OperationExecutor,
     operationFactory: PackageSearchOperationFactory,
-    private val onItemSelectionChanged: SelectedPackageModelListener
+    private val onItemSelectionChanged: SelectedPackageModelListener,
+    private val onSearchResultStateChanged: SearchResultStateChangeListener
 ) : JBTable(), CopyProvider, DataProvider, Displayable<PackagesTable.ViewModel> {
 
     private val operationFactory = PackageSearchOperationFactory()
@@ -65,7 +67,7 @@ internal class PackagesTable(
     private val tableModel: PackagesTableModel
         get() = model as PackagesTableModel
 
-    private var selectedPackage: SelectedPackageModel<*>? = null
+    private var selectedUiPackageModel: UiPackageModel<*>? = null
 
     var transferFocusUp: () -> Unit = { transferFocusBackward() }
 
@@ -85,7 +87,7 @@ internal class PackagesTable(
     }
 
     private val actionsColumn = ActionsColumn(
-        operationExecutor = ::executeUpdateActionColumnOperations,
+        operationExecutor = ::executeActionColumnOperations,
         operationFactory = operationFactory
     )
 
@@ -102,11 +104,11 @@ internal class PackagesTable(
         if (selectedIndex >= 0 && item != null) {
             TableUtil.scrollSelectionToVisible(this)
             updateAndRepaint()
-            selectedPackage = item.toSelectedPackageModule()
-            onItemSelectionChanged(selectedPackage)
+            selectedUiPackageModel = item.uiPackageModel
+            onItemSelectionChanged(selectedUiPackageModel)
             PackageSearchEventsLogger.logPackageSelected(item is PackagesTableItem.InstalledPackage)
         } else {
-            selectedPackage = null
+            selectedUiPackageModel = null
         }
     }
 
@@ -279,7 +281,7 @@ internal class PackagesTable(
         versionColumn.updateData(viewModel.onlyStable, viewModel.targetModules)
         actionsColumn.updateData(viewModel.onlyStable, viewModel.targetModules, knownRepositoriesInTargetModules, allKnownRepositories)
 
-        val previouslySelectedPackage = selectedPackage?.packageModel?.identifier
+        val previouslySelectedPackage = selectedUiPackageModel?.packageModel?.identifier
         selectionModel.removeListSelectionListener(listSelectionListener)
         tableModel.items = viewModel.items
 
@@ -321,43 +323,44 @@ internal class PackagesTable(
         return tableModel.getValueAt(selectedIndex, 0) as? PackagesTableItem<*>
     }
 
-    private fun updatePackageScope(packageModel: PackageModel, newScope: PackageScope) {
-        if (packageModel is PackageModel.Installed) {
-            val operations = operationFactory.createChangePackageScopeOperations(packageModel, newScope, targetModules, repoToInstall = null)
+    private fun updatePackageScope(uiPackageModel: UiPackageModel<*>, newScope: PackageScope) {
+        when (uiPackageModel) {
+            is UiPackageModel.Installed -> {
+                val operations = operationFactory.createChangePackageScopeOperations(
+                    packageModel = uiPackageModel.packageModel,
+                    newScope = newScope,
+                    targetModules = targetModules,
+                    repoToInstall = null
+                )
 
-            logDebug("PackagesTable#updatePackageScope()") {
-                "The user has selected a new scope for ${packageModel.identifier}: '$newScope'. This resulted in ${operations.size} operation(s)."
-            }
-            operationExecutor.executeOperations(operations)
-        } else if (packageModel is PackageModel.SearchResult) {
-            tableModel.replaceItemMatching(packageModel) { item ->
-                when (item) {
-                    is PackagesTableItem.InstalledPackage -> {
-                        throw IllegalStateException("Expecting a search result item model, got an installed item model")
-                    }
-                    is PackagesTableItem.InstallablePackage -> item.copy(item.selectedPackageModel.copy(selectedScope = newScope))
+                logDebug("PackagesTable#updatePackageScope()") {
+                    "The user has selected a new scope for ${uiPackageModel.identifier}: '$newScope'. This resulted in ${operations.size} operation(s)."
                 }
+                operationExecutor.executeOperations(operations)
             }
+            is UiPackageModel.SearchResult -> {
+                onSearchResultStateChanged(uiPackageModel.packageModel, uiPackageModel.selectedVersion, newScope)
 
-            logDebug("PackagesTable#updatePackageScope()") {
-                "The user has selected a new scope for search result ${packageModel.identifier}: '$newScope'."
+                logDebug("PackagesTable#updatePackageScope()") {
+                    "The user has selected a new scope for search result ${uiPackageModel.identifier}: '$newScope'."
+                }
+                updateAndRepaint()
             }
-            updateAndRepaint()
         }
     }
 
-    private fun updatePackageVersion(packageModel: PackageModel, newVersion: PackageVersion) {
-        when (packageModel) {
-            is PackageModel.Installed -> {
-                val operations = packageModel.usageInfo.flatMap {
+    private fun updatePackageVersion(uiPackageModel: UiPackageModel<*>, newVersion: PackageVersion) {
+        when (uiPackageModel) {
+            is UiPackageModel.Installed -> {
+                val operations = uiPackageModel.packageModel.usageInfo.flatMap {
                     val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
-                        packageModel,
+                        uiPackageModel.packageModel,
                         newVersion,
                         allKnownRepositories
                     )
 
                     operationFactory.createChangePackageVersionOperations(
-                        packageModel = packageModel,
+                        packageModel = uiPackageModel.packageModel,
                         newVersion = newVersion,
                         targetModules = targetModules,
                         repoToInstall = repoToInstall
@@ -365,40 +368,28 @@ internal class PackagesTable(
                 }
 
                 logDebug("PackagesTable#updatePackageVersion()") {
-                    "The user has selected a new version for ${packageModel.identifier}: '$newVersion'. " +
+                    "The user has selected a new version for ${uiPackageModel.identifier}: '$newVersion'. " +
                         "This resulted in ${operations.size} operation(s)."
                 }
                 operationExecutor.executeOperations(operations)
             }
-            is PackageModel.SearchResult -> {
-                tableModel.replaceItemMatching(packageModel) { item ->
-                    when (item) {
-                        is PackagesTableItem.InstalledPackage -> item.copy(item.selectedPackageModel.copy(selectedVersion = newVersion))
-                        is PackagesTableItem.InstallablePackage -> item.copy(item.selectedPackageModel.copy(selectedVersion = newVersion))
-                    }
-                }
+            is UiPackageModel.SearchResult -> {
+                onSearchResultStateChanged(uiPackageModel.packageModel, newVersion, uiPackageModel.selectedScope)
 
                 logDebug("PackagesTable#updatePackageVersion()") {
-                    "The user has selected a new version for search result ${packageModel.identifier}: '$newVersion'."
+                    "The user has selected a new version for search result ${uiPackageModel.identifier}: '$newVersion'."
                 }
                 updateAndRepaint()
             }
         }
     }
 
-    private fun executeUpdateActionColumnOperations(operations: List<PackageSearchOperation<*>>) {
-        logDebug("PackagesTable#updatePackageVersion()") {
-            "The user has clicked the update action for a package. This resulted in ${operations.size} operation(s)."
+    private fun executeActionColumnOperations(operations: List<PackageSearchOperation<*>>) {
+        logDebug("PackagesTable#executeActionColumnOperations()") {
+            "The user has clicked the action for a package. This resulted in ${operations.size} operation(s)."
         }
         operationExecutor.executeOperations(operations)
     }
-
-    private fun PackagesTableItem<*>.toSelectedPackageModule() = SelectedPackageModel(
-        packageModel = packageModel,
-        selectedVersion = (tableModel.columns[2] as VersionColumn).valueOf(this).selectedVersion,
-        selectedScope = (tableModel.columns[1] as ScopeColumn).valueOf(this).selectedScope,
-        mixedBuildSystemTargets = targetModules.isMixedBuildSystems
-    )
 
     private fun applyColumnSizes(tW: Int, columns: List<TableColumn>, weights: List<Float>) {
         require(columnWeights.size == columns.size) {
