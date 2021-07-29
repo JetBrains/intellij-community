@@ -60,7 +60,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     final PsiElement element = myMatchingVisitor.getElement();
     if (!(element instanceof PsiComment)) {
-      if (element instanceof PsiMember) {
+      if (element instanceof PsiMember && PsiTreeUtil.skipWhitespacesAndCommentsForward(comment) instanceof PsiDeclarationStatement) {
         other = ObjectUtils.tryCast(element.getFirstChild(), PsiComment.class);
       }
     }
@@ -224,20 +224,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitDocComment(PsiDocComment comment) {
-    final PsiDocComment other;
-    if (myMatchingVisitor.getElement() instanceof PsiDocCommentOwner) {
-      other = ((PsiDocCommentOwner)myMatchingVisitor.getElement()).getDocComment();
-      if (!myMatchingVisitor.setResult(other != null)) {
-        // doc comment are not collapsed for inner classes!
-        return;
-      }
-    }
-    else {
-      other = (PsiDocComment)myMatchingVisitor.getElement();
-      if (!myMatchingVisitor.setResult(!(myMatchingVisitor.getElement().getParent() instanceof PsiDocCommentOwner))) {
-        return; // we should matched the doc before
-      }
-    }
+    final PsiDocComment other = myMatchingVisitor.getElement(PsiDocComment.class);
+    if (other == null) return;
 
     final PsiDocTag[] tags = comment.getTags();
     if (tags.length > 0 && !myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(tags, other.getTags()))) return;
@@ -368,7 +356,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiField other = myMatchingVisitor.getElement(PsiField.class);
     if (other == null) return;
     final PsiDocComment comment = field.getDocComment();
-    if (comment != null && !myMatchingVisitor.setResult(myMatchingVisitor.match(comment, other))) return;
+    if (comment != null && !myMatchingVisitor.setResult(myMatchingVisitor.match(comment, other.getDocComment()))) return;
     if (!myMatchingVisitor.setResult(checkHierarchy(other, field))) return;
     super.visitField(field);
   }
@@ -1785,7 +1773,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     final PsiDocComment comment = clazz.getDocComment();
     if (comment != null) {
-      if (!myMatchingVisitor.setResult(myMatchingVisitor.match(comment, other))) return;
+      if (!myMatchingVisitor.setResult(myMatchingVisitor.match(comment, other.getDocComment()))) return;
     }
 
     final PsiIdentifier identifier1 = clazz.getNameIdentifier();
@@ -1836,7 +1824,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     context.pushResult();
     try {
       final PsiDocComment docComment = method.getDocComment();
-      if (docComment != null && !myMatchingVisitor.setResult(myMatchingVisitor.match(docComment, other))) return;
+      if (docComment != null && !myMatchingVisitor.setResult(myMatchingVisitor.match(docComment, other.getDocComment()))) return;
       if (method.hasTypeParameters() && !myMatchingVisitor.setResult(
         myMatchingVisitor.match(method.getTypeParameterList(), other.getTypeParameterList()))) return;
 
