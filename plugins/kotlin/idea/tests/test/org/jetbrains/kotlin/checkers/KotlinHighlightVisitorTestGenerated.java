@@ -227,7 +227,7 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
 
         @TestMetadata("PackageInExpressionPosition.kt")
         public void testPackageInExpressionPosition() throws Exception {
-            runTest("idea/testData/checker/PackageInExpressionPosition.kt");
+            runTest("testData/checker/PackageInExpressionPosition.kt");
         }
 
         @TestMetadata("PackageQualified.kt")
@@ -893,7 +893,7 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
 
         @TestMetadata("valOrVarOnParameter.kt")
         public void testValOrVarOnParameter() throws Exception {
-            runTest("idea/testData/checker/diagnosticsMessage/valOrVarOnParameter.kt");
+            runTest("testData/checker/diagnosticsMessage/valOrVarOnParameter.kt");
         }
     }
 }

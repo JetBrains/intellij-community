@@ -18,7 +18,7 @@ import static org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts.comp
 @TestRoot("fir")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/ultraLightClasses")
+@TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/ultraLightClasses")
 public class FirClassLoadingTestGenerated extends AbstractFirClassLoadingTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);

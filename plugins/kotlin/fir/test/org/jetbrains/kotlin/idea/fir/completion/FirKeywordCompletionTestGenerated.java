@@ -355,6 +355,21 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
             runTest("../completion/tests/testData/keywords/NoCompletionForCapitalPrefix.kt");
         }
 
+        @TestMetadata("NoConstructorInCompanion.kt")
+        public void testNoConstructorInCompanion() throws Exception {
+            runTest("../completion/tests/testData/keywords/NoConstructorInCompanion.kt");
+        }
+
+        @TestMetadata("NoConstructorInObject.kt")
+        public void testNoConstructorInObject() throws Exception {
+            runTest("../completion/tests/testData/keywords/NoConstructorInObject.kt");
+        }
+
+        @TestMetadata("NoConstructorInObjectLiteral.kt")
+        public void testNoConstructorInObjectLiteral() throws Exception {
+            runTest("../completion/tests/testData/keywords/NoConstructorInObjectLiteral.kt");
+        }
+
         @TestMetadata("NoContinue.kt")
         public void testNoContinue() throws Exception {
             runTest("../completion/tests/testData/keywords/NoContinue.kt");
@@ -363,6 +378,16 @@ public abstract class FirKeywordCompletionTestGenerated extends AbstractFirKeywo
         @TestMetadata("NoFinalInParameterList.kt")
         public void testNoFinalInParameterList() throws Exception {
             runTest("../completion/tests/testData/keywords/NoFinalInParameterList.kt");
+        }
+
+        @TestMetadata("NoValVarInFunctionParameters.kt")
+        public void testNoValVarInFunctionParameters() throws Exception {
+            runTest("../completion/tests/testData/keywords/NoValVarInFunctionParameters.kt");
+        }
+
+        @TestMetadata("NoValVarInSecondaryConstructorParameters.kt")
+        public void testNoValVarInSecondaryConstructorParameters() throws Exception {
+            runTest("../completion/tests/testData/keywords/NoValVarInSecondaryConstructorParameters.kt");
         }
 
         @TestMetadata("NotInNotIs.kt")
