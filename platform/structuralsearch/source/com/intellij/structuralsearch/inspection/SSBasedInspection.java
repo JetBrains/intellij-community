@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -55,7 +54,6 @@ import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_
 public class SSBasedInspection extends LocalInspectionTool implements DynamicGroupTool {
   public static final Comparator<? super Configuration> CONFIGURATION_COMPARATOR =
     Comparator.comparing(Configuration::getName, NaturalComparator.INSTANCE).thenComparingInt(Configuration::getOrder);
-  private static final Object LOCK = ObjectUtils.sentinel("SSRLock"); // hack to avoid race conditions in SSR
 
   private static final Key<Map<Configuration, Matcher>> COMPILED_PATTERNS = Key.create("SSR_COMPILED_PATTERNS");
   private final MultiMapEx<Configuration, Matcher> myCompiledPatterns = new MultiMapEx<>();
@@ -168,24 +166,8 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     }
     if (configurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
-    final Map<Configuration, Matcher> compiledPatterns;
-    if (!Registry.is("ssr.multithreaded.inspection")) {
-      compiledPatterns = SSBasedInspectionCompiledPatternsCache.getInstance(project).getCachedCompiledConfigurations(configurations);
-      if (compiledPatterns.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
-      synchronized (LOCK) {
-        for (Map.Entry<Configuration, Matcher> entry : compiledPatterns.entrySet()) {
-          final Matcher matcher = entry.getValue();
-          if (matcher == null) {
-            continue;
-          }
-          matcher.getMatchContext().setSink(new InspectionResultSink());
-        }
-      }
-    }
-    else {
-      compiledPatterns = checkOutCompiledPatterns(configurations, project);
-      session.putUserData(COMPILED_PATTERNS, compiledPatterns);
-    }
+    final Map<Configuration, Matcher> compiledPatterns = checkOutCompiledPatterns(configurations, project);
+    session.putUserData(COMPILED_PATTERNS, compiledPatterns);
     return new SSBasedVisitor(compiledPatterns, profile, holder);
   }
 
@@ -423,17 +405,6 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     @Override
     public void visitElement(@NotNull PsiElement element) {
       if (LexicalNodesFilter.getInstance().accepts(element)) return;
-      if (Registry.is("ssr.multithreaded.inspection")) {
-        processElement(element);
-      }
-      else {
-        synchronized (LOCK) {
-          processElement(element);
-        }
-      }
-    }
-
-    private void processElement(@NotNull PsiElement element) {
       for (Map.Entry<Configuration, Matcher> entry : myCompiledOptions.entrySet()) {
         final Configuration configuration = entry.getKey();
         LanguageFileType fileType = configuration.getMatchOptions().getFileType();
