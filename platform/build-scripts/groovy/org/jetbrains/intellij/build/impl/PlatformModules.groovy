@@ -235,7 +235,8 @@ final class PlatformModules {
         "Log4J",
         "fastutil-min",
         // used in JPS
-        "maven-resolver-provider"
+        "maven-resolver-provider",
+        "gson"
       ))
 
       for (JpsLibrary library in additionalProjectLevelLibraries) {
