@@ -78,6 +78,8 @@ interface UastElementFactory {
                            kind: UastCallKind,
                            context: PsiElement? = null): UCallExpression?
 
+  fun createCallableReferenceExpression(receiver: UExpression?, methodName: String, context: PsiElement?): UCallableReferenceExpression?
+
   fun createIfExpression(condition: UExpression, thenBranch: UExpression, elseBranch: UExpression?, context: PsiElement?): UIfExpression?
 
   fun createStringLiteralExpression(text: String, context: PsiElement?): ULiteralExpression?

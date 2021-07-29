@@ -148,6 +148,18 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
         ?.let { JavaUCallExpression(it, null) }
   }
 
+  override fun createCallableReferenceExpression(
+    receiver: UExpression?,
+    methodName: String,
+    context: PsiElement?
+  ): UCallableReferenceExpression? {
+    val receiverSource = receiver?.sourcePsi
+    requireNotNull(receiverSource) { "Receiver should not be null for Java callable references." }
+    val callableExpression = psiFactory.createExpressionFromText("${receiverSource.text}::$methodName", context)
+    if (callableExpression !is PsiMethodReferenceExpression) return null
+    return JavaUCallableReferenceExpression(callableExpression, null)
+  }
+
   override fun createStringLiteralExpression(text: String, context: PsiElement?): ULiteralExpression? {
     val literalExpr = psiFactory.createExpressionFromText(StringUtil.wrapWithDoubleQuote(text), context)
     if (literalExpr !is PsiLiteralExpressionImpl) return null

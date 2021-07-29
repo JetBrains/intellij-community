@@ -136,6 +136,16 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
 
     }
 
+    override fun createCallableReferenceExpression(
+        receiver: UExpression?,
+        methodName: String,
+        context: PsiElement?
+    ): UCallableReferenceExpression? {
+        val text = receiver?.sourcePsi?.text ?: ""
+        val callableExpression = psiFactory.createCallableReferenceExpression("$text::$methodName") ?: return null
+        return KotlinUCallableReferenceExpression(callableExpression, null)
+    }
+
     override fun createStringLiteralExpression(text: String, context: PsiElement?): ULiteralExpression? {
         return KotlinStringULiteralExpression(psiFactory.createExpression(StringUtil.wrapWithDoubleQuote(text)), null)
     }
