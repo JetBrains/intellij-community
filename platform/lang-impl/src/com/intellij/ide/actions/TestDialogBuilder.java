@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Map;
 
 /**
@@ -36,6 +37,11 @@ public class TestDialogBuilder implements CreateFileFromTemplateDialog.Builder {
   @Override
   public CreateFileFromTemplateDialog.Builder setValidator(InputValidator validator) {
     myValidator = validator;
+    return this;
+  }
+
+  @Override
+  public CreateFileFromTemplateDialog.Builder setDialogOwner(@Nullable Component owner) {
     return this;
   }
 
