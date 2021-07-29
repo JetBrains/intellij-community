@@ -1,6 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.core.CoreBundle;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ExceptionUtil;
@@ -281,6 +286,9 @@ final class PersistentFSConnection {
           createBrokenMarkerFile(e);
           myCorrupted = true;
           doForce();
+          if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+            showCorruptionNotification();
+          }
         }
       });
     }
@@ -305,5 +313,14 @@ final class PersistentFSConnection {
    */
   static void ensureIdIsValid(int id) {
     assert id > 0 : id;
+  }
+
+  private static void showCorruptionNotification() {
+    NotificationGroupManager.getInstance().getNotificationGroup("IDE Caches")
+      .createNotification(CoreBundle.message("vfs.corruption.notification.title"),
+                          CoreBundle.message("vfs.corruption.notification.text"),
+                          NotificationType.INFORMATION)
+      .addAction(ActionManager.getInstance().getAction("RestartIde"))
+      .notify(null);
   }
 }

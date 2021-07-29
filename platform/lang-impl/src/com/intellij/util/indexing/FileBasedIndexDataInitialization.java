@@ -183,7 +183,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       return;
     }
 
-    NotificationGroupManager.getInstance().getNotificationGroup("Indexing")
+    NotificationGroupManager.getInstance().getNotificationGroup("IDE Caches")
       .createNotification(IndexingBundle.message("index.rebuild.notification.title"), rebuildNotification, NotificationType.INFORMATION)
       .notify(null);
   }
