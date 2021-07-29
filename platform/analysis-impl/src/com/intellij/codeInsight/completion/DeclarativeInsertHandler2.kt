@@ -48,10 +48,14 @@ open class CompositeDeclarativeInsertHandler(val handlers: Map<String, Lazy<Decl
 
 /**
  * Important statements of the contract.
- * * Operations of RelativeTextEdit may NOT intersect, their offsets must also be independent (with regards to order of application), for example:
+ * * Operations of RelativeTextEdit have greedy ranges which may NOT intersect, their offsets must also be independent (with regards to order of application), for example:
  *    operations (0, 0, "AA) and (2, 2, "BB) - offsets of "BB" should not be calculated with expectation of operation "AA" applied first, and vice-versa.
+ *    following text: _<caret>___ should look like: _<caret>AA_BB__
+ * * Reasoning for intersection rule: if ranges intersect, then order of application becomes important; so please merge your operations' ranges
+ *   before submitting. For example:
+ *     operations (0, 1, "A") and (1, 2, "B") should be merged into one operation (0, 2, "AB")
  *
- *  * offsetToPutCaret - should be calculated under assumption that all operations already applied.
+ *  * offsetToPutCaret - should be calculated under assumption that all operations are already applied.
  */
 @ApiStatus.Experimental
 open class DeclarativeInsertHandler2 protected constructor(
