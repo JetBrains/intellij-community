@@ -33,7 +33,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
       get() = service<ProjectPluginTrackerManager>()
 
     @JvmStatic
-    fun loadPlugins(pluginIds: Collection<PluginId>): Boolean = DynamicPlugins.loadPlugins(pluginIds.toPluginDescriptors())
+    fun loadPlugins(pluginIds: Collection<PluginId>): Boolean = DynamicPlugins.loadPlugins(toPluginDescriptors(pluginIds))
 
     @JvmStatic
     @JvmOverloads
@@ -41,14 +41,15 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
       pluginIds: Collection<PluginId>,
       project: Project? = null,
       parentComponent: JComponent? = null,
-    ): Boolean = DynamicPlugins.unloadPlugins(
-      pluginIds.toPluginDescriptors(),
-      project,
-      parentComponent,
-    )
+    ): Boolean {
+      return DynamicPlugins.unloadPlugins(
+        descriptors = toPluginDescriptors(pluginIds),
+        project = project,
+        parentComponent = parentComponent,
+      )
+    }
 
     internal class EnableDisablePluginsActivity : StartupActivity {
-
       init {
         if (ApplicationManager.getApplication().isUnitTestMode) {
           throw ExtensionNotApplicableException.INSTANCE
@@ -89,7 +90,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
 
     private fun openProjectsExcludingCurrent(project: Project?) = ProjectManager.getInstance().openProjects.filterNot { it == project }
 
-    private fun Collection<PluginId>.toPluginDescriptors() = mapNotNull { PluginManagerCore.getPlugin(it) }
+    private fun toPluginDescriptors(collection: Collection<PluginId>) = collection.mapNotNull { PluginManagerCore.findPlugin(it) }
   }
 
   private var applicationShuttingDown = false
