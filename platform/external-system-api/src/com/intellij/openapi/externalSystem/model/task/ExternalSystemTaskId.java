@@ -79,6 +79,10 @@ public final class ExternalSystemTaskId implements Serializable {
     return myType;
   }
 
+  public long getId() {
+    return myId;
+  }
+
   @Override
   public int hashCode() {
     return 31 * myType.hashCode() + (int)(myId ^ (myId >>> 32));
