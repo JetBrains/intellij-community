@@ -181,7 +181,7 @@ public final class KeymapUtil {
   }
 
   public static boolean isSimplifiedMacShortcuts() {
-    return SystemInfo.isMac && AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols");
+    return SystemInfo.isMac && AdvancedSettings.getInstanceIfCreated() != null && AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols");
   }
 
   @NotNull
