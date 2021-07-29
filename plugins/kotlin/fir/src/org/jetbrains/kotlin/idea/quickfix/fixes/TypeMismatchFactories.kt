@@ -29,6 +29,11 @@ object TypeMismatchFactories {
         diagnostic.psi.initializer?.let { getFixesForTypeMismatch(it, diagnostic.expectedType, diagnostic.actualType) } ?: emptyList()
     }
 
+    val smartcastImpossibleFactory = diagnosticFixFactory(KtFirDiagnostic.SmartcastImpossible::class) { diagnostic ->
+        val psi = diagnostic.psi
+        getFixesForTypeMismatch(psi, expectedType = diagnostic.desiredType, actualType = psi.getKtType())
+    }
+
     private fun KtAnalysisSession.getFixesForTypeMismatch(
         psi: PsiElement,
         expectedType: KtType,
