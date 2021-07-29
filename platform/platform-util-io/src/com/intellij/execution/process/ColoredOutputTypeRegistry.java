@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-@Service
 public abstract class ColoredOutputTypeRegistry {
   /*
     Description
