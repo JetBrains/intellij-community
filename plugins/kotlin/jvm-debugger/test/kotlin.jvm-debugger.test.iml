@@ -40,5 +40,8 @@
     <orderEntry type="module" module-name="intellij.java.debugger.streams" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.native" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="TEST" />
   </component>
 </module>
