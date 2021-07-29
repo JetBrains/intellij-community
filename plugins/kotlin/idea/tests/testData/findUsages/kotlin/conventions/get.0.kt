@@ -3,7 +3,7 @@
 
 class B(val n: Int) {
     operator fun <caret>get(i: Int) = ""
-    operator fun set(i: Int, s: String)
+    operator fun set(i: Int, s: String) {}
 }
 
 fun test() {

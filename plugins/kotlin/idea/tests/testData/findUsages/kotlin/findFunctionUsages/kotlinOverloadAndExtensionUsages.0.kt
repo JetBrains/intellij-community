@@ -45,5 +45,3 @@ fun B.foo(s: String, n: Number) {
 fun bar(b: B) {
     b.foo("", 0)
 }
-
-// DISABLE-ERRORS

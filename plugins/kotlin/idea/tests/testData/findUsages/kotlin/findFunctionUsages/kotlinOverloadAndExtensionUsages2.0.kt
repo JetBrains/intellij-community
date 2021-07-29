@@ -4,7 +4,7 @@ interface X {
 
 }
 
-class A: X {
+open class A: X {
 
 }
 

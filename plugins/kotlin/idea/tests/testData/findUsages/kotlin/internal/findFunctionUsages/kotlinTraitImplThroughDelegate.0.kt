@@ -3,12 +3,12 @@
 package server
 
 interface TraitWithImpl {
-    internal fun <caret>foo() = 1
+    @Suppress("WRONG_MODIFIER_CONTAINING_DECLARATION") internal fun <caret>foo() = 1
 }
 
 public class TraitWithDelegatedWithImpl(f: TraitWithImpl): TraitWithImpl by f
 
 fun test(twdwi: TraitWithDelegatedWithImpl) = twdwi.foo()
 
-// ERROR: Modifier 'internal' is not applicable inside 'interface'
 // FIR_COMPARISON
+// CRI_IGNORE

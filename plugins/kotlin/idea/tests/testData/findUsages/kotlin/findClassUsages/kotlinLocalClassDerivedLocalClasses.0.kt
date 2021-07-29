@@ -5,13 +5,11 @@ fun foo() {
 
     class B: A()
 
-    interface T: A
+    open class T: A()
 
     fun bar() {
         class C: A()
 
-        class D: T
+        class D: T()
     }
 }
-
-// DISABLE-ERRORS

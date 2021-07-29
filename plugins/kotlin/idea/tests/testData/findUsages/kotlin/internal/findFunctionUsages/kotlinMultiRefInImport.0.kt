@@ -10,10 +10,9 @@ fun Int.foo() {
 
 }
 
+@JvmName("fooInt")
 fun foo(n: Int) {
 
 }
 
-val foo: Int
-
-// ERROR: Property must be initialized
+val foo: Int = 42

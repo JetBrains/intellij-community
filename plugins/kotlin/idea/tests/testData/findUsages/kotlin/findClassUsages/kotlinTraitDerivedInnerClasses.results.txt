@@ -1,3 +1,5 @@
 [kotlinTraitDerivedInnerClasses.0.kt] Unclassified 7 open class A: X {
-[kotlinTraitDerivedInnerClasses.1.kt] Unclassified 4 open class B: A() {
-[kotlinTraitDerivedInnerClasses.1.kt] Unclassified 8 open class C: Y {
+[kotlinTraitDerivedInnerClasses.1.kt] Unclassified 11 open class Z : A() {
+[kotlinTraitDerivedInnerClasses.1.kt] Unclassified 15 open class U : Z() {
+[kotlinTraitDerivedInnerClasses.1.kt] Unclassified 2 open class B : A() {
+[kotlinTraitDerivedInnerClasses.1.kt] Unclassified 6 open class C : Y {

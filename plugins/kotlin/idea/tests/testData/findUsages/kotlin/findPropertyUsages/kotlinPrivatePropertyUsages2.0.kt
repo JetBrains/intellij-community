@@ -12,4 +12,3 @@ public class ServerEx(): Server(foo = "!") {
                                                 // if it was simple property, it wouldn't be found
 }
 // DISABLE-ERRORS
-

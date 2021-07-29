@@ -141,6 +141,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/kotlin/conventions/set.0.kt");
             }
 
+            @TestMetadata("set1.0.kt")
+            public void testSet1() throws Exception {
+                runTest("testData/findUsages/kotlin/conventions/set1.0.kt");
+            }
+
             @TestMetadata("setAsPropertyDelegate.0.kt")
             public void testSetAsPropertyDelegate() throws Exception {
                 runTest("testData/findUsages/kotlin/conventions/setAsPropertyDelegate.0.kt");
@@ -943,6 +948,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/kotlin/findPropertyUsages/javaClassObjectPropertyUsages.0.kt");
             }
 
+            @TestMetadata("javaClassObjectPropertyUsages2.0.kt")
+            public void testJavaClassObjectPropertyUsages2() throws Exception {
+                runTest("testData/findUsages/kotlin/findPropertyUsages/javaClassObjectPropertyUsages2.0.kt");
+            }
+
             @TestMetadata("javaPropertyReadUsages.0.kt")
             public void testJavaPropertyReadUsages() throws Exception {
                 runTest("testData/findUsages/kotlin/findPropertyUsages/javaPropertyReadUsages.0.kt");
@@ -976,6 +986,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             @TestMetadata("javaPropertyWriteUsages2.0.kt")
             public void testJavaPropertyWriteUsages2() throws Exception {
                 runTest("testData/findUsages/kotlin/findPropertyUsages/javaPropertyWriteUsages2.0.kt");
+            }
+
+            @TestMetadata("jvmFieldProperty.0.kt")
+            public void testJvmFieldProperty() throws Exception {
+                runTest("testData/findUsages/kotlin/findPropertyUsages/jvmFieldProperty.0.kt");
             }
 
             @TestMetadata("jvmStaticProperty.0.kt")
@@ -1021,6 +1036,16 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             @TestMetadata("kotlinPrivatePropertyUsages2.0.kt")
             public void testKotlinPrivatePropertyUsages2() throws Exception {
                 runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPrivatePropertyUsages2.0.kt");
+            }
+
+            @TestMetadata("kotlinPrivatePropertyUsages3.0.kt")
+            public void testKotlinPrivatePropertyUsages3() throws Exception {
+                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPrivatePropertyUsages3.0.kt");
+            }
+
+            @TestMetadata("kotlinPrivatePropertyUsages4.0.kt")
+            public void testKotlinPrivatePropertyUsages4() throws Exception {
+                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPrivatePropertyUsages4.0.kt");
             }
 
             @TestMetadata("kotlinPropertyReadUsages.0.kt")

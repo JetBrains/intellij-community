@@ -1,12 +1,9 @@
 fun foo() {
-    open class T: A
+    open class T : A
 
-    object O1: A
+    val O1 = object : A {}
 
     fun bar() {
-        object O2: T()
+        val O2 = object : T() {}
     }
 }
-
-
-

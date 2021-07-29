@@ -1,10 +1,12 @@
-// PSI_ELEMENT: org.jetbrains.kotlin.psi.KtObjectDeclaration
+// PSI_ELEMENT: org.jetbrains.kotlin.psi.KtProperty
 // OPTIONS: usages
 fun foo(): Any {
-    object <caret>Bar
+    val Bar<caret> = object {}
 
     return Bar
 }
+
+object Bar {}
 
 val x = Bar
 

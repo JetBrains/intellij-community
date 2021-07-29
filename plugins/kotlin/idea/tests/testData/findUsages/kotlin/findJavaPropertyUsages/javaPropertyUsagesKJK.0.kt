@@ -17,15 +17,14 @@ fun test() {
     val t = A().p
     A().p = 1
 
-    val t = AA().p
+    val t2 = AA().p
     AA().p = 1
 
-    val t = J().p
+    val t3 = J().p
     J().p = 1
 
-    val t = B().p
+    val t4 = B().p
     B().p = 1
 }
 
-// DISABLE-ERRORS
 // FIR_IGNORE

@@ -6,11 +6,11 @@
 package server
 
 open class A<T> {
-    open var <caret>foo: T
+    open var <caret>foo: T = TODO()
 }
 
 open class B: A<String>() {
-    open var foo: String
+    override var foo: String
         get() {
             println("get")
             return super<A>.foo

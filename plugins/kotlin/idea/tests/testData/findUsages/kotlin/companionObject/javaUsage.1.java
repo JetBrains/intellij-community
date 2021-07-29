@@ -1,5 +1,3 @@
-import static Foo.*;
-
 class JavaUsage {
     public static void main(String[] args) {
         System.out.println(Foo.CONST);

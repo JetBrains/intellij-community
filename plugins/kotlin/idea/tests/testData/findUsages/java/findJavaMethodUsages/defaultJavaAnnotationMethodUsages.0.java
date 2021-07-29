@@ -11,3 +11,5 @@ class Test {
     @JAnn(value = "abc")
     void test2() { }
 }
+
+// CRI_IGNORE

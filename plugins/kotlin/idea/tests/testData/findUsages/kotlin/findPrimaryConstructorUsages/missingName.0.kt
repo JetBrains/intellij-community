@@ -6,3 +6,4 @@ class <caret>() {
 }
 
 // FIR_IGNORE
+// CRI_IGNORE

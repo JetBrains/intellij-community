@@ -1,2 +1,1 @@
-Unclassified 4 interface T: A
-Unclassified 7 public interface Y: X
+Unclassified 1 interface T : A

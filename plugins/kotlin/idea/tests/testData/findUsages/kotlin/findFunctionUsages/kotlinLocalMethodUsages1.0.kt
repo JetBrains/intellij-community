@@ -10,4 +10,5 @@ fun foo() {
     bar()
 }
 
-bar()
+fun bar() = Unit
+val b = bar()

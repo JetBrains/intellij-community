@@ -11,11 +11,11 @@ fun foo() {
     }
 
     fun bar() {
-        interface Z: A {
+        open class Z: A() {
 
         }
 
-        interface U: Z {
+        class U: Z() {
 
         }
     }

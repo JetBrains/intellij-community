@@ -11,5 +11,5 @@ public open class Server() {
 public class ServerEx(): Server() {
     override fun processRequest() = "foo" + foo
 }
-// DISABLE-ERRORS
 
+// DISABLE-ERRORS

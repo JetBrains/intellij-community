@@ -12,5 +12,5 @@ fun foo(): String {
     return bar
 }
 
+val bar = ""
 val x = bar
-// DISABLE-ERRORS

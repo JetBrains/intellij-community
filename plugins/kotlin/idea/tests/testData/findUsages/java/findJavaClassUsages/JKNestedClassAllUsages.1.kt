@@ -1,4 +1,4 @@
-public class X(bar: String? = Outer.A.BAR): Outer.A() {
+public class X(bar: String? = Outer.A.BAR) : Outer.A() {
     var next: Outer.A? = Outer.A()
     val myBar: String? = Outer.A.BAR
 
@@ -12,7 +12,7 @@ public class X(bar: String? = Outer.A.BAR): Outer.A() {
         aa.bar = ""
     }
 
-    fun getNext(): Outer.A? {
+    fun getNextFun(): Outer.A? {
         return next
     }
 
@@ -20,12 +20,12 @@ public class X(bar: String? = Outer.A.BAR): Outer.A() {
         super<Outer.A>.foo()
     }
 
-    companion object: Outer.A() {
+    companion object : Outer.A() {
 
     }
 }
 
-object O: Outer.A() {
+object O : Outer.A() {
 
 }
 

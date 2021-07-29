@@ -4,7 +4,7 @@
 // HIGHLIGHTING
 
 open class A : I {
-    open fun foo() {}
+    override fun foo() {}
 }
 
 class B: A() {
@@ -16,5 +16,3 @@ fun test(i: I) {
     A().foo()
     B().foo()
 }
-
-// DISABLE-ERRORS

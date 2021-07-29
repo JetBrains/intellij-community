@@ -9,6 +9,8 @@ class Foo {
         @JvmStatic fun s() {
         }
 
-        val CONST = 42
+        const val CONST = 42
     }
 }
+
+// CRI_IGNORE

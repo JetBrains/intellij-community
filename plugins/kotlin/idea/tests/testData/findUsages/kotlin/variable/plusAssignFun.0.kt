@@ -2,12 +2,9 @@
 // OPTIONS: usages
 class C
 
-operator fun C.plusAssign(p: Int) = this
+operator fun C.plusAssign(p: Int) = Unit
 
 fun foo() {
     val <caret>c = C()
     c += 10
 }
-
-// ERROR: 'operator' modifier is inapplicable on this function: must return Unit
-// ERROR: Function 'plusAssign' should return Unit to be used by corresponding operator '+='

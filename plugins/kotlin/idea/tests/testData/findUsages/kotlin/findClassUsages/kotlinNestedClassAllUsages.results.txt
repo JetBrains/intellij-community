@@ -3,7 +3,7 @@
 [kotlinNestedClassAllUsages.1.kt] Companion object 11 Outer.A.foo()
 [kotlinNestedClassAllUsages.1.kt] Companion object 5 public class X(bar: String? = Outer.A.bar): Outer.A() {
 [kotlinNestedClassAllUsages.1.kt] Companion object 7 val myBar: String? = Outer.A.bar
-[kotlinNestedClassAllUsages.1.kt] Function return types 19 fun getNext(): Outer.A? {
+[kotlinNestedClassAllUsages.1.kt] Function return types 19 fun getNext2(): Outer.A? {
 [kotlinNestedClassAllUsages.1.kt] Function return types 40 fun Any.toA(): Outer.A? {
 [kotlinNestedClassAllUsages.1.kt] Local variable declaration 15 val aa: Outer.A = a
 [kotlinNestedClassAllUsages.1.kt] New instance creation 36 fun X.bar(a: Outer.A = Outer.A()) {

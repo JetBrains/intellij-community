@@ -16,7 +16,7 @@ public class X(bar: String? = Outer.A.bar): Outer.A() {
         aa.bar = ""
     }
 
-    fun getNext(): Outer.A? {
+    fun getNext2(): Outer.A? {
         return next
     }
 

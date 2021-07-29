@@ -3,7 +3,7 @@
 [kotlinDeeplyNestedClassAllUsages.1.kt] Companion object 11 Inner.A.foo()
 [kotlinDeeplyNestedClassAllUsages.1.kt] Companion object 5 public class X(bar: String? = Inner.A.bar): Inner.A() {
 [kotlinDeeplyNestedClassAllUsages.1.kt] Companion object 7 val myBar: String? = Inner.A.bar
-[kotlinDeeplyNestedClassAllUsages.1.kt] Function return types 19 fun getNext(): Inner.A? {
+[kotlinDeeplyNestedClassAllUsages.1.kt] Function return types 19 fun getNext2(): Inner.A? {
 [kotlinDeeplyNestedClassAllUsages.1.kt] Function return types 40 fun Any.toA(): Inner.A? {
 [kotlinDeeplyNestedClassAllUsages.1.kt] Local variable declaration 15 val aa: Inner.A = a
 [kotlinDeeplyNestedClassAllUsages.1.kt] New instance creation 36 fun X.bar(a: Inner.A = Inner.A()) {

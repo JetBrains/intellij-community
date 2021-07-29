@@ -1,2 +1,4 @@
-Local variable declaration 8 val a: Alias
-Unclassified 7 Alias
+[objectAlias.0.kt] Local variable declaration 8 val a: Alias
+[objectAlias.0.kt] Unclassified 7 Alias
+[objectAlias.1.kt] Local variable declaration 3 val a: Alias
+[objectAlias.1.kt] Unclassified 2 Alias

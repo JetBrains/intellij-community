@@ -16,7 +16,7 @@ public class KOuter: Outer() {
             aa.bar = ""
         }
 
-        fun getNext(): Outer.A? {
+        fun getNext2(): Outer.A? {
             return next
         }
 

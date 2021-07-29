@@ -2,12 +2,12 @@
 // OPTIONS: derivedClasses
 
 fun foo() {
-    object O1: A() {
+    val O1 = object: A() {
 
     }
 
     fun bar() {
-        object O2: X {
+        val O2 = object: X {
 
         }
     }

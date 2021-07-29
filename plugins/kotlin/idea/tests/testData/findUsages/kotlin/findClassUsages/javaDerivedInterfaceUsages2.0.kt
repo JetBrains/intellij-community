@@ -12,7 +12,6 @@ open class C: Y {
 
 }
 
-interface Z: A {
+open class Z: A() {
 
 }
-// DISABLE-ERRORS

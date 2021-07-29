@@ -8,3 +8,5 @@ public interface AI {
         public String getFoo() {return "";}
     }
 }
+
+// CRI_IGNORE

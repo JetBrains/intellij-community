@@ -1,5 +1,5 @@
 [kotlinInnerClassAllUsages.1.kt] Class/object property type 7 var next: Outer.A? = (this@KOuter as Outer).A()
-[kotlinInnerClassAllUsages.1.kt] Function return types 19 fun getNext(): Outer.A? {
+[kotlinInnerClassAllUsages.1.kt] Function return types 19 fun getNext2(): Outer.A? {
 [kotlinInnerClassAllUsages.1.kt] Function return types 33 fun Any.toA(): Outer.A? {
 [kotlinInnerClassAllUsages.1.kt] Function return types 37 fun Any.asServer(): Outer.A? {
 [kotlinInnerClassAllUsages.1.kt] Local variable declaration 15 val aa: Outer.A = a

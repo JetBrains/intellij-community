@@ -10,11 +10,11 @@ class Outer {
     }
 
     class Inner {
-        interface Z: A {
+        open class Z: A() {
 
         }
 
-        class U: Z {
+        class U: Z() {
 
         }
     }
