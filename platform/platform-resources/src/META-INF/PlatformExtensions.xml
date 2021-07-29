@@ -879,7 +879,6 @@
                         serviceImplementation="com.intellij.openapi.editor.impl.FontFamilyServiceImpl"
                         preload="notHeadless"/>
 
-    <jbProtocolCommand implementation="com.intellij.openapi.project.impl.JBProtocolOpenProjectCommand"/>
     <jbProtocolCommand implementation="com.intellij.navigation.JBProtocolNavigateCommand"/>
 
     <intentionAction>
