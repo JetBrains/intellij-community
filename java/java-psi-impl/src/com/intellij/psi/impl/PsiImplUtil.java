@@ -792,7 +792,7 @@ public final class PsiImplUtil {
       return ((LightJavaModule)module).getRootVirtualFile();
     }
     else {
-      VirtualFile file = module.getContainingFile().getVirtualFile();
+      VirtualFile file = module.getContainingFile().getOriginalFile().getVirtualFile();
       if (file == null) {
         throw new IllegalArgumentException("Module '" + module + "' lost its VF; file=" + module.getContainingFile() + "; valid=" + module.isValid());
       }
