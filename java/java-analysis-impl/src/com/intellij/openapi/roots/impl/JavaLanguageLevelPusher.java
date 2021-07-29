@@ -26,7 +26,7 @@ public class JavaLanguageLevelPusher implements FileIntPropertyPusher<LanguageLe
 
   public static void pushLanguageLevel(@NotNull final Project project) {
     PushedFilePropertiesUpdater instance = PushedFilePropertiesUpdater.getInstance(project);
-    for (FilePropertyPusher pusher : EP_NAME.getExtensionList()) {
+    for (FilePropertyPusher<?> pusher : EP_NAME.getExtensionList()) {
       if (pusher instanceof JavaLanguageLevelPusher) {
         instance.pushAll(pusher);
       }
