@@ -205,7 +205,7 @@ import org.jetbrains.kotlin.tools.projectWizard.cli.AbstractProjectTemplateBuild
 import org.jetbrains.kotlin.tools.projectWizard.cli.AbstractYamlBuildFileGenerationTest
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractProjectTemplateNewWizardProjectImportTest
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractYamlNewWizardProjectImportTest
-import org.jetbrains.kotlinx.serialization.idea.AbstractSerializationPluginIdeDiagnosticTest
+import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSerializationPluginIdeDiagnosticTest
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSerializationQuickFixTest
 import org.jetbrains.uast.test.kotlin.*
 import org.jetbrains.kotlin.spec.utils.tasks.detectDirsWithTestsMapFileOnly

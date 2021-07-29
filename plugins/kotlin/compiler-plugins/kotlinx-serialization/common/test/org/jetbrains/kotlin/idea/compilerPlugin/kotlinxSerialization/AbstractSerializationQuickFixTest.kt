@@ -6,8 +6,6 @@ import com.intellij.openapi.roots.OrderRootType
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.addRoot
-import org.jetbrains.kotlinx.serialization.idea.getSerializationCoreLibraryJar
-import org.jetbrains.kotlinx.serialization.idea.getSerializationJsonLibraryJar
 
 abstract class AbstractSerializationQuickFixTest : AbstractQuickFixTest() {
     override fun setUp() {
