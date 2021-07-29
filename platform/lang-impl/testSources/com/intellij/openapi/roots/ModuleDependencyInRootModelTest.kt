@@ -110,6 +110,29 @@ class ModuleDependencyInRootModelTest {
   }
 
   @Test
+  fun `add multiple dependencies at once`() {
+    val dep1 = projectModel.createModule("dep1")
+    val dep2 = projectModel.createModule("dep2")
+    val model = createModifiableModel(mainModule)
+    model.addModuleEntries(listOf(dep1, dep2), DependencyScope.RUNTIME, true)
+    fun checkEntry(entry: ModuleOrderEntry) {
+      assertThat(entry.isExported).isTrue
+      assertThat(entry.scope).isEqualTo(DependencyScope.RUNTIME)
+    }
+
+    val (entry1, entry2) = dropModuleSourceEntry(model, 2)
+    assertThat((entry1 as ModuleOrderEntry).module).isEqualTo(dep1)
+    checkEntry(entry1)
+    assertThat((entry2 as ModuleOrderEntry).module).isEqualTo(dep2)
+    checkEntry(entry2)
+    val (committedEntry1, committedEntry2) = dropModuleSourceEntry(commitModifiableRootModel(model), 2)
+    assertThat((committedEntry1 as ModuleOrderEntry).module).isEqualTo(dep1)
+    checkEntry(committedEntry1)
+    assertThat((committedEntry2 as ModuleOrderEntry).module).isEqualTo(dep2)
+    checkEntry(committedEntry2)
+  }
+
+  @Test
   fun `remove module dependency if there are several equal entries`() {
     val dep1Module = projectModel.createModule("dep1")
     val dep2Module = projectModel.createModule("dep2")

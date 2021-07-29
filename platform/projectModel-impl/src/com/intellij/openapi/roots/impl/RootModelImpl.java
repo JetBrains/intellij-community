@@ -268,6 +268,16 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     return libraryOrderEntry;
   }
 
+  @Override
+  public void addLibraryEntries(@NotNull List<Library> libraries,
+                                @NotNull DependencyScope scope, boolean exported) {
+    for (Library library : libraries) {
+      LibraryOrderEntry entry = addLibraryEntry(library);
+      entry.setScope(scope);
+      entry.setExported(exported);
+    }
+  }
+
   @NotNull
   @Override
   public ModuleOrderEntry addModuleOrderEntry(@NotNull Module module) {
@@ -277,6 +287,16 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     final ModuleOrderEntryImpl moduleOrderEntry = new ModuleOrderEntryImpl(module, this);
     myOrderEntries.add(moduleOrderEntry);
     return moduleOrderEntry;
+  }
+
+  @Override
+  public void addModuleEntries(@NotNull List<Module> modules,
+                               @NotNull DependencyScope scope, boolean exported) {
+    for (Module module : modules) {
+      ModuleOrderEntry entry = addModuleOrderEntry(module);
+      entry.setScope(scope);
+      entry.setExported(exported);
+    }
   }
 
   @NotNull
