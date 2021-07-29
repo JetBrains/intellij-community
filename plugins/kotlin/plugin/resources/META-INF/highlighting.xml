@@ -81,10 +81,4 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <highlighterExtension implementation="org.jetbrains.kotlin.idea.highlighter.dsl.DslHighlighterExtension"/>
   </extensions>
-
-  <actions>
-    <group id="InternalKotlin" internal="true">
-      <action id="HighlightingBenchmarkAction" class="org.jetbrains.kotlin.idea.actions.internal.benchmark.HighlightingBenchmarkAction"/>
-    </group>
-  </actions>
 </idea-plugin>

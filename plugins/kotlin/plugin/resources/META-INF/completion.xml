@@ -46,18 +46,4 @@
             order="after proximity"
             implementationClass="org.jetbrains.kotlin.idea.completion.KotlinLookupElementProximityWeigher"/>
   </extensions>
-
-  <actions>
-    <group id="KotlinInternalGroup" popup="true">
-      <group id="KotlinCompletionBenchmarkGroup" popup="true">
-        <action
-                id="TopLevelCompletionBenchmarkAction"
-                class="org.jetbrains.kotlin.idea.actions.internal.benchmark.TopLevelCompletionBenchmarkAction"/>
-
-        <action
-                id="LocalCompletionBenchmarkAction"
-                class="org.jetbrains.kotlin.idea.actions.internal.benchmark.LocalCompletionBenchmarkAction"/>
-      </group>
-    </group>
-  </actions>
 </idea-plugin>
