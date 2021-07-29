@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.PathsList
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 
 enum class CoroutineDebuggerMode {
@@ -28,6 +29,10 @@ internal object CoroutineAgentConnector {
     private val kotlinxCoroutinesCoreJarRegex = Regex(""".+\W$kotlinxCoroutinesCoreName(-jvm)?-(\d[\w.\-]+)?\.jar""")
 
     fun attachCoroutineAgent(project: Project, params: JavaParameters): Boolean {
+        if (!params.classPath.containsKotlinxCoroutinesCore()) {
+            return false
+        }
+
         val searchResult = findKotlinxCoroutinesCoreJar(project)
         if (searchResult.debuggerMode == CoroutineDebuggerMode.VERSION_1_3_8_AND_UP &&
             searchResult.jarPath != null) {
@@ -35,6 +40,9 @@ internal object CoroutineAgentConnector {
         }
         return false
     }
+
+    private fun PathsList.containsKotlinxCoroutinesCore() =
+        pathList.any { it.contains(kotlinxCoroutinesCoreName) }
 
     private fun findKotlinxCoroutinesCoreJar(project: Project): KotlinxCoroutinesSearchResult {
         val matchResult = project
