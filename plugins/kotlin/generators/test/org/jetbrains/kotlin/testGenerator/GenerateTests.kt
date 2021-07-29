@@ -1523,8 +1523,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     }
 
         testGroup(
-            "plugins/kotlin-serialization/kotlin-serialization-ide/test",
-            "plugins/kotlin-serialization/kotlin-serialization-ide/testData"
+            "compiler-plugins/kotlinx-serialization/common", testDataPath = "compiler-plugins/kotlinx-serialization/common/testData"
         ) {
             testClass<AbstractSerializationPluginIdeDiagnosticTest> {
                 model("diagnostics")
@@ -1590,7 +1589,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea/performanceTests/test", "../idea/tests/testData") {
+    testGroup("performance-tests", testDataPath = "../idea/tests/testData") {
         testClass<AbstractPerformanceJavaToKotlinCopyPasteConversionTest> {
             model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
