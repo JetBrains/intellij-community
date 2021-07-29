@@ -3,10 +3,10 @@
 fun foo() {
     open class <caret>A
 
-    interface T: A
+    interface T : A
 
     fun bar() {
-        interface U: T
+        interface U : T
     }
 }
 

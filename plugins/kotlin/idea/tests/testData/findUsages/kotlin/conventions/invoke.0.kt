@@ -3,7 +3,7 @@
 package pack
 
 open class B(val n: Int) {
-    open operator fun <caret>invoke(i: Int){}
+    open operator fun <caret>invoke(i: Int) {}
 }
 
 object Obj : B(0)
@@ -26,7 +26,7 @@ fun cTest(c: C) {
     some(12, "Irrelevant usage")
 }
 
-class C(): B(12) {
+class C() : B(12) {
     override fun invoke(i: Int) {}
 }
 

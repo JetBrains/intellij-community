@@ -2,20 +2,20 @@
 // OPTIONS: derivedClasses
 
 fun foo() {
-    open class B: A() {
+    open class B : A() {
 
     }
 
-    open class C: Y {
+    open class C : Y {
 
     }
 
     fun bar() {
-        open class Z: A() {
+        open class Z : A() {
 
         }
 
-        class U: Z() {
+        class U : Z() {
 
         }
     }

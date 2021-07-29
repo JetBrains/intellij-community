@@ -10,7 +10,7 @@ fun test() {
     1 in A(2)
     1 !in A(2)
     when (1) {
-        in A(2) -> {}
-        !in A(2) -> {}
+        in A(2) -> Unit
+        !in A(2) -> Unit
     }
 }

@@ -1,5 +1,5 @@
 Class/object property type 6 var nextServer: Server? = Server()
-Companion object 5 class Client(name: String = Server.NAME): Server() {
+Companion object 5 class Client(name: String = Server.NAME) : Server() {
 Companion object 7 val name = Server.NAME
 Function return types 14 fun getNextServer2(): Server? {
 Function return types 36 fun Any.asServer(): Server? {

@@ -4,10 +4,10 @@ interface <caret>X {
 
 }
 
-open class A: X {
+open class A : X {
 
 }
 
-interface Y: X {
+interface Y : X {
 
 }

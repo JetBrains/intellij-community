@@ -7,8 +7,11 @@ public class JavaClassInvoke {
 
     public static JavaClassInvoke INSTANCE = new JavaClassInvoke();
 
-    public static class Other extends JavaClassInvoke {}
-    public static class AnotherOther extends Other {}
+    public static class Other extends JavaClassInvoke {
+    }
+
+    public static class AnotherOther extends Other {
+    }
 
     public static class JavaOther {
         public void invoke() {

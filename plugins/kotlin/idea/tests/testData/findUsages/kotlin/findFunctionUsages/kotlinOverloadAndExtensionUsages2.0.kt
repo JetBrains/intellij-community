@@ -4,11 +4,11 @@ interface X {
 
 }
 
-open class A: X {
+open class A : X {
 
 }
 
-object O: A() {
+object O : A() {
     fun <caret>foo() {
 
     }

@@ -2,10 +2,11 @@
 // OPTIONS: usages, skipImports
 
 interface A {
-    @Suppress("WRONG_MODIFIER_CONTAINING_DECLARATION") internal fun foo()
+    @Suppress("WRONG_MODIFIER_CONTAINING_DECLARATION")
+    internal fun foo()
 }
 
-class B: A {
+class B : A {
     override fun foo() {} // Find usages gives no results
 }
 

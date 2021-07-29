@@ -6,7 +6,7 @@ fun foo() {
 
     }
 
-    doSomething(object : A() {}, object: X {})
+    doSomething(object : A() {}, object : X {})
 
     fun bar() {
         val x = object : X {

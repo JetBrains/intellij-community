@@ -2,8 +2,8 @@ package b
 
 import a.Outer
 
-public class KOuter: Outer() {
-    public inner class X(bar: String? = (this@KOuter as Outer).A().bar): Outer.A() {
+public class KOuter : Outer() {
+    public inner class X(bar: String? = (this@KOuter as Outer).A().bar) : Outer.A() {
         var next: Outer.A? = (this@KOuter as Outer).A()
         val myBar: String? = (this@KOuter as Outer).A().bar
 

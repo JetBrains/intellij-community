@@ -3,7 +3,7 @@
 
 open data class A(val a: Int)
 
-class B(b: Int): A(b) {
+class B(b: Int) : A(b) {
     override fun <caret>copy(b: Int): B = B(b)
 }
 

@@ -8,11 +8,11 @@ package usages
 
 import library.*
 
-class X: A {
-    constructor(): super()
+class X : A {
+    constructor() : super()
 }
 
-class Y(): A()
+class Y() : A()
 
 fun test() {
     val a: A = <caret>A()

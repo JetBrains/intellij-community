@@ -7,7 +7,7 @@ open class A : I {
     override fun foo() {}
 }
 
-class B: A() {
+class B : A() {
     override fun <caret>foo() {}
 }
 

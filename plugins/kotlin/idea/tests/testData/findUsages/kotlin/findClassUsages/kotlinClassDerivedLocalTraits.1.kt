@@ -2,20 +2,20 @@
 // OPTIONS: derivedInterfaces
 
 fun foo() {
-    open class B: A() {
+    open class B : A() {
 
     }
 
-    open class C: Y {
+    open class C : Y {
 
     }
 
     fun bar() {
-        interface Z: A {
+        interface Z : A {
 
         }
 
-        interface U: Z {
+        interface U : Z {
 
         }
     }

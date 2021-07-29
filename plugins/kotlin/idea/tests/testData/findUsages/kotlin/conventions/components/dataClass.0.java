@@ -9,11 +9,13 @@ public class JavaClass {
         return Collections.singletonList(a);
     }
 
-    public void takeA(A a){}
+    public void takeA(A a) {
+    }
 
     private A getAPrivate() {
         return new A(1, "", "");
     }
 
-    private void takeAPrivate(A a){}
+    private void takeAPrivate(A a) {
+    }
 }

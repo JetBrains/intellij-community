@@ -3,13 +3,13 @@
 fun foo() {
     open class <caret>A
 
-    val B = object: A() {}
+    val B = object : A() {}
 
-    open class T: A()
+    open class T : A()
 
     fun bar() {
-        val C = object: A() {}
+        val C = object : A() {}
 
-        val D = object: T() {}
+        val D = object : T() {}
     }
 }

@@ -5,7 +5,9 @@ public interface AI {
 
     public class A implements AI {
         @Override
-        public String getFoo() {return "";}
+        public String getFoo() {
+            return "";
+        }
     }
 }
 

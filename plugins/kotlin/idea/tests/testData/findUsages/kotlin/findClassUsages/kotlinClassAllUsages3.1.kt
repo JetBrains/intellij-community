@@ -2,7 +2,7 @@ package client
 
 import server.Data
 
-class Client<T: Data, X> where X: Data {
+class Client<T : Data, X> where X : Data {
 
 }
 

@@ -10,7 +10,7 @@ class A() {
         ext() // companion object is extension receiver
     }
 
-    companion <caret>object: Foo {
+    companion <caret>object : Foo {
         fun foo() {
         }
 

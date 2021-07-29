@@ -2,6 +2,7 @@
 // OPTIONS: usages
 class Foo {
     companion object {
-        @JvmStatic var <caret>foo = 1
+        @JvmStatic
+        var <caret>foo = 1
     }
 }

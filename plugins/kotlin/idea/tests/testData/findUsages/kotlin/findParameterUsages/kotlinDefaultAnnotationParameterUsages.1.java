@@ -1,7 +1,9 @@
 class Test {
     @KAnn("abc")
-    void test1() { }
+    void test1() {
+    }
 
     @KAnn(value = "abc")
-    void test2() { }
+    void test2() {
+    }
 }

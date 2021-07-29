@@ -2,7 +2,7 @@ package client
 
 import server.Server
 
-class Client(name: String = Server.NAME): Server() {
+class Client(name: String = Server.NAME) : Server() {
     var nextServer: Server? = Server()
     val name = Server.NAME
 
@@ -21,7 +21,7 @@ class Client(name: String = Server.NAME): Server() {
     }
 }
 
-object ClientObject: Server() {
+object ClientObject : Server() {
 
 }
 

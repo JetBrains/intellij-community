@@ -1,4 +1,4 @@
-open class B: A<String>() {
+open class B : A<String>() {
     override fun foo(t: String) {
         super<A>.foo(t)
     }

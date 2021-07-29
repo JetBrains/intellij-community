@@ -7,7 +7,8 @@ public class JavaClassWI {
 
     public static JavaClassWI INSTANCE = new JavaClassWI();
 
-    public static class Other extends JavaClassWI {}
+    public static class Other extends JavaClassWI {
+    }
 }
 
 // CRI_IGNORE

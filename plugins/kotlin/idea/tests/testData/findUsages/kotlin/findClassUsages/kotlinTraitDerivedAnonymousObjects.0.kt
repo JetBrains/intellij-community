@@ -4,6 +4,6 @@ interface <caret>X {
 
 }
 
-open class A: X {
+open class A : X {
 
 }

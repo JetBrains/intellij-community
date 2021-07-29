@@ -1,1 +1,2 @@
-public class Client extends Foo {}
+public class Client extends Foo {
+}

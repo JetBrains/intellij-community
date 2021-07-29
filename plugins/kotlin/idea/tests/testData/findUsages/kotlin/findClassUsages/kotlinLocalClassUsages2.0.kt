@@ -13,4 +13,5 @@ fun foo(): Any {
 }
 
 class Bar
+
 val x = Bar()

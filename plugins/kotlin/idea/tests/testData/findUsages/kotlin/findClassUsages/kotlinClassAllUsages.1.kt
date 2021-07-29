@@ -2,7 +2,7 @@ package client
 
 import server.Server
 
-class Client(name: String = Server.NAME): Server() {
+class Client(name: String = Server.NAME) : Server() {
     var nextServer: Server? = Server()
     val name = Server.NAME
 
@@ -20,16 +20,16 @@ class Client(name: String = Server.NAME): Server() {
         println("Client")
     }
 
-    companion object: Server() {
+    companion object : Server() {
 
     }
 }
 
-object ClientObject: Server() {
+object ClientObject : Server() {
 
 }
 
-abstract class Servers: Iterator<Server> {
+abstract class Servers : Iterator<Server> {
 
 }
 

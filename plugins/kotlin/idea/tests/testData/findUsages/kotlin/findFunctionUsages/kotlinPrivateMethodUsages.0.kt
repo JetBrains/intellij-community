@@ -10,7 +10,7 @@ public open class Server() {
     open fun processRequest() = doProcessRequest()
 }
 
-public class ServerEx(): Server() {
+public class ServerEx() : Server() {
     override fun processRequest() = "foo" + doProcessRequest()
 }
 

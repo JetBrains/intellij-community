@@ -5,7 +5,7 @@ interface A {
     fun foo()
 }
 
-class B: A {
+class B : A {
     override fun foo() {} // Find usages gives no results
 }
 

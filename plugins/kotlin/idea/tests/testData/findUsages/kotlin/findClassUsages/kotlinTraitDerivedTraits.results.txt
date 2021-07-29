@@ -1,2 +1,2 @@
-[kotlinTraitDerivedTraits.0.kt] Unclassified 11 interface Y: X {
+[kotlinTraitDerivedTraits.0.kt] Unclassified 11 interface Y : X {
 [kotlinTraitDerivedTraits.1.kt] Unclassified 19 interface D : Y {}

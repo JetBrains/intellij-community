@@ -7,7 +7,7 @@ open class A<T> {
     open var <caret>foo: T = TODO()
 }
 
-open class B: A<String>() {
+open class B : A<String>() {
     override var foo: String
         get() {
             println("get")

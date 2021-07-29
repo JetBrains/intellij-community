@@ -8,6 +8,6 @@ open class <caret>A: X {
 
 }
 
-interface Y: X {
+interface Y : X {
 
 }
