@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlinx.serialization.idea.quickfixes
+package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.quickfixes
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
@@ -13,13 +13,12 @@ import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.refactoring.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceProperty.KotlinIntroducePropertyHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHintByKey
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getOutermostParentContainedIn
 import org.jetbrains.kotlinx.serialization.compiler.diagnostic.SerializationErrors
-import org.jetbrains.kotlinx.serialization.idea.KotlinSerializationBundle
+import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.KotlinSerializationBundle
 
 internal class JsonRedundantQuickFix(expression: KtCallExpression) : KotlinQuickFixAction<KtCallExpression>(expression) {
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
