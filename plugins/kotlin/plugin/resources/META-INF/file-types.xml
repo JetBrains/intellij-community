@@ -1,4 +1,10 @@
 <idea-plugin>
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.binaryExtension"
+            interface="org.jetbrains.kotlin.idea.util.KotlinBinaryExtension"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.KotlinIconProviderService"

@@ -1,4 +1,11 @@
 <idea-plugin>
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.ultraLightClassModifierExtension"
+            interface="org.jetbrains.kotlin.asJava.UltraLightClassModifierExtension"
+            area="IDEA_PROJECT"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="org.jetbrains.kotlin.asJava.classes.FacadeCache"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade"/>

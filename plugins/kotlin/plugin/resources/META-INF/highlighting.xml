@@ -1,4 +1,14 @@
 <idea-plugin>
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.highlighterExtension"
+            interface="org.jetbrains.kotlin.idea.highlighter.HighlighterExtension"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.beforeResolveHighlightingVisitor"
+            interface="org.jetbrains.kotlin.idea.highlighter.BeforeResolveHighlightingExtension"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.references.KotlinReferenceProviderContributor"

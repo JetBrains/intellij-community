@@ -1,4 +1,10 @@
 <idea-plugin>
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.completionExtension"
+            interface="org.jetbrains.kotlin.idea.completion.KotlinCompletionExtension"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.completion.LookupCancelWatcher"/>
 

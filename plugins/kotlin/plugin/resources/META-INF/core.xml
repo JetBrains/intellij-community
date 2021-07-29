@@ -7,8 +7,43 @@
             interface="org.jetbrains.kotlin.idea.quickfix.KotlinAutoImportsFilter"
             dynamic="true"/>
     <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.updater"
+            beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
+    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.pluginUpdateVerifier"
             interface="org.jetbrains.kotlin.idea.update.PluginUpdateVerifier"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.projectConfigurator"
+            interface="org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.newFileHook"
+            interface="org.jetbrains.kotlin.idea.actions.NewKotlinFileHook"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.facetValidatorCreator"
+            interface="org.jetbrains.kotlin.idea.facet.KotlinFacetValidatorCreator"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.clearBuildState"
+            interface="org.jetbrains.kotlin.idea.compiler.configuration.ClearBuildStateExtension"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.experimentalFeature"
+            interface="org.jetbrains.kotlin.idea.configuration.ExperimentalFeature"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.j2kConverterExtension"
+            interface="org.jetbrains.kotlin.j2k.J2kConverterExtension"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="com.intellij.newProjectWizard.buildSystem.kotlin"
+            interface="org.jetbrains.kotlin.tools.projectWizard.KotlinBuildSystemType" dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.testFrameworkProvider"
+            interface="org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.buildSystemTypeDetector"
+            interface="org.jetbrains.kotlin.idea.configuration.BuildSystemTypeDetector"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
