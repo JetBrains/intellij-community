@@ -833,9 +833,14 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/addExclExclCall/typeMismatch/removeNullabilityForSubclass.kt");
             }
 
-            @TestMetadata("whenSmartCastImpossible.kt")
-            public void testWhenSmartCastImpossible() throws Exception {
-                runTest("testData/quickfix/addExclExclCall/typeMismatch/whenSmartCastImpossible.kt");
+            @TestMetadata("smartcastImpossibleForArgument.kt")
+            public void testSmartcastImpossibleForArgument() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/typeMismatch/smartcastImpossibleForArgument.kt");
+            }
+
+            @TestMetadata("smartcastImpossibleForReceiver.kt")
+            public void testSmartcastImpossibleForReceiver() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/typeMismatch/smartcastImpossibleForReceiver.kt");
             }
         }
     }
