@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -45,6 +46,7 @@ import org.jetbrains.jps.service.SharedThreadPool;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -62,6 +64,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * @author Eugene Zhuravlev
@@ -870,14 +873,14 @@ public final class IncProjectBuilder {
     private final Set<BuildChunkTask> myNotBuiltDependencies = new HashSet<>();
     private final List<BuildChunkTask> myTasksDependsOnThis = new ArrayList<>();
     private int mySelfScore = 0;
-    private int myDepsScore = 0;
+    private final AtomicInteger myDepsScore = new AtomicInteger(0);
 
     private BuildChunkTask(BuildTargetChunk chunk) {
       myChunk = chunk;
     }
 
     private int getScore() {
-      return myDepsScore + mySelfScore;
+      return myDepsScore.get() + mySelfScore;
     }
 
     public BuildTargetChunk getChunk() {
@@ -940,24 +943,19 @@ public final class IncProjectBuilder {
         }
       }
 
-      Map<BuildTarget<?>, Collection<BuildTarget<?>>> transitiveDependencyCache = new HashMap<>(myTasks.size());
+      Map<BuildTarget<?>, Collection<BuildTarget<?>>> transitiveDependencyCache = new ConcurrentHashMap<>(myTasks.size());
 
-      for (BuildChunkTask task : myTasks) {
-        for (BuildTarget<?> target : task.getChunk().getTargets()) {
-          for (BuildTarget<?> dependency : targetIndex.getDependencies(target, myContext)) {
-            BuildChunkTask depTask = targetToTask.get(dependency);
-            if (depTask != null && depTask != task) {
-              task.addDependency(depTask);
+      // reverse bypass is important (tasks are topologically sorted, so in original list the last ones will be without dependencies)
+      Lists.reverse(myTasks).parallelStream().forEach(chunkTask -> {
+        chunkTask.getChunk().getTargets().parallelStream()
+          .flatMap(target -> StreamSupport.stream(getTransitiveDeps(targetIndex, target, context, transitiveDependencyCache).spliterator(), true))
+          .map(dependency -> targetToTask.get(dependency))
+          .forEach(depTask -> {
+            if (depTask != null && depTask != chunkTask) {
+              depTask.myDepsScore.addAndGet(chunkTask.mySelfScore);
             }
-          }
-          for (BuildTarget<?> dependency : getTransitiveDeps(targetIndex, target, myContext, transitiveDependencyCache)) {
-            BuildChunkTask depTask = targetToTask.get(dependency);
-            if (depTask != null && depTask != task) {
-              depTask.myDepsScore += task.mySelfScore;
-            }
-          }
-        }
-      }
+          });
+      });
 
       myTasksCountDown = new CountDownLatch(myTasks.size());
     }
@@ -1061,11 +1059,11 @@ public final class IncProjectBuilder {
       return cache.get(target);
     }
     Set<BuildTarget<?>> result = new HashSet<>();
-    LinkedList<BuildTarget<?>> queue = new LinkedList<>();
+    ArrayDeque<BuildTarget<?>> queue = new ArrayDeque<>();
     queue.add(target);
     result.add(target);
     while (!queue.isEmpty()) {
-      BuildTarget next = queue.pop();
+      BuildTarget<?> next = queue.pop();
       Collection<BuildTarget<?>> transitive = cache.get(next);
       if (transitive != null) {
         result.addAll(transitive);
