@@ -32,12 +32,6 @@ public class AndroidStudioSystemHealthMonitorAdapter {
     }
   }
 
-  public static void recordWriteLockWaitTime(long elapsed) {
-    if (ourListener != null) {
-      ourListener.recordWriteLockWaitTime(elapsed);
-    }
-  }
-
   public static boolean handleExceptionEvent(IdeaLoggingEvent event, VMOptions.MemoryKind memoryKind) {
     if (ourListener != null) {
       return ourListener.handleExceptionEvent(event, memoryKind);
@@ -55,8 +49,6 @@ public class AndroidStudioSystemHealthMonitorAdapter {
 
   public interface EventsListener {
     void countActionInvocation(Class<? extends AnAction> aClass, Presentation presentation, AnActionEvent event);
-
-    void recordWriteLockWaitTime(long elapsed);
 
     boolean handleExceptionEvent(IdeaLoggingEvent event, VMOptions.MemoryKind memoryKind);
   }
