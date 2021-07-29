@@ -228,7 +228,8 @@ public final class ArtifactRepositoryManager {
       org.apache.http.HttpConnection.class, //httpcore
       org.apache.http.client.HttpClient.class, //httpclient
       org.apache.commons.logging.LogFactory.class, // commons-logging
-      org.slf4j.Marker.class // slf4j
+      org.slf4j.Marker.class, // slf4j
+      org.apache.commons.codec.binary.Base64.class // commons-codec
     );
   }
 
