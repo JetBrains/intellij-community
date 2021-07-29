@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repositorie
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.InterceptionPoint
 
-class KtorServerTemplate : Template() {
+object KtorServerTemplate : Template() {
     override val title: String = KotlinNewProjectWizardBundle.message("module.template.ktor.server.title")
     override val description: String = KotlinNewProjectWizardBundle.message("module.template.ktor.server.description")
 

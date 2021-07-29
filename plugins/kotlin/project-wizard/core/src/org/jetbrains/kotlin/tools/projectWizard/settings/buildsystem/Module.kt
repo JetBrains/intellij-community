@@ -179,13 +179,23 @@ val Module.isRootModule
     get() = parent == null
 
 @Suppress("FunctionName")
-fun MultiplatformTargetModule(@NonNls name: String, configurator: ModuleConfigurator, sourceSets: List<Sourceset>) =
-    Module(name, configurator, sourceSets = sourceSets)
+fun MultiplatformTargetModule(
+    @NonNls name: String,
+    configurator: ModuleConfigurator,
+    sourceSets: List<Sourceset>,
+    permittedTemplateIds: Set<String>? = null
+) =
+    Module(name, configurator, sourceSets = sourceSets, permittedTemplateIds = permittedTemplateIds)
 
 @Suppress("FunctionName")
-fun MultiplatformModule(@NonNls name: String, template: Template? = null, targets: List<Module> = emptyList()) =
-    Module(name, MppModuleConfigurator, template = template, subModules = targets)
+fun MultiplatformModule(
+    @NonNls name: String,
+    template: Template? = null,
+    targets: List<Module> = emptyList(),
+    permittedTemplateIds: Set<String>? = null
+) =
+    Module(name, MppModuleConfigurator, template = template, permittedTemplateIds = permittedTemplateIds, subModules = targets)
 
 @Suppress("FunctionName")
-fun SinglePlatformModule(@NonNls name: String, sourceSets: List<Sourceset>) =
-    Module(name, JvmSinglePlatformModuleConfigurator, sourceSets = sourceSets)
+fun SinglePlatformModule(@NonNls name: String, sourceSets: List<Sourceset>, permittedTemplateIds: Set<String>? = null) =
+    Module(name, JvmSinglePlatformModuleConfigurator, sourceSets = sourceSets, permittedTemplateIds = permittedTemplateIds)

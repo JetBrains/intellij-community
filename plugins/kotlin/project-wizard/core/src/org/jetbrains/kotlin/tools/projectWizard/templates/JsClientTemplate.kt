@@ -57,7 +57,7 @@ abstract class JsClientTemplate : Template() {
     }
 
     override fun Reader.createInterceptors(module: ModuleIR): List<TemplateInterceptor> = buildList {
-        +interceptTemplate(KtorServerTemplate()) {
+        +interceptTemplate(KtorServerTemplate) {
             applicableIf { buildFileIR ->
                 if (module !is MultiplatformModuleIR) return@applicableIf false
                 val tasks = buildFileIR.irsOfTypeOrNull<GradleConfigureTaskIR>() ?: return@applicableIf true

@@ -20,7 +20,7 @@ class KtorTemplatesPlugin(context: Context) : TemplatePlugin(context) {
 
         val addTemplate by pipelineTask(GenerationPhase.PREPARE) {
             withAction {
-                TemplatesPlugin.addTemplate.execute(KtorServerTemplate())
+                TemplatesPlugin.addTemplate.execute(KtorServerTemplate)
             }
         }
     }

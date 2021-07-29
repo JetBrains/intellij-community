@@ -104,9 +104,8 @@ private fun createDefaultSourceSets() =
         )
     }
 
-private fun ModuleType.createDefaultTarget(
-    name: String = this.name
-) = MultiplatformTargetModule(name, defaultTarget, createDefaultSourceSets())
+private fun ModuleType.createDefaultTarget(name: String = this.name, permittedTemplateIds: Set<String>? = null) =
+    MultiplatformTargetModule(name, defaultTarget, createDefaultSourceSets(), permittedTemplateIds)
 
 object ConsoleApplicationProjectTemplate : ProjectTemplate() {
     override val title = KotlinNewProjectWizardBundle.message("project.template.empty.jvm.console.title")
@@ -122,9 +121,10 @@ object ConsoleApplicationProjectTemplate : ProjectTemplate() {
             KotlinPlugin.modules.reference withValue listOf(
                 SinglePlatformModule(
                     "consoleApp",
-                    createDefaultSourceSets()
+                    createDefaultSourceSets(),
+                    permittedTemplateIds = setOf(ConsoleJvmApplicationTemplate.id)
                 ).apply {
-                    withTemplate(ConsoleJvmApplicationTemplate())
+                    withTemplate(ConsoleJvmApplicationTemplate)
                 }
             )
         )
@@ -144,14 +144,20 @@ object MultiplatformLibraryProjectTemplate : ProjectTemplate() {
             KotlinPlugin.modules.reference withValue listOf(
                 MultiplatformModule(
                     "library",
+                    permittedTemplateIds = emptySet(),
                     targets = listOf(
                         ModuleType.common.createDefaultTarget(),
-                        ModuleType.jvm.createDefaultTarget(),
-                        MultiplatformTargetModule("js", MppLibJsBrowserTargetConfigurator, createDefaultSourceSets())
+                        ModuleType.jvm.createDefaultTarget(permittedTemplateIds = emptySet()),
+                        MultiplatformTargetModule(
+                            "js",
+                            MppLibJsBrowserTargetConfigurator,
+                            createDefaultSourceSets(),
+                            permittedTemplateIds = emptySet()
+                        )
                             .withConfiguratorSettings<MppLibJsBrowserTargetConfigurator> {
                                 JSConfigurator.kind withValue JsTargetKind.LIBRARY
                             },
-                        ModuleType.native.createDefaultTarget()
+                        ModuleType.native.createDefaultTarget(permittedTemplateIds = emptySet())
                     )
                 )
             )
@@ -170,13 +176,13 @@ object FullStackWebApplicationProjectTemplate : ProjectTemplate() {
         KotlinPlugin.modules.reference withValue listOf(
             MultiplatformModule(
                 "application",
+                permittedTemplateIds = emptySet(),
                 targets = listOf(
                     ModuleType.common.createDefaultTarget(),
-                    ModuleType.jvm.createDefaultTarget().apply {
-                        withTemplate(KtorServerTemplate()) {
-                        }
+                    ModuleType.jvm.createDefaultTarget(permittedTemplateIds = setOf(KtorServerTemplate.id)).apply {
+                        withTemplate(KtorServerTemplate)
                     },
-                    ModuleType.js.createDefaultTarget().apply {
+                    ModuleType.js.createDefaultTarget(permittedTemplateIds = setOf(ReactJsClientTemplate.id)).apply {
                         withTemplate(ReactJsClientTemplate)
                     }
                 )
@@ -200,12 +206,13 @@ object NativeApplicationProjectTemplate : ProjectTemplate() {
                 Module(
                     "app",
                     MppModuleConfigurator,
-                    template = null,
+                    permittedTemplateIds = emptySet(),
                     sourceSets = emptyList(),
                     subModules = listOf(
-                        ModuleType.native.createDefaultTarget("native").apply {
-                            withTemplate(NativeConsoleApplicationTemplate())
-                        }
+                        ModuleType.native.createDefaultTarget("native", permittedTemplateIds = setOf(NativeConsoleApplicationTemplate.id))
+                            .apply {
+                                withTemplate(NativeConsoleApplicationTemplate)
+                            }
                     )
                 )
             )
