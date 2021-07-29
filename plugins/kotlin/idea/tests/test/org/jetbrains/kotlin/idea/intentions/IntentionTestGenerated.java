@@ -8536,6 +8536,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertToStringTemplate/stringPlusStringLiteral.kt");
         }
 
+        @TestMetadata("superToString.kt")
+        public void testSuperToString() throws Exception {
+            runTest("testData/intentions/convertToStringTemplate/superToString.kt");
+        }
+
         @TestMetadata("templatePlusStringLiteral.kt")
         public void testTemplatePlusStringLiteral() throws Exception {
             runTest("testData/intentions/convertToStringTemplate/templatePlusStringLiteral.kt");
