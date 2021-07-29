@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots
 
 import com.intellij.execution.CantRunException
@@ -21,7 +21,7 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeType
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
-import com.intellij.lang.LangBundle
+import com.intellij.lang.LangCoreBundle
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.roots.OrderRootType
@@ -113,7 +113,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       }
       catch (t: Throwable) {
         LOG.warn(t)
-        targetProgressIndicator.stopWithErrorMessage(LangBundle.message("progress.message.failed.to.resolve.0.1", volume.localRoot,
+        targetProgressIndicator.stopWithErrorMessage(LangCoreBundle.message("progress.message.failed.to.resolve.0.1", volume.localRoot,
                                                                         t.localizedMessage))
         result.resolveFailure(t)
       }
@@ -149,7 +149,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       }
       catch (t: Throwable) {
         LOG.warn(t)
-        targetProgressIndicator.stopWithErrorMessage(LangBundle.message("progress.message.failed.to.resolve.0.1", volume.localRoot,
+        targetProgressIndicator.stopWithErrorMessage(LangCoreBundle.message("progress.message.failed.to.resolve.0.1", volume.localRoot,
                                                                         t.localizedMessage))
         result.resolveFailure(t)
       }
@@ -206,7 +206,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     }
     else {
       if (languageRuntime == null) {
-        throw CantRunException(LangBundle.message("error.message.cannot.find.java.configuration.in.0.target", request.configuration?.displayName))
+        throw CantRunException(LangCoreBundle.message("error.message.cannot.find.java.configuration.in.0.target", request.configuration?.displayName))
       }
 
       val java = if (platform == Platform.WINDOWS) "java.exe" else "java"
@@ -243,7 +243,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     // copies agent .jar files to the beginning of the classpath to load agent classes faster
     if (vmParameters.isUrlClassloader()) {
       if (request !is LocalTargetEnvironmentRequest) {
-        throw CantRunException(LangBundle.message("error.message.cannot.run.application.with.urlclasspath.on.the.remote.target"))
+        throw CantRunException(LangCoreBundle.message("error.message.cannot.run.application.with.urlclasspath.on.the.remote.target"))
       }
 
       for (parameter in vmParameters.parameters) {
@@ -481,7 +481,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       }
       if (vmParameters.isUrlClassloader()) {
         if (request !is LocalTargetEnvironmentRequest) {
-          throw CantRunException(LangBundle.message("error.message.cannot.run.application.with.urlclasspath.on.the.remote.target"))
+          throw CantRunException(LangCoreBundle.message("error.message.cannot.run.application.with.urlclasspath.on.the.remote.target"))
         }
 
         // since request is known to be local we will simplify to TargetValue.fixed below
@@ -721,7 +721,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
 
     @Throws(CantRunException::class)
     private fun throwUnableToCreateTempFile(cause: IOException?) {
-      throw CantRunException(LangBundle.message("error.message.failed.to.create.a.temporary.file.in.0", FileUtil.getTempDirectory()), cause)
+      throw CantRunException(LangCoreBundle.message("error.message.failed.to.create.a.temporary.file.in.0", FileUtil.getTempDirectory()), cause)
     }
   }
 

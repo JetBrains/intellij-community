@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
-import com.intellij.lang.LangBundle;
+import com.intellij.lang.LangCoreBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.NlsContexts;
@@ -35,10 +35,10 @@ public enum ShortenCommandLine {
     }
   };
 
-  private final @PropertyKey(resourceBundle = LangBundle.BUNDLE) String myNameKey;
+  private final @PropertyKey(resourceBundle = LangCoreBundle.BUNDLE) String myNameKey;
   private final @NlsSafe String myDescription;
 
-  ShortenCommandLine(@PropertyKey(resourceBundle = LangBundle.BUNDLE) String nameKey, @NlsSafe String description) {
+  ShortenCommandLine(@PropertyKey(resourceBundle = LangCoreBundle.BUNDLE) String nameKey, @NlsSafe String description) {
     myNameKey = nameKey;
     myDescription = description;
   }
@@ -52,7 +52,7 @@ public enum ShortenCommandLine {
   }
 
   public @NlsContexts.Label String getPresentableName() {
-    return LangBundle.message(myNameKey);
+    return LangCoreBundle.message(myNameKey);
   }
 
   public static @NotNull ShortenCommandLine getDefaultMethod(@Nullable Project project, String rootPath) {
