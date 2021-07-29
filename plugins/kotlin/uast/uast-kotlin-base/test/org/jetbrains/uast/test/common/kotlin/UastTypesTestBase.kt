@@ -3,7 +3,6 @@
 package org.jetbrains.uast.test.common.kotlin
 
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.test.KtAssert
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastTestSuffix.TXT
 import java.io.File
@@ -19,22 +18,10 @@ interface UastTypesTestBase : UastPluginSelection, UastFileComparisonTestBase {
         return getTypesFile(filePath, "$pluginSuffix$TXT")
     }
 
-    // TODO: ideally, we don't want this kind of whitelist.
-    fun isExpectedToFail(filePath: String): Boolean {
-        return false
-    }
-
     fun check(filePath: String, file: UFile) {
         val typesFile = getPluginTypesFile(filePath)
 
-        try {
-            KotlinTestUtils.assertEqualsToFile(typesFile, file.asLogTypes())
-            if (isExpectedToFail(filePath)) {
-                KtAssert.fail("This test seems not fail anymore. Drop this from the white-list and re-run the test.")
-            }
-        } catch (e: Exception) {
-            if (!isExpectedToFail(filePath)) throw e
-        }
+        KotlinTestUtils.assertEqualsToFile(typesFile, file.asLogTypes())
 
         cleanUpIdenticalFile(
             typesFile,
