@@ -650,6 +650,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/expressions/unnecessarySafeCall1.kt");
         }
 
+        @TestMetadata("unnecessarySafeCall2.kt")
+        public void testUnnecessarySafeCall2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/expressions/unnecessarySafeCall2.kt");
+        }
+
         @TestMetadata("unsafeCall1.kt")
         public void testUnsafeCall1() throws Exception {
             runTest("../idea/tests/testData/quickfix/expressions/unsafeCall1.kt");
@@ -1451,6 +1456,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/callExpression.kt");
         }
 
+        @TestMetadata("callExpressionInSafeQualified.kt")
+        public void testCallExpressionInSafeQualified() throws Exception {
+            runTest("../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/callExpressionInSafeQualified.kt");
+        }
+
+        @TestMetadata("callExpressionInSafeQualified2.kt")
+        public void testCallExpressionInSafeQualified2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/callExpressionInSafeQualified2.kt");
+        }
+
         @TestMetadata("hasElvis.kt")
         public void testHasElvis() throws Exception {
             runTest("../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/hasElvis.kt");
@@ -1487,6 +1502,21 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("normal.kt")
         public void testNormal() throws Exception {
             runTest("../idea/tests/testData/quickfix/replaceWithDotCall/normal.kt");
+        }
+
+        @TestMetadata("safeCallChain.kt")
+        public void testSafeCallChain() throws Exception {
+            runTest("../idea/tests/testData/quickfix/replaceWithDotCall/safeCallChain.kt");
+        }
+
+        @TestMetadata("safeCallChain2.kt")
+        public void testSafeCallChain2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/replaceWithDotCall/safeCallChain2.kt");
+        }
+
+        @TestMetadata("safeCallChain3.kt")
+        public void testSafeCallChain3() throws Exception {
+            runTest("../idea/tests/testData/quickfix/replaceWithDotCall/safeCallChain3.kt");
         }
     }
 
@@ -1590,6 +1620,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("invokeOperator.kt")
         public void testInvokeOperator() throws Exception {
             runTest("../idea/tests/testData/quickfix/replaceWithSafeCall/invokeOperator.kt");
+        }
+
+        @TestMetadata("invokeOperator2.kt")
+        public void testInvokeOperator2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/replaceWithSafeCall/invokeOperator2.kt");
         }
 
         @TestMetadata("lastStatementOfLambdaAsArgument.kt")
@@ -1997,6 +2032,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("invokeFunctionType2.kt")
         public void testInvokeFunctionType2() throws Exception {
             runTest("../idea/tests/testData/quickfix/wrapWithSafeLetCall/invokeFunctionType2.kt");
+        }
+
+        @TestMetadata("invokeOperator.kt")
+        public void testInvokeOperator() throws Exception {
+            runTest("../idea/tests/testData/quickfix/wrapWithSafeLetCall/invokeOperator.kt");
+        }
+
+        @TestMetadata("invokeOperator2.kt")
+        public void testInvokeOperator2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/wrapWithSafeLetCall/invokeOperator2.kt");
         }
 
         @TestMetadata("invokeUnsafe.kt")
