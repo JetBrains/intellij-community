@@ -1475,7 +1475,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("plugins/kotlin-serialization/kotlin-serialization-ide/test") {
+    testGroup("compiler-plugins/kotlin-serialization/kotlin-serialization-ide/test") {
         testClass<AbstractSerializationPluginIdeDiagnosticTest> {
             model("diagnostics")
         }
