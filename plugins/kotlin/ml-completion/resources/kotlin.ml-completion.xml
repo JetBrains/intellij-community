@@ -4,8 +4,8 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
-    <completion.ml.model implementation="org.jetbrains.kotlin.idea.completion.ml.KotlinMLRankingProvider"/>
-    <completion.ml.contextFeatures language="kotlin" implementationClass="org.jetbrains.kotlin.idea.completion.ml.KotlinContextFeatureProvider"/>
+    <completion.ml.model implementation="org.jetbrains.kotlin.idea.mlCompletion.KotlinMLRankingProvider"/>
+    <completion.ml.contextFeatures language="kotlin" implementationClass="org.jetbrains.kotlin.idea.mlCompletion.KotlinContextFeatureProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
