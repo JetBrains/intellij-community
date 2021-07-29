@@ -34,9 +34,6 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
       if (!original.isTemplate() && !runManager.hasSettings(original)) {
         return true;
       }
-      if (!super.isModified()) {
-        return false;
-      }
 
       if (isSpecificallyModified()) {
         return true;
