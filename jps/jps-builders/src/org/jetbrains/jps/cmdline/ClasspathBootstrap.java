@@ -34,12 +34,14 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * @author Eugene Zhuravlev
@@ -57,6 +59,11 @@ public final class ClasspathBootstrap {
     ProtobufDecoder.class,  // netty codec
   };
 
+  private static final String[] REFLECTION_OPEN_PACKAGES = {
+    // needed for jps core functioning
+    "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+    "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
+  };
 
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
   private static final String PROTOBUF_JAVA6_VERSION = "3.5.1";
@@ -216,6 +223,13 @@ public final class ClasspathBootstrap {
   public static File getResourceFile(Class<?> aClass) {
     final String resourcePath = getResourcePath(aClass);
     return resourcePath != null? new File(resourcePath) : null;
+  }
+
+  public static void configureReflectionOpenPackages(Consumer<String> paramConsumer) {
+    for (String aPackage : REFLECTION_OPEN_PACKAGES) {
+      paramConsumer.accept("--add-opens");
+      paramConsumer.accept(aPackage);
+    }
   }
 
   private static List<String> getInstrumentationUtilRoots() {
