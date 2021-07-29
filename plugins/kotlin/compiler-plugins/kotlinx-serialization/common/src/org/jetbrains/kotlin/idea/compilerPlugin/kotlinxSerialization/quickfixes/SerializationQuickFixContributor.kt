@@ -5,8 +5,6 @@ package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.quickfixes
 import org.jetbrains.kotlin.idea.quickfix.QuickFixContributor
 import org.jetbrains.kotlin.idea.quickfix.QuickFixes
 import org.jetbrains.kotlinx.serialization.compiler.diagnostic.SerializationErrors
-import org.jetbrains.kotlinx.serialization.idea.quickfixes.JsonRedundantDefaultQuickFix
-import org.jetbrains.kotlinx.serialization.idea.quickfixes.JsonRedundantQuickFix
 
 class SerializationQuickFixContributor : QuickFixContributor {
     override fun registerQuickFixes(quickFixes: QuickFixes) {
