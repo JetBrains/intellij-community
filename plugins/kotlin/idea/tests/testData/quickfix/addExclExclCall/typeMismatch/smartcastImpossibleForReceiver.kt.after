@@ -14,5 +14,3 @@ open class MyClass {
         }
     }
 }
-// TODO: Enable when FIR reports SMARTCAST_IMPOSSIBLE
-/* IGNORE_FIR */
