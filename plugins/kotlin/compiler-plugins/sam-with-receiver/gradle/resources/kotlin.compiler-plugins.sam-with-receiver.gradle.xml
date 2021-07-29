@@ -1,7 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.gradleJava">
   <dependencies>
     <plugin id="org.jetbrains.plugins.gradle"/>
-    <module name="kotlin.gradle.gradle-idea"/>
+    <module name="kotlin.gradle.gradle-java"/>
   </dependencies>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

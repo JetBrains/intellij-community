@@ -5,7 +5,6 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.extensions.gradle.GradleBuildScriptSupport
 import org.jetbrains.kotlin.idea.extensions.gradle.GradleVersionProvider
 import org.jetbrains.kotlin.idea.extensions.gradle.SettingsScriptBuilder
-import org.jetbrains.kotlin.idea.gradle.configuration.KotlinBuildScriptManipulator
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinGradleBuildScriptSupport : GradleBuildScriptSupport {

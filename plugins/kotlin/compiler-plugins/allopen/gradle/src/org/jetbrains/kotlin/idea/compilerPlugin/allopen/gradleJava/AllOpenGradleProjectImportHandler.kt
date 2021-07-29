@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.allopen.gradleJava
 
 import org.jetbrains.kotlin.allopen.AllOpenCommandLineProcessor
 import org.jetbrains.kotlin.allopen.ide.AllOpenModel
-import org.jetbrains.kotlin.idea.gradle.compilerPlugin.AbstractGradleImportHandler
+import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractGradleImportHandler
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 
 class AllOpenGradleProjectImportHandler : AbstractGradleImportHandler<AllOpenModel>() {

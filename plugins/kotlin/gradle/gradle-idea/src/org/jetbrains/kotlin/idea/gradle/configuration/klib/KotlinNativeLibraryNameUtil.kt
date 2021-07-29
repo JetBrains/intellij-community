@@ -3,11 +3,15 @@
 package org.jetbrains.kotlin.idea.gradle.configuration.klib
 
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.idea.KotlinPluginInternalApi
 
 object KotlinNativeLibraryNameUtil {
     @NonNls
-    internal const val KOTLIN_NATIVE_LIBRARY_PREFIX = "Kotlin/Native"
-    internal const val KOTLIN_NATIVE_LIBRARY_PREFIX_PLUS_SPACE = "$KOTLIN_NATIVE_LIBRARY_PREFIX "
+    @KotlinPluginInternalApi
+    const val KOTLIN_NATIVE_LIBRARY_PREFIX = "Kotlin/Native"
+
+    @KotlinPluginInternalApi
+    const val KOTLIN_NATIVE_LIBRARY_PREFIX_PLUS_SPACE = "$KOTLIN_NATIVE_LIBRARY_PREFIX "
 
     @NonNls
     internal const val GRADLE_LIBRARY_PREFIX = "Gradle: "

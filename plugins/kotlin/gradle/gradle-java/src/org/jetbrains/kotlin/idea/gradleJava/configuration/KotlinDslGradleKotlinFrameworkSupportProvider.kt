@@ -15,14 +15,12 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
-import org.jetbrains.kotlin.idea.gradle.configuration.KotlinBuildScriptManipulator.Companion.GSK_KOTLIN_VERSION_PROPERTY_NAME
-import org.jetbrains.kotlin.idea.gradle.configuration.KotlinBuildScriptManipulator.Companion.getKotlinGradlePluginClassPathSnippet
-import org.jetbrains.kotlin.idea.gradle.configuration.KotlinBuildScriptManipulator.Companion.getKotlinModuleDependencySnippet
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinBuildScriptManipulator.Companion.GSK_KOTLIN_VERSION_PROPERTY_NAME
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinBuildScriptManipulator.Companion.getKotlinGradlePluginClassPathSnippet
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinBuildScriptManipulator.Companion.getKotlinModuleDependencySnippet
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade
-import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleModuleConfigurator
-import org.jetbrains.kotlin.idea.gradle.configuration.KotlinJsGradleModuleConfigurator
 import org.jetbrains.kotlin.idea.gradle.configuration.MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
 import org.jetbrains.kotlin.idea.util.isSnapshot

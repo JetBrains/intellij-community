@@ -8,9 +8,11 @@ import com.intellij.openapi.util.Pair
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslModelsParameters.*
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.jetbrains.kotlin.gradle.KotlinDslScriptAdditionalTask
+import org.jetbrains.kotlin.idea.KotlinPluginInternalApi
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 
-internal val LOG = Logger.getInstance(KotlinDslScriptModelResolverCommon::class.java)
+@KotlinPluginInternalApi
+val LOG = Logger.getInstance(KotlinDslScriptModelResolverCommon::class.java)
 
 @Order(Integer.MIN_VALUE) // to be the first
 abstract class KotlinDslScriptModelResolverCommon : AbstractProjectResolverExtension() {

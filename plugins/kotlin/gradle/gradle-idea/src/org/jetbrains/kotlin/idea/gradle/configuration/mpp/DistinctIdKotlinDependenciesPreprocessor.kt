@@ -2,8 +2,10 @@
 package org.jetbrains.kotlin.idea.gradle.configuration.mpp
 
 import org.jetbrains.kotlin.gradle.KotlinDependency
+import org.jetbrains.kotlin.idea.KotlinPluginInternalApi
 
-internal object DistinctIdKotlinDependenciesPreprocessor : KotlinDependenciesPreprocessor {
+@KotlinPluginInternalApi
+object DistinctIdKotlinDependenciesPreprocessor : KotlinDependenciesPreprocessor {
     override fun invoke(dependencies: Iterable<KotlinDependency>): List<KotlinDependency> {
         return dependencies
             .groupBy { dependency -> dependency.id }
