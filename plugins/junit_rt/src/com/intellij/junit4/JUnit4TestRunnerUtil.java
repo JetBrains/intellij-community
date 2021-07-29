@@ -333,7 +333,7 @@ public final class JUnit4TestRunnerUtil {
       System.err.print(MessageFormat.format(ResourceBundle.getBundle("messages.RuntimeBundle").getString("junit.class.not.found"), clazz));
       System.exit(1);
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       System.err.println(MessageFormat.format(ResourceBundle.getBundle("messages.RuntimeBundle").getString("junit.cannot.instantiate.tests"),
                                               e.toString()));
       System.exit(1);
