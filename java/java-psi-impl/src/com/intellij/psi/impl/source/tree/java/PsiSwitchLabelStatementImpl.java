@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaControlFlowUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,16 +97,18 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
     final AtomicBoolean thisSwitchLabelIsImmediate = new AtomicBoolean();
 
     PsiTreeUtil.treeWalkUp(place, getParent(), (currentScope, prevScope) -> {
-      PsiElement immediateSwitchLabel = PsiTreeUtil.findSiblingBackward(currentScope,
-                                                                              JavaElementType.SWITCH_LABEL_STATEMENT,
-                                                                              false,
-                                                                              null);
-      while (isCase(immediateSwitchLabel, JavaTokenType.NULL_KEYWORD) ||
-             isCase(immediateSwitchLabel, JavaTokenType.DEFAULT_KEYWORD) ||
-             isDefault(immediateSwitchLabel)) {
-        immediateSwitchLabel = PsiTreeUtil.findSiblingBackward(immediateSwitchLabel,
-                                                               JavaElementType.SWITCH_LABEL_STATEMENT,
-                                                               null);
+
+      PsiSwitchLabelStatementBase immediateSwitchLabel;
+
+      if (currentScope instanceof PsiSwitchLabelStatementBase) {
+        immediateSwitchLabel = (PsiSwitchLabelStatementBase)currentScope;
+      }
+      else {
+        immediateSwitchLabel = PsiTreeUtil.getPrevSiblingOfType(currentScope, PsiSwitchLabelStatementBase.class);
+      }
+
+      while (immediateSwitchLabel != null && isFallthrough(immediateSwitchLabel) && isSpecialCaseLabel(immediateSwitchLabel)) {
+        immediateSwitchLabel = PsiTreeUtil.getPrevSiblingOfType(immediateSwitchLabel, PsiSwitchLabelStatementBase.class);
       }
 
       if (immediateSwitchLabel == this) {
@@ -118,25 +121,24 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
     return thisSwitchLabelIsImmediate.get();
   }
 
-  private static boolean isDefault(@Nullable PsiElement item) {
-    if (item == null) return false;
-    if (!(item instanceof PsiSwitchLabelStatementBase)) return false;
-    final PsiSwitchLabelStatementBase switchLabel = (PsiSwitchLabelStatementBase)item;
-    return switchLabel.isDefaultCase();
+  private static boolean isFallthrough(@NotNull PsiSwitchLabelStatementBase immediateSwitchLabel) {
+    final PsiStatement prevStmt = PsiTreeUtil.getPrevSiblingOfType(immediateSwitchLabel, PsiStatement.class);
+    if (prevStmt == null) return false;
+    return JavaControlFlowUtils.statementMayCompleteNormally(prevStmt);
   }
 
-  private static boolean isCase(@Nullable PsiElement item, IElementType keyword) {
-    if (item == null) return false;
-    if (!(item instanceof PsiSwitchLabelStatementBase)) return false;
-    final PsiSwitchLabelStatementBase switchLabel = (PsiSwitchLabelStatementBase)item;
+  private static boolean isSpecialCaseLabel(@NotNull PsiSwitchLabelStatementBase switchCaseLabel) {
+    return isCase(switchCaseLabel, JavaTokenType.NULL_KEYWORD) ||
+           isCase(switchCaseLabel, JavaTokenType.DEFAULT_KEYWORD) ||
+           switchCaseLabel.isDefaultCase();
+  }
 
-    final PsiCaseLabelElementList caseElementsList = switchLabel.getCaseLabelElementList();
-    if (caseElementsList == null) return false;
+  private static boolean isCase(@NotNull PsiSwitchLabelStatementBase item, @NotNull IElementType keyword) {
+    if (item.getCaseLabelElementList() == null) return false;
 
-    final PsiCaseLabelElement[] elements = caseElementsList.getElements();
+    final PsiCaseLabelElement[] elements = item.getCaseLabelElementList().getElements();
     if (elements.length != 1) return false;
 
     return elements[0].getNode().getFirstChildNode().getElementType() == keyword;
   }
-
 }
