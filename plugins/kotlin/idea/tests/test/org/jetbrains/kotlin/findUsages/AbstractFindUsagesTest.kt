@@ -74,6 +74,10 @@ abstract class AbstractFindUsagesWithDisableComponentSearchTest : AbstractFindUs
     override val prefixForResults = "DisabledComponents."
 }
 
+abstract class AbstractKotlinScriptFindUsagesTest : AbstractFindUsagesTest() {
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_SCRIPT_RUNTIME
+}
+
 abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_NO_SOURCES

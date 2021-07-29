@@ -5,7 +5,10 @@ package org.jetbrains.kotlin.testGenerator
 import org.jetbrains.kotlin.AbstractDataFlowValueRenderingTest
 import org.jetbrains.kotlin.addImport.AbstractAddImportTest
 import org.jetbrains.kotlin.addImportAlias.AbstractAddImportAliasTest
-import org.jetbrains.kotlin.asJava.classes.*
+import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightClassLoadingTest
+import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightClassSanityTest
+import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightFacadeClassTest
+import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightScriptLoadingTest
 import org.jetbrains.kotlin.checkers.*
 import org.jetbrains.kotlin.copyright.AbstractUpdateKotlinCopyrightTest
 import org.jetbrains.kotlin.findUsages.*
@@ -584,9 +587,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractFindUsagesTest> {
-            model("findUsages/kotlin", pattern = """^(.+)\.0\.(kt|kts)$""".toRegex())
+            model("findUsages/kotlin", pattern = """^(.+)\.0\.kt$""".toRegex())
             model("findUsages/java", pattern = """^(.+)\.0\.java$""".toRegex())
             model("findUsages/propertyFiles", pattern = """^(.+)\.0\.properties$""".toRegex())
+        }
+
+        testClass<AbstractKotlinScriptFindUsagesTest> {
+            model("findUsages/kotlinScript", pattern = """^(.+)\.0\.kts$""".toRegex())
         }
 
         testClass<AbstractFindUsagesWithDisableComponentSearchTest> {

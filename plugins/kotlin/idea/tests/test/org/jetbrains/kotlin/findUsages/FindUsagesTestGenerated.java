@@ -1304,39 +1304,6 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/findUsages/kotlin/script")
-        public static class Script extends AbstractFindUsagesTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("anonymousObject.0.kts")
-            public void testAnonymousObject() throws Exception {
-                runTest("testData/findUsages/kotlin/script/anonymousObject.0.kts");
-            }
-
-            @TestMetadata("anonymousObjectAsInitializer.0.kts")
-            public void testAnonymousObjectAsInitializer() throws Exception {
-                runTest("testData/findUsages/kotlin/script/anonymousObjectAsInitializer.0.kts");
-            }
-
-            @TestMetadata("anonymousObjectInFun.0.kts")
-            public void testAnonymousObjectInFun() throws Exception {
-                runTest("testData/findUsages/kotlin/script/anonymousObjectInFun.0.kts");
-            }
-
-            @TestMetadata("dummy.0.kts")
-            public void testDummy() throws Exception {
-                runTest("testData/findUsages/kotlin/script/dummy.0.kts");
-            }
-
-            @TestMetadata("localClass.0.kts")
-            public void testLocalClass() throws Exception {
-                runTest("testData/findUsages/kotlin/script/localClass.0.kts");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/unresolvedAnnotation")
         public static class UnresolvedAnnotation extends AbstractFindUsagesTest {
             private void runTest(String testDataFilePath) throws Exception {
