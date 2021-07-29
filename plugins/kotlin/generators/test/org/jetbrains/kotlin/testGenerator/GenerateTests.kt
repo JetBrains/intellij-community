@@ -110,6 +110,7 @@ import org.jetbrains.kotlin.idea.resolve.*
 import org.jetbrains.kotlin.idea.scratch.AbstractScratchLineMarkersTest
 import org.jetbrains.kotlin.idea.scratch.AbstractScratchRunActionTest
 import org.jetbrains.kotlin.idea.script.*
+import org.jetbrains.kotlin.idea.search.refIndex.AbstractFindUsagesWithCompilerReferenceIndexTest
 import org.jetbrains.kotlin.idea.search.refIndex.AbstractKotlinCompilerReferenceTest
 import org.jetbrains.kotlin.idea.slicer.AbstractSlicerLeafGroupingTest
 import org.jetbrains.kotlin.idea.slicer.AbstractSlicerMultiplatformTest
@@ -1425,6 +1426,14 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("refIndex/tests") {
         testClass<AbstractKotlinCompilerReferenceTest> {
             model("compilerIndex", pattern = DIRECTORY)
+        }
+    }
+
+    testGroup("refIndex/tests", testDataPath = "../../idea/tests/testData") {
+        testClass<AbstractFindUsagesWithCompilerReferenceIndexTest> {
+            model("findUsages/kotlin", pattern = """^(.+)\.0\.kt$""".toRegex())
+            model("findUsages/java", pattern = """^(.+)\.0\.java$""".toRegex())
+            model("findUsages/propertyFiles", pattern = """^(.+)\.0\.properties$""".toRegex())
         }
     }
 
