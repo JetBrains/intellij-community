@@ -17,7 +17,7 @@ public class IntObjectMap<T> {
     });
 
   public T computeIfAbsent(int objectID, @NotNull ObjectFactory<T> objectFactory) {
-    T object = (T)myObjectsMap.get(objectID);
+    T object = myObjectsMap.get(objectID);
     if (object == null) {
       object = objectFactory.newInstance();
       myObjectsMap.put(objectID, object);
