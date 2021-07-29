@@ -75,7 +75,7 @@ public class HighLevelBasicCompletionHandlerTestGenerated extends AbstractHighLe
 
     @TestMetadata("ExtensionPropertyFromSameFile.kt")
     public void testExtensionPropertyFromSameFile() throws Exception {
-        runTest("idea/idea-completion/testData/handlers/basic/ExtensionPropertyFromSameFile.kt");
+        runTest("../completion/tests/testData/handlers/basic/ExtensionPropertyFromSameFile.kt");
     }
 
     @TestMetadata("ExtensionReceiverTypeArg.kt")
@@ -150,7 +150,7 @@ public class HighLevelBasicCompletionHandlerTestGenerated extends AbstractHighLe
 
     @TestMetadata("LocalFunction.kt")
     public void testLocalFunction() throws Exception {
-        runTest("idea/idea-completion/testData/handlers/basic/LocalFunction.kt");
+        runTest("../completion/tests/testData/handlers/basic/LocalFunction.kt");
     }
 
     @TestMetadata("NestedTypeArg.kt")
@@ -454,7 +454,7 @@ public class HighLevelBasicCompletionHandlerTestGenerated extends AbstractHighLe
 
         @TestMetadata("InsertFunctionLiteralForLocalFunction.kt")
         public void testInsertFunctionLiteralForLocalFunction() throws Exception {
-            runTest("idea/idea-completion/testData/handlers/basic/highOrderFunctions/InsertFunctionLiteralForLocalFunction.kt");
+            runTest("../completion/tests/testData/handlers/basic/highOrderFunctions/InsertFunctionLiteralForLocalFunction.kt");
         }
 
         @TestMetadata("InsertFunctionWithSingleParameterWithBrace.kt")
@@ -606,6 +606,11 @@ public class HighLevelBasicCompletionHandlerTestGenerated extends AbstractHighLe
         @TestMetadata("KeepAnnotationBefore.kt")
         public void testKeepAnnotationBefore() throws Exception {
             runTest("../completion/tests/testData/handlers/basic/override/KeepAnnotationBefore.kt");
+        }
+
+        @TestMetadata("KeepComments.kt")
+        public void testKeepComments() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/override/KeepComments.kt");
         }
 
         @TestMetadata("KeepModifiersBefore.kt")
