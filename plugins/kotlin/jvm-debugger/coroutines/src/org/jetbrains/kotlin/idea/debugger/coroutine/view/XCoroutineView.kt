@@ -70,7 +70,6 @@ class XCoroutineView(val project: Project, val session: XDebugSession) :
 
     private fun createToolbar(): ActionToolbarImpl {
         val framesGroup = DefaultActionGroup()
-        //val actionsManager = CommonActionsManager.getInstance()
         framesGroup
             .addAll(ActionManager.getInstance().getAction(XDebuggerActions.FRAMES_TOP_TOOLBAR_GROUP))
         val toolbar = ActionManager.getInstance().createActionToolbar(

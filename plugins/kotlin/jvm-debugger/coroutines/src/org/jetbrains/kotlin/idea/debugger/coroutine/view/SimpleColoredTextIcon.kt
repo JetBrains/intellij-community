@@ -113,8 +113,7 @@ class SimpleColoredTextIconPresentationRenderer {
 
         val icon = fromState(infoData.descriptor.state)
 
-        val hasChildren = infoData.stackTrace.isNotEmpty() || infoData.creationStackTrace.isNotEmpty()
-        val label = SimpleColoredTextIcon(icon, hasChildren)
+        val label = SimpleColoredTextIcon(icon, !infoData.isCreated())
         label.append("\"")
         label.appendValue(infoData.descriptor.formatName())
         label.append("\": ${infoData.descriptor.state}")

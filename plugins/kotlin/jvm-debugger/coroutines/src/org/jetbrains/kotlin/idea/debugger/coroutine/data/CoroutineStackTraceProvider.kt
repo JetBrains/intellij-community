@@ -58,8 +58,9 @@ class CoroutineStackTraceProvider(private val executionContext: DefaultExecution
             if (baseContinuationImpl != null) {
                 restoredBaseContinuationImpl.add(baseContinuationImpl)
                 observedFrame = baseContinuationImpl.nextContinuation
-            } else
+            } else {
                 break
+            }
         }
         return restoredBaseContinuationImpl
     }
