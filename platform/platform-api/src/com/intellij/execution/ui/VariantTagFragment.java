@@ -180,11 +180,8 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
       int dropDownWidth = 0;
       if (myDropDown != null) {
         Dimension preferredSize = myDropDown.getPreferredSize();
-        dropDownWidth = preferredSize.width - ourInset * 3;
-        Point location = myCloseButton.getLocation();
-        location.x -= ourInset * 3;
-        Rectangle bounds = new Rectangle(location, preferredSize);
-        myDropDown.setBounds(bounds);
+        dropDownWidth = preferredSize.width - ourInset * 2;
+        myDropDown.setBounds(new Rectangle(myCloseButton.getX() - ourInset * 2, 0, preferredSize.width, myButton.getHeight()));
       }
 
       Insets insets = myButton.getMargin();
