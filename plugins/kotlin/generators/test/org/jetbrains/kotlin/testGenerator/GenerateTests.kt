@@ -166,24 +166,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractIrKotlinSteppingTest> {
-            model(
-                "stepping/stepIntoAndSmartStepInto",
-                pattern = KT_WITHOUT_DOTS,
-                testMethodName = "doStepIntoTest",
-                testClassName = "StepInto"
-            )
-            model(
-                "stepping/stepIntoAndSmartStepInto",
-                pattern = KT_WITHOUT_DOTS,
-                testMethodName = "doSmartStepIntoTest",
-                testClassName = "SmartStepInto"
-            )
-            model(
-                "stepping/stepInto",
-                pattern = KT_WITHOUT_DOTS,
-                testMethodName = "doStepIntoTest",
-                testClassName = "StepIntoOnly"
-            )
+            model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepInto")
+            model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doSmartStepIntoTest", testClassName = "SmartStepInto")
+            model("stepping/stepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepIntoOnly")
             model("stepping/stepOut", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepOutTest")
             model("stepping/stepOver", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepOverTest")
             model("stepping/filters", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest")
@@ -240,8 +225,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("coroutines")
         }
 
-        testClass<AbstractSequenceTraceTestCase> {
-            // TODO: implement mapping logic for terminal operations
+        testClass<AbstractSequenceTraceTestCase> { // TODO: implement mapping logic for terminal operations
             model("sequence/streams/sequence", excludedDirectories = listOf("terminal"))
         }
 
@@ -262,7 +246,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractKotlinExceptionFilterTest> {
-            model("exceptionFilter", pattern = """^([^\.]+)$""".toRegex(), isRecursive = false)
+            model("exceptionFilter", pattern = """^([^.]+)$""".toRegex(), isRecursive = false)
         }
     }
 
@@ -355,8 +339,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractParameterInfoTest> {
             model(
-                "parameterInfo", pattern = "^([\\w\\-_]+)\\.kt$".toRegex(), isRecursive = true,
-                excludedDirectories = listOf("withLib1/sharedLib", "withLib2/sharedLib", "withLib3/sharedLib")
+                "parameterInfo",
+                pattern = "^([\\w\\-_]+)\\.kt$".toRegex(),
+                isRecursive = true,
+                excludedDirectories = listOf("withLib1/sharedLib", "withLib2/sharedLib", "withLib3/sharedLib"),
             )
         }
 
@@ -648,15 +634,20 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractFormatterTest> {
-            model("formatter", pattern = """^([^\.]+)\.after\.kt.*$""".toRegex())
-            model("formatter/trailingComma", pattern = """^([^\.]+)\.call\.after\.kt.*$""".toRegex(), testMethodName = "doTestCallSite", testClassName = "FormatterCallSite")
-            model("formatter", pattern = """^([^\.]+)\.after\.inv\.kt.*$""".toRegex(), testMethodName = "doTestInverted", testClassName = "FormatterInverted")
-            model("formatter/trailingComma", pattern = """^([^\.]+)\.call\.after\.inv\.kt.*$""".toRegex(), testMethodName = "doTestInvertedCallSite", testClassName = "FormatterInvertedCallSite")
+            model("formatter", pattern = """^([^.]+)\.after\.kt.*$""".toRegex())
+            model("formatter/trailingComma", pattern = """^([^.]+)\.call\.after\.kt.*$""".toRegex(), testMethodName = "doTestCallSite", testClassName = "FormatterCallSite")
+            model("formatter", pattern = """^([^.]+)\.after\.inv\.kt.*$""".toRegex(), testMethodName = "doTestInverted", testClassName = "FormatterInverted")
+            model(
+                "formatter/trailingComma",
+                pattern = """^([^.]+)\.call\.after\.inv\.kt.*$""".toRegex(),
+                testMethodName = "doTestInvertedCallSite",
+                testClassName = "FormatterInvertedCallSite",
+            )
         }
 
         testClass<AbstractTypingIndentationTestBase> {
-            model("indentationOnNewline", pattern = """^([^\.]+)\.after\.kt.*$""".toRegex(), testMethodName = "doNewlineTest", testClassName = "DirectSettings")
-            model("indentationOnNewline", pattern = """^([^\.]+)\.after\.inv\.kt.*$""".toRegex(), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings")
+            model("indentationOnNewline", pattern = """^([^.]+)\.after\.kt.*$""".toRegex(), testMethodName = "doNewlineTest", testClassName = "DirectSettings")
+            model("indentationOnNewline", pattern = """^([^.]+)\.after\.inv\.kt.*$""".toRegex(), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings")
         }
 
         testClass<AbstractDiagnosticMessageTest> {
@@ -688,19 +679,19 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractJavaToKotlinCopyPasteConversionTest> {
-            model("copyPaste/conversion", pattern = """^([^\.]+)\.java$""".toRegex())
+            model("copyPaste/conversion", pattern = """^([^.]+)\.java$""".toRegex())
         }
 
         testClass<AbstractTextJavaToKotlinCopyPasteConversionTest> {
-            model("copyPaste/plainTextConversion", pattern = """^([^\.]+)\.txt$""".toRegex())
+            model("copyPaste/plainTextConversion", pattern = """^([^.]+)\.txt$""".toRegex())
         }
 
         testClass<AbstractLiteralTextToKotlinCopyPasteTest> {
-            model("copyPaste/plainTextLiteral", pattern = """^([^\.]+)\.txt$""".toRegex())
+            model("copyPaste/plainTextLiteral", pattern = """^([^.]+)\.txt$""".toRegex())
         }
 
         testClass<AbstractLiteralKotlinToKotlinCopyPasteTest> {
-            model("copyPaste/literal", pattern = """^([^\.]+)\.kt$""".toRegex())
+            model("copyPaste/literal", pattern = """^([^.]+)\.kt$""".toRegex())
         }
 
         testClass<AbstractInsertImportOnPasteTest> {
@@ -721,8 +712,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractLightTestRunLineMarkersTest> {
-            model("codeInsight/lineMarker/runMarkers", pattern = "^((jUnit|test).*)\\.kt$".toRegex(), testMethodName = "doLightTest", testClassName="WithLightTestFramework")
-            model("codeInsight/lineMarker/runMarkers", pattern = "^((jUnit|test).*)\\.kt$".toRegex(), testMethodName = "doPureTest", testClassName="WithoutLightTestFramework")
+            model("codeInsight/lineMarker/runMarkers", pattern = "^((jUnit|test).*)\\.kt$".toRegex(), testMethodName = "doLightTest", testClassName = "WithLightTestFramework")
+            model("codeInsight/lineMarker/runMarkers", pattern = "^((jUnit|test).*)\\.kt$".toRegex(), testMethodName = "doPureTest", testClassName = "WithoutLightTestFramework")
         }
 
         testClass<AbstractLineMarkersTestInLibrarySources> {
@@ -758,19 +749,19 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractCommonDecompiledTextTest> {
-            model("decompiler/decompiledText", pattern = """^([^\.]+)$""".toRegex())
+            model("decompiler/decompiledText", pattern = """^([^.]+)$""".toRegex())
         }
 
         testClass<AbstractJvmDecompiledTextTest> {
-            model("decompiler/decompiledTextJvm", pattern = """^([^\.]+)$""".toRegex())
+            model("decompiler/decompiledTextJvm", pattern = """^([^.]+)$""".toRegex())
         }
 
         testClass<AbstractCommonDecompiledTextFromJsMetadataTest> {
-            model("decompiler/decompiledText", pattern = """^([^\.]+)$""".toRegex(), targetBackend = TargetBackend.JS)
+            model("decompiler/decompiledText", pattern = """^([^.]+)$""".toRegex(), targetBackend = TargetBackend.JS)
         }
 
         testClass<AbstractJsDecompiledTextFromJsMetadataTest> {
-            model("decompiler/decompiledTextJs", pattern = """^([^\.]+)$""".toRegex(), targetBackend = TargetBackend.JS)
+            model("decompiler/decompiledTextJs", pattern = """^([^.]+)$""".toRegex(), targetBackend = TargetBackend.JS)
         }
 
         testClass<AbstractClsStubBuilderTest> {
@@ -778,8 +769,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractAutoImportTest> {
-            model("editor/autoImport", testMethodName = "doTest", testClassName="WithAutoImport", pattern = DIRECTORY, isRecursive = false)
-            model("editor/autoImport", testMethodName = "doTestWithoutAutoImport", testClassName="WithoutAutoImport", pattern = DIRECTORY, isRecursive = false)
+            model("editor/autoImport", testMethodName = "doTest", testClassName = "WithAutoImport", pattern = DIRECTORY, isRecursive = false)
+            model("editor/autoImport", testMethodName = "doTestWithoutAutoImport", testClassName = "WithoutAutoImport", pattern = DIRECTORY, isRecursive = false)
         }
 
         testClass<AbstractJvmOptimizeImportsTest> {
@@ -911,20 +902,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractScriptConfigurationInsertImportOnPasteTest> {
-            model(
-                "script/definition/imports",
-                testMethodName = "doTestCopy",
-                testClassName = "Copy",
-                pattern = DIRECTORY,
-                isRecursive = false
-            )
-            model(
-                "script/definition/imports",
-                testMethodName = "doTestCut",
-                testClassName = "Cut",
-                pattern = DIRECTORY,
-                isRecursive = false
-            )
+            model("script/definition/imports", testMethodName = "doTestCopy", testClassName = "Copy", pattern = DIRECTORY, isRecursive = false)
+            model("script/definition/imports", testMethodName = "doTestCut", testClassName = "Cut", pattern = DIRECTORY, isRecursive = false)
         }
 
         testClass<AbstractScriptDefinitionsOrderTest> {
@@ -1174,12 +1153,15 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractUltraLightClassSanityTest> {
             model("compiler/asJava/lightClasses", pattern = KT_OR_KTS)
         }
+
         testClass<AbstractUltraLightClassLoadingTest> {
             model("compiler/asJava/ultraLightClasses", pattern = KT_OR_KTS)
         }
+
         testClass<AbstractUltraLightScriptLoadingTest> {
             model("compiler/asJava/ultraLightScripts", pattern = KT_OR_KTS)
         }
+
         testClass<AbstractUltraLightFacadeClassTest> {
             model("compiler/asJava/ultraLightFacades", pattern = KT_OR_KTS)
         }
@@ -1287,6 +1269,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractYamlBuildFileGenerationTest> {
             model("buildFileGeneration", isRecursive = false, pattern = DIRECTORY)
         }
+
         testClass<AbstractProjectTemplateBuildFileGenerationTest> {
             model("projectTemplatesBuildFileGeneration", isRecursive = false, pattern = DIRECTORY)
         }
@@ -1300,13 +1283,15 @@ private fun assembleWorkspace(): TWorkspace = workspace {
                     isRecursive = false,
                     pattern = DIRECTORY,
                     testMethodName = "doTest${testClass}",
-                    testClassName = testClass
+                    testClassName = testClass,
                 )
             }
         }
+
         testClass<AbstractYamlNewWizardProjectImportTest> {
             allBuildSystemTests("buildFileGeneration")
         }
+
         testClass<AbstractProjectTemplateNewWizardProjectImportTest> {
             allBuildSystemTests("projectTemplatesBuildFileGeneration")
         }
@@ -1327,6 +1312,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractJavaToKotlinConverterSingleFileTest> {
             model("fileOrElement", pattern = JAVA)
         }
+
         testClass<AbstractJavaToKotlinConverterMultiFileTest> {
             model("multiFile", pattern = DIRECTORY, isRecursive = false)
         }
@@ -1334,26 +1320,33 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("j2k/new/tests") {
         testClass<AbstractNewJavaToKotlinConverterSingleFileTest> {
-            model("newJ2k", pattern = """^([^\.]+)\.java$""".toRegex())
+            model("newJ2k", pattern = """^([^.]+)\.java$""".toRegex())
         }
+
         testClass<AbstractPartialConverterTest> {
             model("partialConverter", pattern = """^([^.]+)\.java$""".toRegex())
         }
+
         testClass<AbstractCommonConstraintCollectorTest> {
             model("inference/common")
         }
+
         testClass<AbstractNullabilityInferenceTest> {
             model("inference/nullability")
         }
+
         testClass<AbstractMutabilityInferenceTest> {
             model("inference/mutability")
         }
+
         testClass<AbstractNewJavaToKotlinCopyPasteConversionTest> {
-            model("copyPaste", pattern = """^([^\.]+)\.java$""".toRegex())
+            model("copyPaste", pattern = """^([^.]+)\.java$""".toRegex())
         }
+
         testClass<AbstractTextNewJavaToKotlinCopyPasteConversionTest> {
-            model("copyPastePlainText", pattern = """^([^\.]+)\.txt$""".toRegex())
+            model("copyPastePlainText", pattern = """^([^.]+)\.txt$""".toRegex())
         }
+
         testClass<AbstractNewJavaToKotlinConverterMultiFileTest> {
             model("multiFile", pattern = DIRECTORY, isRecursive = false)
         }
@@ -1363,16 +1356,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractIncrementalJvmJpsTest> {
             model("incremental/multiModule/common", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR)
             model("incremental/multiModule/jvm", pattern = DIRECTORY)
-            model(
-                "incremental/multiModule/multiplatform/custom", pattern = DIRECTORY, 
-                targetBackend = TargetBackend.JVM_IR
-            )
+            model("incremental/multiModule/multiplatform/custom", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR)
             model("incremental/pureKotlin", pattern = DIRECTORY, isRecursive = false, targetBackend = TargetBackend.JVM_IR)
             model("incremental/withJava", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR)
             model("incremental/inlineFunCallSite", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR)
-            model(
-                "incremental/classHierarchyAffected", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR
-            )
+            model("incremental/classHierarchyAffected", pattern = DIRECTORY, targetBackend = TargetBackend.JVM_IR)
         }
 
         //actualizeMppJpsIncTestCaseDirs(testDataAbsoluteRoot, "incremental/multiModule/multiplatform/withGeneratedContent")
@@ -1382,10 +1370,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractMultiplatformJpsTestWithGeneratedContent> {
-            model(
-                "incremental/multiModule/multiplatform/withGeneratedContent", isRecursive = true, pattern = DIRECTORY,
-                testClassName = "MultiplatformMultiModule"
-            )
+            model("incremental/multiModule/multiplatform/withGeneratedContent", isRecursive = true, pattern = DIRECTORY, testClassName = "MultiplatformMultiModule")
         }
 
         testClass<AbstractJvmLookupTrackerTest> {
@@ -1394,8 +1379,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractJsLookupTrackerTest> {
             model("incremental/lookupTracker/js", pattern = DIRECTORY, isRecursive = false)
         }
-        testClass<AbstractJsKlibLookupTrackerTest> {
-            // todo: investigate why lookups are different from non-klib js
+        testClass<AbstractJsKlibLookupTrackerTest> { // todo: investigate why lookups are different from non-klib js
             model("incremental/lookupTracker/jsKlib", pattern = DIRECTORY, isRecursive = false)
         }
 
@@ -1439,15 +1423,15 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("performance-tests", testDataPath = "../idea/tests/testData") {
         testClass<AbstractPerformanceJavaToKotlinCopyPasteConversionTest> {
-            model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = """^([^\.]+)\.java$""".toRegex())
+            model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = """^([^.]+)\.java$""".toRegex())
         }
 
         testClass<AbstractPerformanceNewJavaToKotlinCopyPasteConversionTest> {
-            model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = """^([^\.]+)\.java$""".toRegex())
+            model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = """^([^.]+)\.java$""".toRegex())
         }
 
         testClass<AbstractPerformanceLiteralKotlinToKotlinCopyPasteTest> {
-            model("copyPaste/literal", testMethodName = "doPerfTest", pattern = """^([^\.]+)\.kt$""".toRegex())
+            model("copyPaste/literal", testMethodName = "doPerfTest", pattern = """^([^.]+)\.kt$""".toRegex())
         }
 
         testClass<AbstractPerformanceHighlightingTest> {
@@ -1459,8 +1443,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractPerformanceTypingIndentationTest> {
-            model("indentationOnNewline", pattern = """^([^\.]+)\.after\.kt.*$""".toRegex(), testMethodName = "doNewlineTest", testClassName = "DirectSettings")
-            model("indentationOnNewline", pattern = """^([^\.]+)\.after\.inv\.kt.*$""".toRegex(), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings")
+            model("indentationOnNewline", pattern = """^([^.]+)\.after\.kt.*$""".toRegex(), testMethodName = "doNewlineTest", testClassName = "DirectSettings")
+            model("indentationOnNewline", pattern = """^([^.]+)\.after\.inv\.kt.*$""".toRegex(), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings")
         }
     }
 
