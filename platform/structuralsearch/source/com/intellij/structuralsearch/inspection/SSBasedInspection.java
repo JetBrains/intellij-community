@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -11,6 +11,7 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -435,6 +436,8 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     private void processElement(@NotNull PsiElement element) {
       for (Map.Entry<Configuration, Matcher> entry : myCompiledOptions.entrySet()) {
         final Configuration configuration = entry.getKey();
+        LanguageFileType fileType = configuration.getMatchOptions().getFileType();
+        if (fileType == null || !element.getLanguage().isKindOf(fileType.getLanguage())) continue;
         final Matcher matcher = entry.getValue();
         if (matcher == null) continue;
 
