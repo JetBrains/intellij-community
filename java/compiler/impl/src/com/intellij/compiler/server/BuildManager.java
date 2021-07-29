@@ -1318,10 +1318,7 @@ public final class BuildManager implements Disposable {
       }
       if (sdkVersion.isAtLeast(JavaSdkVersion.JDK_16)) {
         // enable javac-related reflection tricks in JPS
-        cmdLine.addParameter("--add-opens");
-        cmdLine.addParameter("jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED");
-        cmdLine.addParameter("--add-opens");
-        cmdLine.addParameter("jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED");
+        ClasspathBootstrap.configureReflectionOpenPackages(p -> cmdLine.addParameter(p));
       }
     }
     if (IS_UNIT_TEST_MODE) {
@@ -1438,9 +1435,9 @@ public final class BuildManager implements Disposable {
         cmdLine.addParameter("-D"+ GlobalOptions.LANGUAGE_BUNDLE + "=" + FileUtil.toSystemIndependentName(bundlePath));
       }
     }
-    cmdLine.addPathParameter("-D" + PathManager.PROPERTY_HOME_PATH + "=", PathManager.getHomePath());
-    cmdLine.addPathParameter("-D" + PathManager.PROPERTY_CONFIG_PATH + "=", PathManager.getConfigPath());
-    cmdLine.addPathParameter("-D" + PathManager.PROPERTY_PLUGINS_PATH + "=", PathManager.getPluginsPath());
+    cmdLine.addPathParameter("-D" + PathManager.PROPERTY_HOME_PATH + "=", FileUtil.toSystemIndependentName(PathManager.getHomePath()));
+    cmdLine.addPathParameter("-D" + PathManager.PROPERTY_CONFIG_PATH + "=", FileUtil.toSystemIndependentName(PathManager.getConfigPath()));
+    cmdLine.addPathParameter("-D" + PathManager.PROPERTY_PLUGINS_PATH + "=", FileUtil.toSystemIndependentName(PathManager.getPluginsPath()));
 
     cmdLine.addPathParameter("-D" + GlobalOptions.LOG_DIR_OPTION + "=", FileUtil.toSystemIndependentName(getBuildLogDirectory().getAbsolutePath()));
     if (myFallbackSdkHome != null && myFallbackSdkVersion != null) {
