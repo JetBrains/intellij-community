@@ -44,7 +44,7 @@ task setupCidr
     path: "CIDR/cidr-debugger/bin/lldb"
   ],
   lldbfrontend: [
-    version: "4834ed19d738ada8f552d88e920b8aaf98ee5c92",
+    version: "1e5c6ed011d85d7547e00afb083a96a5a46719aa",
     platforms: [
       win: [archs: ["x64", "x86"]],
       linux: [archs: ["x64"]],
