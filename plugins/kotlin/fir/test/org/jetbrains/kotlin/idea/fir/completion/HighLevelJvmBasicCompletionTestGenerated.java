@@ -920,6 +920,16 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("AutoPopupBreak.kt")
+            public void testAutoPopupBreak() throws Exception {
+                runTest("../completion/tests/testData/basic/common/autoPopup/AutoPopupBreak.kt");
+            }
+
+            @TestMetadata("AutoPopupThis.kt")
+            public void testAutoPopupThis() throws Exception {
+                runTest("../completion/tests/testData/basic/common/autoPopup/AutoPopupThis.kt");
+            }
+
             @TestMetadata("AutopopupInFunExtensionReceiver.kt")
             public void testAutopopupInFunExtensionReceiver() throws Exception {
                 runTest("../completion/tests/testData/basic/common/autoPopup/AutopopupInFunExtensionReceiver.kt");
@@ -1446,6 +1456,11 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 runTest("../completion/tests/testData/basic/common/fromSmart/ArrayLiteralAnnotationUseForVararg.kt");
             }
 
+            @TestMetadata("CustomAnnotation.kt")
+            public void testCustomAnnotation() throws Exception {
+                runTest("../completion/tests/testData/basic/common/fromSmart/CustomAnnotation.kt");
+            }
+
             @TestMetadata("EnumEntries.kt")
             public void testEnumEntries() throws Exception {
                 runTest("../completion/tests/testData/basic/common/fromSmart/EnumEntries.kt");
@@ -1617,6 +1632,24 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/tests/testData/basic/common/inInitBlock")
+        public static class InInitBlock extends AbstractHighLevelJvmBasicCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("localVariable.kt")
+            public void testLocalVariable() throws Exception {
+                runTest("../completion/tests/testData/basic/common/inInitBlock/localVariable.kt");
+            }
+
+            @TestMetadata("property.kt")
+            public void testProperty() throws Exception {
+                runTest("../completion/tests/testData/basic/common/inInitBlock/property.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../completion/tests/testData/basic/common/inStringLiterals")
         public static class InStringLiterals extends AbstractHighLevelJvmBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -1651,6 +1684,47 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
             @TestMetadata("StringTemplateDotSomething.kt")
             public void testStringTemplateDotSomething() throws Exception {
                 runTest("../completion/tests/testData/basic/common/inStringLiterals/StringTemplateDotSomething.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/tests/testData/basic/common/inSuperTypes")
+        public static class InSuperTypes extends AbstractHighLevelJvmBasicCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("baseClass.kt")
+            public void testBaseClass() throws Exception {
+                runTest("../completion/tests/testData/basic/common/inSuperTypes/baseClass.kt");
+            }
+
+            @TestMetadata("baseClassWithPrefix.kt")
+            public void testBaseClassWithPrefix() throws Exception {
+                runTest("../completion/tests/testData/basic/common/inSuperTypes/baseClassWithPrefix.kt");
+            }
+
+            @TestMetadata("typeParameter.kt")
+            public void testTypeParameter() throws Exception {
+                runTest("../completion/tests/testData/basic/common/inSuperTypes/typeParameter.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/tests/testData/basic/common/inTypeAlias")
+        public static class InTypeAlias extends AbstractHighLevelJvmBasicCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("member.kt")
+            public void testMember() throws Exception {
+                runTest("../completion/tests/testData/basic/common/inTypeAlias/member.kt");
+            }
+
+            @TestMetadata("topLevel.kt")
+            public void testTopLevel() throws Exception {
+                runTest("../completion/tests/testData/basic/common/inTypeAlias/topLevel.kt");
             }
         }
 
@@ -2131,6 +2205,29 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/tests/testData/basic/common/primaryConstructor")
+        public static class PrimaryConstructor extends AbstractHighLevelJvmBasicCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("parameterDefaultValue.kt")
+            public void testParameterDefaultValue() throws Exception {
+                runTest("../completion/tests/testData/basic/common/primaryConstructor/parameterDefaultValue.kt");
+            }
+
+            @TestMetadata("previousParameter.kt")
+            public void testPreviousParameter() throws Exception {
+                runTest("../completion/tests/testData/basic/common/primaryConstructor/previousParameter.kt");
+            }
+
+            @TestMetadata("propertyType.kt")
+            public void testPropertyType() throws Exception {
+                runTest("../completion/tests/testData/basic/common/primaryConstructor/propertyType.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../completion/tests/testData/basic/common/primitiveCompletion")
         public static class PrimitiveCompletion extends AbstractHighLevelJvmBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -2169,12 +2266,12 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
 
             @TestMetadata("completionInLocalFunction.kt")
             public void testCompletionInLocalFunction() throws Exception {
-                runTest("idea/idea-completion/testData/basic/common/primitiveCompletion/completionInLocalFunction.kt");
+                runTest("../completion/tests/testData/basic/common/primitiveCompletion/completionInLocalFunction.kt");
             }
 
             @TestMetadata("completionInPropertyLambdaInitializer.kt")
             public void testCompletionInPropertyLambdaInitializer() throws Exception {
-                runTest("idea/idea-completion/testData/basic/common/primitiveCompletion/completionInPropertyLambdaInitializer.kt");
+                runTest("../completion/tests/testData/basic/common/primitiveCompletion/completionInPropertyLambdaInitializer.kt");
             }
 
             @TestMetadata("defaultKotlinImports.kt")
@@ -2220,6 +2317,16 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
             @TestMetadata("insideFunctionWithParameters.kt")
             public void testInsideFunctionWithParameters() throws Exception {
                 runTest("../completion/tests/testData/basic/common/primitiveCompletion/insideFunctionWithParameters.kt");
+            }
+
+            @TestMetadata("localClassConstructor.kt")
+            public void testLocalClassConstructor() throws Exception {
+                runTest("../completion/tests/testData/basic/common/primitiveCompletion/localClassConstructor.kt");
+            }
+
+            @TestMetadata("localClassMember.kt")
+            public void testLocalClassMember() throws Exception {
+                runTest("../completion/tests/testData/basic/common/primitiveCompletion/localClassMember.kt");
             }
 
             @TestMetadata("localVariablesAndFunctions.kt")
@@ -2726,6 +2833,26 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 runTest("../completion/tests/testData/basic/common/visibility/VisibilityInSubclassForce.kt");
             }
 
+            @TestMetadata("VisibilityOfClassMembersFromLocalClassConstructor.kt")
+            public void testVisibilityOfClassMembersFromLocalClassConstructor() throws Exception {
+                runTest("../completion/tests/testData/basic/common/visibility/VisibilityOfClassMembersFromLocalClassConstructor.kt");
+            }
+
+            @TestMetadata("VisibilityOfClassMembersFromLocalClassMember.kt")
+            public void testVisibilityOfClassMembersFromLocalClassMember() throws Exception {
+                runTest("../completion/tests/testData/basic/common/visibility/VisibilityOfClassMembersFromLocalClassMember.kt");
+            }
+
+            @TestMetadata("VisibilityOfCompanionObjectMembersFromOutside.kt")
+            public void testVisibilityOfCompanionObjectMembersFromOutside() throws Exception {
+                runTest("../completion/tests/testData/basic/common/visibility/VisibilityOfCompanionObjectMembersFromOutside.kt");
+            }
+
+            @TestMetadata("VisibilityOfCompanionObjectMembersFromSubclass.kt")
+            public void testVisibilityOfCompanionObjectMembersFromSubclass() throws Exception {
+                runTest("../completion/tests/testData/basic/common/visibility/VisibilityOfCompanionObjectMembersFromSubclass.kt");
+            }
+
             @TestMetadata("VisibilityPrivateToThis.kt")
             public void testVisibilityPrivateToThis() throws Exception {
                 runTest("../completion/tests/testData/basic/common/visibility/VisibilityPrivateToThis.kt");
@@ -2843,6 +2970,11 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
         @TestMetadata("NonImportedPrefixMatching2.kt")
         public void testNonImportedPrefixMatching2() throws Exception {
             runTest("../completion/tests/testData/basic/java/NonImportedPrefixMatching2.kt");
+        }
+
+        @TestMetadata("NullableAnnotation.kt")
+        public void testNullableAnnotation() throws Exception {
+            runTest("../completion/tests/testData/basic/java/NullableAnnotation.kt");
         }
 
         @TestMetadata("Number.kt")

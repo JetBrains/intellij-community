@@ -168,6 +168,11 @@ public class FirLegacyUastValuesTestGenerated extends AbstractFirLegacyUastValue
         runTest("../uast-kotlin/testData/InnerNonFixedTypeVariable.kt");
     }
 
+    @TestMetadata("LambdaParameters.kt")
+    public void testLambdaParameters() throws Exception {
+        runTest("../uast-kotlin/testData/LambdaParameters.kt");
+    }
+
     @TestMetadata("LambdaReturn.kt")
     public void testLambdaReturn() throws Exception {
         runTest("../uast-kotlin/testData/LambdaReturn.kt");
@@ -341,6 +346,11 @@ public class FirLegacyUastValuesTestGenerated extends AbstractFirLegacyUastValue
     @TestMetadata("TryCatch.kt")
     public void testTryCatch() throws Exception {
         runTest("../uast-kotlin/testData/TryCatch.kt");
+    }
+
+    @TestMetadata("TypeAliasConstructorReference.kt")
+    public void testTypeAliasConstructorReference() throws Exception {
+        runTest("../uast-kotlin/testData/TypeAliasConstructorReference.kt");
     }
 
     @TestMetadata("TypeAliasExpansionWithOtherAliasInArgument.kt")

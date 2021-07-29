@@ -18,7 +18,7 @@ import static org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts.comp
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses")
+@TestMetadata("../../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses")
 public class UltraLightClassSanityTestGenerated extends AbstractUltraLightClassSanityTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -176,7 +176,7 @@ public class UltraLightClassSanityTestGenerated extends AbstractUltraLightClassS
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/compilationErrors")
+    @TestMetadata("../../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/compilationErrors")
     public static class CompilationErrors extends AbstractUltraLightClassSanityTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -285,7 +285,7 @@ public class UltraLightClassSanityTestGenerated extends AbstractUltraLightClassS
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/delegation")
+    @TestMetadata("../../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/delegation")
     public static class Delegation extends AbstractUltraLightClassSanityTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -314,7 +314,7 @@ public class UltraLightClassSanityTestGenerated extends AbstractUltraLightClassS
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/facades")
+    @TestMetadata("../../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/facades")
     public static class Facades extends AbstractUltraLightClassSanityTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -353,7 +353,7 @@ public class UltraLightClassSanityTestGenerated extends AbstractUltraLightClassS
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/ideRegression")
+    @TestMetadata("../../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/ideRegression")
     public static class IdeRegression extends AbstractUltraLightClassSanityTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -422,7 +422,7 @@ public class UltraLightClassSanityTestGenerated extends AbstractUltraLightClassS
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/nullabilityAnnotations")
+    @TestMetadata("../../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/nullabilityAnnotations")
     public static class NullabilityAnnotations extends AbstractUltraLightClassSanityTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -526,7 +526,7 @@ public class UltraLightClassSanityTestGenerated extends AbstractUltraLightClassS
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/object")
+    @TestMetadata("../../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/object")
     public static class Object extends AbstractUltraLightClassSanityTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -545,7 +545,7 @@ public class UltraLightClassSanityTestGenerated extends AbstractUltraLightClassS
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/publicField")
+    @TestMetadata("../../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/publicField")
     public static class PublicField extends AbstractUltraLightClassSanityTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -569,7 +569,7 @@ public class UltraLightClassSanityTestGenerated extends AbstractUltraLightClassS
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../intellij/out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/script")
+    @TestMetadata("../../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/lightClasses/script")
     public static class Script extends AbstractUltraLightClassSanityTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);

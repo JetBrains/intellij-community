@@ -218,6 +218,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("testData/basic/multifile/NoGenericFunDuplication/");
     }
 
+    @TestMetadata("NotImportedClass")
+    public void testNotImportedClass() throws Exception {
+        runTest("testData/basic/multifile/NotImportedClass/");
+    }
+
     @TestMetadata("NotImportedExtensionForImplicitReceiver")
     public void testNotImportedExtensionForImplicitReceiver() throws Exception {
         runTest("testData/basic/multifile/NotImportedExtensionForImplicitReceiver/");
@@ -261,6 +266,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
     @TestMetadata("NotImportedJavaClass")
     public void testNotImportedJavaClass() throws Exception {
         runTest("testData/basic/multifile/NotImportedJavaClass/");
+    }
+
+    @TestMetadata("NotImportedNestedClassFromPrivateClass")
+    public void testNotImportedNestedClassFromPrivateClass() throws Exception {
+        runTest("testData/basic/multifile/NotImportedNestedClassFromPrivateClass/");
     }
 
     @TestMetadata("NotImportedObject")
