@@ -122,6 +122,12 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     snapshot.setName(getNameText());
     RunnerAndConfigurationSettings original = getSettings();
     snapshot.setTemporary(original.isTemporary());
+    if (original.isStoredInDotIdeaFolder()) {
+      snapshot.storeInDotIdeaFolder();
+    }
+    else if (original.isStoredInArbitraryFileInProject() && original.getPathIfStoredInArbitraryFileInProject() != null) {
+      snapshot.storeInArbitraryFileInProject(original.getPathIfStoredInArbitraryFileInProject());
+    }
     return snapshot;
   }
 
