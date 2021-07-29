@@ -14,7 +14,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <buildSystemTypeDetector implementation="org.jetbrains.kotlin.idea.configuration.GradleDetector"/>
     <scriptDiagnosticFixProvider implementation="org.jetbrains.kotlin.idea.gradle.scripting.GradleScriptDiagnosticFixProvider"/>
   </extensions>
 
