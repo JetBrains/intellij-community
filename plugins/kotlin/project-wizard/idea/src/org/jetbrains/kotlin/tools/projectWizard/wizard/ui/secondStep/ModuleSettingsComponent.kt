@@ -61,8 +61,16 @@ class ModuleSettingsComponent(
     }
 
     private fun createTemplatesListComponentForModule(module: Module): ModuleTemplateComponent? {
-        // we don't display the component for a single template (nothing to choose from)
-        val templates = read { availableTemplatesFor(module) }.takeIf { it.size > 1 } ?: return null
+        val templates = read { availableTemplatesFor(module) }
+        if (templates.isEmpty()) return null
+
+        assert(templates.all { it.isPermittedForModule(module)}) {
+            "Templates available for the module contain non-permitted one: templates=$templates, module=$module"
+        }
+
+        // we don't display the component for a single template matching module's default one (nothing to choose from)
+        if (templates.size == 1 && templates.first() == module.template) return null
+
         return ModuleTemplateComponent(context, module, templates, uiEditorUsagesStats) {
             updateModule(module)
             component.updateUI()
