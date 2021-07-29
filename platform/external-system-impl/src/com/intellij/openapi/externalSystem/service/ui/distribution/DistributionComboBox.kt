@@ -14,6 +14,7 @@ import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.lockOrSkip
+import com.intellij.util.ui.JBUI
 import java.awt.event.ActionEvent
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.AbstractAction
@@ -107,6 +108,9 @@ class DistributionComboBox(
       selected: Boolean,
       hasFocus: Boolean
     ) {
+      ipad = JBUI.emptyInsets()
+      myBorder = null
+
       val name = value?.name
       val description = value?.description
       if (name != null) {
