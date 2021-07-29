@@ -166,6 +166,7 @@ class TextCompletionPopup<C : JTextComponent>(
       list.selectionMode = ListSelectionModel.SINGLE_SELECTION
       list.border = null
       list.isFocusable = false
+      list.font = textComponent.font
 
       list.addKeyboardAction(getKeyStrokes(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE)) {
         fireVariantChosen(list.selectedValue as? TextCompletionInfo)
@@ -203,6 +204,8 @@ class TextCompletionPopup<C : JTextComponent>(
       // Code completion prefix should be visible under cell selection
       mySelected = false
 
+      myBorder = null
+
       if (value == null) {
         append(LangBundle.message("completion.no.suggestions"))
         return
@@ -224,8 +227,9 @@ class TextCompletionPopup<C : JTextComponent>(
       if (description != null) {
         val descriptionForeground = LookupCellRenderer.getGrayedForeground(selected)
         val descriptionAttributes = SimpleTextAttributes(textStyle, descriptionForeground)
+        append(" ")
         append(description.trim(), descriptionAttributes)
-        appendTextPadding(maxOf(preferredSize.width + ipad.left + ipad.right, list.width - ipad.right), SwingConstants.RIGHT)
+        appendTextPadding(maxOf(preferredSize.width, list.width - (ipad.left + ipad.right)), SwingConstants.RIGHT)
       }
     }
   }
