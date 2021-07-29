@@ -32,7 +32,7 @@ class LanguageToolChecker : TextChecker() {
     val language = Languages.getLanguageForLocale(locale)
     val state = GrazieConfig.get()
     val lang = state.enabledLanguages.find { language == it.jLanguage } ?: return emptyList()
-    return getRules(lang, state)
+    return grammarRules(LangTool.getTool(lang), lang)
   }
 
   override fun check(extracted: TextContent): @NotNull List<TextProblem> {
@@ -79,8 +79,8 @@ class LanguageToolChecker : TextChecker() {
     private val interner = Interner.createWeakInterner<String>()
     private val sentenceSeparationRules = setOf("LC_AFTER_PERIOD", "PUNT_GEEN_HL", "KLEIN_NACH_PUNKT")
 
-    internal fun getRules(lang: Lang, state: GrazieConfig.State = GrazieConfig.get()): List<LanguageToolRule> {
-      return LangTool.getTool(lang, state).allRules.asSequence()
+    internal fun grammarRules(tool: JLanguageTool, lang: Lang): List<LanguageToolRule> {
+      return tool.allRules.asSequence()
         .distinctBy { it.id }
         .filter { r -> !r.isDictionaryBasedSpellingRule }
         .map { LanguageToolRule(lang, it) }
