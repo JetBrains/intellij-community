@@ -9,17 +9,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.BrowseFolderRunnable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextComponentAccessor
-import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.*
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.lockOrSkip
 import com.intellij.util.ui.JBUI
 import java.awt.event.ActionEvent
+import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.AbstractAction
 import javax.swing.JList
 import javax.swing.JTextField
+import javax.swing.ListCellRenderer
 import javax.swing.plaf.basic.BasicComboBoxEditor
 import javax.swing.text.DefaultEditorKit
 import javax.swing.text.JTextComponent
@@ -56,7 +56,11 @@ class DistributionComboBox(
   }
 
   init {
-    renderer = Renderer()
+    renderer = Optional.ofNullable(popup)
+      .map { it.list }
+      .map { ExpandableItemsHandlerFactory.install<Int>(it) }
+      .map<ListCellRenderer<DistributionInfo>> { ExpandedItemListCellRendererWrapper(Renderer(), it) }
+      .orElseGet { Renderer() }
   }
 
   init {
