@@ -47,7 +47,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
   private final Context myContext;
   private final boolean myJavacBefore9;
   private final Collection<? extends JavaSourceTransformer> mySourceTransformers;
-  private final FileOperations myFileOperations;
+  private final FileOperations myFileOperations = new DefaultFileOperations();
   private final Map<String, Collection<String>> myGeneratedToOriginatingMap = new HashMap<String, Collection<String>>();
 
   private final Function<File, JavaFileObject> myFileToInputFileObjectConverter = new Function<File, JavaFileObject>() {
@@ -82,23 +82,6 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
     super(context.getStandardFileManager());
     myJavacBefore9 = javacBefore9;
     mySourceTransformers = transformers;
-
-    FileOperations foImpl;
-    try {
-      if ("true".equalsIgnoreCase(System.getProperty("jps.nio.file.operations", "false"))) {
-        // NIOFileOperations proved to be slower than DefaultFileOperations so far, so disabled by default
-        final Class<? extends FileOperations> aClass = (Class<? extends FileOperations>)Class.forName("org.jetbrains.jps.javac.NIOFileOperations");
-        foImpl = aClass.getDeclaredConstructor().newInstance();
-      }
-      else {
-        foImpl = new DefaultFileOperations();
-      }
-    }
-    catch (Throwable e) {
-      foImpl = new DefaultFileOperations();
-    }
-    myFileOperations = foImpl;
-
     myContext = new Context() {
       @Nullable
       @Override
