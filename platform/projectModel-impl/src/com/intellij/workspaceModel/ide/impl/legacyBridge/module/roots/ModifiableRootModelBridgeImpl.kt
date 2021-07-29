@@ -229,26 +229,33 @@ internal class ModifiableRootModelBridgeImpl(
   }
 
   override fun addLibraryEntry(library: Library): LibraryOrderEntry {
-    val libraryId = if (library is LibraryBridge) library.libraryId
-    else {
-      val libraryName = library.name
-      if (libraryName.isNullOrEmpty()) {
-        error("Library name is null or empty: $library")
-      }
-
-      LibraryId(libraryName, LibraryNameGenerator.getLibraryTableId(library.table.tableLevel))
-    }
-
-    val libraryDependency = ModuleDependencyItem.Exportable.LibraryDependency(
-      library = libraryId,
+    appendDependency(ModuleDependencyItem.Exportable.LibraryDependency(
+      library = library.libraryId,
       exported = false,
       scope = ModuleDependencyItem.DependencyScope.COMPILE
-    )
-
-    appendDependency(libraryDependency)
-
-
+    ))
     return (mutableOrderEntries.lastOrNull() as? LibraryOrderEntry ?: error("Unable to find library orderEntry after adding"))
+  }
+
+  private val Library.libraryId: LibraryId
+    get() {
+      val libraryId = if (this is LibraryBridge) libraryId
+      else {
+        val libraryName = name
+        if (libraryName.isNullOrEmpty()) {
+          error("Library name is null or empty: ${this}")
+        }
+
+        LibraryId(libraryName, LibraryNameGenerator.getLibraryTableId(table.tableLevel))
+      }
+      return libraryId
+    }
+
+  override fun addLibraryEntries(libraries: List<Library>, scope: DependencyScope, exported: Boolean) {
+    val dependencyScope = scope.toEntityDependencyScope()
+    appendDependencies(libraries.map {
+      ModuleDependencyItem.Exportable.LibraryDependency(it.libraryId, exported, dependencyScope)
+    })
   }
 
   override fun addInvalidLibrary(name: String, level: String): LibraryOrderEntry {
@@ -276,6 +283,13 @@ internal class ModifiableRootModelBridgeImpl(
     return mutableOrderEntries.lastOrNull() as? ModuleOrderEntry ?: error("Unable to find module orderEntry after adding")
   }
 
+  override fun addModuleEntries(modules: MutableList<Module>, scope: DependencyScope, exported: Boolean) {
+    val dependencyScope = scope.toEntityDependencyScope()
+    appendDependencies(modules.map {
+      ModuleDependencyItem.Exportable.ModuleDependency((it as ModuleBridge).moduleEntityId, exported, dependencyScope, productionOnTest = false)
+    })
+  }
+
   override fun addInvalidModuleEntry(name: String): ModuleOrderEntry {
     val moduleDependency = ModuleDependencyItem.Exportable.ModuleDependency(
       module = ModuleId(name),
@@ -294,6 +308,16 @@ internal class ModifiableRootModelBridgeImpl(
     entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
     diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
       dependencies = dependencies + dependency
+    }
+  }
+
+  internal fun appendDependencies(dependencies: List<ModuleDependencyItem>) {
+    for (dependency in dependencies) {
+      mutableOrderEntries.add(RootModelBridgeImpl.toOrderEntry(dependency, mutableOrderEntries.size, this, this::updateDependencyItem))
+    }
+    entityStorageOnDiff.clearCachedValue(orderEntriesArrayValue)
+    diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+      this.dependencies = this.dependencies + dependencies
     }
   }
 

@@ -27,6 +27,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Model of roots that should be used by clients to modify module roots.
  * <p/>
@@ -88,11 +90,23 @@ public interface ModifiableRootModel extends ModuleRootModel {
   @NotNull
   LibraryOrderEntry addInvalidLibrary(@NotNull @NonNls String name, @NotNull String level);
 
+  /**
+   * Adds dependencies on several {@code libraries} and sets the specified {@code scope} and {@code exported} flag for them. This works
+   * faster than adding these dependencies one-by-one via {@link #addLibraryEntry}.
+   */
+  void addLibraryEntries(@NotNull List<Library> libraries, @NotNull DependencyScope scope, boolean exported);
+
   @NotNull
   ModuleOrderEntry addModuleOrderEntry(@NotNull Module module);
 
   @NotNull
   ModuleOrderEntry addInvalidModuleEntry(@NotNull String name);
+
+  /**
+   * Adds dependencies on several {@code modules} and sets the specified {@code scope} and {@code exported} flag for them. This works
+   * faster than adding these dependencies one-by-one via {@link #addModuleOrderEntry}.
+   */
+  void addModuleEntries(@NotNull List<Module> modules, @NotNull DependencyScope scope, boolean exported);
 
   @Nullable
   ModuleOrderEntry findModuleOrderEntry(@NotNull Module module);
