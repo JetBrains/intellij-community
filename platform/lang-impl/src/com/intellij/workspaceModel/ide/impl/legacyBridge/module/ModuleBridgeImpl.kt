@@ -139,11 +139,13 @@ internal class ModuleBridgeImpl(
       }
     }
     else {
-      WriteAction.runAndWait<RuntimeException> {
-        WorkspaceModel.getInstance(project).updateProjectModel { builder ->
-          val entity = builder.findModuleEntity(this)
-          if (entity != null) {
-            updateOptionInEntity(builder, entity)
+      if (getOptionValue(key) != value) {
+        WriteAction.runAndWait<RuntimeException> {
+          WorkspaceModel.getInstance(project).updateProjectModel { builder ->
+            val entity = builder.findModuleEntity(this)
+            if (entity != null) {
+              updateOptionInEntity(builder, entity)
+            }
           }
         }
       }
