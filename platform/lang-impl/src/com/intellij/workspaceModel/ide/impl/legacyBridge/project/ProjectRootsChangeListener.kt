@@ -55,7 +55,7 @@ internal class ProjectRootsChangeListener(private val project: Project) {
               !shouldFireRootsChanged(newEntity, project)) continue
           if (oldEntity is ModuleEntity &&
               newEntity is ModuleEntity &&
-              oldEntity.dependencies.containsAll(newEntity.dependencies)) {
+              oldEntity.dependencies.toSet().containsAll(newEntity.dependencies)) {
             continue
           }
           ProjectRootManagerImpl.RootsChangeType.GENERIC
