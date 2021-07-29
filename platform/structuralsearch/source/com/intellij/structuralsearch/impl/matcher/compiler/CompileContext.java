@@ -2,6 +2,7 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -29,8 +30,9 @@ public class CompileContext {
     }
     else {
       SearchScope scope = myOptions.getScope();
-      if (!myOptions.isSearchInjectedCode() && scope instanceof GlobalSearchScope) {
-        scope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)scope, myOptions.getFileType());
+      LanguageFileType fileType = myOptions.getFileType();
+      if (!myOptions.isSearchInjectedCode() && scope instanceof GlobalSearchScope && fileType != null) {
+        scope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)scope, fileType);
       }
       mySearchHelper = new FindInFilesOptimizingSearchHelper(scope, options.isCaseSensitiveMatch(), project);
     }
