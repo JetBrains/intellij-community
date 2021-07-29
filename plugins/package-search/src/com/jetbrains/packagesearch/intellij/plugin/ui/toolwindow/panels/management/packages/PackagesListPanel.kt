@@ -16,10 +16,9 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.FilterOptions
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SearchClient
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SelectedPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
@@ -59,14 +58,15 @@ internal class PackagesListPanel(
     private val searchClient: SearchClient,
     operationFactory: PackageSearchOperationFactory,
     operationExecutor: OperationExecutor,
-    onItemSelectionChanged: SelectedPackageModelListener
+    onItemSelectionChanged: SelectedPackageModelListener,
+    onSearchResultStateChanged: SearchResultStateChangeListener
 ) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")), Displayable<PackagesListPanel.ViewModel> {
 
-    val selectedPackage = MutableStateFlow<SelectedPackageModel<*>?>(null)
+    val selectedPackage = MutableStateFlow<UiPackageModel<*>?>(null)
 
     private val searchFieldFocus = Channel<Unit>()
 
-    private val packagesTable = PackagesTable(project, operationExecutor, operationFactory, onItemSelectionChanged)
+    private val packagesTable = PackagesTable(project, operationExecutor, operationFactory, onItemSelectionChanged, onSearchResultStateChanged)
 
     private val searchTextField = PackagesSmartSearchField(searchFieldFocus.consumeAsFlow(), project)
         .apply {
@@ -218,7 +218,6 @@ internal class PackagesListPanel(
 
     internal data class ViewModel(
         val headerData: PackagesHeaderData,
-        val packageModels: List<PackageModel>,
         val filterOptions: FilterOptions,
         val targetModules: TargetModules,
         val knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
@@ -257,7 +256,7 @@ internal class PackagesListPanel(
             )
         )
 
-        tableScrollPane.isVisible = viewModel.packageModels.isNotEmpty()
+        tableScrollPane.isVisible = viewModel.tableItems.isNotEmpty()
 
         listPanel.updateAndRepaint()
         packagesTable.updateAndRepaint()

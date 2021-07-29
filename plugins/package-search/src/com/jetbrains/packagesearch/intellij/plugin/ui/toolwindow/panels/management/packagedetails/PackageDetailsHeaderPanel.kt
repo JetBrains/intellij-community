@@ -22,7 +22,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageM
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SelectedPackageModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
@@ -151,7 +151,7 @@ internal class PackageDetailsHeaderPanel(
     }
 
     internal data class ViewModel(
-        val selectedPackageModel: SelectedPackageModel<*>,
+        val selectedPackageModel: UiPackageModel<*>,
         val knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
         val allKnownRepositories: KnownRepositories.All,
         val targetModules: TargetModules,

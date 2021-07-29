@@ -70,7 +70,7 @@ import kotlin.time.toDuration
 
 internal class PackageSearchDataService(
     override val project: Project
-) : RootDataModelProvider, SearchClient, TargetModuleSetter, SelectedPackageSetter, OperationExecutor, CoroutineScope {
+) : RootDataModelProvider, SearchClient, TargetModuleSetter, SelectedPackageSetter, OperationExecutor, CoroutineScope, SearchResultStateSetter {
 
     override val coroutineContext = project.lifecycleScope.newCoroutineContext(CoroutineName("PackageSearchDataService"))
 
@@ -87,9 +87,11 @@ internal class PackageSearchDataService(
     private val searchQueryState = MutableStateFlow("")
     private val searchResultsState: MutableStateFlow<ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>?> =
         MutableStateFlow(null)
+    private val searchResultsUiStateOverridesState: MutableStateFlow<Map<PackageIdentifier, SearchResultUiState>> =
+        MutableStateFlow(emptyMap())
 
     private val targetModulesState = MutableStateFlow<TargetModules>(TargetModules.None)
-    private val selectedPackageModelState = MutableStateFlow<SelectedPackageModel<*>?>(null)
+    private val selectedPackageModelState = MutableStateFlow<UiPackageModel<*>?>(null)
     private val filterOptionsState = MutableStateFlow(
         FilterOptions(
             onlyStable = configuration.onlyStable,
@@ -110,18 +112,21 @@ internal class PackageSearchDataService(
         filterOptionsState,
         project.getPackageSearchModulesChangesFlow(replayFromErrorChannel.consumeAsFlow()),
         knownRepositoriesRemoteInfo,
-        selectedPackageModelState
+        selectedPackageModelState,
+        searchResultsUiStateOverridesState
     ) { searchQuery, searchResult, targetModules,
-        filterOptions, modules, apiRepositories, selectedPackage ->
+        filterOptions, modules, apiRepositories, selectedPackage,
+        searchResultsUiStateOverrides ->
         OnDataChangedIntermediateModel(
             traceInfo = TraceInfo(TraceInfo.TraceSource.DATA_CHANGED),
             searchQuery = searchQuery,
-            searchResult = searchResult,
+            searchResults = searchResult,
             targetModules = targetModules.refreshWith(modules),
             filterOptions = filterOptions,
             projectModules = modules,
             knownRepositories = apiRepositories,
-            selectedPackageModel = selectedPackage
+            selectedPackageModel = selectedPackage,
+            searchResultsUiStateOverrides = searchResultsUiStateOverrides
         )
     }.replayOnSignal(dataChangeChannel.consumeAsFlow())
         .mapLatest { it.toRootDataModel() }
@@ -137,12 +142,13 @@ internal class PackageSearchDataService(
     private data class OnDataChangedIntermediateModel(
         val traceInfo: TraceInfo,
         val searchQuery: String,
-        val searchResult: ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>?,
+        val searchResults: ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>?,
         val targetModules: TargetModules,
         val filterOptions: FilterOptions,
         val projectModules: List<ProjectModule>,
         val knownRepositories: List<ApiRepository>,
-        val selectedPackageModel: SelectedPackageModel<*>?
+        val selectedPackageModel: UiPackageModel<*>?,
+        val searchResultsUiStateOverrides: Map<PackageIdentifier, SearchResultUiState>
     )
 
     init {
@@ -168,13 +174,10 @@ internal class PackageSearchDataService(
 
             setStatus(isSearching = true)
 
-            val r =
+            val response =
                 dataProvider.doSearch(query, filterOptionsState.value).onFailure {
                     logError(traceInfo, "performSearch()") { "Search failed for query '$query': ${it.message}" }
-                    showErrorNotification(
-                        it.message,
-                        PackageSearchBundle.message("packagesearch.search.client.searching.failed")
-                    )
+                    handleSearchError(it)
                 }
                     .onSuccess {
                         logDebug(traceInfo, "PKGSDataService#performSearch()") {
@@ -183,17 +186,20 @@ internal class PackageSearchDataService(
                     }
                     .getOrNull()
             setStatus(isSearching = false)
-            r
+            response
         }
-            .catch { error ->
-                when (error) {
-                    is TimeoutCancellationException, is TimeoutException, is SocketTimeoutException ->
-                        showErrorNotification(message = PackageSearchBundle.message("packagesearch.search.client.searching.failed.timeout"))
-                    else -> logError("searchQueryState", error) { "Error while retrieving search results." }
-                }
-            }
+            .catch { error -> handleSearchError(error) }
             .onEach { searchResultsState.emit(it) }
             .launchIn(this)
+    }
+
+    private fun handleSearchError(throwable: Throwable) {
+        when (throwable) {
+            is TimeoutCancellationException, is TimeoutException, is SocketTimeoutException -> {
+                showErrorNotification(message = PackageSearchBundle.message("packagesearch.search.client.searching.failed.timeout"))
+            }
+            else -> showErrorNotification(message = PackageSearchBundle.message("packagesearch.search.client.searching.failed"))
+        }
     }
 
     private fun checkNotificationsSetupIsCorrect() {
@@ -221,23 +227,31 @@ internal class PackageSearchDataService(
         val moduleModels = fetchProjectModuleModels(targetModules, traceInfo, projectModules)
         val targetProjectModules = targetModules.map { it.projectModule }
 
-        val installedPackages = installedPackages(targetProjectModules, traceInfo)
+        val installedUiPackageModels = installedPackages(targetProjectModules, traceInfo)
             .filter { it.matches(searchQuery, filterOptions.onlyKotlinMultiplatform) }
+            .map { it.toUiPackageModel(targetModules, project) }
 
-        val installablePackages = installablePackages(searchResult, installedPackages, traceInfo)
+        val installableUiPackageModels = installablePackages(
+            searchResults = searchResults,
+            installedPackages = installedUiPackageModels,
+            onlyStable = filterOptions.onlyStable,
+            targetModules = targetModules,
+            searchResultsUiStateOverrides = searchResultsUiStateOverrides, // TODO remove this, we shouldn't need it anymore
+            traceInfo = traceInfo
+        )
         val allKnownRepositories = allKnownRepositoryModels(moduleModels, knownRepositories)
         val knownRepositoriesInTargetModules = allKnownRepositories.filterOnlyThoseUsedIn(targetModules)
-        val packagesToUpdate = computePackageUpdates(installedPackages, filterOptions.onlyStable)
+        val packagesToUpdate = computePackageUpdates(installedUiPackageModels, filterOptions.onlyStable)
 
         logDebug(traceInfo, "PKGSDataService#onDataChanged()") {
-            "New data: ${installedPackages.size} installed, ${installablePackages.size} installable, " +
+            "New data: ${installedUiPackageModels.size} installed, ${installableUiPackageModels.size} installable, " +
                 "${knownRepositoriesInTargetModules.size} known repos in target modules, ${moduleModels.size} modules"
         }
 
-        val packageModels = installedPackages + installablePackages
+        val packageModels = installedUiPackageModels + installableUiPackageModels
         val headerData = computeHeaderData(
-            installed = installedPackages,
-            installable = installablePackages,
+            installedUiPackageModels = installedUiPackageModels,
+            installableUiPackageModels = installableUiPackageModels,
             isSearching = searchQuery.isNotEmpty(),
             onlyStable = filterOptions.onlyStable,
             targetModules = targetModules,
@@ -351,19 +365,29 @@ internal class PackageSearchDataService(
 
     private fun installablePackages(
         searchResults: ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>?,
-        installedPackages: List<PackageModel>,
+        installedPackages: List<UiPackageModel.Installed>,
+        onlyStable: Boolean,
+        targetModules: TargetModules,
+        searchResultsUiStateOverrides: Map<PackageIdentifier, SearchResultUiState>,
         traceInfo: TraceInfo
-    ): List<PackageModel.SearchResult> {
+    ): List<UiPackageModel.SearchResult> {
         logDebug(traceInfo, "PKGSDataService#installedDependencies()") { "Calculating installable dependencies from search results..." }
         if (searchResults == null || searchResults.packages.isEmpty()) return emptyList()
 
-        val installedDependencies = installedPackages.map { InstalledDependency(it.groupId, it.artifactId) }
+        val installedDependencies = installedPackages.map { it.packageModel }
+            .map { InstalledDependency(it.groupId, it.artifactId) }
 
         return searchResults.packages
             .filterNot { installedDependencies.any { installed -> installed.matchesCoordinates(it) } }
-            .mapNotNull { PackageModel.fromSearchResult(it) }
+            .mapNotNull {
+                val uiState = searchResultsUiStateOverrides[it.identifier()]
+                PackageModel.fromSearchResult(it, uiState)
+            }
+            .map { it.toUiPackageModel(onlyStable, targetModules, project) }
             .toList()
     }
+
+    private fun ApiStandardPackage.identifier() = PackageIdentifier("$groupId:$artifactId")
 
     private fun allKnownRepositoryModels(
         allModules: List<ModuleModel>,
@@ -409,21 +433,21 @@ internal class PackageSearchDataService(
         }
 
     private fun computePackageUpdates(
-        installedPackages: List<PackageModel.Installed>,
+        installedPackages: List<UiPackageModel.Installed>,
         onlyStable: Boolean
     ): PackagesToUpdate {
         val updatesByModule = mutableMapOf<Module, MutableSet<PackagesToUpdate.PackageUpdateInfo>>()
-        for (installedPackage in installedPackages) {
-            if (installedPackage.remoteInfo == null) continue
-            val latestVersion = installedPackage.getLatestAvailableVersion(onlyStable) as? PackageVersion.Named
+        for (installedPackageModel in installedPackages.map { it.packageModel }) {
+            if (installedPackageModel.remoteInfo == null) continue
+            val latestVersion = installedPackageModel.getLatestAvailableVersion(onlyStable) as? PackageVersion.Named
                 ?: continue
 
-            for (usageInfo in installedPackage.usageInfo) {
+            for (usageInfo in installedPackageModel.usageInfo) {
                 val currentVersion = usageInfo.version
 
                 if (currentVersion < latestVersion) {
                     updatesByModule.getOrCreate(usageInfo.projectModule.nativeModule) { mutableSetOf() } +=
-                        PackagesToUpdate.PackageUpdateInfo(installedPackage, usageInfo, latestVersion)
+                        PackagesToUpdate.PackageUpdateInfo(installedPackageModel, usageInfo, latestVersion)
                 }
             }
         }
@@ -438,15 +462,15 @@ internal class PackageSearchDataService(
         }
 
     private fun computeHeaderData(
-        installed: List<PackageModel.Installed>,
-        installable: List<PackageModel.SearchResult>,
+        installedUiPackageModels: List<UiPackageModel.Installed>,
+        installableUiPackageModels: List<UiPackageModel.SearchResult>,
         isSearching: Boolean,
         onlyStable: Boolean,
         targetModules: TargetModules,
         knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
         allKnownRepositories: KnownRepositories.All
     ): PackagesHeaderData {
-        val count = installed.count() + installable.count()
+        val count = installedUiPackageModels.count() + installableUiPackageModels.count()
         val selectedModules = targetModulesState.value
         val moduleNames = if (selectedModules.size == 1) {
             selectedModules.first().projectModule.name
@@ -460,9 +484,10 @@ internal class PackageSearchDataService(
             PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.installedPackages.addedIn", moduleNames)
         }
 
-        val updatablePackages = installed.filter { it.canBeUpgraded(onlyStable) }
+        val updatablePackages = installedUiPackageModels.filter { it.packageModel.canBeUpgraded(onlyStable) }
 
-        val operations = updatablePackages.flatMap { packageModel ->
+        val operations = updatablePackages.flatMap { uiPackageModel ->
+            val packageModel = uiPackageModel.packageModel
             val newVersion = packageModel.getLatestAvailableVersion(onlyStable)
                 ?: return@flatMap emptyList<PackageSearchOperation<*>>()
 
@@ -534,11 +559,21 @@ internal class PackageSearchDataService(
         }
     }
 
-    override suspend fun setSelectedPackage(selectedPackageModel: SelectedPackageModel<*>?) {
+    override suspend fun setSelectedPackage(selectedPackageModel: UiPackageModel<*>?) {
         logDebug("PKGSDataService#setSelectedPackage()") {
             "Setting selected package: ${selectedPackageModel?.packageModel?.identifier}"
         }
         selectedPackageModelState.emit(selectedPackageModel)
+    }
+
+    override suspend fun setSearchResultState(searchResult: PackageModel.SearchResult, newVersion: PackageVersion?, newScope: PackageScope?) {
+        logDebug("PKGSDataService#setSearchResultState()") {
+            "Setting state for search result '${searchResult.identifier}': version=${newVersion}, scope=${newScope}"
+        }
+        val uiStates = searchResultsUiStateOverridesState.value.toMutableMap()
+        val identifier = PackageIdentifier(searchResult.identifier)
+        uiStates[identifier] = SearchResultUiState(newVersion, newScope)
+        searchResultsUiStateOverridesState.emit(uiStates)
     }
 
     override fun executeOperations(operations: List<PackageSearchOperation<*>>) {
