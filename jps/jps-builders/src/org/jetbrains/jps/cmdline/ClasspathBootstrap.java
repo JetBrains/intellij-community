@@ -34,8 +34,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -62,7 +61,18 @@ public final class ClasspathBootstrap {
   private static final String[] REFLECTION_OPEN_PACKAGES = {
     // needed for jps core functioning
     "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
-    "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
+    "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+
+    // needed for some lombok versions to function
+    "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",
+    "jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED",
+    "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+    "jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED",
+    "jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED",
+    "jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
+    "jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED",
+    "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+    "jdk.compiler/com.sun.tools.javac.jvm=ALL-UNNAMED"
   };
 
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
