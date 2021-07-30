@@ -9,7 +9,6 @@ public final class ProjectSettings {
 
   public static final String IS_LOMBOK_VERSION_CHECK_ENABLED = PREFIX + "IS_LOMBOK_VERSION_CHECK_Enabled";
   public static final String IS_LOMBOK_JPS_FIX_ENABLED = PREFIX + "IS_LOMBOK_JPS_FIX_ENABLED";
-  public static final String IS_LOMBOK_ADD_OPENS_FIX_ENABLED = PREFIX + "IS_LOMBOK_ADD_OPENS_FIX_ENABLED";
 
   public static boolean isEnabled(@NotNull Project project, final String propertyName) {
     return PropertiesComponent.getInstance(project).getBoolean(propertyName, true);
