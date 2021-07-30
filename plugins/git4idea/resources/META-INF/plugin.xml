@@ -62,7 +62,7 @@
             class="git4idea.ui.branch.dashboard.BranchesDashboardActions$NavigateLogToSelectedBranchAction"/>
     <action id="Git.Log.Hide.Branches" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$HideBranchesAction"
             icon="AllIcons.Actions.ArrowCollapse"/>
-    <group id="Git.Log.Branches.Settings" popup="true" icon="AllIcons.General.GearPlain">
+    <group id="Git.Log.Branches.Settings" popup="true" icon="AllIcons.General.GearPlain" class="com.intellij.ide.actions.NonTrivialActionGroup">
       <separator key="group.Git.Log.Branches.Settings.Separator.text"/>
       <action id="Git.Log.Branches.Change.Branch.Filter.On.Selection"
               class="git4idea.ui.branch.dashboard.BranchesDashboardActions$ChangeBranchFilterAction"/>
