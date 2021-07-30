@@ -278,7 +278,7 @@ final class DistributionJARsBuilder {
                                          modulesToIndex, List.of("traverseUI", targetDirectory.toString(), "true"),
                                          systemProperties,
                                          List.of("-ea", "-Xmx1024m", "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader"),
-                                         [], TimeUnit.MINUTES.toMillis(10L), classpathCustomizer)
+                                         TimeUnit.MINUTES.toMillis(10L), classpathCustomizer)
     List<Path> modules = Files.newDirectoryStream(targetDirectory).withCloseable { it.asList() }
     if (modules.isEmpty()) {
       buildContext.messages.error("Failed to build searchable options index: $targetDirectory is empty")

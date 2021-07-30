@@ -209,7 +209,6 @@ final class BuildTasksImpl extends BuildTasks {
                                     List<String> arguments,
                                     Map<String, Object> systemProperties = Collections.emptyMap(),
                                     List<String> vmOptions = List.of("-Xmx512m"),
-                                    List<String> pluginsToDisable = Collections.emptyList(),
                                     long timeoutMillis = TimeUnit.MINUTES.toMillis(10L),
                                     ApplicationStarterClasspathCustomizer classpathCustomizer = new ApplicationStarterClasspathCustomizer(context)) {
     Files.createDirectories(tempDir)
@@ -246,7 +245,7 @@ final class BuildTasksImpl extends BuildTasks {
     }
     ideClasspath = classpathCustomizer.customize(ideClasspath)
 
-    disableCompatibleIgnoredPlugins(context, tempDir.resolve("config"), pluginsToDisable)
+    disableCompatibleIgnoredPlugins(context, tempDir.resolve("config"))
 
     BuildHelper.runJava(
       context,
@@ -257,10 +256,8 @@ final class BuildTasksImpl extends BuildTasks {
       timeoutMillis)
   }
 
-  private static void disableCompatibleIgnoredPlugins(@NotNull BuildContext context,
-                                                      @NotNull Path configDir,
-                                                      @NotNull List<String> pluginsToDisable) {
-    Set<String> toDisable = new HashSet<>(pluginsToDisable)
+  private static void disableCompatibleIgnoredPlugins(@NotNull BuildContext context, @NotNull Path configDir) {
+    Set<String> toDisable = new HashSet<>()
     for (String moduleName : context.productProperties.productLayout.compatiblePluginsToIgnore) {
       Path pluginXml = context.findFileInModuleSources(moduleName, "META-INF/plugin.xml")
       toDisable.add(JDOMUtil.load(pluginXml).getChildTextTrim("id"))
