@@ -281,6 +281,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   public void navigate(boolean requestFocus) {
     ReadAction.nonBlocking(() -> getNavigatable())
       .expireWith(this)
+      .coalesceBy(this)
       .finishOnUiThread(ModalityState.NON_MODAL, navigatable -> {
       if (navigatable != null) {
         navigatable.navigate(requestFocus);
