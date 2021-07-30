@@ -11,9 +11,9 @@ internal sealed class PackageModel(
     val remoteInfo: ApiStandardPackage?
 ) : Comparable<PackageModel> {
 
-    val identifier = "$groupId:$artifactId".lowercase()
+    val identifier = PackageIdentifier("$groupId:$artifactId")
 
-    val sortKey = (StringUtils.normalizeSpace(remoteInfo?.name) ?: identifier).lowercase()
+    val sortKey = (StringUtils.normalizeSpace(remoteInfo?.name) ?: identifier.rawValue.lowercase())
 
     val isKotlinMultiplatform = remoteInfo?.mpp != null
 
@@ -117,8 +117,7 @@ internal sealed class PackageModel(
     class SearchResult(
         groupId: String,
         artifactId: String,
-        remoteInfo: ApiStandardPackage,
-        val uiState: SearchResultUiState?
+        remoteInfo: ApiStandardPackage
     ) : PackageModel(groupId, artifactId, remoteInfo) {
 
         override fun additionalAvailableVersions(): List<PackageVersion> = emptyList()
@@ -148,14 +147,13 @@ internal sealed class PackageModel(
 
     companion object {
 
-        fun fromSearchResult(remoteInfo: ApiStandardPackage, uiState: SearchResultUiState? = null): SearchResult? {
+        fun fromSearchResult(remoteInfo: ApiStandardPackage): SearchResult? {
             if (remoteInfo.versions.isEmpty()) return null
 
             return SearchResult(
                 remoteInfo.groupId,
                 remoteInfo.artifactId,
-                remoteInfo = remoteInfo,
-                uiState = uiState
+                remoteInfo = remoteInfo
             )
         }
 
