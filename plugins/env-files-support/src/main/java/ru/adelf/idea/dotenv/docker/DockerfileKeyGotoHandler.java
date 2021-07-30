@@ -1,4 +1,3 @@
-/*
 package ru.adelf.idea.dotenv.docker;
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
@@ -16,18 +15,17 @@ public class DockerfileKeyGotoHandler implements GotoDeclarationHandler {
     @Nullable
     @Override
     public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
-
-        if(psiElement == null || psiElement.getParent() == null) {
+        if (psiElement == null || psiElement.getParent() == null) {
             return PsiElement.EMPTY_ARRAY;
         }
 
-        if(!psiElement.getContainingFile().getName().equals("Dockerfile")) {
+        if (!psiElement.getContainingFile().getName().equals("Dockerfile")) {
             return PsiElement.EMPTY_ARRAY;
         }
 
         psiElement = psiElement.getParent();
 
-        if(!(psiElement instanceof DockerFileEnvRegularDeclaration)) {
+        if (!(psiElement instanceof DockerFileEnvRegularDeclaration)) {
             return PsiElement.EMPTY_ARRAY;
         }
 
@@ -40,4 +38,3 @@ public class DockerfileKeyGotoHandler implements GotoDeclarationHandler {
         return null;
     }
 }
-*/

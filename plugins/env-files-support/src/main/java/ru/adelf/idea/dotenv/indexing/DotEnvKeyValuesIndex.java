@@ -76,6 +76,6 @@ public class DotEnvKeyValuesIndex extends FileBasedIndexExtension<String, String
 
     @Override
     public int getVersion() {
-        return 6;
+        return 7;
     }
 }

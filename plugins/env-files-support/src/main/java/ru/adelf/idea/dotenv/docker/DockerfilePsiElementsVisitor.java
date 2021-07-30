@@ -1,10 +1,10 @@
-/*
 package ru.adelf.idea.dotenv.docker;
 
 import com.intellij.docker.dockerFile.parser.psi.DockerFileEnvRegularDeclaration;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 
 import java.util.Collection;
@@ -14,8 +14,8 @@ class DockerfilePsiElementsVisitor extends PsiRecursiveElementVisitor {
     private final Collection<KeyValuePsiElement> collectedItems = new HashSet<>();
 
     @Override
-    public void visitElement(PsiElement element) {
-        if(element instanceof DockerFileEnvRegularDeclaration) {
+    public void visitElement(@NotNull PsiElement element) {
+        if (element instanceof DockerFileEnvRegularDeclaration) {
             this.visitProperty((DockerFileEnvRegularDeclaration) element);
         }
 
@@ -23,11 +23,11 @@ class DockerfilePsiElementsVisitor extends PsiRecursiveElementVisitor {
     }
 
     private void visitProperty(DockerFileEnvRegularDeclaration envRegularDeclaration) {
-        if(StringUtils.isNotBlank(envRegularDeclaration.getDeclaredName().getText()) && envRegularDeclaration.getRegularValue() != null) {
+        if (StringUtils.isNotBlank(envRegularDeclaration.getDeclaredName().getText()) && envRegularDeclaration.getRegularValue() != null) {
             collectedItems.add(new KeyValuePsiElement(
-                    envRegularDeclaration.getDeclaredName().getText(),
-                    envRegularDeclaration.getRegularValue().getText(),
-                    envRegularDeclaration));
+                envRegularDeclaration.getDeclaredName().getText(),
+                envRegularDeclaration.getRegularValue().getText(),
+                envRegularDeclaration));
         }
     }
 
@@ -35,4 +35,3 @@ class DockerfilePsiElementsVisitor extends PsiRecursiveElementVisitor {
         return collectedItems;
     }
 }
-*/

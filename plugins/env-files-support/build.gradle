@@ -30,15 +30,15 @@ apply plugin: 'org.jetbrains.intellij'
 apply plugin: 'java'
 
 intellij {
-    version 'IU-212.4037.9-EAP-SNAPSHOT'
+    version 'IU-212.4746.92'
     plugins = [
-            'com.jetbrains.php:212.4037.57',
+            'com.jetbrains.php:212.4746.100',
             //'JavaScriptLanguage',
             'yaml',
-            'org.jetbrains.plugins.go:212.4037.9',
+            'org.jetbrains.plugins.go:212.4746.92',
             'Docker',
-            'pythonid:212.4037.9',
-            'org.jetbrains.plugins.ruby:212.4037.9',
+            'pythonid:212.4746.96',
+            'org.jetbrains.plugins.ruby:212.4746.92',
             'Kotlin',
             'coverage',
             'CSS',
@@ -59,6 +59,6 @@ buildSearchableOptions {
 }
 
 group 'ru.adelf'
-version '2021.2.212' // Plugin version
+version '2021.3.0.212' // Plugin version
 sourceCompatibility = 11
 targetCompatibility = 11

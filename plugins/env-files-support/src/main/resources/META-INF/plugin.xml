@@ -72,8 +72,8 @@
     <!--<depends optional="true" config-file="js.xml">JavaScript</depends>-->
     <depends optional="true" config-file="go.xml">org.jetbrains.plugins.go</depends>
 
-    <!--<depends optional="true" config-file="docker.xml">Docker</depends>-->
-    <!--<depends optional="true" config-file="yaml.xml">org.jetbrains.plugins.yaml</depends>-->
+    <depends optional="true" config-file="docker.xml">Docker</depends>
+    <depends optional="true" config-file="yaml.xml">org.jetbrains.plugins.yaml</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <projectService serviceImplementation="ru.adelf.idea.dotenv.DotEnvSettings"/>

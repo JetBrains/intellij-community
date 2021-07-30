@@ -1,4 +1,3 @@
-/*
 package ru.adelf.idea.dotenv.docker;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,7 +16,7 @@ public class DockerComposeYamlVariablesProvider implements EnvironmentVariablesP
     @NotNull
     @Override
     public FileAcceptResult acceptFile(VirtualFile file) {
-        if(file.getName().equals("docker-compose.yml") || file.getName().equals("docker-compose.yaml")) {
+        if (file.getName().equals("docker-compose.yml") || file.getName().equals("docker-compose.yaml")) {
             return file.getFileType().equals(YAMLFileType.YML) ? FileAcceptResult.ACCEPTED : FileAcceptResult.NOT_ACCEPTED;
         }
 
@@ -27,8 +26,7 @@ public class DockerComposeYamlVariablesProvider implements EnvironmentVariablesP
     @NotNull
     @Override
     public Collection<KeyValuePsiElement> getElements(PsiFile psiFile) {
-
-        if(psiFile instanceof YAMLFile) {
+        if (psiFile instanceof YAMLFile) {
             DockerComposeYamlPsiElementsVisitor visitor = new DockerComposeYamlPsiElementsVisitor();
             psiFile.acceptChildren(visitor);
 
@@ -38,4 +36,3 @@ public class DockerComposeYamlVariablesProvider implements EnvironmentVariablesP
         return Collections.emptyList();
     }
 }
-*/
