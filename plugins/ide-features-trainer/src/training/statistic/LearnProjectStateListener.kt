@@ -78,15 +78,28 @@ internal class LearnProjectState : PersistentStateComponent<LearnProjectState> {
   }
 }
 
+private const val NOTIFICATION_SESSION_COUNTER = "ift.show.new.lessons.notification.session.counter"
+
+/** Need to show notification only once per session */
+private var showingNotificationIsConsidered = false
+
 private fun considerNotifyAboutNewLessons(project: Project) {
   if (!PropertiesComponent.getInstance().getBoolean(SHOW_NEW_LESSONS_NOTIFICATION, true)) {
     return
   }
-  if (learningPanelWasOpenedInCurrentVersion || !iftPluginIsUsing) {
+  if (learningPanelWasOpenedInCurrentVersion || !iftPluginIsUsing || showingNotificationIsConsidered) {
     return
   }
+  showingNotificationIsConsidered = true
   val newLessons = CourseManager.instance.newLessons
   if (newLessons.isEmpty() || newLessons.any { it.passed }) {
+    return
+  }
+  val cooldown = 5
+  val startCounter = 2
+  val sessionCounter = PropertiesComponent.getInstance().getInt(NOTIFICATION_SESSION_COUNTER, startCounter) + 1
+  PropertiesComponent.getInstance().setValue(NOTIFICATION_SESSION_COUNTER, sessionCounter % cooldown, startCounter)
+  if (sessionCounter != cooldown) {
     return
   }
   notifyAboutNewLessons(project, newLessons)
