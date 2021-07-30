@@ -111,7 +111,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   @NonNls private static final String SEARCH_DIMENSION_SERVICE_KEY = "#com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog";
   @NonNls private static final String REPLACE_DIMENSION_SERVICE_KEY = "#com.intellij.structuralsearch.plugin.ui.StructuralReplaceDialog";
 
-  @NonNls private static final String RECURSIVE_STATE = "structural.search.recursive";
   @NonNls private static final String SHORTEN_FQN_STATE = "structural.search.shorten.fqn";
   @NonNls private static final String REFORMAT_STATE = "structural.search.reformat";
   @NonNls private static final String USE_STATIC_IMPORT_STATE = "structural.search.use.static.import";
@@ -595,25 +594,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         initValidation();
       }
     };
-    final CheckboxAction recursive = new CheckboxAction(SSRBundle.message("recursive.matching.checkbox")) {
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        super.update(e);
-        e.getPresentation().setEnabledAndVisible(!myReplace);
-      }
-
-      @Override
-      public boolean isSelected(@NotNull AnActionEvent e) {
-        return myConfiguration.getMatchOptions().isRecursiveSearch();
-      }
-
-      @Override
-      public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myConfiguration.getMatchOptions().setRecursiveSearch(state);
-        initValidation();
-      }
-    };
     final CheckboxAction matchCase = new CheckboxAction(FindBundle.message("find.popup.case.sensitive")) {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
@@ -746,7 +726,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       }
     };
     final DefaultActionGroup optionsActionGroup =
-      new DefaultActionGroup(injected, recursive, matchCase, myFileTypeChooser, filterAction, templateActionGroup);
+      new DefaultActionGroup(injected, matchCase, myFileTypeChooser, filterAction, templateActionGroup);
     myOptionsToolbar = (ActionToolbarImpl)actionManager.createActionToolbar("StructuralSearchDialog", optionsActionGroup, true);
     myOptionsToolbar.setTargetComponent(mySearchCriteriaEdit);
     myOptionsToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -1176,7 +1156,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     }
     UIUtil.setContent(mySearchCriteriaEdit, matchOptions.getSearchPattern());
 
-    final PropertiesComponent properties = PropertiesComponent.getInstance();
     if (myReplace) {
       final Editor replaceEditor = myReplaceCriteriaEdit.getEditor();
       if (replaceEditor != null) {
@@ -1189,11 +1168,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       }
       else {
         UIUtil.setContent(myReplaceCriteriaEdit, matchOptions.getSearchPattern());
-      }
-    }
-    else {
-      if (configuration instanceof ReplaceConfiguration) {
-        matchOptions.setRecursiveSearch(properties.getBoolean(RECURSIVE_STATE));
       }
     }
   }
@@ -1216,19 +1190,15 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     matchOptions.setDialect(myDialect);
     matchOptions.setPatternContext(myPatternContext);
     matchOptions.setSearchPattern(getPattern(mySearchCriteriaEdit));
-
+    matchOptions.setRecursiveSearch(!myReplace);
 
     final PropertiesComponent properties = PropertiesComponent.getInstance();
     if (myReplace) {
       final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
       replaceOptions.setReplacement(getPattern(myReplaceCriteriaEdit));
-      matchOptions.setRecursiveSearch(false);
       properties.setValue(SHORTEN_FQN_STATE, replaceOptions.isToShortenFQN());
       properties.setValue(USE_STATIC_IMPORT_STATE, replaceOptions.isToUseStaticImport());
       properties.setValue(REFORMAT_STATE, replaceOptions.isToReformatAccordingToStyle());
-    }
-    else {
-      properties.setValue(RECURSIVE_STATE, matchOptions.isRecursiveSearch());
     }
   }
 
