@@ -132,7 +132,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private @Nullable Runnable myShutDownTask;
   private @Nullable ScheduledFuture<?> myFlushingFuture;
-  private @Nullable ScheduledFuture<?> myHealthСheckFuture;
+  private @Nullable ScheduledFuture<?> myHealthСheсkFuture;
 
   private final AtomicInteger myLocalModCount = new AtomicInteger();
   private final AtomicInteger myFilesModCount = new AtomicInteger();
@@ -359,7 +359,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   void setUpHealthCheck() {
-    myHealthСheckFuture = AppExecutorUtil
+    myHealthСheсkFuture = AppExecutorUtil
       .getAppScheduledExecutorService()
       .scheduleWithFixedDelay(ConcurrencyUtil.underThreadNameRunnable("Index Healthcheck", () -> {
         myIndexableFilesFilterHolder.runHealthCheck();
@@ -606,9 +606,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         myFlushingFuture.cancel(false);
         myFlushingFuture = null;
       }
-      if (myHealthСheckFuture != null) {
-        myHealthСheckFuture.cancel(false);
-        myHealthСheckFuture = null;
+      if (myHealthСheсkFuture != null) {
+        myHealthСheсkFuture.cancel(false);
+        myHealthСheсkFuture = null;
       }
     }
     finally {
