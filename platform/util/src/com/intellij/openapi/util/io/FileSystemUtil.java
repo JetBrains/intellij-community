@@ -8,6 +8,8 @@ import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.system.CpuArch;
@@ -484,12 +486,20 @@ public final class FileSystemUtil {
   static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivityByJavaIO(@NotNull File anyChild) {
     // try to query this path by different-case strings and deduce case sensitivity from the answers
     if (!anyChild.exists()) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("readParentCaseSensitivityByJavaIO("+anyChild+") fallback returned UNKNOWN because the child doesn't exist");
+      }
       return FileAttributes.CaseSensitivity.UNKNOWN;
     }
     File parent = anyChild.getParentFile();
     if (parent == null) {
       String probe = findCaseToggleableChild(anyChild);
-      if (probe == null) return FileAttributes.CaseSensitivity.UNKNOWN;
+      if (probe == null) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("readParentCaseSensitivityByJavaIO("+anyChild+") fallback returned UNKNOWN because parent is null and toggleable child wasn't found. isDirectory="+anyChild.isDirectory());
+        }
+        return FileAttributes.CaseSensitivity.UNKNOWN;
+      }
       parent = anyChild;
       anyChild = new File(parent, probe);
     }
@@ -500,6 +510,18 @@ public final class FileSystemUtil {
       // we have a bad case of "123" file
       name = findCaseToggleableChild(parent);
       if (name == null) {
+        if (LOG.isDebugEnabled()) {
+          String[] list;
+          try {
+            list = parent.list();
+          }
+          catch (Exception e) {
+            list = null;
+          }
+          int count = list==null?0:list.length;
+          LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + ") fallback returned UNKNOWN because toggleable child wasn't found among " + count +" children:\n "+StringUtil.first(StringUtil.join(
+                      ObjectUtils.notNull(list, ArrayUtil.EMPTY_STRING_ARRAY), ", "), 200, true));
+        }
         // we can't find any file with toggleable case.
         return FileAttributes.CaseSensitivity.UNKNOWN;
       }
@@ -523,6 +545,7 @@ public final class FileSystemUtil {
       }
     }
     catch (IOException e) {
+      LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + ") fallback returned UNKNOWN because of IOException", e);
       return FileAttributes.CaseSensitivity.UNKNOWN;
     }
 
@@ -548,7 +571,7 @@ public final class FileSystemUtil {
     return detected;
   }
 
-  private static String toggleCase(String name) {
+  private static @NotNull String toggleCase(@NotNull String name) {
     String altName = name.toUpperCase(Locale.getDefault());
     if (altName.equals(name)) altName = name.toLowerCase(Locale.getDefault());
     return altName;
@@ -563,8 +586,8 @@ public final class FileSystemUtil {
   }
 
   // return child which name can be used for querying by different-case names (e.g "child.txt" vs "CHILD.TXT")
-  // or null if there are none (e.g there's only one child "123.456").
-  private static @Nullable String findCaseToggleableChild(File dir) {
+  // or null if there are none (e.g., there's only one child "123.456").
+  private static @Nullable String findCaseToggleableChild(@NotNull File dir) {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir.toPath())) {
       for (Path path : stream) {
         String name = path.getFileName().toString();
@@ -573,7 +596,8 @@ public final class FileSystemUtil {
         }
       }
     }
-    catch (Exception ignored) { }
+    catch (Exception ignored) {
+    }
     return null;
   }
 
