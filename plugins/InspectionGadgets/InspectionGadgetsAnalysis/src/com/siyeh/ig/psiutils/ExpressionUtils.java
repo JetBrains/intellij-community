@@ -60,12 +60,18 @@ public final class ExpressionUtils {
 
   @Nullable
   public static Object computeConstantExpression(@Nullable PsiExpression expression) {
-    return JavaExpressionUtils.computeConstantExpression(expression);
+    return computeConstantExpression(expression, false);
   }
 
   @Nullable
   public static Object computeConstantExpression(@Nullable PsiExpression expression, boolean throwConstantEvaluationOverflowException) {
-    return JavaExpressionUtils.computeConstantExpression(expression, throwConstantEvaluationOverflowException);
+    if (expression == null) {
+      return null;
+    }
+    final Project project = expression.getProject();
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final PsiConstantEvaluationHelper constantEvaluationHelper = psiFacade.getConstantEvaluationHelper();
+    return constantEvaluationHelper.computeConstantExpression(expression, throwConstantEvaluationOverflowException);
   }
 
   public static boolean isConstant(PsiField field) {

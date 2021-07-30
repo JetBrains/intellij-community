@@ -4,13 +4,13 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.JavaControlFlowUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,8 +123,17 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
 
   private static boolean isFallthrough(@NotNull PsiSwitchLabelStatementBase immediateSwitchLabel) {
     final PsiStatement prevStmt = PsiTreeUtil.getPrevSiblingOfType(immediateSwitchLabel, PsiStatement.class);
+
     if (prevStmt == null) return false;
-    return JavaControlFlowUtils.statementMayCompleteNormally(prevStmt);
+    if (prevStmt instanceof PsiSwitchLabelStatementBase) return true;
+
+    try {
+      final ControlFlow flow = ControlFlowFactory.getControlFlow(prevStmt, new LocalsControlFlowPolicy(prevStmt), ControlFlowOptions.NO_CONST_EVALUATE);
+      return ControlFlowUtil.canCompleteNormally(flow, 0, flow.getSize());
+    }
+    catch (AnalysisCanceledException e) {
+      return false;
+    }
   }
 
   private static boolean isSpecialCaseLabel(@NotNull PsiSwitchLabelStatementBase switchCaseLabel) {
