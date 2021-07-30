@@ -5,28 +5,28 @@
     <root id="root">
       <element id="directory" name="lib">
         <element id="archive" name="android-extensions-compiler-plugin-for-ide.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/1.5.10-release-918/android-extensions-compiler-plugin-for-ide-1.5.10-release-918.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/1.5.10-release-936/android-extensions-compiler-plugin-for-ide-1.5.10-release-936.jar" path-in-jar="/" />
         </element>
         <element id="archive" name="allopen-compiler-plugin-for-ide.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/1.5.10-release-918/allopen-compiler-plugin-for-ide-1.5.10-release-918.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/1.5.10-release-936/allopen-compiler-plugin-for-ide-1.5.10-release-936.jar" path-in-jar="/" />
         </element>
         <element id="archive" name="kotlinx-serialization-compiler-plugin-for-ide.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.5.10-release-918/kotlinx-serialization-compiler-plugin-for-ide-1.5.10-release-918.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.5.10-release-936/kotlinx-serialization-compiler-plugin-for-ide-1.5.10-release-936.jar" path-in-jar="/" />
         </element>
         <element id="archive" name="sam-with-receiver-compiler-plugin-for-ide.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/1.5.10-release-918/sam-with-receiver-compiler-plugin-for-ide-1.5.10-release-918.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/1.5.10-release-936/sam-with-receiver-compiler-plugin-for-ide-1.5.10-release-936.jar" path-in-jar="/" />
         </element>
         <element id="archive" name="noarg-compiler-plugin-for-ide.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/1.5.10-release-918/noarg-compiler-plugin-for-ide-1.5.10-release-918.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/1.5.10-release-936/noarg-compiler-plugin-for-ide-1.5.10-release-936.jar" path-in-jar="/" />
         </element>
         <element id="archive" name="kotlin-scripting-compiler-impl.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.5.10-release-918/kotlin-scripting-compiler-impl-1.5.10-release-918.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.5.10-release-936/kotlin-scripting-compiler-impl-1.5.10-release-936.jar" path-in-jar="/" />
         </element>
         <element id="directory" name="jps">
           <element id="archive" name="kotlin-jps-plugin.jar">
             <element id="module-output" name="kotlin.jps-plugin" />
             <element id="module-output" name="kotlin.jps-common" />
-            <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/compiler-components-for-jps/1.5.10-release-918/compiler-components-for-jps-1.5.10-release-918.jar" path-in-jar="/" />
+            <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/compiler-components-for-jps/1.5.10-release-936/compiler-components-for-jps-1.5.10-release-936.jar" path-in-jar="/" />
             <element id="module-output" name="intellij.platform.core" />
           </element>
         </element>
@@ -62,16 +62,16 @@
           <element id="module-output" name="kotlin.compiler-plugins.scripting" />
         </element>
         <element id="archive" name="kotlin-scripting-common.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.5.10-release-918/kotlin-scripting-common-1.5.10-release-918.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.5.10-release-936/kotlin-scripting-common-1.5.10-release-936.jar" path-in-jar="/" />
         </element>
         <element id="archive" name="kotlin-script-runtime.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.5.10-release-918/kotlin-script-runtime-1.5.10-release-918.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/1.5.10-release-936/kotlin-script-runtime-1.5.10-release-936.jar" path-in-jar="/" />
         </element>
         <element id="archive" name="kotlin-scripting-jvm.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.5.10-release-918/kotlin-scripting-jvm-1.5.10-release-918.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.5.10-release-936/kotlin-scripting-jvm-1.5.10-release-936.jar" path-in-jar="/" />
         </element>
         <element id="archive" name="kotlin-gradle-statistics-for-ide.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/1.5.10-release-918/kotlin-gradle-statistics-for-ide-1.5.10-release-918.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-statistics-for-ide/1.5.10-release-936/kotlin-gradle-statistics-for-ide-1.5.10-release-936.jar" path-in-jar="/" />
         </element>
         <element id="archive" name="kotlin-gradle-gradle-idea.jar">
           <element id="module-output" name="kotlin.gradle.gradle-idea" />
@@ -131,7 +131,7 @@
           <element id="module-output" name="kotlin.core" />
         </element>
         <element id="archive" name="kotlin-eval4j.jar">
-          <element id="module-output" name="kotlin.eval4j" />
+          <element id="module-output" name="kotlin.jvm-debugger.eval4j" />
         </element>
         <element id="archive" name="kotlin-fir.jar">
           <element id="module-output" name="kotlin.fir" />
@@ -146,7 +146,7 @@
           <element id="module-output" name="kotlin.idea" />
           <element id="directory" name="META-INF">
             <element id="directory" name="extensions">
-              <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-for-ide/1.5.10-release-918/kotlin-compiler-for-ide-1.5.10-release-918.jar" path-in-jar="/META-INF/extensions/" />
+              <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-for-ide/1.5.10-release-936/kotlin-compiler-for-ide-1.5.10-release-936.jar" path-in-jar="/META-INF/extensions/" />
             </element>
           </element>
         </element>
@@ -169,7 +169,7 @@
           <element id="module-output" name="kotlin.repl" />
         </element>
         <element id="archive" name="kotlin-script-util.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-util/1.5.10-release-918/kotlin-script-util-1.5.10-release-918.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-util/1.5.10-release-936/kotlin-script-util-1.5.10-release-936.jar" path-in-jar="/" />
         </element>
         <element id="archive" name="kotlin-scripting.jar">
           <element id="module-output" name="kotlin.scripting" />
@@ -178,19 +178,19 @@
         <element id="library" level="project" name="kotlinx-collections-immutable-jvm" />
         <element id="library" level="project" name="javax-inject" />
         <element id="archive" name="kotlin-stdlib.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.5.10-release-918/kotlin-stdlib-1.5.10-release-918.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.5.10-release-936/kotlin-stdlib-1.5.10-release-936.jar" path-in-jar="/" />
         </element>
         <element id="archive" name="kotlin-stdlib-jdk7.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.5.10-release-918/kotlin-stdlib-jdk7-1.5.10-release-918.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.5.10-release-936/kotlin-stdlib-jdk7-1.5.10-release-936.jar" path-in-jar="/" />
         </element>
         <element id="archive" name="kotlin-stdlib-jdk8.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.5.10-release-918/kotlin-stdlib-jdk8-1.5.10-release-918.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.5.10-release-936/kotlin-stdlib-jdk8-1.5.10-release-936.jar" path-in-jar="/" />
         </element>
         <element id="archive" name="kotlin-reflect.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.5.10-release-918/kotlin-reflect-1.5.10-release-918.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.5.10-release-936/kotlin-reflect-1.5.10-release-936.jar" path-in-jar="/" />
         </element>
         <element id="archive" name="kotlin-plugin.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-for-ide/1.5.10-release-918/kotlin-compiler-for-ide-1.5.10-release-918.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-for-ide/1.5.10-release-936/kotlin-compiler-for-ide-1.5.10-release-936.jar" path-in-jar="/" />
         </element>
         <element id="archive" name="kotlin-frontend-independent.jar">
           <element id="module-output" name="kotlin.fir.frontend-independent" />
@@ -204,7 +204,7 @@
         <element id="library" level="module" name="intellij-markdown" module-name="intellij.markdown" />
         <element id="library" level="project" name="kotlinx-coroutines-jdk8" />
         <element id="archive" name="kotlin-coroutines-experimental-compat.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-coroutines-experimental-compat/1.5.10-release-918/kotlin-coroutines-experimental-compat-1.5.10-release-918.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-coroutines-experimental-compat/1.5.10-release-936/kotlin-coroutines-experimental-compat-1.5.10-release-936.jar" path-in-jar="/" />
         </element>
         <element id="library" level="project" name="completion-ranking-kotlin" />
         <element id="archive" name="kotlin-parcelize.jar">
@@ -212,7 +212,7 @@
           <element id="module-output" name="kotlin.compiler-plugins.parcelize.gradle" />
         </element>
         <element id="archive" name="parcelize-compiler-plugin-for-ide.jar">
-          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/1.5.10-release-918/parcelize-compiler-plugin-for-ide-1.5.10-release-918.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/1.5.10-release-936/parcelize-compiler-plugin-for-ide-1.5.10-release-936.jar" path-in-jar="/" />
         </element>
         <element id="archive" name="kotlin-i18n.jar">
           <element id="module-output" name="kotlin.i18n" />
@@ -220,9 +220,45 @@
         <element id="archive" name="kotlin-injection.jar">
           <element id="module-output" name="kotlin.injection" />
         </element>
+        <element id="archive" name="kotlin-coverage.jar">
+          <element id="module-output" name="kotlin.coverage" />
+        </element>
+        <element id="archive" name="kotlin-testng.jar">
+          <element id="module-output" name="kotlin.testng" />
+        </element>
+        <element id="archive" name="kotlin-junit.jar">
+          <element id="module-output" name="kotlin.junit" />
+        </element>
+        <element id="archive" name="kotlin-grazie.jar">
+          <element id="module-output" name="kotlin.grazie" />
+        </element>
+        <element id="archive" name="kotlin-ml-completion.jar">
+          <element id="module-output" name="kotlin.ml-completion" />
+        </element>
+        <element id="archive" name="kotlin-groovy.jar">
+          <element id="module-output" name="kotlin.groovy" />
+        </element>
+        <element id="archive" name="kotlin-copyright.jar">
+          <element id="module-output" name="kotlin.copyright" />
+        </element>
+        <element id="archive" name="kotlin-spellchecker.jar">
+          <element id="module-output" name="kotlin.spellchecker" />
+        </element>
+        <element id="archive" name="kotlin-jvm-decompiler.jar">
+          <element id="module-output" name="kotlin.jvm-decompiler" />
+        </element>
+        <element id="archive" name="kotlin-properties.jar">
+          <element id="module-output" name="kotlin.properties" />
+        </element>
+        <element id="archive" name="kotlin-project-wizard-maven.jar">
+          <element id="module-output" name="kotlin.project-wizard.maven" />
+        </element>
+        <element id="archive" name="kotlin-project-wizard-gradle.jar">
+          <element id="module-output" name="kotlin.project-wizard.gradle" />
+        </element>
       </element>
       <element id="directory" name="kotlinc">
-        <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/1.5.10-release-918/kotlin-dist-for-ide-1.5.10-release-918.jar" path-in-jar="/" />
+        <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/1.5.10-release-936/kotlin-dist-for-ide-1.5.10-release-936.jar" path-in-jar="/" />
       </element>
     </root>
   </artifact>

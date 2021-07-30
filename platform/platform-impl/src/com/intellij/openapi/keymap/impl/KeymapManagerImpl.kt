@@ -8,10 +8,7 @@ import com.intellij.ide.WelcomeWizardUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ConfigImportHelper
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.actions.CtrlYActionChooser
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -34,7 +31,7 @@ internal const val KEYMAPS_DIR_PATH = "keymaps"
 private const val ACTIVE_KEYMAP = "active_keymap"
 private const val NAME_ATTRIBUTE = "name"
 
-@State(name = "KeymapManager", storages = [(Storage(value = "keymap.xml", roamingType = RoamingType.PER_OS))], additionalExportDirectory = KEYMAPS_DIR_PATH)
+@State(name = "KeymapManager", storages = [(Storage(value = "keymap.xml", roamingType = RoamingType.PER_OS))], additionalExportDirectory = KEYMAPS_DIR_PATH, category = ComponentCategory.KEYMAP)
 class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   private val listeners = ContainerUtil.createLockFreeCopyOnWriteList<KeymapManagerListener>()
   private val boundShortcuts = HashMap<String, String>()

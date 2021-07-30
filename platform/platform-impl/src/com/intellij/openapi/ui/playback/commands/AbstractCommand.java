@@ -21,6 +21,20 @@ public abstract class AbstractCommand implements PlaybackCommand {
 
   public static final @NonNls String CMD_PREFIX = "%";
 
+  /**
+   * "%commandName some parameters" => "some parameters"
+   * OR
+   * "some parameters" => "some parameters"
+   */
+  public String extractCommandArgument(String prefix) {
+    if (myText.startsWith(prefix)) {
+      return myText.substring(prefix.length()).trim();
+    }
+    else {
+      return myText;
+    }
+  }
+
   private final @NonNls @NotNull String myText;
   private final int myLine;
   private final boolean myExecuteInAwt;

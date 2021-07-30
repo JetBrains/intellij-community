@@ -3,6 +3,7 @@ package com.intellij.find.actions;
 
 import com.intellij.find.FindBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,7 +21,6 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsagePresentation;
 import com.intellij.usages.impl.GroupNode;
 import com.intellij.usages.impl.UsageNode;
-import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.ui.EmptyIcon;
@@ -34,14 +34,23 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
-class ShowUsagesTableCellRenderer implements TableCellRenderer {
-  private final UsageViewImpl myUsageView;
-  @NotNull private final AtomicInteger myOutOfScopeUsages;
-  @NotNull private final SearchScope mySearchScope;
+final class ShowUsagesTableCellRenderer implements TableCellRenderer {
 
-  ShowUsagesTableCellRenderer(@NotNull UsageViewImpl usageView, @NotNull AtomicInteger outOfScopeUsages, @NotNull SearchScope searchScope) {
-    myUsageView = usageView;
+  private final @NotNull Project myProject;
+  private final @NotNull Predicate<? super Usage> myOriginUsageCheck;
+  private final @NotNull AtomicInteger myOutOfScopeUsages;
+  private final @NotNull SearchScope mySearchScope;
+
+  ShowUsagesTableCellRenderer(
+    @NotNull Project project,
+    @NotNull Predicate<? super Usage> originUsageCheck,
+    @NotNull AtomicInteger outOfScopeUsages,
+    @NotNull SearchScope searchScope
+  ) {
+    myProject = project;
+    myOriginUsageCheck = originUsageCheck;
     myOutOfScopeUsages = outOfScopeUsages;
     mySearchScope = searchScope;
   }
@@ -125,7 +134,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     panel.setFont(null);
 
     // greying the current usage the "find usages" was originated from
-    boolean isOriginUsage = myUsageView.isOriginUsage(usage);
+    boolean isOriginUsage = myOriginUsageCheck.test(usage);
     if (isOriginUsage) {
       rowBackground = slightlyDifferentColor(rowBackground);
       if (fileBgColor != null) {
@@ -144,7 +153,8 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
       case CURRENT_ASTERISK_COL:
         if (isOriginUsage) {
           panel.add(new JLabel(isSelected ? AllIcons.General.ModifiedSelected : AllIcons.General.Modified));
-        }
+          panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.CURRENT_ASTERISK_COL"));
+        } else panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.OTHER_ASTERISK_COL"));
         break;
       case FILE_GROUP_COL:
         appendGroupText(list, (GroupNode)usageNode.getParent(), panel, fileBgColor, isSelected);
@@ -157,6 +167,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
         SpeedSearchUtil.applySpeedSearchHighlighting(list, textChunks, false, isSelected);
 
         panel.add(textChunks);
+        panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.LINE_NUMBER_COL", textChunks.getAccessibleContext().getAccessibleName()));
         break;
 
       case USAGE_TEXT_COL:
@@ -170,6 +181,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
         SpeedSearchUtil.applySpeedSearchHighlighting(list, textChunks, false, isSelected);
 
         panel.add(textChunks);
+        panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.USAGE_TEXT_COL", textChunks.getAccessibleContext().getAccessibleName()));
 
         if (isOriginUsage) {
           SimpleColoredComponent origin = new SimpleColoredComponent();
@@ -182,6 +194,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
           origin.append("| " + FindBundle.message("show.usages.current.usage.label"), attributes);
           origin.appendTextPadding(JBUIScale.scale(45));
           panel.add(origin, BorderLayout.EAST);
+          panel.getAccessibleContext().setAccessibleName(panel.getAccessibleContext().getAccessibleName() + ", " + origin.getAccessibleContext().getAccessibleName());
         }
         break;
 
@@ -279,8 +292,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     else {
       VirtualFile virtualFile = usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() : null;
       if (virtualFile != null) {
-        Project project = myUsageView.getProject();
-        Color color = VfsPresentationUtil.getFileBackgroundColor(project, virtualFile);
+        Color color = VfsPresentationUtil.getFileBackgroundColor(myProject, virtualFile);
         if (color != null) fileBgColor = color;
       }
     }
@@ -298,13 +310,12 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     if (group == null) return;
     GroupNode parentGroup = (GroupNode)node.getParent();
     appendGroupText(table, parentGroup, panel, fileBgColor, isSelected);
-    if (node.canNavigateToSource()) {
-      SimpleColoredComponent renderer = new SimpleColoredComponent();
-      renderer.setIcon(group.getIcon());
-      SimpleTextAttributes attributes = deriveBgColor(SimpleTextAttributes.REGULAR_ATTRIBUTES, fileBgColor);
-      renderer.append(group.getPresentableGroupText(), attributes);
-      SpeedSearchUtil.applySpeedSearchHighlighting(table, renderer, false, isSelected);
-      panel.add(renderer);
-    }
+    SimpleColoredComponent renderer = new SimpleColoredComponent();
+    renderer.setIcon(group.getIcon());
+    SimpleTextAttributes attributes = deriveBgColor(SimpleTextAttributes.REGULAR_ATTRIBUTES, fileBgColor);
+    renderer.append(group.getPresentableGroupText(), attributes);
+    SpeedSearchUtil.applySpeedSearchHighlighting(table, renderer, false, isSelected);
+    panel.add(renderer);
+    panel.getAccessibleContext().setAccessibleName(IdeBundle.message("ShowUsagesTableCellRenderer.accessible.FILE_GROUP_COL", renderer.getAccessibleContext().getAccessibleName()));
   }
 }

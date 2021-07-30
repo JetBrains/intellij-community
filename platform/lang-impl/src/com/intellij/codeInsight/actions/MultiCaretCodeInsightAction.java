@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see MultiCaretCodeInsightActionHandler
  */
-public abstract class MultiCaretCodeInsightAction extends AnAction implements PerformWithDocumentsCommitted {
+public abstract class MultiCaretCodeInsightAction extends AnAction implements UpdateInBackground, PerformWithDocumentsCommitted {
   private static final Logger LOG = Logger.getInstance(MultiCaretCodeInsightAction.class);
 
   @Override

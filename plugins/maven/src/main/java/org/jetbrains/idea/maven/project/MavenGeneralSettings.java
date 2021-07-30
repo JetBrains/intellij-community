@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -13,10 +12,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.apache.commons.lang.StringUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.config.MavenConfig;
+import org.jetbrains.idea.maven.config.MavenConfigParser;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
@@ -25,8 +27,10 @@ import org.jetbrains.idea.maven.utils.MavenWslUtil;
 
 import java.io.File;
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.Supplier;
+
+import static java.util.Objects.requireNonNullElse;
+import static org.jetbrains.idea.maven.config.MavenConfigSettings.*;
+import static org.jetbrains.idea.maven.execution.MavenExecutionOptions.ChecksumPolicy.NOT_SET;
 
 public class MavenGeneralSettings implements Cloneable {
   private transient Project myProject;
@@ -37,15 +41,13 @@ public class MavenGeneralSettings implements Cloneable {
   private boolean printErrorStackTraces = false;
   private boolean usePluginRegistry = false;
   private boolean nonRecursive = false;
-
   private boolean alwaysUpdateSnapshots = false;
-
   private boolean showDialogWithAdvancedSettings = false;
-
+  private boolean useMavenConfig = false;
   private String threads;
 
   private MavenExecutionOptions.LoggingLevel outputLevel = MavenExecutionOptions.LoggingLevel.INFO;
-  private MavenExecutionOptions.ChecksumPolicy checksumPolicy = MavenExecutionOptions.ChecksumPolicy.NOT_SET;
+  private MavenExecutionOptions.ChecksumPolicy checksumPolicy = NOT_SET;
   private MavenExecutionOptions.FailureMode failureBehavior = MavenExecutionOptions.FailureMode.NOT_SET;
   private MavenExecutionOptions.PluginUpdatePolicy pluginUpdatePolicy = MavenExecutionOptions.PluginUpdatePolicy.DEFAULT;
 
@@ -53,6 +55,7 @@ public class MavenGeneralSettings implements Cloneable {
   private transient File myEffectiveLocalHomeCache;
   private transient VirtualFile myEffectiveSuperPomCache;
   private transient Set<String> myDefaultPluginsCache;
+  private transient MavenConfig mavenConfigCache;
 
   private int myBulkUpdateLevel = 0;
   private List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -78,12 +81,6 @@ public class MavenGeneralSettings implements Cloneable {
     }
   }
 
-
-  private <T> T resolveWslAware(Supplier<T> ordinary, Function<WSLDistribution, T> wsl) {
-    if (myProject == null) return ordinary.get();
-    return MavenWslUtil.resolveWslAware(myProject, ordinary, wsl);
-  }
-
   public void changed() {
     if (myBulkUpdateLevel > 0) return;
 
@@ -91,6 +88,7 @@ public class MavenGeneralSettings implements Cloneable {
     myDefaultPluginsCache = null;
     myEffectiveLocalHomeCache = null;
     myEffectiveSuperPomCache = null;
+    mavenConfigCache = null;
     fireChanged();
   }
 
@@ -114,8 +112,10 @@ public class MavenGeneralSettings implements Cloneable {
 
   public void setChecksumPolicy(MavenExecutionOptions.ChecksumPolicy value) {
     if (value == null) return; // null may come from deserializator
-    this.checksumPolicy = value;
-    changed();
+    if (!Comparing.equal(this.checksumPolicy, value)) {
+      this.checksumPolicy = value;
+      changed();
+    }
   }
 
   @Property
@@ -126,8 +126,10 @@ public class MavenGeneralSettings implements Cloneable {
 
   public void setFailureBehavior(MavenExecutionOptions.FailureMode value) {
     if (value == null) return; // null may come from deserializator
-    this.failureBehavior = value;
-    changed();
+    if (!Comparing.equal(this.failureBehavior, value)) {
+      this.failureBehavior = value;
+      changed();
+    }
   }
 
   /**
@@ -159,9 +161,11 @@ public class MavenGeneralSettings implements Cloneable {
     return workOffline;
   }
 
-  public void setWorkOffline(boolean workOffline) {
-    this.workOffline = workOffline;
-    changed();
+  public void setWorkOffline(boolean value) {
+    if (!Comparing.equal(this.workOffline, value)) {
+      this.workOffline = value;
+      changed();
+    }
   }
 
   @NotNull
@@ -189,11 +193,7 @@ public class MavenGeneralSettings implements Cloneable {
   @Deprecated
   public @Nullable File getEffectiveMavenHome() {
     if (myEffectiveLocalHomeCache == null) {
-      myEffectiveLocalHomeCache =
-        resolveWslAware(
-          () -> MavenUtil.resolveMavenHomeDirectory(getMavenHome()),
-          wsl -> MavenWslUtil.resolveMavenHomeDirectory(wsl, getMavenHome())
-        );
+      myEffectiveLocalHomeCache = MavenWslUtil.resolveMavenHome(myProject, getMavenHome());
     }
     return myEffectiveLocalHomeCache;
   }
@@ -216,19 +216,13 @@ public class MavenGeneralSettings implements Cloneable {
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public @Nullable File getEffectiveUserSettingsIoFile() {
-    return resolveWslAware(
-      () -> MavenUtil.resolveUserSettingsFile(getUserSettingsFile()),
-      wsl -> MavenWslUtil.resolveUserSettingsFile(wsl, getUserSettingsFile())
-    );
+    return MavenWslUtil.getUserSettings(myProject, getUserSettingsFile(), getMavenConfigInner());
   }
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public @Nullable File getEffectiveGlobalSettingsIoFile() {
-    return resolveWslAware(
-      () -> MavenUtil.resolveGlobalSettingsFile(getMavenHome()),
-      wsl -> MavenWslUtil.resolveGlobalSettingsFile(wsl, getMavenHome())
-    );
+    return MavenWslUtil.getGlobalSettings(myProject, getMavenHome(), getMavenConfigInner());
   }
 
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
@@ -281,12 +275,7 @@ public class MavenGeneralSettings implements Cloneable {
     File result = myEffectiveLocalRepositoryCache;
     if (result != null) return result;
 
-    result = MavenWslUtil.resolveWslAware(myProject,
-                                          () -> MavenUtil.resolveLocalRepository(overriddenLocalRepository, mavenHome, mavenSettingsFile),
-                                          wsl -> MavenWslUtil.resolveLocalRepository(wsl,
-                                                                                     overriddenLocalRepository, mavenHome,
-                                                                                     mavenSettingsFile)
-    );
+    result = MavenWslUtil.getLocalRepo(myProject, overriddenLocalRepository, mavenHome, mavenSettingsFile, getMavenConfigInner());
     myEffectiveLocalRepositoryCache = result;
     return result;
   }
@@ -334,44 +323,65 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public void setPrintErrorStackTraces(boolean value) {
-    printErrorStackTraces = value;
-    changed();
+    if (!Comparing.equal(this.printErrorStackTraces, value)) {
+      printErrorStackTraces = value;
+      changed();
+    }
   }
 
   public boolean isUsePluginRegistry() {
     return usePluginRegistry;
   }
 
-  public void setUsePluginRegistry(final boolean usePluginRegistry) {
-    this.usePluginRegistry = usePluginRegistry;
-    changed();
+  public void setUsePluginRegistry(final boolean value) {
+    if (!Comparing.equal(this.usePluginRegistry, value)) {
+      this.usePluginRegistry = value;
+      changed();
+    }
+  }
+
+  public boolean isUseMavenConfig() {
+    return useMavenConfig;
+  }
+
+  public void setUseMavenConfig(boolean value) {
+    if (!Comparing.equal(this.useMavenConfig, value)) {
+      this.useMavenConfig = value;
+      changed();
+    }
   }
 
   public boolean isAlwaysUpdateSnapshots() {
     return alwaysUpdateSnapshots;
   }
 
-  public void setAlwaysUpdateSnapshots(boolean alwaysUpdateSnapshots) {
-    this.alwaysUpdateSnapshots = alwaysUpdateSnapshots;
-    changed();
+  public void setAlwaysUpdateSnapshots(boolean value) {
+    if (!Comparing.equal(this.alwaysUpdateSnapshots, value)) {
+      this.alwaysUpdateSnapshots = value;
+      changed();
+    }
   }
 
   public boolean isShowDialogWithAdvancedSettings() {
     return showDialogWithAdvancedSettings;
   }
 
-  public void setShowDialogWithAdvancedSettings(boolean showDialogWithAdvancedSettings) {
-    this.showDialogWithAdvancedSettings = showDialogWithAdvancedSettings;
-    changed();
+  public void setShowDialogWithAdvancedSettings(boolean value) {
+    if (!Comparing.equal(this.showDialogWithAdvancedSettings, value)) {
+      this.showDialogWithAdvancedSettings = value;
+      changed();
+    }
   }
 
   public boolean isNonRecursive() {
     return nonRecursive;
   }
 
-  public void setNonRecursive(final boolean nonRecursive) {
-    this.nonRecursive = nonRecursive;
-    changed();
+  public void setNonRecursive(final boolean value) {
+    if (!Comparing.equal(this.nonRecursive, value)) {
+      this.nonRecursive = value;
+      changed();
+    }
   }
 
   @Nullable
@@ -379,9 +389,12 @@ public class MavenGeneralSettings implements Cloneable {
     return threads;
   }
 
-  public void setThreads(@Nullable String threads) {
-    this.threads = StringUtil.nullize(threads);
-    changed();
+  public void setThreads(@Nullable String value) {
+    String nullizeValue = StringUtil.nullize(value);
+    if (!Objects.equals(this.threads, nullizeValue)) {
+      this.threads = nullizeValue;
+      changed();
+    }
   }
 
   public boolean equals(final Object o) {
@@ -397,6 +410,7 @@ public class MavenGeneralSettings implements Cloneable {
     if (showDialogWithAdvancedSettings != that.showDialogWithAdvancedSettings) return false;
     if (printErrorStackTraces != that.printErrorStackTraces) return false;
     if (usePluginRegistry != that.usePluginRegistry) return false;
+    if (useMavenConfig != that.useMavenConfig) return false;
     if (workOffline != that.workOffline) return false;
     if (!checksumPolicy.equals(that.checksumPolicy)) return false;
     if (!failureBehavior.equals(that.failureBehavior)) return false;
@@ -416,6 +430,7 @@ public class MavenGeneralSettings implements Cloneable {
     result = 31 * result + overriddenLocalRepository.hashCode();
     result = 31 * result + (printErrorStackTraces ? 1 : 0);
     result = 31 * result + (usePluginRegistry ? 1 : 0);
+    result = 31 * result + (useMavenConfig ? 1 : 0);
     result = 31 * result + (nonRecursive ? 1 : 0);
     result = 31 * result + outputLevel.hashCode();
     result = 31 * result + checksumPolicy.hashCode();
@@ -449,6 +464,70 @@ public class MavenGeneralSettings implements Cloneable {
 
   public void removeListener(Listener l) {
     myListeners.remove(l);
+  }
+
+  @Transient
+  public void updateFromMavenConfig(@NotNull List<MavenProject> mavenRootProjects) {
+    mavenConfigCache = null;
+    MavenConfig config = getMavenConfig(mavenRootProjects);
+    if (config == null) return;
+
+    boolean needUpdate;
+    MavenExecutionOptions.ChecksumPolicy checksumConfig = requireNonNullElse(config.getChecksumPolicy(), NOT_SET);
+    needUpdate = !Objects.equals(checksumConfig, checksumPolicy);
+    checksumPolicy = checksumConfig;
+
+    MavenExecutionOptions.FailureMode failureBehaviorConfig = requireNonNullElse(config.getFailureMode(),
+                                                                          MavenExecutionOptions.FailureMode.NOT_SET);
+    needUpdate = needUpdate || !Objects.equals(failureBehavior, failureBehaviorConfig);
+    failureBehavior = failureBehaviorConfig;
+
+    MavenExecutionOptions.LoggingLevel outputLevelCongig = requireNonNullElse(config.getOutputLevel(),
+                                                                              MavenExecutionOptions.LoggingLevel.INFO);
+    needUpdate = needUpdate || !Objects.equals(outputLevel, outputLevelCongig);
+    outputLevel = outputLevelCongig;
+
+    Boolean offlineConfig = requireNonNullElse(config.getBooleanSetting(OFFLINE), false);
+    needUpdate = needUpdate || !Objects.equals(workOffline, offlineConfig);
+    workOffline = offlineConfig;
+
+    Boolean stackTracesConfig = requireNonNullElse(config.getBooleanSetting(ERRORS), false);
+    needUpdate = needUpdate || !Objects.equals(printErrorStackTraces, stackTracesConfig);
+    printErrorStackTraces = stackTracesConfig;
+
+    Boolean updateSnapshotsConfig = requireNonNullElse(config.getBooleanSetting(UPDATE_SNAPSHOTS), false);
+    needUpdate = needUpdate || !Objects.equals(alwaysUpdateSnapshots, updateSnapshotsConfig);
+    alwaysUpdateSnapshots = updateSnapshotsConfig;
+
+    Boolean nonRecursiveConfig = requireNonNullElse(config.getBooleanSetting(NON_RECURSIVE), false);
+    needUpdate = needUpdate || !Objects.equals(nonRecursive, nonRecursiveConfig);
+    nonRecursive = nonRecursiveConfig;
+
+    String threadsConfig = requireNonNullElse(config.getSetting(THREADS), StringUtils.EMPTY);
+    needUpdate = needUpdate || !Objects.equals(threads, threadsConfig);
+    threads = threadsConfig;
+
+    if (needUpdate) {
+      changed();
+    }
+    mavenConfigCache = config;
+  }
+
+  @Transient
+  public MavenConfig getMavenConfig(@NotNull List<MavenProject> mavenRootProjects) {
+    if (mavenRootProjects.isEmpty() || !useMavenConfig) return null;
+    if (mavenConfigCache != null) return mavenConfigCache;
+
+    MavenConfig mavenConfig = MavenConfigParser.parse(mavenRootProjects.get(0).getDirectoryFile().getPath());
+    mavenConfigCache = mavenConfig;
+    return mavenConfig;
+  }
+
+  @Transient
+  private MavenConfig getMavenConfigInner() {
+    if (myProject == null) return null;
+    MavenProjectsManager instance = MavenProjectsManager.getInstance(myProject);
+    return instance != null ? getMavenConfig(instance.getRootProjects()) : null;
   }
 
   private void fireChanged() {

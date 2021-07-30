@@ -9,7 +9,7 @@ import com.intellij.debugger.streams.wrapper.impl.StreamChainImpl
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.impl.KotlinChainTransformerImpl
-import org.jetbrains.kotlin.idea.debugger.sequence.psi.resolveType
+import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.types.KotlinType
 

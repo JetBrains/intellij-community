@@ -1204,6 +1204,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                     runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/first.kt");
                 }
 
+                @TestMetadata("firstNotNullOf.kt")
+                public void testFirstNotNullOf() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/firstNotNullOf.kt");
+                }
+
+                @TestMetadata("firstNotNullOfOrNull.kt")
+                public void testFirstNotNullOfOrNull() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/firstNotNullOfOrNull.kt");
+                }
+
                 @TestMetadata("firstOrNull.kt")
                 public void testFirstOrNull() throws Exception {
                     runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/firstOrNull.kt");
@@ -1897,6 +1907,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("mapNotNull.kt")
             public void testMapNotNull() throws Exception {
                 runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapNotNull.kt");
+            }
+
+            @TestMetadata("mapNotNullFirst.kt")
+            public void testMapNotNullFirst() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapNotNullFirst.kt");
+            }
+
+            @TestMetadata("mapNotNullFirstOrNull.kt")
+            public void testMapNotNullFirstOrNull() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapNotNullFirstOrNull.kt");
             }
 
             @TestMetadata("mapNotNullWithSuspendFunctionCall.kt")
@@ -4901,6 +4921,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/qualifiedCompoundAssignment.kt");
         }
 
+        @TestMetadata("qualifiedIncrement.kt")
+        public void testQualifiedIncrement() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/qualifiedIncrement.kt");
+        }
+
         @TestMetadata("qualifiedProperty.kt")
         public void testQualifiedProperty() throws Exception {
             runTest("testData/inspectionsLocal/dfa/qualifiedProperty.kt");
@@ -5107,9 +5132,29 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("downTo.kt")
+        public void testDownTo() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/downTo.kt");
+        }
+
+        @TestMetadata("downTo2.kt")
+        public void testDownTo2() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/downTo2.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/inspectionsLocal/emptyRange/simple.kt");
+        }
+
+        @TestMetadata("until.kt")
+        public void testUntil() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/until.kt");
+        }
+
+        @TestMetadata("until2.kt")
+        public void testUntil2() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/until2.kt");
         }
     }
 
@@ -7430,6 +7475,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/simple.kt");
         }
 
+        @TestMetadata("withBlockComment.kt")
+        public void testWithBlockComment() throws Exception {
+            runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/withBlockComment.kt");
+        }
+
         @TestMetadata("withComment.kt")
         public void testWithComment() throws Exception {
             runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/withComment.kt");
@@ -7448,6 +7498,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("withComment4.kt")
         public void testWithComment4() throws Exception {
             runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/withComment4.kt");
+        }
+
+        @TestMetadata("withDocComment.kt")
+        public void testWithDocComment() throws Exception {
+            runTest("testData/inspectionsLocal/moveVariableDeclarationIntoWhen/withDocComment.kt");
         }
 
         @TestMetadata("withNewLine.kt")
@@ -12954,6 +13009,54 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/replaceWithImportAlias")
+    public static class ReplaceWithImportAlias extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("class.kt")
+        public void testClass() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithImportAlias/class.kt");
+        }
+
+        @TestMetadata("extension.kt")
+        public void testExtension() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithImportAlias/extension.kt");
+        }
+
+        @TestMetadata("function.kt")
+        public void testFunction() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithImportAlias/function.kt");
+        }
+
+        @TestMetadata("inImport.kt")
+        public void testInImport() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithImportAlias/inImport.kt");
+        }
+
+        @TestMetadata("multipleAliases.kt")
+        public void testMultipleAliases() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithImportAlias/multipleAliases.kt");
+        }
+
+        @TestMetadata("notQualifed.kt")
+        public void testNotQualifed() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithImportAlias/notQualifed.kt");
+        }
+
+        @TestMetadata("property.kt")
+        public void testProperty() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithImportAlias/property.kt");
+        }
+
+        @TestMetadata("type.kt")
+        public void testType() throws Exception {
+            runTest("testData/inspectionsLocal/replaceWithImportAlias/type.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/replaceWithOperatorAssignment")
     public static class ReplaceWithOperatorAssignment extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -15284,6 +15387,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction.kt");
         }
 
+        @TestMetadata("usedEnumFunction10.kt")
+        public void testUsedEnumFunction10() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction10.kt");
+        }
+
         @TestMetadata("usedEnumFunction2.kt")
         public void testUsedEnumFunction2() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction2.kt");
@@ -15317,6 +15425,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("usedEnumFunction8.kt")
         public void testUsedEnumFunction8() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction8.kt");
+        }
+
+        @TestMetadata("usedEnumFunction9.kt")
+        public void testUsedEnumFunction9() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/usedEnumFunction9.kt");
         }
 
         @TestMetadata("withJvmNameUsedFromKotlin.kt")

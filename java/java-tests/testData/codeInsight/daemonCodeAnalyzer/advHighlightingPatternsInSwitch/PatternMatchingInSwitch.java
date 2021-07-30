@@ -204,6 +204,15 @@ class Main {
       case null -> "null";
       default -> "def";
     };
+
+    switch (o) {
+      case <error descr="Unexpected type. Found: 'int', required: 'class or array'">int ii</error>: break;
+      default: break;
+    }
+    str = switch (o) {
+      case <error descr="Unexpected type. Found: 'int', required: 'class or array'">int ii</error> -> "";
+      default -> "";
+    };
   }
 
   void duplicateLabels(Integer i) {
@@ -280,6 +289,29 @@ class Main {
       case null, <error descr="Illegal fall-through to a pattern">Integer i && i != null</error> -> "s";
       default -> "null";
     };
+    switch (o) {
+      case null: case <error descr="Illegal fall-through to a pattern">Integer i && i != null</error>:
+        break;
+      case default:
+        break;
+    }
+    str = switch (o) {
+      case null: case <error descr="Illegal fall-through to a pattern">Object i && i != null</error>: yield "sfds";
+    };
+    str = switch (o) {
+      case null, <error descr="Illegal fall-through to a pattern">Object i && i != null</error> -> "sfds";
+      case default -> "fsd";
+    };
+    switch (o) {
+      case null: case Integer i:
+        break;
+      case default:
+        break;
+    }
+    str = switch (o) {
+      case null: case Integer i: yield "s";
+      case default: yield "d";
+    };
 
     // A switch label may not have more than one pattern case label element.
     switch (o) {
@@ -290,7 +322,14 @@ class Main {
       case Integer i, <error descr="Illegal fall-through to a pattern">Long l && l != null</error> -> "s";
       default -> "null";
     };
-    // todo A switch label may not have both a pattern case label element and a default case label element.
+    switch (o) {
+      case Integer i: case <error descr="Illegal fall-through to a pattern">Long l</error>: System.out.println("s");
+      default: System.out.println("null");
+    }
+    str = switch (o) {
+      case Integer i: case <error descr="Illegal fall-through to a pattern">Long l</error>: yield "s";
+      default: yield "res";
+    };
     // A switch label may not have both a pattern case label element and a default case label element.
     switch (o) {
       case Integer i, <error descr="Illegal fall-through from a pattern">default</error>: System.out.println("s");
@@ -303,6 +342,20 @@ class Main {
     }
     str = switch (o) {
       case default, <error descr="Illegal fall-through to a pattern">Integer i</error> -> "s";
+    };
+    switch (o) {
+      case Integer i: case <error descr="Illegal fall-through from a pattern">default</error>: System.out.println("s");
+    }
+    str = switch (o) {
+      case Integer i: case <error descr="Illegal fall-through from a pattern">default</error>: yield "s";
+    };
+    switch (ii) {
+      case Integer i && i > 1:
+      <error descr="Illegal fall-through from a pattern">default</error>: System.out.println("null");
+    }
+    str = switch (ii) {
+      case Integer i && i > 1:
+      <error descr="Illegal fall-through from a pattern">default</error>: yield "null";
     };
 
     // If a switch label has a constant case label element then if the switch label also has other case element labels
@@ -327,6 +380,12 @@ class Main {
       case Integer i1 && i1 > 5, <error descr="Illegal fall-through from a pattern">1</error> -> "s1";
       default -> "null";
     };
+    switch (ii) {
+      case 1, 2: case null, <error descr="Illegal fall-through to a pattern">Integer i1 && i1 > 5</error>:
+        System.out.println("s1");
+        break;
+      default: System.out.println("null");
+    }
     // more complex case
     switch (ii) {
       case 1, null, <error descr="Illegal fall-through to a pattern">Integer i1 && i1 > 5</error>, <error descr="Illegal fall-through from a pattern">default</error>:
@@ -335,6 +394,12 @@ class Main {
     }
     str = switch (ii) {
       case 1, null, <error descr="Illegal fall-through to a pattern">Integer i1 && i1 > 5</error>, <error descr="Illegal fall-through from a pattern">default</error> -> "s1";
+    };
+    str = switch (ii) {
+      case 1, 2, <error descr="Illegal fall-through to a pattern">Integer i1 && i1 > 5</error>: case <error descr="Illegal fall-through from a pattern">null</error>:
+        System.out.println("s1");
+        yield "s1";
+      default: yield "def";
     };
 
     /**
@@ -392,7 +457,7 @@ class Main {
     };
   }
 
-  void dominance(Object o, Integer ii) {
+  void dominance(Object o, Integer ii, String s, Day d) {
     // A switch label that has a pattern case label element p dominates another switch label that has a pattern case label element q if p dominates q
     switch (o) {
       case List n:
@@ -580,9 +645,41 @@ class Main {
       case null -> "int";
       default -> "def";
     };
+
+    // A switch label that has a pattern case label element p dominates another switch label that has a constant case label element c
+    // if either of the following is true:
+    //the type of c is a primitive type and its wrapper class is a subtype of the erasure of the type of p.
+    //the type of c is a reference type and is a subtype of the erasure of the type of p.
+    switch (ii) {
+      case Integer i:
+        break;
+      case <error descr="Label is dominated by a preceding case label 'Integer i'">1</error>: case <error descr="Label is dominated by a preceding case label 'Integer i'">2</error>:
+        break;
+    }
+    str = switch (s) {
+      case String sss -> "s";
+      case <error descr="Label is dominated by a preceding case label 'String sss'">"1"</error>, <error descr="Label is dominated by a preceding case label 'String sss'">"2"</error> -> "1";
+    };
+
+    // !!! here are some contradictory examples with spec, but javac still compiles them. To be discussed in the mailing list
+    // at least for now it's look quite logical if we have a total pattern in a switch label, and following constant switch label,
+    // then the first switch label dominates the second one.
+    switch (d) {
+      case Day dd: break;
+      case <error descr="Label is dominated by a preceding case label 'Day dd'">MONDAY</error>: break;
+    }
+    str = switch (ii) {
+      case Integer in && in != null -> "";
+      case 1 -> "";
+      case default -> "";
+    };
+    switch (d) {
+      case (Day dd && true): break;
+      case  <error descr="Label is dominated by a preceding case label '(Day dd && true)'">MONDAY</error>: break;
+    }
   }
 
-  void completeness(Day d, I i, I2 i2) {
+  void completeness(Day d, I i, I2 i2, I3 i3) {
     // old style switch, no completeness check
     switch (d) {
       case MONDAY, TUESDAY -> System.out.println("ok");
@@ -614,7 +711,7 @@ class Main {
     switch (d) {
       case <error descr="'switch' has both a total pattern and a default label">((Day dd && true))</error>:
         System.out.println("ok");
-      <error descr="'switch' has both a total pattern and a default label">default:</error>
+      <error descr="'switch' has both a total pattern and a default label"><caret>default</error>: // blah blah blah
         System.out.println("mon");
     };
     switch (d) {
@@ -639,7 +736,7 @@ class Main {
     str = switch(i) {
       case Sub1 s1 -> "ok";
       case Sub2 s2 -> "ok";
-      case Sub3 s3 -> "ok";
+      case Sub3 s3 && true -> "ok";
     };
 
     switch (<error descr="'switch' statement does not cover all possible input values">i</error>) {
@@ -654,7 +751,7 @@ class Main {
       case Sub1 s1 -> "ok";
       case Sub2 s2 -> "ok";
     };
-    switch (i) {
+    switch (<error descr="'switch' statement does not cover all possible input values">i</error>) {
       case Sub1 s1:
         System.out.println("ok");
         break;
@@ -668,12 +765,33 @@ class Main {
         System.out.println("ok");
         break;
     }
-    str = switch(i) {
+    str = switch(<error descr="'switch' expression does not cover all possible input values">i</error>) {
       case Sub1 s1 -> "ok";
       case Sub2 s2 -> "ok";
       case Sub4 s4 -> "ok";
       case Sub6 s6 -> "ok";
     };
+
+    switch (<error descr="'switch' statement does not cover all possible input values">i</error>) {
+      case Sub1 s1:
+        break;
+      case (Sub2 s2 && false):
+        break;
+      case Sub3 s3:
+        break;
+    }
+    str = switch(<error descr="'switch' expression does not cover all possible input values">i</error>) {
+      case I ii && ii != null -> "ok";
+    };
+
+    switch (i3) {
+      case (Sub9 s && true):
+        break;
+      case Sub11 s:
+        break;
+      case Sub12 s && true:
+        break;
+    }
 
     // If the type of the selector expression, T, is not an enum type and also does not name a sealed interface or a sealed class that is abstract
     switch (<error descr="'switch' statement does not cover all possible input values">i2</error>) {
@@ -739,4 +857,19 @@ class Sub7 implements I2 {
 }
 
 class Sub8 implements I2 {
+}
+
+sealed interface I3 {
+}
+
+final class Sub9 implements I3 {
+}
+
+sealed abstract class Sub10 implements I3 {
+}
+
+final class Sub11 extends Sub10 {
+}
+
+final class Sub12 extends Sub10 {
 }

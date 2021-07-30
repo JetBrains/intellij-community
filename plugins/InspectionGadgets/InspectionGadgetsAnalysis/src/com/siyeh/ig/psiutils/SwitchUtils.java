@@ -24,6 +24,7 @@ import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -161,26 +162,16 @@ public final class SwitchUtils {
       return false;
     }
 
-    final PsiSwitchLabelStatementBase label = PsiTreeUtil.getChildOfType(block.getBody(), PsiSwitchLabelStatementBase.class);
-
-    if (label == null || isBeingCompletedSwitchLabel(label)) {
-      return block instanceof PsiSwitchExpression;
+    final PsiCodeBlock switchBody = block.getBody();
+    if (switchBody != null) {
+      for (var child = switchBody.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (child instanceof PsiSwitchLabelStatementBase && !(child.getLastChild() instanceof PsiErrorElement)) {
+          return child instanceof PsiSwitchLabeledRuleStatement;
+        }
+      }
     }
 
-    return label instanceof PsiSwitchLabeledRuleStatement;
-  }
-
-  /**
-   * Checks if the passed switch label is the one that is being completed
-   * (see {@link com.intellij.codeInsight.completion.CompletionProvider}).
-   * A switch label that is being completed is distinct from the other switch labels
-   * by the fact that the very last child of the label is a {@link PsiErrorElement}
-   * which notifies that the colon character <code>":"</code> is expected.
-   * @param label a case label to check
-   * @return true if the passed case label is the one that is being completed right now.
-   */
-  private static boolean isBeingCompletedSwitchLabel(@NotNull PsiSwitchLabelStatementBase label) {
-    return label.getLastChild() instanceof PsiErrorElement;
+    return block instanceof PsiSwitchExpression;
   }
 
   public static boolean canBeSwitchSelectorExpression(PsiExpression expression, LanguageLevel languageLevel) {
@@ -202,9 +193,7 @@ public final class SwitchUtils {
       if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7) && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         return true;
       }
-      if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(expression)) {
-        return true;
-      }
+      return HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(expression);
     }
     return false;
   }
@@ -337,6 +326,27 @@ public final class SwitchUtils {
     }
   }
 
+  /**
+   * @return either default switch label statement {@link PsiSwitchLabelStatementBase}, or {@link PsiDefaultCaseLabelElement},
+   * or null, if nothing was found.
+   */
+  @Nullable
+  public static PsiElement findDefaultElement(@NotNull PsiSwitchBlock switchBlock) {
+    PsiCodeBlock body = switchBlock.getBody();
+    if (body == null) return null;
+    for (PsiStatement statement : body.getStatements()) {
+      PsiSwitchLabelStatementBase switchLabelStatement = ObjectUtils.tryCast(statement, PsiSwitchLabelStatementBase.class);
+      if (switchLabelStatement == null) continue;
+      if (switchLabelStatement.isDefaultCase()) return switchLabelStatement;
+      PsiCaseLabelElementList labelElementList = switchLabelStatement.getCaseLabelElementList();
+      if (labelElementList == null) return null;
+      PsiCaseLabelElement defaultElement = ContainerUtil.find(labelElementList.getElements(),
+                                                              labelElement -> labelElement instanceof PsiDefaultCaseLabelElement);
+      if (defaultElement != null) return defaultElement;
+    }
+    return null;
+  }
+
   public static @Nullable @NonNls String createPatternCaseText(PsiExpression expression){
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiInstanceOfExpression) {
@@ -446,14 +456,14 @@ public final class SwitchUtils {
     if (label == null) {
       return Collections.emptyList();
     }
-    final PsiExpressionList list = label.getCaseValues();
+    final PsiCaseLabelElementList list = label.getCaseLabelElementList();
     if (list == null) {
       return Collections.emptyList();
     }
     List<PsiEnumConstant> constants = new ArrayList<>();
-    for (PsiExpression value : list.getExpressions()) {
-      if (value instanceof PsiReferenceExpression) {
-        final PsiElement target = ((PsiReferenceExpression)value).resolve();
+    for (PsiCaseLabelElement labelElement : list.getElements()) {
+      if (labelElement instanceof PsiReferenceExpression) {
+        final PsiElement target = ((PsiReferenceExpression)labelElement).resolve();
         if (target instanceof PsiEnumConstant) {
           constants.add((PsiEnumConstant)target);
           continue;

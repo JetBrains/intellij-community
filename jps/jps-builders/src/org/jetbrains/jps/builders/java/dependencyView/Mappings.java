@@ -34,6 +34,7 @@ public final class Mappings {
   private final static Logger LOG = Logger.getInstance(Mappings.class);
   public static final String PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY = "compiler.process.constants.non.incremental";
   private boolean myProcessConstantsIncrementally = !Boolean.valueOf(System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false"));
+  private static boolean USE_NATURAL_INT_MULTIMAP_IMPLEMENTATION = Boolean.valueOf(System.getProperty("jps.mappings.natural.int.multimap.impl", "false"));
 
   private final static String CLASS_TO_SUBCLASSES = "classToSubclasses.tab";
   private final static String CLASS_TO_CLASS = "classToClass.tab";
@@ -143,12 +144,22 @@ public final class Mappings {
         myClassToRelativeSourceFilePath = new IntObjectTransientMultiMaplet<>(fileCollectionFactory);
       }
       else {
-        myClassToSubclasses = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_SUBCLASSES),
-                                                              EnumeratorIntegerDescriptor.INSTANCE);
-        myClassToClassDependency = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_CLASS),
-                                                                   EnumeratorIntegerDescriptor.INSTANCE);
-        myShortClassNameIndex = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, SHORT_NAMES),
-                                                                EnumeratorIntegerDescriptor.INSTANCE);
+        myClassToSubclasses = new IntIntPersistentMultiMaplet(
+          DependencyContext.getTableFile(myRootDir, CLASS_TO_SUBCLASSES), EnumeratorIntegerDescriptor.INSTANCE
+        );
+        if (USE_NATURAL_INT_MULTIMAP_IMPLEMENTATION) {
+          myClassToClassDependency = new NaturalIntIntPersistentMultiMaplet(
+            DependencyContext.getTableFile(myRootDir, CLASS_TO_CLASS), EnumeratorIntegerDescriptor.INSTANCE
+          );
+        }
+        else {
+          myClassToClassDependency = new IntIntPersistentMultiMaplet(
+            DependencyContext.getTableFile(myRootDir, CLASS_TO_CLASS), EnumeratorIntegerDescriptor.INSTANCE
+          );
+        }
+        myShortClassNameIndex = new IntIntPersistentMultiMaplet(
+          DependencyContext.getTableFile(myRootDir, SHORT_NAMES), EnumeratorIntegerDescriptor.INSTANCE
+        );
         myRelativeSourceFilePathToClasses = new ObjectObjectPersistentMultiMaplet<String, ClassFileRepr>(
           DependencyContext.getTableFile(myRootDir, SOURCE_TO_CLASS), PathStringDescriptor.INSTANCE, new ClassFileReprExternalizer(myContext),
           () -> new THashSet<>(5, DEFAULT_SET_LOAD_FACTOR)
@@ -2575,7 +2586,6 @@ public final class Mappings {
   private void cleanupBackDependency(final int className, @Nullable Set<? extends UsageRepr.Usage> usages, final IntIntMultiMaplet buffer) {
     if (usages == null) {
       final ClassFileRepr repr = getReprByName(null, className);
-
       if (repr != null) {
         usages = repr.getUsages();
       }
@@ -2583,7 +2593,10 @@ public final class Mappings {
 
     if (usages != null) {
       for (final UsageRepr.Usage u : usages) {
-        buffer.put(u.getOwner(), className);
+        final int owner = u.getOwner();
+        if (owner != className) {
+          buffer.put(owner, className);
+        }
       }
     }
   }
@@ -2798,34 +2811,13 @@ public final class Mappings {
         addAllKeys(affectedClasses, delta.myClassToClassDependency);
 
         affectedClasses.forEach(aClass -> {
-          final TIntHashSet now = delta.myClassToClassDependency.get(aClass);
           final TIntHashSet toRemove = dependenciesTrashBin.get(aClass);
-          final boolean hasDataToAdd = now != null && !now.isEmpty();
-
-          if (toRemove != null && !toRemove.isEmpty()) {
-            final TIntHashSet current = myClassToClassDependency.get(aClass);
-            if (current != null && !current.isEmpty()) {
-              final TIntHashSet before = new TIntHashSet();
-              addAll(before, current);
-
-              final boolean removed1 = current.removeAll(toRemove.toArray());
-              final boolean added = hasDataToAdd && current.addAll(now.toArray());
-
-              if ((removed1 && !added) || (!removed1 && added) || !before.equals(current)) {
-                myClassToClassDependency.replace(aClass, current);
-              }
-            }
-            else {
-              if (hasDataToAdd) {
-                myClassToClassDependency.put(aClass, now);
-              }
-            }
+          if (toRemove != null) {
+            myClassToClassDependency.removeAll(aClass, toRemove);
           }
-          else {
-            // nothing to remove for this class
-            if (hasDataToAdd) {
-              myClassToClassDependency.put(aClass, now);
-            }
+          final TIntHashSet toAdd = delta.myClassToClassDependency.get(aClass);
+          if (toAdd != null) {
+            myClassToClassDependency.put(aClass, toAdd);
           }
           return true;
         });

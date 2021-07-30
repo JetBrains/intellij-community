@@ -7,7 +7,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.TestConsoleProperties
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.ExecutionDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager
@@ -117,7 +117,7 @@ abstract class GradleRerunFailedTestsTestCase : GradleImportingTestCase() {
     rerunAction.setModelProvider { testExecutionConsole.resultsViewer }
     val actionEvent = TestActionEvent(
       SimpleDataContext.builder()
-        .add(LangDataKeys.EXECUTION_ENVIRONMENT, testExecutionEnvironment)
+        .add(ExecutionDataKeys.EXECUTION_ENVIRONMENT, testExecutionEnvironment)
         .add(CommonDataKeys.PROJECT, myProject)
         .build())
     rerunAction.update(actionEvent)

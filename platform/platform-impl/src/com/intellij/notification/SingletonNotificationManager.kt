@@ -6,10 +6,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.NlsContexts.NotificationTitle
 import com.intellij.openapi.wm.ToolWindowManager
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Consumer
 
-class SingletonNotificationManager(private val group: NotificationGroup, private val type: NotificationType, private val defaultListener: NotificationListener? = null) {
+class SingletonNotificationManager(groupId: String, private val type: NotificationType) {
+  private val group = NotificationGroupManager.getInstance().getNotificationGroup(groupId)
   private val notification = AtomicReference<Notification>()
+  private var defaultListener: NotificationListener? = null
 
   private val expiredListener = Runnable {
     val currentNotification = notification.get()
@@ -18,36 +22,31 @@ class SingletonNotificationManager(private val group: NotificationGroup, private
     }
   }
 
-  fun notify(@NotificationContent content: String, project: Project?): Boolean {
-    return notify("", content, project)
-  }
+  fun notify(@NotificationTitle title: String, @NotificationContent content: String, project: Project) =
+    notify(title, content, project) { }
 
-  @JvmOverloads
-  fun notify(@NotificationTitle title: String = "",
+  fun notify(@NotificationTitle title: String,
              @NotificationContent content: String,
-             project: Project? = null,
-             listener: NotificationListener? = defaultListener,
-             action: AnAction? = null): Boolean {
+             project: Project?,
+             customizer: Consumer<Notification>) {
     val oldNotification = notification.get()
     if (oldNotification != null) {
       if (isVisible(oldNotification, project)) {
-        return false
+        return
       }
-      oldNotification.whenExpired(null)
-      oldNotification.expire()
+      expire(oldNotification)
     }
 
-    val newNotification = group.createNotification(title, content, type)
-    if (action != null) {
-      newNotification.addAction(action)
-    }
-    if (listener != null) {
-      newNotification.setListener(listener)
-    }
+    val newNotification = Notification(group.displayId, title, content, type)
+    customizer.accept(newNotification)
     newNotification.whenExpired(expiredListener)
-    notification.set(newNotification)
-    newNotification.notify(project)
-    return true
+
+    if (notification.compareAndSet(oldNotification, newNotification)) {
+      newNotification.notify(project)
+    }
+    else {
+      expire(newNotification)
+    }
   }
 
   private fun isVisible(notification: Notification, project: Project?): Boolean {
@@ -60,9 +59,41 @@ class SingletonNotificationManager(private val group: NotificationGroup, private
   }
 
   fun clear() {
-    notification.getAndSet(null)?.let {
-      it.whenExpired(null)
-      it.expire()
-    }
+    notification.getAndSet(null)?.let { expire(it) }
   }
+
+  private fun expire(notification: Notification) {
+    notification.whenExpired(null)
+    notification.expire()
+  }
+
+  //<editor-fold desc="Deprecated stuff.">
+  @Deprecated("please use `#SingletonNotificationManager(String, NotificationType)` instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  constructor(group: NotificationGroup, type: NotificationType, defaultListener: NotificationListener? = null) : this(group.displayId, type) {
+    this.defaultListener = defaultListener
+  }
+
+  @Deprecated("please use `#notify(String, String, Project)` instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  fun notify(@NotificationContent content: String, project: Project?): Boolean {
+    notify("", content, project) { }
+    return true
+  }
+
+  @JvmOverloads
+  @Deprecated("please use `#notify(String, String, Project, Consumer<Notification>)` instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  fun notify(@NotificationTitle title: String = "",
+             @NotificationContent content: String,
+             project: Project? = null,
+             listener: NotificationListener? = defaultListener,
+             action: AnAction? = null): Boolean {
+    notify(title, content, project) { notification ->
+      action?.let { notification.addAction(it) }
+      listener?.let { notification.setListener(it) }
+    }
+    return true
+  }
+  //</editor-fold>
 }

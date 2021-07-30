@@ -749,6 +749,32 @@ class ModuleBridgesTest {
     assertEmpty(updatedStore.entities(LibraryEntity::class.java).toList())
   }
 
+  @Test
+  fun `readd module`() = WriteCommandAction.runWriteCommandAction(project) {
+    val moduleManager = ModuleManager.getInstance(project)
+
+    val module = moduleManager.modifiableModel.let { modifiableModel ->
+      val module = modifiableModel.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id)
+      modifiableModel.commit()
+      module as ModuleBridge
+    }
+
+    val newModule = moduleManager.modifiableModel.let { modifiableModel ->
+      modifiableModel.disposeModule(module)
+      val newModule = modifiableModel.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id)
+      modifiableModel.commit()
+      newModule
+    }
+
+    WorkspaceModel.getInstance(project).updateProjectModel { builder ->
+      val entity = builder.resolve(ModuleId("xxx"))!!
+      builder.modifyEntity(ModifiableModuleEntity::class.java, entity) {
+        this.name = "yyy"
+      }
+    }
+    assertEquals("yyy", newModule.name)
+  }
+
   class OutCatcher(printStream: PrintStream) : PrintStream(printStream) {
     var catcher = ""
     override fun println(x: String?) {

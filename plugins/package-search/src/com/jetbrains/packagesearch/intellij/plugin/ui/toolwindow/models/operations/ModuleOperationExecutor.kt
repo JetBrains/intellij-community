@@ -42,7 +42,7 @@ internal class ModuleOperationExecutor {
             module = projectModule
         ).throwIfAnyFailures()
 
-        PackageSearchEventsLogger.logPackageInstalled(operation.model, operation.projectModule)
+        PackageSearchEventsLogger.logPackageInstalled(operation.projectModule)
         logTrace("ModuleOperationExecutor#installPackage()") { "Package ${operation.model.displayName} installed in ${projectModule.name}" }
     }
 
@@ -58,7 +58,7 @@ internal class ModuleOperationExecutor {
             module = projectModule
         ).throwIfAnyFailures()
 
-        PackageSearchEventsLogger.logPackageRemoved(operation.model, operation.projectModule)
+        PackageSearchEventsLogger.logPackageRemoved(operation.projectModule)
         logTrace("ModuleOperationExecutor#removePackage()") { "Package ${operation.model.displayName} removed from ${projectModule.name}" }
     }
 
@@ -74,7 +74,7 @@ internal class ModuleOperationExecutor {
             module = projectModule
         ).throwIfAnyFailures()
 
-        PackageSearchEventsLogger.logPackageUpdated(operation.model, operation.projectModule)
+        PackageSearchEventsLogger.logPackageUpdated(operation.projectModule)
         logTrace("ModuleOperationExecutor#changePackage()") { "Package ${operation.model.displayName} changed in ${projectModule.name}" }
     }
 

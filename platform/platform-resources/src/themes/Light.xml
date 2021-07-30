@@ -261,6 +261,17 @@
         <option name="FOREGROUND" value="336ecc" />
       </value>
     </option>
+    <option name="GO_COMMENT_REFERENCE">
+      <value>
+        <option name="FOREGROUND" value="525252"/>
+      </value>
+    </option>
+    <option name="GO_SHADOWING_VARIABLE">
+      <value>
+        <option name="FOREGROUND" value="708c00" deuteranopia="0" protanopia="0"/>
+        <option name="FONT_TYPE" value="0" deuteranopia="3" protanopia="3"/>
+      </value>
+    </option>
     <option name="GROOVY_KEYWORD" baseAttributes="JAVA_KEYWORD" />
     <option name="HYPERLINK_ATTRIBUTES">
       <value>

@@ -10,6 +10,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.ide" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" exported="" />
     <orderEntry type="module" module-name="intellij.platform.lvcs" exported="" />
     <orderEntry type="module" module-name="intellij.platform.indexing" exported="" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" exported="" />
@@ -27,5 +28,6 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.execution" exported="" />
   </component>
 </module>

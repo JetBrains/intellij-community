@@ -35,6 +35,11 @@ public class TestDialogBuilder implements CreateFileFromTemplateDialog.Builder {
   }
 
   @Override
+  public CreateFileFromTemplateDialog.Builder setDefaultText(String text) {
+    return this;
+  }
+
+  @Override
   public CreateFileFromTemplateDialog.Builder setValidator(InputValidator validator) {
     myValidator = validator;
     return this;

@@ -17,6 +17,10 @@ import java.util.Collection;
 public interface LightEditService {
   String WINDOW_NAME = "LightEdit";
 
+  boolean isLightEditEnabled();
+
+  boolean isForceOpenInLightEditMode();
+
   static LightEditService getInstance() {
     return ApplicationManager.getApplication().getService(LightEditService.class);
   }
@@ -39,6 +43,8 @@ public interface LightEditService {
 
   @NotNull
   Project openFile(@NotNull VirtualFile file);
+
+  @Nullable Project openFile(@NotNull Path path, boolean suggestSwitchToProject);
 
   boolean isAutosaveMode();
 

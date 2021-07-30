@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.asJava
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.search.GlobalSearchScope
@@ -14,9 +14,7 @@ import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
 import org.jetbrains.kotlin.asJava.elements.KtLightPsiArrayInitializerMemberValue
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.idea.completion.test.assertInstanceOf
 import org.jetbrains.kotlin.idea.facet.configureFacet
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
@@ -922,7 +920,7 @@ class KtLightAnnotationTest : KotlinLightCodeInsightFixtureTestCase() {
 
     private fun configureKotlinVersion(version: String) {
         WriteAction.run<Throwable> {
-            val modelsProvider = IdeModifiableModelsProviderImpl(project)
+            val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
             val facet = module.getOrCreateFacet(modelsProvider, useProjectSettings = false)
             facet.configureFacet(version, null, modelsProvider)
             modelsProvider.commit()

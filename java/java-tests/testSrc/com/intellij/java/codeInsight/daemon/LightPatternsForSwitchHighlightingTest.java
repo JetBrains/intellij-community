@@ -2,7 +2,11 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -26,6 +30,8 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
 
   public void testPatternMatchingInSwitch() {
     doTest();
+    IntentionAction action = myFixture.getAvailableIntention("Remove 'default' branch");
+    assertNotNull(action);
   }
 
   public void testPatternMatchingWithGuard() {
@@ -44,7 +50,41 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     doTest();
   }
 
+  public void testEffectivelyFinal() {
+    doTest();
+  }
+
   public void testSameVariableNameInPatternMatchingInSwitch() {
+    doTest();
+  }
+
+  public void testFallthroughPatternMatchingSwitch() {
+    doTest();
+  }
+
+  public void testGuardedPatterns() {
+    doTest();
+  }
+
+  public void testSwitchExprHasResult() {
+    doTest();
+  }
+
+  public void testIdentifierHighlighterForPatternVariable() {
+    PsiFile file = myFixture.configureByFile(getTestName(false) + ".java");
+    PsiElement element = myFixture.getElementAtCaret();
+    assertSize(3, IdentifierHighlighterPass.getUsages(element, file, true));
+  }
+
+  public void testGuardWithInstanceOfPatternMatching() {
+    doTest();
+  }
+
+  public void testMultipleReferencesToPatternVariable() {
+    doTest();
+  }
+
+  public void testBreakAndOtherStopWords() {
     doTest();
   }
 

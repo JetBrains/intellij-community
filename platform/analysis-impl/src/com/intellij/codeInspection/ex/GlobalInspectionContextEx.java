@@ -53,8 +53,8 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
   protected volatile Path myOutputDir;
   protected GlobalReportedProblemFilter myGlobalReportedProblemFilter;
   private ReportedProblemFilter myReportedProblemFilter;
-  Map<Path, Long> myProfile;
-  protected InspectionProblemConsumer myProblemConsumer = null;
+  private Map<Path, Long> myProfile;
+  protected InspectionProblemConsumer myProblemConsumer;
 
   public GlobalInspectionContextEx(@NotNull Project project) {super(project);}
 

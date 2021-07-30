@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="3" platform="JVM 1.8" allPlatforms="JVM [1.8]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable" />
+          <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xopt-in=kotlin.io.path.ExperimentalPathApi -Xopt-in=org.jetbrains.kotlin.idea.KotlinPluginInternalApi" />
         </compilerSettings>
         <compilerArguments>
           <option name="languageVersion" value="1.4" />
@@ -31,9 +31,9 @@
     <orderEntry type="module" module-name="kotlin.fir" />
     <orderEntry type="module" module-name="kotlin.scripting-support" />
     <orderEntry type="module" module-name="kotlin.maven.tests" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-idea.tests" />
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" />
-    <orderEntry type="module" module-name="kotlin.project-wizard.idea" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.tests" />
     <orderEntry type="module" module-name="kotlin.j2k.old.tests" />
     <orderEntry type="module" module-name="kotlin.j2k.new.tests" />
     <orderEntry type="module" module-name="kotlin.jps-plugin" />
@@ -49,5 +49,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jps-plugin.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refIndex.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.coverage.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.copyright.tests" scope="TEST" />
   </component>
 </module>

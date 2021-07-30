@@ -22,6 +22,7 @@ import org.jetbrains.jps.build.Standalone
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.cmdline.JpsModelLoader
+import org.jetbrains.jps.gant.Log4jFileLoggerFactory
 import org.jetbrains.jps.incremental.MessageHandler
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType
 import org.jetbrains.jps.incremental.artifacts.impl.ArtifactSorter
@@ -123,6 +124,20 @@ class JpsCompilationRunner {
     return ArtifactSorter.addIncludedArtifacts(artifacts)
   }
 
+  private void setupAdditionalBuildLogging(JpsCompilationData compilationData) {
+    def categoriesWithDebugLevel = compilationData.categoriesWithDebugLevel
+    def buildLogFile = compilationData.buildLogFile
+
+    try {
+      Logger.Factory factory = new Log4jFileLoggerFactory(buildLogFile, categoriesWithDebugLevel)
+      AntLoggerFactory.ourFileLoggerFactory = factory
+      context.messages.info("Build log (${!categoriesWithDebugLevel.isEmpty() ? "debug level for $categoriesWithDebugLevel" : "info"}) will be written to ${buildLogFile.absolutePath}")
+    }
+    catch (Throwable t) {
+      context.messages.warning("Cannot setup additional logging to $buildLogFile.absolutePath: $t.message")
+    }
+  }
+
   private void runBuild(final Set<String> modulesSet, final boolean allModules, Collection<String> artifactNames, boolean includeTests,
                         boolean resolveProjectDependencies) {
     if (JavaVersion.current().feature < 9 && (!modulesSet.isEmpty() || allModules)) {
@@ -133,7 +148,7 @@ class JpsCompilationRunner {
     System.setProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY, "false")
     final AntMessageHandler messageHandler = new AntMessageHandler()
     AntLoggerFactory.ourMessageHandler = messageHandler
-    AntLoggerFactory.ourFileLoggerFactory = compilationData.fileLoggerFactory
+    setupAdditionalBuildLogging(compilationData)
     Logger.setFactory(AntLoggerFactory.class)
     boolean forceBuild = !context.options.incrementalCompilation
 

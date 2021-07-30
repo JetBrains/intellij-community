@@ -61,7 +61,7 @@ internal class CustomDecorationTitle(val frame: JFrame): CustomHeaderTitle {
 
     project?.let {
       val myDockManager = DockManager.getInstance(it)
-      val dockContainer = myDockManager.getContainerFor(frame.rootPane)
+      val dockContainer = myDockManager.getContainerFor(frame.rootPane) { dc -> dc is DockableEditorTabbedContainer }
       if (dockContainer is DockableEditorTabbedContainer) {
         createCustomDecoration(it)
       }

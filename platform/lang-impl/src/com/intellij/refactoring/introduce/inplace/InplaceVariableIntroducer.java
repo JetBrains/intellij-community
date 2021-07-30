@@ -125,6 +125,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
     return false;
   }
 
+  @NlsContexts.Command 
   @Override
   protected String getCommandName() {
     return myTitle;

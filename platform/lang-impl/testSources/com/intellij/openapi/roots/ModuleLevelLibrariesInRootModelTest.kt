@@ -165,6 +165,24 @@ class ModuleLevelLibrariesInRootModelTest {
   }
 
   @Test
+  fun `remove previously created module library`() {
+    val library: Library = runWriteActionAndWait {
+      val model = ModuleRootManager.getInstance(module).modifiableModel
+      val table = model.moduleLibraryTable
+      val lib = table.createLibrary("lib")
+      model.commit()
+      lib
+    }
+
+    runWriteActionAndWait {
+      val model = ModuleRootManager.getInstance(module).modifiableModel
+      val table = model.moduleLibraryTable
+      table.removeLibrary(library)
+      model.commit()
+    }
+  }
+
+  @Test
   fun `rename library before committing root model`() {
     val model = createModifiableModel(module)
     val library = model.moduleLibraryTable.createLibrary("foo")

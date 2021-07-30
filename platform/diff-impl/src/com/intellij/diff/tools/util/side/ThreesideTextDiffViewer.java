@@ -16,6 +16,7 @@
 package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.actions.impl.FocusOppositePaneAction;
 import com.intellij.diff.actions.impl.OpenInEditorWithMouseAction;
 import com.intellij.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.diff.contents.DocumentContent;
@@ -33,8 +34,10 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.breadcrumbs.SimpleDiffBreadcrumbsPanel;
 import com.intellij.diff.util.*;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
@@ -62,7 +65,8 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   public ThreesideTextDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     super(context, request, TextEditorHolder.TextEditorHolderFactory.INSTANCE);
 
-    //new MyFocusOppositePaneAction().setupAction(myPanel, this); // TODO
+    new MyFocusOppositePaneAction(true).install(myPanel);
+    new MyFocusOppositePaneAction(false).install(myPanel);
 
     myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
@@ -389,6 +393,31 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
       }
 
       return request;
+    }
+  }
+
+  private class MyFocusOppositePaneAction extends FocusOppositePaneAction {
+    MyFocusOppositePaneAction(boolean scrollToPosition) {
+      super(scrollToPosition);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      ThreeSide currentSide = getCurrentSide();
+      ThreeSide targetSide = currentSide.select(ThreeSide.BASE, ThreeSide.RIGHT, ThreeSide.LEFT); // cycle right
+
+      EditorEx targetEditor = getEditor(targetSide);
+
+      if (myScrollToPosition) {
+        LogicalPosition currentPosition = DiffUtil.getCaretPosition(getCurrentEditor());
+        LogicalPosition position = transferPosition(currentSide, targetSide, currentPosition);
+        targetEditor.getCaretModel().moveToLogicalPosition(position);
+      }
+
+      setCurrentSide(targetSide);
+      targetEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+
+      DiffUtil.requestFocus(getProject(), getPreferredFocusedComponent());
     }
   }
 }

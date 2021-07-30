@@ -152,6 +152,8 @@ class BuildOptions {
    */
   String outputRootPath = System.getProperty("intellij.build.output.root")
 
+  String logPath = System.getProperty("intellij.build.log.root")
+
   static final String CLEAN_OUTPUT_FOLDER_PROPERTY = "intellij.build.clean.output.root"
   boolean cleanOutputFolder = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_FOLDER_PROPERTY, true)
 

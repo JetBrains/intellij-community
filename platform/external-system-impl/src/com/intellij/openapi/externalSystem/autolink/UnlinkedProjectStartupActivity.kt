@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.externalSystem.autoimport.AsyncFileChangeListenerBase
@@ -31,8 +32,9 @@ import java.util.concurrent.CompletableFuture
 class UnlinkedProjectStartupActivity : StartupActivity.Background {
   private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("UnlinkedProjectTracker.backgroundExecutor", 1)
 
-  override fun runActivity(project: Project) {
-    val externalProjectPath = project.guessProjectDir()?.path ?: return
+  override fun runActivity(project: Project) = invokeLater {
+    if (project.isDisposed) return@invokeLater
+    val externalProjectPath = project.guessProjectDir()?.path ?: return@invokeLater
     showNotificationWhenNonEmptyProjectUnlinked(project)
     showNotificationWhenBuildToolPluginEnabled(project, externalProjectPath)
     showNotificationWhenNewBuildFileCreated(project, externalProjectPath)

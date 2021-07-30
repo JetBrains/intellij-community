@@ -17,7 +17,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
@@ -56,6 +55,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
   private var images: List<Image> = emptyList()
   private var isCloseOnEsc = false
   private var onCloseHandler: BooleanGetter? = null
+  private var isDecorated: Boolean = true
   private var frame: Window? = null
   private var project: Project? = null
   private var focusWatcher: FocusWatcher? = null
@@ -262,7 +262,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
   val isActive: Boolean
     get() = frame?.isActive == true
 
-  protected open fun createJFrame(parent: IdeFrame): JFrame = MyJFrame(this, parent)
+  protected open fun createJFrame(parent: IdeFrame): JFrame = MyJFrame(this, parent, isDecorated)
 
   protected open fun createJDialog(parent: IdeFrame): JDialog = MyJDialog(this, parent)
 
@@ -295,6 +295,10 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     onCloseHandler = value
   }
 
+  fun setIsDecorated(value: Boolean) {
+    isDecorated = value
+  }
+
   protected open fun loadFrameState(state: WindowState?) {
     val frame = getFrame()
     if (state == null) {
@@ -309,7 +313,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     (frame as RootPaneContainer).rootPane.revalidate()
   }
 
-  private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeFrame) : JFrame(), DataProvider, IdeFrame.Child, IdeFrameEx {
+  private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeFrame, decorated: Boolean = true) : JFrame(), DataProvider, IdeFrame.Child, IdeFrameEx {
     private var frameTitle: String? = null
     private var fileTitle: String? = null
     private var file: Path? = null
@@ -325,8 +329,9 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       focusTraversalPolicy = IdeFocusTraversalPolicy()
       // NB!: the root pane must be set before decorator,
       // which holds its own client properties in a root pane
-      myFrameDecorator = IdeFrameDecorator.decorate(this, owner)
-
+      if (decorated) {
+        myFrameDecorator = IdeFrameDecorator.decorate(this, owner)
+      }
     }
 
     override fun isInFullScreen() = false

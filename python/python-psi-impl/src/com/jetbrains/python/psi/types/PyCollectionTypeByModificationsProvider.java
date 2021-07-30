@@ -31,8 +31,8 @@ public final class PyCollectionTypeByModificationsProvider extends PyTypeProvide
         PyTargetExpression element = (PyTargetExpression)target;
         ScopeOwner owner = ScopeUtil.getScopeOwner(element);
         if (owner != null) {
-          final List<PyType> typesByModifications = PyCollectionTypeUtil.INSTANCE
-            .getCollectionTypeByModifications(qualifiedName, element, context);
+          final List<PyType> typesByModifications =
+            PyCollectionTypeUtil.INSTANCE.getCollectionTypeByModifications(qualifiedName, element, context);
           if (!typesByModifications.isEmpty()) {
             if (qualifiedName.equals(PyCollectionTypeUtil.DICT_CONSTRUCTOR)) {
               argumentTypes = extractTypesForDict(argumentTypes, typesByModifications);

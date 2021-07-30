@@ -84,6 +84,7 @@
     <group id="Java.BuildMenu">
       <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="AllIcons.Actions.Compile">
         <add-to-group group-id="TouchBarDefault" anchor="before" relative-to-action="RunConfiguration"/>
+        <add-to-group group-id="RightToolbarSideGroup" anchor="first"/>
       </action>
       <action id="MakeModule" class="com.intellij.compiler.actions.MakeModuleAction"/>
       <action id="Compile" class="com.intellij.compiler.actions.CompileAction"/>
@@ -124,6 +125,7 @@
         <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction"/>
         <separator/>
         <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction"/>
+        <action id="MarkVfsCorrupted" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.MarkVfsCorruptedAction"/>
         <action id="LoadAllContent" internal="true" class="com.intellij.internal.LoadAllContentsAction"/>
         <action id="LoadAllVFSContent" internal="true" class="com.intellij.internal.LoadAllVfsStoredContentsAction"/>
         <action id="ComputeVFStatistics" internal="true" class="com.intellij.internal.ComputeVirtualFileNameStatAction"/>

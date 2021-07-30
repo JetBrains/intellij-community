@@ -7,9 +7,9 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.project.DumbAware
-import icons.GradleIcons
 import icons.OpenapiIcons
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleFacade
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.ValidationResult
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.isSpecificError
@@ -129,7 +129,7 @@ class BuildSystemTypeSettingComponent(
 private val BuildSystemType.icon
     get() = when (this) {
         BuildSystemType.GradleKotlinDsl -> KotlinIcons.GRADLE_SCRIPT
-        BuildSystemType.GradleGroovyDsl -> GradleIcons.Gradle
+        BuildSystemType.GradleGroovyDsl -> KotlinGradleFacade.instance?.gradleIcon ?: KotlinIcons.GRADLE_SCRIPT
         BuildSystemType.Maven -> OpenapiIcons.RepositoryLibraryLogo
         BuildSystemType.Jps -> AllIcons.Nodes.Module
     }

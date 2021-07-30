@@ -452,6 +452,9 @@
 
     <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.ErrorStripeUpdateManager"/>
 
+    <applicationService serviceInterface="com.intellij.framework.detection.FileContentPattern$ParseXml"
+                        serviceImplementation="com.intellij.util.xml.NanoXmlParserImpl"/>
+
     <!-- Extension resources -->
     <applicationService serviceImplementation="com.intellij.ide.extensionResources.ResourceVersions"/>
     <obsoleteStorage file="extensionsRootType.xml">
@@ -1007,7 +1010,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.move.MoveUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.actions.RefactoringUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.webcore.packaging.PackageManagementUsageCollector"/>
-    <statistics.counterUsagesCollector groupId="completion" version="7"/>
+    <statistics.counterUsagesCollector groupId="completion" version="8"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.find.findUsages.FindUsagesStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.usages.impl.UsageViewStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.fileTypes.impl.FileTypeConfigurableInteractions"/>

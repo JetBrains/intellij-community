@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.accessibility.TextFieldWithListAccessibleContext;
@@ -90,6 +90,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.toPsi;
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.getReportableContributorID;
 
 /**
@@ -785,8 +786,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         data.add(SearchEverywhereUsageTriggerCollector.CURRENT_TAB_FIELD.with(selectedTabContributorID));
       }
       data.add(SearchEverywhereUsageTriggerCollector.SELECTED_ITEM_NUMBER.with(i));
-      if (value instanceof PsiElement) {
-        data.add(EventFields.Language.with(((PsiElement)value).getLanguage()));
+      PsiElement psi = toPsi(value);
+      if (psi != null) {
+        data.add(EventFields.Language.with(psi.getLanguage()));
       }
       SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ITEM_SELECTED.log(myProject, data);
 
@@ -1015,13 +1017,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
             targets.add(element);
           }
         }));
-    }
-
-    private PsiElement toPsi(Object o) {
-      if (o instanceof PsiElement) return (PsiElement)o;
-      if (o instanceof PsiItemWithPresentation) return ((PsiItemWithPresentation)o).getItem();
-
-      return null;
     }
 
     private void showInFindWindow(Collection<? extends PsiElement> targets, Collection<Usage> usages, UsageViewPresentation presentation) {

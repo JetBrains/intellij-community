@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -43,7 +44,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-@State(name = "com.intellij.ide.ui.customization.CustomActionsSchema", storages = @Storage("customization.xml"))
+@State(name = "com.intellij.ide.ui.customization.CustomActionsSchema", storages = @Storage("customization.xml"), category = ComponentCategory.UI)
 public final class CustomActionsSchema implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(CustomActionsSchema.class);
 
@@ -59,6 +60,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   private final Map<String, String> myIconCustomizations = new HashMap<>();
   private final Map<String, @Nls String> myIdToName = new LinkedHashMap<>();
   private final Map<String, ActionGroup> myIdToActionGroup = new HashMap<>();
+  private final Set<String> myExtGroupIds = new HashSet<>();
 
   private List<ActionUrl> myActions = new ArrayList<>();
   private boolean isFirstLoadState = true;
@@ -82,18 +84,31 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     myIdToName.put(IdeActions.GROUP_NAVBAR_POPUP, ActionsTreeUtil.getNavigationBarPopupMenu());
     myIdToName.put(IdeActions.GROUP_NAVBAR_TOOLBAR, ActionsTreeUtil.getNavigationBarToolbar());
 
+    fillExtGroups();
+    CustomizableActionGroupProvider.EP_NAME.addChangeListener(this::fillExtGroups, null);
+
+    myIdToName.putAll(ourAdditionalIdToName);
+  }
+
+  private void fillExtGroups() {
+    for (String id : myExtGroupIds) {
+      myIdToName.remove(id);
+    }
+    myExtGroupIds.clear();
+
     List<Pair<String, @Nls String>> extList = new ArrayList<>();
     CustomizableActionGroupProvider.CustomizableActionGroupRegistrar registrar =
-      (groupId, groupTitle) -> extList.add(Pair.create(groupId, groupTitle));
+      (groupId, groupTitle) -> {
+        extList.add(Pair.create(groupId, groupTitle));
+      };
     for (CustomizableActionGroupProvider provider : CustomizableActionGroupProvider.EP_NAME.getExtensions()) {
       provider.registerGroups(registrar);
     }
     extList.sort((o1, o2) -> StringUtil.naturalCompare(o1.second, o2.second));
     for (Pair<String, @Nls String> couple : extList) {
+      myExtGroupIds.add(couple.first);
       myIdToName.put(couple.first, couple.second);
     }
-
-    myIdToName.putAll(ourAdditionalIdToName);
   }
 
   public static void addSettingsGroup(@NotNull String itemId, @Nls @NotNull String itemName) {

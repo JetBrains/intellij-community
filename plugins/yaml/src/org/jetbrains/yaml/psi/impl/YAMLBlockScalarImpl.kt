@@ -25,26 +25,33 @@ abstract class YAMLBlockScalarImpl(node: ASTNode) : YAMLScalarImpl(node), YAMLBl
   override fun isMultiline(): Boolean = true
 
   override fun getContentRanges(): List<TextRange> = CachedValuesManager.getCachedValue(this, CachedValueProvider {
-     val myStart = textRange.startOffset
-     val indent = locateIndent()
+    val myStart = textRange.startOffset
+    val indent = locateIndent()
 
-     val contentRanges = linesNodes.mapNotNull { line ->
-       val first = line.first()
-       val start = (first.textRange.startOffset - myStart
-                    + if (first.elementType == YAMLTokenTypes.INDENT) min(first.textLength, indent) else 0)
-       val end = line.last().textRange.endOffset - myStart
-       if (start <= end)
-         TextRange.create(start, end)
-       else null
-     }
+    val contentRanges = linesNodes.asSequence().mapNotNull { line ->
+      val first = line.first()
+      val start = (first.textRange.startOffset - myStart
+                   + if (first.elementType == YAMLTokenTypes.INDENT) min(first.textLength, indent) else 0)
+      val end = line.last().textRange.endOffset - myStart
+      if (start <= end)
+        TextRange.create(start, end)
+      else null
+    }.fold(SmartList<TextRange>()) { list, range ->
+      list.apply {
+        if (size > 1 && last().endOffset == range.startOffset)
+          set(lastIndex, TextRange(last().startOffset, range.endOffset))
+        else
+          add(range)
+      }
+    }
 
-     CachedValueProvider.Result.create((if (contentRanges.size == 1)
-       listOf(contentRanges.single().let { TextRange.create(it.endOffset, it.endOffset) })
-     else if (contentRanges.isEmpty())
-       emptyList()
-     else
-       contentRanges.tailOrEmpty()), PsiModificationTracker.MODIFICATION_COUNT)
-   })
+    CachedValueProvider.Result.create((if (contentRanges.size == 1)
+      listOf(contentRanges.single().let { TextRange.create(it.endOffset, it.endOffset) })
+    else if (contentRanges.isEmpty())
+      emptyList()
+    else
+      contentRanges.tailOrEmpty()), PsiModificationTracker.MODIFICATION_COUNT)
+  })
 
   fun hasExplicitIndent(): Boolean = explicitIndent != IMPLICIT_INDENT
 

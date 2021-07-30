@@ -40,7 +40,7 @@
     <orderEntry type="library" scope="RUNTIME" name="Slf4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="imageio-tiff" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.credentialStore" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.credentialStore.ui" scope="RUNTIME" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="jediterm-pty" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
@@ -99,5 +99,10 @@
     <orderEntry type="library" name="jackson-jr-objects" level="project" />
     <orderEntry type="module" module-name="intellij.platform.remote.core" exported="" />
     <orderEntry type="library" name="icu4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
+    <orderEntry type="module" module-name="intellij.platform.vfs.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" exported="" />
+    <orderEntry type="library" scope="RUNTIME" name="netty-handler-proxy" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="rhino" level="project" />
   </component>
 </module>

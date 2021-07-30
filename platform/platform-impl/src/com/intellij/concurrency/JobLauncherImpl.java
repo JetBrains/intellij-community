@@ -259,7 +259,7 @@ public final class JobLauncherImpl extends JobLauncher {
    * Process all elements from the {@code failedToProcess} and then {@code things} concurrently in the underlying pool.
    * Processing happens concurrently maintaining {@code JobSchedulerImpl.CORES_COUNT} parallelism.
    * Stop when {@code tombStone} element is occurred.
-   * If was unable to process some element, add it back to the {@code failedToProcess} queue.
+   * If was unable to process some element (an exception occurred during {@code thingProcessor.process()} call), add it back to the {@code failedToProcess} queue.
    * @return true if all elements processed successfully, false if at least one processor returned false or exception occurred
    */
   public <T> boolean processQueue(@NotNull final BlockingQueue<T> things,

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
+import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
@@ -122,6 +123,7 @@ public class APIWrappers {
   static class ProcessorWrapper extends DynamicWrapper<Processor> {
     private final JpsJavacFileManager myFileManager;
     private boolean myCodeShown = false;
+    private ProcessingEnvironment myProcessingEnv;
 
     ProcessorWrapper(Processor delegate, JpsJavacFileManager fileManager) {
       super(delegate);
@@ -129,26 +131,41 @@ public class APIWrappers {
     }
 
     public void init(ProcessingEnvironment processingEnv) {
+      myProcessingEnv = processingEnv;
       try {
         getWrapperDelegate().init(wrap(ProcessingEnvironment.class, new ProcessingEnvironmentWrapper(processingEnv, myFileManager)));
       }
       catch (IllegalArgumentException e) {
-        if (!myCodeShown) {
-          processingEnv.getMessager().printMessage(
-            Diagnostic.Kind.MANDATORY_WARNING,
-            "The " + e.getClass() + " may be caused by the wrapped ProcessingEnvironment object.\n" +
-            "Please pass the wrapped ProcessingEnvironment further to super.init().\n"+
-            "If you need to access the original ProcessingEnvironment object (e.g. for creating com.sun.source.util.Trees.instance(ProcessingEnvironment)), you may use following code in the processor implementation:\n\n" +
-            getUnwrapCodeSuggestion(ProcessingEnvironment.class, "processingEnv")
-          );
-          processingEnv.getMessager().printMessage(
-            Diagnostic.Kind.MANDATORY_WARNING,
-            "Workaround: to make project compile with the current annotation processor implementation, start JPS with VM option: -D"+JavacMain.TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY + "=false\n" +
-            "When run from IDE, the option can be set in \"Compiler Settings | build process VM options\""
-          );
-          myCodeShown = true;
-        }
+        sendDiagnosticWarning(processingEnv, e);
         throw e;
+      }
+    }
+
+    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+      try {
+        return getWrapperDelegate().process(annotations, roundEnv);
+      }
+      catch (IllegalArgumentException e) {
+        sendDiagnosticWarning(myProcessingEnv, e);
+        throw e;
+      }
+    }
+
+    private void sendDiagnosticWarning(ProcessingEnvironment processingEnv, Throwable e) {
+      if (processingEnv != null && !myCodeShown) {
+        processingEnv.getMessager().printMessage(
+          Diagnostic.Kind.MANDATORY_WARNING,
+          "The " + e.getClass() + " may be caused by the wrapped ProcessingEnvironment object.\n" +
+          "Please pass the wrapped ProcessingEnvironment further to super.init().\n"+
+          "If you need to access the original ProcessingEnvironment object (e.g. for creating com.sun.source.util.Trees.instance(ProcessingEnvironment)), you may use following code in the processor implementation:\n\n" +
+          getUnwrapCodeSuggestion(ProcessingEnvironment.class, "processingEnv")
+        );
+        processingEnv.getMessager().printMessage(
+          Diagnostic.Kind.MANDATORY_WARNING,
+          "Workaround: to make project compile with the current annotation processor implementation, start JPS with VM option: -D"+JavacMain.TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY + "=false\n" +
+          "When run from IDE, the option can be set in \"Compiler Settings | build process VM options\""
+        );
+        myCodeShown = true;
       }
     }
   }

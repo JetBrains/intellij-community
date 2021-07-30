@@ -150,7 +150,15 @@ class InlineStackFrame private constructor(
                     // point, since arguments to an inline function argument would be
                     // associated with a previous active frame.
                     name.startsWith(LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) -> {
-                        assert(pendingVariables.isEmpty())
+                        if (pendingVariables.isNotEmpty()) {
+                            // This can only happen if the debug information is incorrect.
+                            // Since we can't correctly associate the pending variables we
+                            // mark them as unused.
+                            for (pending in pendingVariables) {
+                                variableFrameIds[pending] = -1
+                            }
+                            pendingVariables.clear()
+                        }
                         activeFrames = activeFrames.subList(0, depth + 1)
                         variableFrameIds[currentIndex] = activeFrames.last()
                     }
@@ -161,8 +169,13 @@ class InlineStackFrame private constructor(
                     }
                     // Process arguments to the next inline function call.
                     else -> {
-                        assert(depth == activeFrames.size)
-                        pendingVariables += currentIndex
+                        if (depth == activeFrames.size) {
+                            pendingVariables += currentIndex
+                        } else {
+                            // This can only happen if there is a missing scope introduction
+                            // variable. We mark the current variable as unused.
+                            variableFrameIds[currentIndex] = -1
+                        }
                     }
                 }
             }

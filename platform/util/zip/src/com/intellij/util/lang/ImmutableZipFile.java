@@ -4,7 +4,6 @@ package com.intellij.util.lang;
 import com.intellij.util.io.Murmur3_32Hash;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.EOFException;
@@ -20,7 +19,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
-import java.util.function.Consumer;
 import java.util.zip.ZipException;
 
 @ApiStatus.Internal
@@ -47,10 +45,6 @@ public final class ImmutableZipFile implements Closeable {
   }
 
   public static @NotNull ImmutableZipFile load(@NotNull Path file) throws IOException {
-    return load(file, null);
-  }
-
-  public static @NotNull ImmutableZipFile load(@NotNull Path file, @Nullable Consumer<ByteBuffer> commentConsumer) throws IOException {
     // FileChannel is strongly required because only FileChannel provides `read(ByteBuffer dst, long position)` method -
     // ability to read data without setting channel position, as setting channel position will require synchronization
     int fileSize;
@@ -72,7 +66,7 @@ public final class ImmutableZipFile implements Closeable {
       mappedBuffer.order(ByteOrder.LITTLE_ENDIAN);
     }
     try {
-      return populateFromCentralDirectory(mappedBuffer, fileSize, commentConsumer);
+      return populateFromCentralDirectory(mappedBuffer, fileSize);
     }
     catch (IOException e) {
       throw new IOException(file.toString(), e);
@@ -116,23 +110,12 @@ public final class ImmutableZipFile implements Closeable {
     return index >= 0 ? nameMap[index] : null;
   }
 
-  private static ImmutableZipFile populateFromCentralDirectory(@NotNull ByteBuffer buffer,
-                                                               int fileSize,
-                                                               @Nullable Consumer<ByteBuffer> commentConsumer) throws IOException {
+  private static ImmutableZipFile populateFromCentralDirectory(@NotNull ByteBuffer buffer, int fileSize) throws IOException {
     // https://en.wikipedia.org/wiki/ZIP_(file_format)
     int offset =  readEndSignature(buffer, fileSize);
     int entryCount = buffer.getShort(offset + 10) & 0xffff;
     int centralDirSize = buffer.getInt(offset + 12);
     int centralDirPosition = buffer.getInt(offset + 16);
-
-    if (commentConsumer != null) {
-      buffer.position(offset + 20);
-      int commentLength = buffer.getShort() & 0xffff;
-      if (commentLength > 0) {
-        commentConsumer.accept(buffer);
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
-      }
-    }
 
     // ensure table is even length
     if (entryCount == 65535) {

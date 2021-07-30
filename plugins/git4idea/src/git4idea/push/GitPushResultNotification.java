@@ -14,7 +14,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -175,11 +174,10 @@ final class GitPushResultNotification extends Notification {
       }
     }
 
-    if (Registry.is("vcs.showConsole")
-        && !grouped.errors.isEmpty()
-        || !grouped.rejected.isEmpty()
-        || !grouped.customRejected.isEmpty()) {
-      notification.addAction(VcsNotifier.getInstance(project).createShowDetailsAction());
+    if (!grouped.errors.isEmpty() ||
+        !grouped.rejected.isEmpty() ||
+        !grouped.customRejected.isEmpty()) {
+      VcsNotifier.addShowDetailsAction(project, notification);
     }
 
     return notification;

@@ -5,6 +5,8 @@
   <xi:include href="jps.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="refIndex.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="idea.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="project-wizard.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="dep-spellchecker.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="caches.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <actions>
@@ -34,10 +36,6 @@
     </group>
 
     <action id="KotlinConfigureUpdates" class="org.jetbrains.kotlin.idea.actions.ConfigurePluginUpdatesAction">
-      <add-to-group group-id="KotlinToolsGroup"/>
-    </action>
-
-    <action id="DecompileKotlinToJava" class="org.jetbrains.kotlin.idea.actions.DecompileKotlinToJavaAction">
       <add-to-group group-id="KotlinToolsGroup"/>
     </action>
 
@@ -317,6 +315,7 @@
 
     <iconProvider implementation="org.jetbrains.kotlin.idea.KotlinIconProvider"/>
     <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoSymbolContributor"/>
+    <gotoPrimeSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoPrimeSymbolContributor"/>
     <gotoClassContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoClassContributor"/>
     <searchEverywhereClassifier implementation="org.jetbrains.kotlin.idea.goto.KotlinSearchEverywhereClassifier"/>
     <lang.importOptimizer language="kotlin" implementationClass="org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer"/>
@@ -583,8 +582,6 @@
     <psi.classFileDecompiler implementation="org.jetbrains.kotlin.idea.decompiler.js.KotlinJavaScriptMetaFileDecompiler"/>
     <psi.classFileDecompiler implementation="org.jetbrains.kotlin.idea.decompiler.builtIns.KotlinBuiltInDecompiler"/>
 
-    <attachSourcesProvider implementation="org.jetbrains.kotlin.idea.actions.DecompileKotlinToJavaActionProvider"/>
-
     <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinImportAliasGotoDeclarationHandler"/>
     <referencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearcher"/>
     <referencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinAliasedImportedElementSearcher"/>
@@ -681,8 +678,6 @@
     <lang.jvm.actions.jvmElementActionsFactory implementation="org.jetbrains.kotlin.idea.quickfix.crossLanguage.KotlinElementActionsFactory"/>
 
     <resolveScopeEnlarger implementation="org.jetbrains.kotlin.idea.CommonModuleResolveScopeEnlarger"/>
-
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.statistics.KotlinGradleFUSLogger"/>
 
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.versions.KotlinUpdatePluginStartupActivity"/>
 

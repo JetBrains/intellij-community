@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
@@ -12,7 +12,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
-class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
+final class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
   private final Int2ObjectMap<MyReference<V>> myMap = new Int2ObjectOpenHashMap<>();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
@@ -37,12 +37,12 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
   }
 
   @Override
-  public final V get(int key) {
+  public V get(int key) {
     return SoftReference.dereference(myMap.get(key));
   }
 
   @Override
-  public final V put(int key, @NotNull V value) {
+  public V put(int key, @NotNull V value) {
     processQueue();
     MyReference<V> ref = new MyReference<>(key, value, myQueue);
     MyReference<V> oldRef = myMap.put(key, ref);
@@ -50,36 +50,36 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
   }
 
   @Override
-  public final V remove(int key) {
+  public V remove(int key) {
     processQueue();
     MyReference<V> ref = myMap.remove(key);
     return SoftReference.dereference(ref);
   }
 
   @Override
-  public final void clear() {
+  public void clear() {
     myMap.clear();
     processQueue();
   }
 
   @Override
-  public final int size() {
+  public int size() {
     return myMap.size();
   }
 
   @Override
-  public final boolean isEmpty() {
+  public boolean isEmpty() {
     return myMap.isEmpty();
   }
 
   @Override
-  public final boolean containsKey(int key) {
+  public boolean containsKey(int key) {
     throw RefValueHashMapUtil.pointlessContainsKey();
   }
 
   @Override
   @NotNull
-  public final Collection<@NotNull V> values() {
+  public Collection<@NotNull V> values() {
     Collection<MyReference<V>> refs = myMap.values();
     List<V> result = new ArrayList<>(refs.size());
     for (MyReference<V> o : refs) {

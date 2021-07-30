@@ -3,7 +3,7 @@
   <resource-bundle>messages.PyBundle</resource-bundle>
 
   <content>
-    <module name="intellij.pycharm.community.customization.impl/training"/>
+    <module name="intellij.pycharm.community.ide.impl/training"/>
   </content>
   <projectListeners>
     <listener class="com.jetbrains.python.PyModuleListener" topic="com.intellij.openapi.project.ModuleListener"/>
@@ -67,7 +67,6 @@
     <!-- Console -->
     <toolWindow id="Python Console" anchor="bottom" icon="PythonIcons.Python.PythonConsoleToolWindow" canCloseContents="true"
                 factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
-    <toolWindowExtractorMode id="Python Console" mode="mirror"/>
 
     <directoryIndexExcludePolicy implementation="com.jetbrains.python.PyDirectoryIndexExcludePolicy"/>
 

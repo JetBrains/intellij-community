@@ -3,6 +3,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.project.Project
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.UIUtil
@@ -13,6 +14,7 @@ import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGe
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RootDataModelProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SearchClient
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SearchResultStateSetter
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SelectedPackageSetter
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModuleSetter
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
@@ -24,9 +26,10 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.computePackagesTableItems
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
+import com.jetbrains.packagesearch.intellij.plugin.util.ReadActions
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +40,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.newCoroutineContext
 import kotlinx.coroutines.withContext
 import java.awt.Dimension
 import javax.swing.BorderFactory
@@ -46,12 +50,28 @@ import javax.swing.JScrollPane
 internal class PackageManagementPanel(
     rootDataModelProvider: RootDataModelProvider,
     selectedPackageSetter: SelectedPackageSetter,
+    searchResultStateSetter: SearchResultStateSetter,
     targetModuleSetter: TargetModuleSetter,
     searchClient: SearchClient,
-    operationExecutor: OperationExecutor
+    operationExecutor: OperationExecutor,
+    project: Project
 ) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")), CoroutineScope, Disposable {
 
-    override val coroutineContext = SupervisorJob() + CoroutineName("PackageManagementPanel")
+    companion object {
+
+        operator fun invoke(project: Project) = PackageManagementPanel(
+            rootDataModelProvider = project.packageSearchDataService,
+            selectedPackageSetter = project.packageSearchDataService,
+            searchResultStateSetter = project.packageSearchDataService,
+            targetModuleSetter = project.packageSearchDataService,
+            searchClient = project.packageSearchDataService,
+            operationExecutor = project.packageSearchDataService,
+            project = project
+        )
+    }
+
+    override val coroutineContext =
+        project.lifecycleScope.newCoroutineContext(SupervisorJob() + CoroutineName("PackageManagementPanel"))
 
     private val operationFactory = PackageSearchOperationFactory()
 
@@ -68,10 +88,12 @@ internal class PackageManagementPanel(
         project = project,
         searchClient = searchClient,
         operationExecutor = operationExecutor,
-        operationFactory = operationFactory
-    ) {
-        launch { selectedPackageSetter.setSelectedPackage(it) }
-    }
+        operationFactory = operationFactory,
+        onItemSelectionChanged = { launch { selectedPackageSetter.setSelectedPackage(it) } },
+        onSearchResultStateChanged = { searchResult, version, scope ->
+            launch { searchResultStateSetter.setSearchResultState(searchResult, version, scope) }
+        }
+    )
 
     private val packageDetailsPanel = PackageDetailsPanel(operationFactory, operationExecutor)
 
@@ -137,25 +159,26 @@ internal class PackageManagementPanel(
             .launchIn(this)
 
         rootDataModelProvider.dataModelFlow.onEach { data ->
-
-            val tableData = computePackagesTableItems(
-                project,
-                data.packageModels,
-                data.filterOptions.onlyStable,
-                data.targetModules,
-                data.traceInfo
-            )
+            val tableItems = withContext(Dispatchers.ReadActions) {
+                computePackagesTableItems(
+                    project = project,
+                    packages = data.packageModels,
+                    selectedPackage = data.selectedPackage,
+                    targetModules = data.targetModules,
+                    traceInfo = data.traceInfo
+                )
+            }
 
             packagesListPanel.display(
                 PackagesListPanel.ViewModel(
                     headerData = data.headerData,
-                    packageModels = data.packageModels,
                     targetModules = data.targetModules,
                     knownRepositoriesInTargetModules = data.knownRepositoriesInTargetModules,
                     allKnownRepositories = data.allKnownRepositories,
                     filterOptions = data.filterOptions,
-                    tableData = tableData,
-                    traceInfo = data.traceInfo
+                    tableItems = tableItems,
+                    traceInfo = data.traceInfo,
+                    searchQuery = data.searchQuery
                 )
             )
 
@@ -166,7 +189,7 @@ internal class PackageManagementPanel(
                     allKnownRepositories = data.allKnownRepositories,
                     targetModules = data.targetModules,
                     onlyStable = data.filterOptions.onlyStable,
-                    invokeLaterScope = project.lifecycleScope
+                    invokeLaterScope = this
                 )
             )
         }.launchIn(this)

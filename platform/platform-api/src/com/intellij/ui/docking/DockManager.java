@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public abstract class DockManager {
   /**
@@ -36,5 +37,12 @@ public abstract class DockManager {
 
   public abstract String getDimensionKeyForFocus(@NotNull String key);
 
+  /**
+   * @deprecated use {@link #getContainerFor(Component, Predicate)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public abstract @Nullable DockContainer getContainerFor(Component c);
+
+  public abstract @Nullable DockContainer getContainerFor(@Nullable Component c, @NotNull Predicate<DockContainer> filter);
 }

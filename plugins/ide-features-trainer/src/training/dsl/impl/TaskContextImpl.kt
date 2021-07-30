@@ -12,7 +12,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.ui.EditorNotifications
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.intellij.lang.annotations.Language
@@ -82,7 +81,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   }
 
   /**
-   * Should not be called more then once in single task (even with [showWarning]
+   * Should not be called more than once in single task (even with [showWarning]
    */
   override fun proposeRestore(restoreCheck: TaskRuntimeContext.() -> RestoreNotification?) {
     checkAndShowNotificationIfNeeded(0, null, restoreCheck) {
@@ -99,16 +98,17 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
         }
       }
 
-    val selectedTextEditor = FileEditorManager.getInstance(project).selectedTextEditor ?: return null
+    fun selectedTextEditor() = FileEditorManager.getInstance(project).selectedTextEditor
     if (lessonExecutor.lesson.lessonType.isSingleEditor) {
-      if (selectedTextEditor != lessonExecutor.predefinedEditor) {
+      if (selectedTextEditor() != lessonExecutor.predefinedEditor) {
         val file = lessonExecutor.predefinedFile ?: return null
         return restoreNotification(file)
       }
     }
     else {
       val file = runtimeContext.previous.file ?: return null
-      val currentFile = FileDocumentManager.getInstance().getFile(selectedTextEditor.document)
+      val document = selectedTextEditor()?.document ?: return restoreNotification(file)
+      val currentFile = FileDocumentManager.getInstance().getFile(document)
       if (file != currentFile) {
         return restoreNotification(file)
       }
@@ -117,7 +117,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   }
 
   /**
-   * Should not be called more then once in single task (even with [proposeRestore]
+   * Should not be called more than once in single task (even with [proposeRestore]
    */
   override fun showWarning(text: String, restoreTaskWhenResolved: Boolean, warningRequired: TaskRuntimeContext.() -> Boolean) {
     val notificationRequired: TaskRuntimeContext.() -> RestoreNotification? = {
@@ -137,7 +137,6 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
       val lessonManager = LessonManager.instance
       val activeNotification = lessonManager.shownRestoreNotification
       if (notification != null && notification.message != activeNotification?.message) {
-        EditorNotifications.getInstance(runtimeContext.project).updateNotifications(lessonExecutor.virtualFile)
         setNotification(notification)
         StatisticBase.logRestorePerformed(lessonExecutor.lesson, taskId.idx)
       }
@@ -214,8 +213,9 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
       PsiDocumentManager.getInstance(runtimeContext.project).commitDocument(runtimeContext.editor.document)
       calculateState(runtimeContext)
     }
+
     var state: T? = null
-    addStep(recorder.futureActionAndCheckAround(actionId, { state = calculateAction()}) {
+    addStep(recorder.futureActionAndCheckAround(actionId, { state = calculateAction() }) {
       state?.let { checkState(runtimeContext, it, calculateAction()) } ?: false
     })
   }
@@ -257,7 +257,8 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
       DumbService.getInstance(runtimeContext.project).waitForSmartMode()
       // This wait implementation is quite ugly, but it works and it is needed in the test mode only. So should be ok for now.
       if (waitEditorToBeReady) {
-        val psiFile = invokeAndWaitIfNeeded { PsiDocumentManager.getInstance(project).getPsiFile(runtimeContext.editor.document) } ?: return@Runnable
+        val psiFile = invokeAndWaitIfNeeded { PsiDocumentManager.getInstance(project).getPsiFile(runtimeContext.editor.document) }
+                      ?: return@Runnable
         var t = 0
         val step = 100
         while (!runReadAction { DaemonCodeAnalyzerEx.getInstanceEx(project).isErrorAnalyzingFinished(psiFile) }) {
@@ -334,7 +335,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
 
   // This method later can be converted to the public (But I'm not sure it will be ever needed in a such form)
   override fun triggerByFoundPathAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
-                                                    checkTree: TaskRuntimeContext.(tree: JTree) -> TreePath?) {
+                                              checkTree: TaskRuntimeContext.(tree: JTree) -> TreePath?) {
     triggerByUiComponentAndHighlight l@{
       val tree = LearningUiUtil.findComponentOrNull(JTree::class.java) {
         checkTree(it) != null
@@ -349,7 +350,6 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
       tree
     }
   }
-
 
 
   private fun triggerByUiComponentAndHighlight(findAndHighlight: TaskRuntimeContext.() -> Component?) {

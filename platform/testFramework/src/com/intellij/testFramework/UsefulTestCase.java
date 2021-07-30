@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -117,7 +117,9 @@ public abstract class UsefulTestCase extends TestCase {
   private static final String ORIGINAL_TEMP_DIR = FileUtilRt.getTempDirectory();
 
   private static final Object2LongMap<String> TOTAL_SETUP_COST_MILLIS = new Object2LongOpenHashMap<>();
+  private static final Object2LongMap<String> TOTAL_SETUP_COST_COUNT = new Object2LongOpenHashMap<>();
   private static final Object2LongMap<String> TOTAL_TEARDOWN_COST_MILLIS = new Object2LongOpenHashMap<>();
+  private static final Object2LongMap<String> TOTAL_TEARDOWN_COST_COUNT = new Object2LongOpenHashMap<>();
 
   protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
 
@@ -486,24 +488,27 @@ public abstract class UsefulTestCase extends TestCase {
     long setupStart = System.nanoTime();
     setUp();
     long setupCost = (System.nanoTime() - setupStart) / 1000000;
-    logPerClassCost(setupCost, TOTAL_SETUP_COST_MILLIS);
+    logPerClassCost(setupCost, TOTAL_SETUP_COST_MILLIS, TOTAL_SETUP_COST_COUNT);
   }
 
   protected void invokeTearDown() throws Exception {
     long teardownStart = System.nanoTime();
     tearDown();
     long teardownCost = (System.nanoTime() - teardownStart) / 1000000;
-    logPerClassCost(teardownCost, TOTAL_TEARDOWN_COST_MILLIS);
+    logPerClassCost(teardownCost, TOTAL_TEARDOWN_COST_MILLIS, TOTAL_TEARDOWN_COST_COUNT);
   }
 
   /**
    * Logs the setup cost grouped by test fixture class (superclass of the current test class).
    *
    * @param cost setup cost in milliseconds
+   * @param countMap
    */
   private void logPerClassCost(long cost,
-                               @NotNull Object2LongMap<? super String> costMap) {
+                               @NotNull Object2LongMap<? super String> costMap,
+                               Object2LongMap<String> countMap) {
     costMap.mergeLong(getClass().getSuperclass().getName(), cost, Math::addExact);
+    countMap.mergeLong(getClass().getSuperclass().getName(), 1, Math::addExact);
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -511,13 +516,15 @@ public abstract class UsefulTestCase extends TestCase {
     System.out.println("Setup costs");
     long totalSetup = 0;
     for (Object2LongMap.Entry<String> entry : TOTAL_SETUP_COST_MILLIS.object2LongEntrySet()) {
-      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getLongValue());
+      long count = TOTAL_SETUP_COST_COUNT.getLong(entry.getKey());
+      System.out.printf("  %s: %d ms for %d executions%n", entry.getKey(), entry.getLongValue(), count);
       totalSetup += entry.getLongValue();
     }
     System.out.println("Teardown costs");
     long totalTeardown = 0;
     for (Object2LongMap.Entry<String> entry : TOTAL_TEARDOWN_COST_MILLIS.object2LongEntrySet()) {
-      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getLongValue());
+      long count = TOTAL_TEARDOWN_COST_COUNT.getLong(entry.getKey());
+      System.out.printf("  %s: %d ms for %d executions%n", entry.getKey(), entry.getLongValue(), count);
       totalTeardown += entry.getLongValue();
     }
     System.out.printf("Total overhead: setup %d ms, teardown %d ms%n", totalSetup, totalTeardown);

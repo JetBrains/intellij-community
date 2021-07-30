@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.StatisticsUtil.getCurrentHourInUTC
 import com.intellij.internal.statistic.utils.StatisticsUtil.getNextPowerOfTwo
+import com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo
 import com.intellij.testFramework.LightPlatformTestCase
 import junit.framework.TestCase
 import org.junit.Test
@@ -63,6 +64,61 @@ class StatisticsUtilTest : LightPlatformTestCase() {
   private fun testPowerOfTwo(value: Int, expected: Int) {
     assertEquals(expected, getNextPowerOfTwo(value), "Incorrect key for value `$value`")
   }
+
+  @Test
+  fun `test round to power of two int`() {
+    testRoundToPowerOfTwoInt(0, 0)
+    testRoundToPowerOfTwoInt(-5, -8)
+    testRoundToPowerOfTwoInt(5, 8)
+    testRoundToPowerOfTwoInt(-1, -1)
+    testRoundToPowerOfTwoInt(1, 1)
+    testRoundToPowerOfTwoInt(-2, -2)
+    testRoundToPowerOfTwoInt(2, 2)
+    testRoundToPowerOfTwoInt(Int.MAX_VALUE, Int.MAX_VALUE)
+    testRoundToPowerOfTwoInt(Int.MIN_VALUE, Int.MIN_VALUE)
+
+    val minEdgeValue = -1073741824 // max value without overflow
+    testRoundToPowerOfTwoInt(minEdgeValue, minEdgeValue)
+    testRoundToPowerOfTwoInt(minEdgeValue - 1, Int.MIN_VALUE)
+    testRoundToPowerOfTwoInt(minEdgeValue + 1, minEdgeValue)
+
+    val maxEdgeValue = 1073741824 // min value without overflow
+    testRoundToPowerOfTwoInt(maxEdgeValue, maxEdgeValue)
+    testRoundToPowerOfTwoInt(maxEdgeValue - 1, maxEdgeValue)
+    testRoundToPowerOfTwoInt(maxEdgeValue + 1, Int.MAX_VALUE)
+  }
+
+  private fun testRoundToPowerOfTwoInt(value: Int, expected: Int) {
+    assertEquals(expected, roundToPowerOfTwo(value), "Incorrect key for value `$value`")
+  }
+
+  @Test
+  fun `test round to power of two long`() {
+    testRoundToPowerOfTwoLong(0, 0)
+    testRoundToPowerOfTwoLong(-5, -8)
+    testRoundToPowerOfTwoLong(5, 8)
+    testRoundToPowerOfTwoLong(-1, -1)
+    testRoundToPowerOfTwoLong(1, 1)
+    testRoundToPowerOfTwoLong(-2, -2)
+    testRoundToPowerOfTwoLong(2, 2)
+    testRoundToPowerOfTwoLong(Long.MAX_VALUE, Long.MAX_VALUE)
+    testRoundToPowerOfTwoLong(Long.MIN_VALUE, Long.MIN_VALUE)
+
+    val minEdgeValue = -4611686018427387904 // max value without overflow
+    testRoundToPowerOfTwoLong(minEdgeValue, minEdgeValue)
+    testRoundToPowerOfTwoLong(minEdgeValue - 1, Long.MIN_VALUE)
+    testRoundToPowerOfTwoLong(minEdgeValue + 1, minEdgeValue)
+
+    val maxEdgeValue = 4611686018427387904 // min value without overflow
+    testRoundToPowerOfTwoLong(maxEdgeValue, maxEdgeValue)
+    testRoundToPowerOfTwoLong(maxEdgeValue - 1, maxEdgeValue)
+    testRoundToPowerOfTwoLong(maxEdgeValue + 1, Long.MAX_VALUE)
+  }
+
+  private fun testRoundToPowerOfTwoLong(value: Long, expected: Long) {
+    assertEquals(expected, roundToPowerOfTwo(value), "Incorrect key for value `$value`")
+  }
+
 
   @Test
   fun `test hash sensitive data`() {

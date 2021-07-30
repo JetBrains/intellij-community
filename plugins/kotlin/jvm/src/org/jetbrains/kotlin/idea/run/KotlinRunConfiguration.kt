@@ -39,8 +39,8 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiPackage
+import com.intellij.psi.search.ExecutionSearchScopes
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.refactoring.listeners.RefactoringElementAdapter
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.util.PathUtil
@@ -73,7 +73,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
 
     override fun getValidModules(): Collection<Module> = ModuleManager.getInstance(project).modules.toList()
 
-    override fun getSearchScope(): GlobalSearchScope? = GlobalSearchScopes.executionScope(modules.toList())
+    override fun getSearchScope(): GlobalSearchScope? = ExecutionSearchScopes.executionScope(modules.toList())
 
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration?> {
         val group = SettingsEditorGroup<KotlinRunConfiguration>()

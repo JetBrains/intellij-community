@@ -7,12 +7,11 @@ import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.impl.nodes.*;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -22,7 +21,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -39,14 +37,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
@@ -62,7 +55,10 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
@@ -72,9 +68,11 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tree.TreeVisitor;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -96,6 +94,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import static com.intellij.application.options.OptionId.PROJECT_VIEW_SHOW_VISIBILITY_ICONS;
+import static com.intellij.openapi.actionSystem.PlatformDataKeys.SLOW_DATA_PROVIDERS;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static com.intellij.ui.treeStructure.Tree.MOUSE_PRESSED_NON_FOCUSED;
 
@@ -477,13 +476,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final AtomicBoolean myAutoScrollOnFocusEditor = new AtomicBoolean(true);
 
   private final IdeView myIdeView = new IdeViewForProjectViewPane(this::getCurrentProjectViewPane);
-  private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
 
   private SimpleToolWindowPanel myPanel;
   private final Map<String, AbstractProjectViewPane> myId2Pane = new LinkedHashMap<>();
   private final Collection<AbstractProjectViewPane> myUninitializedPanes = new HashSet<>();
-
-  private static final DataKey<ProjectViewImpl> DATA_KEY = DataKey.create("com.intellij.ide.projectView.impl.ProjectViewImpl");
 
   private DefaultActionGroup myActionGroup;
   private @Nullable String mySavedPaneId = null;
@@ -1244,20 +1240,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return ActionCallback.REJECTED;
   }
 
-  private final class MyDeletePSIElementProvider extends ProjectViewDeleteElementProvider {
-    @Override
-    protected PsiElement @NotNull [] getSelectedPSIElements(@NotNull DataContext dataContext) {
-      final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-      return viewPane.getSelectedPSIElements();
-    }
-
-    @Override
-    protected Boolean hideEmptyMiddlePackages(@NotNull DataContext dataContext) {
-      final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-      return isHideEmptyMiddlePackages(viewPane.getId());
-    }
-  }
-
   private final class MyPanel extends JPanel implements DataProvider {
     MyPanel() {
       super(new BorderLayout());
@@ -1276,42 +1258,20 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
                                         .iterator());
     }
 
-    @Nullable
-    private Object getSelectedNodeElement() {
-      final AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
-      if (currentProjectViewPane == null) { // can happen if not initialized yet
-        return null;
-      }
-      NodeDescriptor<?> descriptor = TreeUtil.getLastUserObject(NodeDescriptor.class, currentProjectViewPane.getSelectedPath());
-      if (descriptor == null) {
-        return null;
-      }
-
-      return descriptor instanceof AbstractTreeNode
-             ? ((AbstractTreeNode<?>)descriptor).getValue()
-             : descriptor.getElement();
-    }
-
     @Override
     public Object getData(@NotNull String dataId) {
       final AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
+
+      if (SLOW_DATA_PROVIDERS.is(dataId) && currentProjectViewPane != null) {
+        DataProvider selectionProvider = currentProjectViewPane.selectionProvider();
+        return selectionProvider == null ? null : List.of(selectionProvider);
+      }
+
       if (currentProjectViewPane != null) {
         final Object paneSpecificData = currentProjectViewPane.getData(dataId);
         if (paneSpecificData != null) return paneSpecificData;
       }
 
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-        if (currentProjectViewPane == null) return null;
-        final PsiElement[] elements = currentProjectViewPane.getSelectedPSIElements();
-        return elements.length == 1 ? elements[0] : null;
-      }
-      if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-        if (currentProjectViewPane == null) {
-          return null;
-        }
-        PsiElement[] elements = currentProjectViewPane.getSelectedPSIElements();
-        return elements.length == 0 ? null : elements;
-      }
       if (LangDataKeys.MODULE.is(dataId)) {
         VirtualFile[] virtualFiles = (VirtualFile[])getData(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName());
         if (virtualFiles == null || virtualFiles.length <= 1) return null;
@@ -1320,9 +1280,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           modules.add(ModuleUtilCore.findModuleForFile(virtualFile, myProject));
         }
         return modules.size() == 1 ? modules.iterator().next() : null;
-      }
-      if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {
-        return null;
       }
       if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
         return myCopyPasteDelegator.getCutProvider();
@@ -1336,224 +1293,15 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (LangDataKeys.IDE_VIEW.is(dataId)) {
         return myIdeView;
       }
-      if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-        final Module[] modules = getSelectedModules();
-        if (modules != null || !getSelectedUnloadedModules().isEmpty()) {
-          return ModuleDeleteProvider.getInstance();
-        }
-        final LibraryOrderEntry orderEntry = getSelectedLibrary();
-        if (orderEntry != null) {
-          return new DeleteProvider() {
-            @Override
-            public void deleteElement(@NotNull DataContext dataContext) {
-              detachLibrary(orderEntry, myProject);
-            }
-
-            @Override
-            public boolean canDeleteElement(@NotNull DataContext dataContext) {
-              return true;
-            }
-          };
-        }
-        return myDeletePSIElementProvider;
-      }
       if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return HelpID.PROJECT_VIEWS;
       }
-      if (DATA_KEY.is(dataId)) {
-        return ProjectViewImpl.this;
-      }
-      if (PlatformDataKeys.PROJECT_CONTEXT.is(dataId)) {
-        Object selected = getSelectedNodeElement();
-        return selected instanceof Project ? selected : null;
-      }
-      if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
-        Object selected = getSelectedNodeElement();
-        if (selected instanceof Module) {
-          return !((Module)selected).isDisposed() ? selected : null;
-        }
-        else if (selected instanceof PsiDirectory) {
-          return moduleBySingleContentRoot(((PsiDirectory)selected).getVirtualFile());
-        }
-        else if (selected instanceof VirtualFile) {
-          return moduleBySingleContentRoot((VirtualFile)selected);
-        }
-        else {
-          return null;
-        }
-      }
-
-      if (LangDataKeys.MODULE_CONTEXT_ARRAY.is(dataId)) {
-        return getSelectedModules();
-      }
-      if (UNLOADED_MODULES_CONTEXT_KEY.is(dataId)) {
-        return Collections.unmodifiableList(getSelectedUnloadedModules());
-      }
-      if (ModuleGroup.ARRAY_DATA_KEY.is(dataId)) {
-        final List<ModuleGroup> selectedElements = getSelectedElements(ModuleGroup.class);
-        return selectedElements.isEmpty() ? null : selectedElements.toArray(new ModuleGroup[0]);
-      }
-      if (LibraryGroupElement.ARRAY_DATA_KEY.is(dataId)) {
-        final List<LibraryGroupElement> selectedElements = getSelectedElements(LibraryGroupElement.class);
-        return selectedElements.isEmpty() ? null : selectedElements.toArray(new LibraryGroupElement[0]);
-      }
-      if (NamedLibraryElement.ARRAY_DATA_KEY.is(dataId)) {
-        final List<NamedLibraryElement> selectedElements = getSelectedElements(NamedLibraryElement.class);
-        return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[0]);
-      }
-
-      if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
-        final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-        return viewPane == null ? null : viewPane.getSelectedElements();
-      }
-
       if (QuickActionProvider.KEY.is(dataId)) {
         return ProjectViewImpl.this;
       }
 
       return null;
     }
-
-    @Nullable
-    private LibraryOrderEntry getSelectedLibrary() {
-      final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-      if (viewPane == null) return null;
-      TreePath path = viewPane.getSelectedPath();
-      if (path == null) return null;
-      TreePath parent = path.getParentPath();
-      if (parent == null) return null;
-      Object userObject = TreeUtil.getLastUserObject(parent);
-      if (userObject instanceof LibraryGroupNode) {
-        userObject = TreeUtil.getLastUserObject(path);
-        if (userObject instanceof NamedLibraryElementNode) {
-          NamedLibraryElement element = ((NamedLibraryElementNode)userObject).getValue();
-          OrderEntry orderEntry = element.getOrderEntry();
-          return orderEntry instanceof LibraryOrderEntry ? (LibraryOrderEntry)orderEntry : null;
-        }
-        PsiDirectory directory = ((PsiDirectoryNode)userObject).getValue();
-        VirtualFile virtualFile = directory.getVirtualFile();
-        Module module = (Module)TreeUtil.getLastUserObject(AbstractTreeNode.class, parent.getParentPath()).getValue();
-
-        if (module == null) return null;
-        ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
-        OrderEntry entry = index.getOrderEntryForFile(virtualFile);
-        if (entry instanceof LibraryOrderEntry) {
-          return (LibraryOrderEntry)entry;
-        }
-      }
-
-      return null;
-    }
-
-    private void detachLibrary(@NotNull final LibraryOrderEntry orderEntry, @NotNull Project project) {
-      final Module module = orderEntry.getOwnerModule();
-      String message = IdeBundle.message("detach.library.from.module", orderEntry.getPresentableName(), module.getName());
-      String title = IdeBundle.message("detach.library");
-      int ret = Messages.showOkCancelDialog(project, message, title, Messages.getQuestionIcon());
-      if (ret != Messages.OK) return;
-      CommandProcessor.getInstance().executeCommand(module.getProject(), () -> {
-        final Runnable action = () -> {
-          ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-          OrderEntry[] orderEntries = rootManager.getOrderEntries();
-          ModifiableRootModel model = rootManager.getModifiableModel();
-          OrderEntry[] modifiableEntries = model.getOrderEntries();
-          for (int i = 0; i < orderEntries.length; i++) {
-            OrderEntry entry = orderEntries[i];
-            if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() == orderEntry.getLibrary()) {
-              model.removeOrderEntry(modifiableEntries[i]);
-            }
-          }
-          model.commit();
-        };
-        ApplicationManager.getApplication().runWriteAction(action);
-      }, title, null);
-    }
-
-    private Module @Nullable [] getSelectedModules() {
-      final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-      if (viewPane == null) return null;
-      final Object[] elements = viewPane.getSelectedElements();
-      ArrayList<Module> result = new ArrayList<>();
-      for (Object element : elements) {
-        if (element instanceof Module) {
-          final Module module = (Module)element;
-          if (!module.isDisposed()) {
-            result.add(module);
-          }
-        }
-        else if (element instanceof ModuleGroup) {
-          Collection<Module> modules = ((ModuleGroup)element).modulesInGroup(myProject, true);
-          result.addAll(modules);
-        }
-        else if (element instanceof PsiDirectory) {
-          Module module = moduleBySingleContentRoot(((PsiDirectory)element).getVirtualFile());
-          if (module != null) result.add(module);
-        }
-        else if (element instanceof VirtualFile) {
-          Module module = moduleBySingleContentRoot((VirtualFile)element);
-          if (module != null) result.add(module);
-        }
-      }
-
-      return result.isEmpty() ? null : result.toArray(Module.EMPTY_ARRAY);
-    }
-
-    private List<UnloadedModuleDescription> getSelectedUnloadedModules() {
-      final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-      if (viewPane == null) return Collections.emptyList();
-      List<UnloadedModuleDescription> result = new SmartList<>();
-      for (Object element : viewPane.getSelectedElements()) {
-        if (element instanceof PsiDirectory) {
-          ContainerUtil.addIfNotNull(result, getUnloadedModuleByContentRoot(((PsiDirectory)element).getVirtualFile()));
-        }
-        else if (element instanceof VirtualFile) {
-          ContainerUtil.addIfNotNull(result, getUnloadedModuleByContentRoot((VirtualFile)element));
-        }
-      }
-      return result;
-    }
-  }
-
-  /** Project view has the same node for module and its single content root
-   *   => MODULE_CONTEXT data key should return the module when its content root is selected
-   *  When there are multiple content roots, they have different nodes under the module node
-   *   => MODULE_CONTEXT should be only available for the module node
-   *      otherwise VirtualFileArrayRule will return all module's content roots when just one of them is selected
-   */
-  @Nullable
-  private Module moduleBySingleContentRoot(@NotNull VirtualFile file) {
-    if (ProjectRootsUtil.isModuleContentRoot(file, myProject)) {
-      Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(file);
-      if (module != null && !module.isDisposed() && ModuleRootManager.getInstance(module).getContentRoots().length == 1) {
-        return module;
-      }
-    }
-
-    return null;
-  }
-
-  @Nullable
-  private UnloadedModuleDescription getUnloadedModuleByContentRoot(@NotNull VirtualFile file) {
-    String moduleName = ProjectRootsUtil.findUnloadedModuleByContentRoot(file, myProject);
-    if (moduleName != null) {
-      return ModuleManager.getInstance(myProject).getUnloadedModuleDescription(moduleName);
-    }
-    return null;
-  }
-
-  @NotNull
-  private <T> List<T> getSelectedElements(@NotNull Class<T> klass) {
-    List<T> result = new ArrayList<>();
-    final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-    if (viewPane == null) return result;
-    final Object[] elements = viewPane.getSelectedElements();
-    for (Object element : elements) {
-      //element still valid
-      if (element != null && klass.isAssignableFrom(element.getClass())) {
-        result.add((T)element);
-      }
-    }
-    return result;
   }
 
   @Override

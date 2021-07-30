@@ -87,7 +87,7 @@ class ProjectPluginTrackerManager : SimplePersistentStateComponent<ProjectPlugin
       }
     }
 
-    internal fun openProjectsExcludingCurrent(project: Project?) = ProjectManager.getInstance().openProjects.filterNot { it == project }
+    private fun openProjectsExcludingCurrent(project: Project?) = ProjectManager.getInstance().openProjects.filterNot { it == project }
 
     private fun Collection<PluginId>.toPluginDescriptors() = mapNotNull { PluginManagerCore.getPlugin(it) }
   }

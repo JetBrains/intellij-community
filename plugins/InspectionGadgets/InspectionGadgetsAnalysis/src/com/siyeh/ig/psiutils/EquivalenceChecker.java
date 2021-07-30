@@ -22,15 +22,17 @@ import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import static java.util.Comparator.*;
 
@@ -430,12 +432,96 @@ public class EquivalenceChecker {
     else if (rule1 || rule2) {
       return EXACT_MISMATCH;
     }
-    final PsiExpressionList caseValues1 = statement1.getCaseValues();
-    final PsiExpressionList caseValues2 = statement2.getCaseValues();
-    if (caseValues1 == null || caseValues2 == null) {
-      return Match.exact(caseValues1 == caseValues2);
+    final PsiCaseLabelElementList labelElementList1 = statement1.getCaseLabelElementList();
+    final PsiCaseLabelElementList labelElementList2 = statement2.getCaseLabelElementList();
+    if (labelElementList1 == null || labelElementList2 == null) {
+      return Match.exact(labelElementList1 == labelElementList2);
     }
-    return expressionsAreEquivalent(caseValues1.getExpressions(), caseValues2.getExpressions(), true);
+    Map<Class<? extends PsiCaseLabelElement>, List<PsiCaseLabelElement>> byClass1 = groupingByClass(labelElementList1);
+
+    List<PsiPattern> patternList1 = getList(byClass1, PsiPattern.class);
+    List<PsiDefaultCaseLabelElement> defaultList1 = getList(byClass1, PsiDefaultCaseLabelElement.class);
+    List<PsiExpression> expressionList1 = getList(byClass1, PsiExpression.class);
+
+    Map<Class<? extends PsiCaseLabelElement>, List<PsiCaseLabelElement>> byClass2 = groupingByClass(labelElementList2);
+    List<PsiPattern> patternList2 = getList(byClass2, PsiPattern.class);
+    List<PsiExpression> expressionList2 = getList(byClass2, PsiExpression.class);
+
+    boolean allListSizesAreEqual = StreamEx.of(PsiPattern.class, PsiDefaultCaseLabelElement.class, PsiExpression.class)
+      .allMatch(aClass -> {
+        List<PsiCaseLabelElement> list1 = byClass1.get(aClass);
+        List<PsiCaseLabelElement> list2 = byClass2.get(aClass);
+        return list1 != null && list2 != null && list1.size() == list2.size() || list1 == list2;
+      });
+
+    if (!allListSizesAreEqual) {
+      return EXACT_MISMATCH;
+    }
+    if (patternList1.size() == 1) {
+      if (!defaultList1.isEmpty() || expressionList1.size() > 1) {
+        return EXACT_MISMATCH;
+      }
+      if (expressionList1.size() == 1) {
+        if (!ExpressionUtils.isNullLiteral(expressionList1.get(0)) ||
+            !ExpressionUtils.isNullLiteral(expressionList2.get(0))) {
+          return EXACT_MISMATCH;
+        }
+      }
+      if (matchPatterns(patternList1.get(0), patternList2.get(0)).isExactMatch()) {
+        return EXACT_MISMATCH;
+      }
+    }
+    else if (patternList1.size() > 1) {
+      return EXACT_MISMATCH;
+    }
+    return expressionsAreEquivalent(expressionList1.toArray(PsiExpression.EMPTY_ARRAY),
+                                    expressionList2.toArray(PsiExpression.EMPTY_ARRAY), true);
+  }
+
+  private static <T extends PsiCaseLabelElement> List<T> getList(Map<Class<? extends PsiCaseLabelElement>, List<PsiCaseLabelElement>> map,
+                                                                 Class<T> clazz) {
+    List<PsiCaseLabelElement> list = map.get(clazz);
+    return list != null ? ContainerUtil.map(list, labelElement -> ObjectUtils.tryCast(labelElement, clazz)) : Collections.emptyList();
+
+  }
+
+  private static Map<Class<? extends PsiCaseLabelElement>, List<PsiCaseLabelElement>> groupingByClass(PsiCaseLabelElementList labelElementList) {
+    return StreamEx.of(labelElementList.getElements()).groupingBy(labelElement -> labelElement.getClass());
+  }
+
+  private Match matchPatterns(@Nullable PsiPattern pattern1, @Nullable PsiPattern pattern2) {
+    if (pattern1 == pattern2) {
+      return EXACT_MATCH;
+    }
+    if (pattern1 == null || pattern2 == null) {
+      return EXACT_MISMATCH;
+    }
+    pattern1 = JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern1);
+    pattern2 = JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern2);
+    if (pattern1 instanceof PsiGuardedPattern && pattern2 instanceof PsiGuardedPattern) {
+      return matchGuardedPatterns((PsiGuardedPattern)pattern1, (PsiGuardedPattern)pattern2);
+    }
+    if (pattern1 instanceof PsiTypeTestPattern && pattern2 instanceof PsiTypeTestPattern) {
+      return matchPrimaryPatterns((PsiTypeTestPattern)pattern1, (PsiTypeTestPattern)pattern2);
+    }
+    return EXACT_MISMATCH;
+  }
+
+  private Match matchGuardedPatterns(@NotNull PsiGuardedPattern guardedPattern1, @NotNull PsiGuardedPattern guardedPattern2) {
+    PsiPrimaryPattern primaryPattern1 = guardedPattern1.getPrimaryPattern();
+    PsiPrimaryPattern primaryPattern2 = guardedPattern2.getPrimaryPattern();
+    if (!matchPrimaryPatterns(primaryPattern1, primaryPattern2).isExactMatch()) {
+      return EXACT_MISMATCH;
+    }
+    PsiExpression guardingExpression1 = guardedPattern1.getGuardingExpression();
+    PsiExpression guardingExpression2 = guardedPattern2.getGuardingExpression();
+    return expressionsMatch(guardingExpression1, guardingExpression2);
+  }
+
+  private Match matchPrimaryPatterns(@NotNull PsiPrimaryPattern primaryPattern1, @NotNull PsiPrimaryPattern primaryPattern2) {
+    PsiType type1 = JavaPsiPatternUtil.getPatternType(primaryPattern1);
+    PsiType type2 = JavaPsiPatternUtil.getPatternType(primaryPattern2);
+    return Match.exact(typesAreEquivalent(type1, type2));
   }
 
   protected Match labeledStatementsMatch(@NotNull PsiLabeledStatement statement1, @NotNull PsiLabeledStatement statement2) {

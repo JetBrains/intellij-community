@@ -1,5 +1,10 @@
 internal class A {
     private val collection: MutableCollection<String>
+
+    init {
+        collection = createCollection()
+    }
+
     fun createCollection(): MutableCollection<String> {
         return ArrayList()
     }
@@ -10,9 +15,5 @@ internal class A {
 
     fun getCollection(): Collection<String> {
         return collection
-    }
-
-    init {
-        collection = createCollection()
     }
 }

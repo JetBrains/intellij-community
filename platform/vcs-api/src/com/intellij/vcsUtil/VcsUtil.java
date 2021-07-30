@@ -244,6 +244,7 @@ public class VcsUtil {
 
   @Nullable
   public static Icon getIcon(@Nullable Project project, @NotNull FilePath filePath) {
+    if (project != null && project.isDisposed()) return null;
     VirtualFile virtualFile = filePath.getVirtualFile();
     if (virtualFile != null) return IconUtil.getIcon(virtualFile, 0, project);
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(filePath.getName());

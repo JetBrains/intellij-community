@@ -5,15 +5,12 @@ package org.jetbrains.kotlin.idea
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import org.jetbrains.kotlin.idea.ThreadTrackerPatcherForTeamCityTesting.patchThreadTracker
-import org.jetbrains.kotlin.idea.debugger.filter.addKotlinStdlibDebugFilterIfNeeded
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-
 
 class JvmPluginStartupActivity : StartupActivity {
     override fun runActivity(project: Project) {
         if (isUnitTestMode()) {
             patchThreadTracker()
         }
-        addKotlinStdlibDebugFilterIfNeeded()
     }
 }

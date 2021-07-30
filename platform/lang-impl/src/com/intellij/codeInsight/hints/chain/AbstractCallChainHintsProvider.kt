@@ -29,19 +29,19 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
       override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
         if (file.project.service<DumbService>().isDumb) return true
 
-        val globalDotQualifiedExpression = element.safeCastUsing(dotQualifiedClass)
-                                             // We will process the whole chain using most global DotQualifiedExpression.
-                                             // If the current one has parent then it means that it's not most global DotQualifiedExpression
+        val topmostDotQualifiedExpression = element.safeCastUsing(dotQualifiedClass)
+                                             // We will process the whole chain using topmost DotQualifiedExpression.
+                                             // If the current one has parent then it means that it's not topmost DotQualifiedExpression
                                              ?.takeIf { it.getParentDotQualifiedExpression() == null }
-                                           ?: return true
+                                            ?: return true
 
         data class ExpressionWithType(val expression: PsiElement, val type: ExpressionType)
 
-        val context = getTypeComputationContext(globalDotQualifiedExpression)
+        val context = getTypeComputationContext(topmostDotQualifiedExpression)
 
         var someTypeIsUnknown = false
         val reversedChain =
-          generateSequence<PsiElement>(globalDotQualifiedExpression) {
+          generateSequence<PsiElement>(topmostDotQualifiedExpression) {
             it.skipParenthesesAndPostfixOperatorsDown()?.safeCastUsing(dotQualifiedClass)?.getReceiver()
           }
             .drop(1) // Except last to avoid builder.build() which has obvious type
@@ -137,7 +137,7 @@ abstract class AbstractCallChainHintsProvider<DotQualifiedExpression : PsiElemen
 
   protected abstract fun PsiElement.skipParenthesesAndPostfixOperatorsDown(): PsiElement?
 
-  protected abstract fun getTypeComputationContext(globalDotQualifiedExpression: DotQualifiedExpression): TypeComputationContext
+  protected abstract fun getTypeComputationContext(topmostDotQualifiedExpression: DotQualifiedExpression): TypeComputationContext
 
   private fun <T> Any.safeCastUsing(clazz: Class<T>) = if (clazz.isInstance(this)) clazz.cast(this) else null
 

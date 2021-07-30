@@ -24,13 +24,12 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.FeatureFlags
 import com.jetbrains.packagesearch.intellij.plugin.util.addSelectionChangedListener
+import com.jetbrains.packagesearch.intellij.plugin.util.getPackageSearchModulesChangesFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.lookAndFeelFlow
-import com.jetbrains.packagesearch.intellij.plugin.util.map
 import com.jetbrains.packagesearch.intellij.plugin.util.onEach
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchModulesChangesFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
@@ -58,9 +57,9 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     override fun isApplicable(project: Project): Boolean {
-        val isAvailable = runBlocking { project.packageSearchModulesChangesFlow.first().isNotEmpty() }
+        val isAvailable = runBlocking { project.getPackageSearchModulesChangesFlow().first().isNotEmpty() }
 
-        if (!isAvailable) project.packageSearchModulesChangesFlow
+        if (!isAvailable) project.getPackageSearchModulesChangesFlow()
             .filter { it.isNotEmpty() }
             .take(1)
             .flowOn(Dispatchers.Default)
@@ -102,15 +101,7 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
         contentManager.removeAllContents(true)
 
         val panels = buildList {
-            add(
-                PackageManagementPanel(
-                    rootDataModelProvider = project.packageSearchDataService,
-                    selectedPackageSetter = project.packageSearchDataService,
-                    targetModuleSetter = project.packageSearchDataService,
-                    searchClient = project.packageSearchDataService,
-                    operationExecutor = project.packageSearchDataService
-                )
-            )
+            add(PackageManagementPanel(project))
             if (FeatureFlags.showRepositoriesTab) {
                 add(RepositoryManagementPanel(rootDataModelProvider = project.packageSearchDataService))
             }
@@ -124,13 +115,13 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
 
         isAvailable = false
 
-        project.packageSearchModulesChangesFlow
+        project.getPackageSearchModulesChangesFlow()
             .map { it.isNotEmpty() }
             .onEach { logInfo("PackageSearchToolWindowFactory#packageSearchModulesChangesFlow") { "Setting toolWindow.isAvailable = $it" } }
             .onEach(Dispatchers.AppUI) { isAvailable = it }
             .launchIn(project.lifecycleScope)
 
-        combine(project.lookAndFeelFlow, project.packageSearchModulesChangesFlow.filter { it.isNotEmpty() }) { _, _ -> }
+        combine(project.lookAndFeelFlow, project.getPackageSearchModulesChangesFlow().filter { it.isNotEmpty() }) { _, _ -> }
             .onEach(Dispatchers.AppUI) { contentManager.component.updateAndRepaint() }
             .launchIn(project.lifecycleScope)
 

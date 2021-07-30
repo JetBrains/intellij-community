@@ -275,8 +275,8 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     }
 
     tab = new TabInfo(component)
-      .setText(SlowOperations.allowSlowOperations(() -> EditorTabPresentationUtil.getEditorTabTitle(myProject, file, myWindow)))
-      .setTabColor(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file, myWindow))
+      .setText(SlowOperations.allowSlowOperations(() -> EditorTabPresentationUtil.getEditorTabTitle(myProject, file)))
+      .setTabColor(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file))
       .setIcon(UISettings.getInstance().getShowFileIconInTabs() ? icon : null)
       .setTooltipText(tooltip)
       .setObject(file)
@@ -336,7 +336,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public static String calcTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
-    return EditorTabPresentationUtil.getEditorTabTitle(project, file, null);
+    return EditorTabPresentationUtil.getEditorTabTitle(project, file);
   }
 
   public Component getComponentAt(int i) {
@@ -579,7 +579,6 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
   public static class DockableEditor implements DockableContent<VirtualFile> {
     final Image myImg;
-    private final DockableEditorTabbedContainer myContainer;
     private final Presentation myPresentation;
     private final Dimension myPreferredSize;
     private final boolean myPinned;
@@ -605,7 +604,6 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       myImg = img;
       myFile = file;
       myPresentation = presentation;
-      myContainer = new DockableEditorTabbedContainer(project);
       myPreferredSize = preferredSize;
       myPinned = isFilePinned;
       myNorthPanelAvailable = isNorthPanelAvailable;
@@ -639,7 +637,6 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
     @Override
     public void close() {
-      myContainer.close(myFile);
     }
 
     public VirtualFile getFile() {

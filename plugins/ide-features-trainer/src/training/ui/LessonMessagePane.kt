@@ -4,6 +4,7 @@ package training.ui
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.openapi.util.SystemInfo
@@ -11,6 +12,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.WatermarkIcon
 import training.FeaturesTrainerIcons
 import training.learn.lesson.LessonManager
 import java.awt.*
@@ -49,12 +51,15 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
 
   enum class MessageState { NORMAL, PASSED, INACTIVE, RESTORE, INFORMER }
 
-  data class MessageProperties(val state: MessageState = MessageState.NORMAL, val visualIndex: Int? = null)
+  data class MessageProperties(val state: MessageState = MessageState.NORMAL,
+                               val visualIndex: Int? = null,
+                               val useInternalParagraphStyle: Boolean = false)
 
   private data class LessonMessage(
     val messageParts: List<MessagePart>,
     var state: MessageState,
     val visualIndex: Int?,
+    val useInternalParagraphStyle: Boolean,
     var start: Int = 0,
     var end: Int = 0
   )
@@ -88,7 +93,8 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
         val rangeData = getRangeDataForMouse(me) ?: return
         val middle = (rangeData.range.first + rangeData.range.last) / 2
         val rectangle = modelToView2D(middle)
-        rangeData.action(Point(rectangle.x.roundToInt(), (rectangle.y.roundToInt() + rectangle.height.roundToInt() / 2)), rectangle.height.roundToInt())
+        rangeData.action(Point(rectangle.x.roundToInt(), (rectangle.y.roundToInt() + rectangle.height.roundToInt() / 2)),
+                         rectangle.height.roundToInt())
       }
 
       override fun mouseMoved(me: MouseEvent) {
@@ -153,20 +159,13 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     StyleConstants.setFontSize(CODE, codeFontSize)
 
     StyleConstants.setFontFamily(LINK, fontFamily)
-    StyleConstants.setUnderline(LINK, true)
     StyleConstants.setFontSize(LINK, fontSize)
 
-    StyleConstants.setLeftIndent(TASK_PARAGRAPH_STYLE, UISettings.instance.checkIndent.toFloat())
-    StyleConstants.setRightIndent(TASK_PARAGRAPH_STYLE, 0f)
-    StyleConstants.setSpaceAbove(TASK_PARAGRAPH_STYLE, 24.0f)
-    StyleConstants.setSpaceBelow(TASK_PARAGRAPH_STYLE, 0.0f)
-    StyleConstants.setLineSpacing(TASK_PARAGRAPH_STYLE, 0.2f)
+    StyleConstants.setSpaceAbove(TASK_PARAGRAPH_STYLE, UISettings.instance.taskParagraphAbove.toFloat())
+    setCommonParagraphAttributes(TASK_PARAGRAPH_STYLE)
 
-    StyleConstants.setLeftIndent(INTERNAL_PARAGRAPH_STYLE, UISettings.instance.checkIndent.toFloat())
-    StyleConstants.setRightIndent(INTERNAL_PARAGRAPH_STYLE, 0f)
-    StyleConstants.setSpaceAbove(INTERNAL_PARAGRAPH_STYLE, 8.0f)
-    StyleConstants.setSpaceBelow(INTERNAL_PARAGRAPH_STYLE, 0.0f)
-    StyleConstants.setLineSpacing(INTERNAL_PARAGRAPH_STYLE, 0.2f)
+    StyleConstants.setSpaceAbove(INTERNAL_PARAGRAPH_STYLE, UISettings.instance.taskInternalParagraphAbove.toFloat())
+    setCommonParagraphAttributes(INTERNAL_PARAGRAPH_STYLE)
 
     StyleConstants.setLineSpacing(BALLOON_STYLE, 0.2f)
     StyleConstants.setLeftIndent(BALLOON_STYLE, UISettings.instance.balloonIndent.toFloat())
@@ -176,6 +175,13 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     StyleConstants.setForeground(SHORTCUT, UISettings.instance.shortcutTextColor)
     StyleConstants.setForeground(LINK, UISettings.instance.lessonLinkColor)
     StyleConstants.setForeground(CODE, codeForegroundColor)
+  }
+
+  private fun setCommonParagraphAttributes(attributeSet: SimpleAttributeSet) {
+    StyleConstants.setLeftIndent(attributeSet, UISettings.instance.checkIndent.toFloat())
+    StyleConstants.setRightIndent(attributeSet, 0f)
+    StyleConstants.setSpaceBelow(attributeSet, 0.0f)
+    StyleConstants.setLineSpacing(attributeSet, 0.2f)
   }
 
   fun messagesNumber(): Int = activeMessages.size
@@ -220,7 +226,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   }
 
   fun addMessage(messageParts: List<MessagePart>, properties: MessageProperties = MessageProperties()): () -> Rectangle? {
-    val lessonMessage = LessonMessage(messageParts, properties.state, properties.visualIndex)
+    val lessonMessage = LessonMessage(messageParts, properties.state, properties.visualIndex, properties.useInternalParagraphStyle)
     when (properties.state) {
       MessageState.INACTIVE -> inactiveMessages
       MessageState.RESTORE -> restoreMessages
@@ -248,12 +254,19 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     ranges.clear()
     text = ""
     insertOffset = 0
+    var previous: LessonMessage? = null
     for (lessonMessage in allLessonMessages()) {
-      paragraphStyle = if (panelMode) TASK_PARAGRAPH_STYLE else BALLOON_STYLE
+      if (previous?.messageParts?.firstOrNull()?.type != MessagePart.MessageType.ILLUSTRATION) {
+        paragraphStyle = when {
+          previous?.useInternalParagraphStyle == true -> INTERNAL_PARAGRAPH_STYLE
+          panelMode -> TASK_PARAGRAPH_STYLE
+          else -> BALLOON_STYLE
+        }
+      }
       val messageParts: List<MessagePart> = lessonMessage.messageParts
       lessonMessage.start = insertOffset
       if (insertOffset != 0)
-        insertText("\n", REGULAR)
+        insertText("\n", paragraphStyle)
       for (part in messageParts) {
         val startOffset = insertOffset
         part.startOffset = startOffset
@@ -266,6 +279,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
           MessagePart.MessageType.LINK -> appendLink(part)?.let { ranges.add(it) }
           MessagePart.MessageType.ICON_IDX -> LearningUiManager.iconMap[part.text]?.let { addPlaceholderForIcon(it) }
           MessagePart.MessageType.PROPOSE_RESTORE -> insertText(part.text, BOLD)
+          MessagePart.MessageType.ILLUSTRATION -> addPlaceholderForIllustration(part)
           MessagePart.MessageType.LINE_BREAK -> {
             insertText("\n", REGULAR)
             paragraphStyle = INTERNAL_PARAGRAPH_STYLE
@@ -277,8 +291,26 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
       if (lessonMessage.state == MessageState.INACTIVE) {
         setInactiveStyle(lessonMessage)
       }
+      previous = lessonMessage
     }
   }
+
+  private fun addPlaceholderForIllustration(part: MessagePart) {
+    val illustration = LearningUiManager.iconMap[part.text]
+    if (illustration == null) {
+      thisLogger().error("No illustration for ${part.text}")
+    }
+    else {
+      val spaceAbove = spaceAboveIllustrationParagraph(illustration) + UISettings.instance.taskInternalParagraphAbove
+      val illustrationStyle = SimpleAttributeSet()
+      StyleConstants.setSpaceAbove(illustrationStyle, spaceAbove.toFloat())
+      setCommonParagraphAttributes(illustrationStyle)
+      paragraphStyle = illustrationStyle
+    }
+    insertText(" ", REGULAR)
+  }
+
+  private fun spaceAboveIllustrationParagraph(illustration: Icon) = illustration.iconHeight - getFontMetrics(this.font).height
 
   private fun addPlaceholderForIcon(icon: Icon) {
     var placeholder = " "
@@ -374,6 +406,9 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
       var startOffset = lessonMessage.start
       if (startOffset != 0) startOffset++
       val rectangle = modelToView2D(startOffset).toRectangle()
+      if (lessonMessage.messageParts.singleOrNull()?.type == MessagePart.MessageType.ILLUSTRATION) {
+        continue
+      }
       val icon = if (lessonMessage.state == MessageState.PASSED) {
         FeaturesTrainerIcons.Img.GreenCheckmark
       }
@@ -418,7 +453,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     for (lessonMessage in inactiveMessages) {
       paintNumber(lessonMessage, UISettings.instance.futureTaskNumberColor)
     }
-    if (activeMessages.lastOrNull()?.state != MessageState.PASSED || panelMode == false) { // lesson can be opened as passed
+    if (activeMessages.lastOrNull()?.state != MessageState.PASSED || !panelMode) { // lesson can be opened as passed
       val firstActiveMessage = firstActiveMessage()
       if (firstActiveMessage != null) {
         val color = if (panelMode) UISettings.instance.activeTaskNumberColor else UISettings.instance.tooltipTaskNumberColor
@@ -448,7 +483,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
       calculateHeight()
       if (numberHeight > textHeight) {
         size--
-        while(calculateHeight() >= textHeight) {
+        while (calculateHeight() >= textHeight) {
           size--
         }
         size++
@@ -502,8 +537,20 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
           }
           MessagePart.MessageType.ICON_IDX -> {
             val rect = modelToView2D(myMessage.startOffset + 1)
-            val icon = LearningUiManager.iconMap[myMessage.text]
-            icon?.paintIcon(this, g2d, rect.x.toInt(), rect.y.toInt())
+            var icon = LearningUiManager.iconMap[myMessage.text] ?: continue
+            if (inactiveMessages.contains(lessonMessage)) {
+              icon = getInactiveIcon(icon)
+            }
+            icon.paintIcon(this, g2d, rect.x.toInt(), rect.y.toInt())
+          }
+          MessagePart.MessageType.ILLUSTRATION -> {
+            val x = modelToView2D(myMessage.startOffset).x.toInt()
+            val y = modelToView2D(myMessage.endOffset - 1).y.toInt()
+            var icon = LearningUiManager.iconMap[myMessage.text] ?: continue
+            if (inactiveMessages.contains(lessonMessage)) {
+              icon = getInactiveIcon(icon)
+            }
+            icon.paintIcon(this, g2d, x, y - spaceAboveIllustrationParagraph(icon))
           }
         }
       }
@@ -512,15 +559,17 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     val firstActiveMessage = firstActiveMessage()
     if (panelMode && lastActiveMessage != null && lastActiveMessage.state == MessageState.NORMAL) {
       val c = UISettings.instance.activeTaskBorder
-      val a = if (totalAnimation == 0) 255 else 255*currentAnimation/totalAnimation
+      val a = if (totalAnimation == 0) 255 else 255 * currentAnimation / totalAnimation
       val needColor = Color(c.red, c.green, c.blue, a)
       drawRectangleAroundMessage(firstActiveMessage, lastActiveMessage, g2d, needColor)
     }
   }
 
+  private fun getInactiveIcon(icon: Icon) = WatermarkIcon(icon, UISettings.instance.transparencyInactiveFactor.toFloat())
+
   private fun firstActiveMessage(): LessonMessage? = activeMessages.indexOfLast { it.state == MessageState.PASSED }
-                                       .takeIf { it != -1 && it < activeMessages.size - 1 }
-                                       ?.let { activeMessages[it + 1] } ?: activeMessages.firstOrNull()
+                                                       .takeIf { it != -1 && it < activeMessages.size - 1 }
+                                                       ?.let { activeMessages[it + 1] } ?: activeMessages.firstOrNull()
 
   private fun drawRectangleAroundText(myMessage: MessagePart,
                                       g2d: Graphics2D,

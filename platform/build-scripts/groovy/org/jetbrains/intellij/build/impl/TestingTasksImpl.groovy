@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileDynamic
@@ -22,6 +23,7 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.nio.file.Files
 import java.util.function.Predicate
 import java.util.jar.Manifest
 
@@ -316,11 +318,10 @@ class TestingTasksImpl extends TestingTasks {
   }
 
   @Override
-  @CompileDynamic
-  File createSnapshotsDirectory() {
-    File snapshotsDir = new File("$context.paths.projectHome/out/snapshots")
-    context.ant.delete(dir: snapshotsDir)
-    context.ant.mkdir(dir: snapshotsDir)
+  java.nio.file.Path createSnapshotsDirectory() {
+    java.nio.file.Path snapshotsDir = context.paths.projectHomeDir.resolve("out/snapshots")
+    NioFiles.deleteRecursively(snapshotsDir)
+    Files.createDirectories(snapshotsDir)
     return snapshotsDir
   }
 
@@ -333,8 +334,8 @@ class TestingTasksImpl extends TestingTasks {
       classPath.addAll(utilClasspath - classPath)
     }
 
-    File snapshotsDir = createSnapshotsDirectory()
-    String hprofSnapshotFilePath = new File(snapshotsDir, "intellij-tests-oom.hprof").absolutePath
+    java.nio.file.Path snapshotsDir = createSnapshotsDirectory()
+    String hprofSnapshotFilePath = snapshotsDir.resolve("intellij-tests-oom.hprof").toString()
     List<String> defaultJvmArgs = VmOptionsGenerator.COMMON_VM_OPTIONS + [
       '-XX:+HeapDumpOnOutOfMemoryError',
       '-XX:HeapDumpPath=' + hprofSnapshotFilePath,
@@ -360,6 +361,7 @@ class TestingTasksImpl extends TestingTasks {
       "idea.system.path"                                  : "$tempDir/system".toString(),
       "intellij.build.compiled.classes.archives.metadata" : System.getProperty("intellij.build.compiled.classes.archives.metadata"),
       "intellij.build.compiled.classes.archive"           : System.getProperty("intellij.build.compiled.classes.archive"),
+      (BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY): "$context.projectOutputDirectory".toString(),
       "idea.coverage.enabled.build"                       : System.getProperty("idea.coverage.enabled.build"),
       "teamcity.buildConfName"                            : System.getProperty("teamcity.buildConfName"),
       "java.io.tmpdir"                                    : tempDir,
@@ -379,8 +381,6 @@ class TestingTasksImpl extends TestingTasks {
     }
 
     if (PortableCompilationCache.CAN_BE_USED) {
-      def compiledClassesDir = "$context.projectOutputDirectory"
-      systemProperties[BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY] = compiledClassesDir.toString()
       systemProperties[BuildOptions.USE_COMPILED_CLASSES_PROPERTY] = "true"
     }
 

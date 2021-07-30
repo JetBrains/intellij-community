@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaControlFlowUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,9 +96,22 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
 
     final AtomicBoolean thisSwitchLabelIsImmediate = new AtomicBoolean();
 
-    PsiTreeUtil.treeWalkUp(place, getParent(), (currentScope, __) -> {
-      final PsiElement sibling = PsiTreeUtil.skipWhitespacesBackward(currentScope.getPrevSibling());
-      if (sibling == this) {
+    PsiTreeUtil.treeWalkUp(place, getParent(), (currentScope, prevScope) -> {
+
+      PsiSwitchLabelStatementBase immediateSwitchLabel;
+
+      if (currentScope instanceof PsiSwitchLabelStatementBase) {
+        immediateSwitchLabel = (PsiSwitchLabelStatementBase)currentScope;
+      }
+      else {
+        immediateSwitchLabel = PsiTreeUtil.getPrevSiblingOfType(currentScope, PsiSwitchLabelStatementBase.class);
+      }
+
+      while (immediateSwitchLabel != null && isFallthrough(immediateSwitchLabel) && isSpecialCaseLabel(immediateSwitchLabel)) {
+        immediateSwitchLabel = PsiTreeUtil.getPrevSiblingOfType(immediateSwitchLabel, PsiSwitchLabelStatementBase.class);
+      }
+
+      if (immediateSwitchLabel == this) {
         thisSwitchLabelIsImmediate.set(true);
         return false;
       }
@@ -105,5 +119,26 @@ public class PsiSwitchLabelStatementImpl extends PsiSwitchLabelStatementBaseImpl
     });
 
     return thisSwitchLabelIsImmediate.get();
+  }
+
+  private static boolean isFallthrough(@NotNull PsiSwitchLabelStatementBase immediateSwitchLabel) {
+    final PsiStatement prevStmt = PsiTreeUtil.getPrevSiblingOfType(immediateSwitchLabel, PsiStatement.class);
+    if (prevStmt == null) return false;
+    return JavaControlFlowUtils.statementMayCompleteNormally(prevStmt);
+  }
+
+  private static boolean isSpecialCaseLabel(@NotNull PsiSwitchLabelStatementBase switchCaseLabel) {
+    return isCase(switchCaseLabel, JavaTokenType.NULL_KEYWORD) ||
+           isCase(switchCaseLabel, JavaTokenType.DEFAULT_KEYWORD) ||
+           switchCaseLabel.isDefaultCase();
+  }
+
+  private static boolean isCase(@NotNull PsiSwitchLabelStatementBase item, @NotNull IElementType keyword) {
+    if (item.getCaseLabelElementList() == null) return false;
+
+    final PsiCaseLabelElement[] elements = item.getCaseLabelElementList().getElements();
+    if (elements.length != 1) return false;
+
+    return elements[0].getNode().getFirstChildNode().getElementType() == keyword;
   }
 }

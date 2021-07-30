@@ -25,6 +25,7 @@ import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
 import git4idea.ift.GitLessonsBundle
+import git4idea.ift.GitLessonsUtil
 import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.highlightLatestCommitsFromBranch
 import git4idea.ift.GitLessonsUtil.openPushDialogText
@@ -70,6 +71,10 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
 
   private lateinit var repository: GitRepository
 
+  private val illustration1 by lazy { GitLessonsUtil.loadIllustration("gitFeatureBranchIllustration01.svg") }
+  private val illustration2 by lazy { GitLessonsUtil.loadIllustration("gitFeatureBranchIllustration02.svg") }
+  private val illustration3 by lazy { GitLessonsUtil.loadIllustration("gitFeatureBranchIllustration03.svg") }
+
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   override val lessonContent: LessonContext.() -> Unit = {
@@ -81,6 +86,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
 
     task("ActivateVersionControlToolWindow") {
       text(GitLessonsBundle.message("git.feature.branch.introduction.1", strong(branchName), strong(main), action(it)))
+      illustration(illustration1)
       stateCheck {
         val toolWindowManager = ToolWindowManager.getInstance(project)
         toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible == true
@@ -156,6 +162,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       text(GitLessonsBundle.message("git.feature.branch.new.commits.explanation", strong(main)))
       highlightLatestCommitsFromBranch("$remoteName/$main", sequenceLength = 2)
       proceedLink()
+      illustration(illustration2)
     }
 
     task {
@@ -166,6 +173,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     task("Git.Branches") {
       secondShowBranchesTaskId = taskId
       text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.2", strong(branchName), strong(main), action(it)))
+      illustration(illustration3)
       text(GitLessonsBundle.message("git.feature.branch.open.branches.popup.balloon"), LearningBalloonConfig(Balloon.Position.above, 200))
       triggerOnBranchesPopupShown()
     }

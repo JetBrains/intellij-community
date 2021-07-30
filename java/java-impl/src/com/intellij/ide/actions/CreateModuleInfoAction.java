@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -12,6 +12,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -32,7 +33,7 @@ import java.util.Map;
 import static com.intellij.ide.fileTemplates.JavaTemplateUtil.INTERNAL_MODULE_INFO_TEMPLATE_NAME;
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_CLASS;
 
-public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
+public class CreateModuleInfoAction extends CreateFromTemplateActionBase implements UpdateInBackground {
   public CreateModuleInfoAction() {
     super(JavaBundle.messagePointer("action.create.new.module-info.title"), JavaBundle.messagePointer("action.create.new.module-info.description"), AllIcons.FileTypes.Java);
   }
@@ -51,9 +52,8 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
     }
   }
 
-  @Nullable
   @Override
-  protected PsiDirectory getTargetDirectory(DataContext ctx, IdeView view) {
+  protected @Nullable PsiDirectory getTargetDirectory(DataContext ctx, IdeView view) {
     PsiDirectory[] directories = view.getDirectories();
     if (directories.length == 1) {
       PsiDirectory psiDir = directories[0];

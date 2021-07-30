@@ -54,7 +54,6 @@ import com.intellij.vcs.commit.NullCommitWorkflowHandler
 import com.intellij.vcs.commit.isBackgroundCommitChecks
 import com.intellij.vcs.commit.isNonModalCommit
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.NotNull
 import javax.swing.JComponent
 import kotlin.coroutines.resume
 
@@ -145,6 +144,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     }
   }
 
+  private data class TestResultsFormDescriptor(val executionConsole: ExecutionConsole, val rootNode : SMTestProxy.SMRootTestProxy, val historyFileName: String)
   private suspend fun startConfiguration(executor: Executor,
                                          configurationSettings: RunnerAndConfigurationSettings,
                                          problems: ArrayList<FailureDescription>) {
@@ -152,7 +152,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     val executionTarget = ExecutionTargetManager.getInstance(project).findTarget(configurationSettings.configuration)
     val environment = environmentBuilder.target(executionTarget).build()
     environment.setHeadless()
-    val console = suspendCancellableCoroutine<ExecutionConsole?> { continuation ->
+    val formDescriptor = suspendCancellableCoroutine<TestResultsFormDescriptor?> { continuation ->
       val messageBus = project.messageBus
       messageBus.connect(environment).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
         override fun processNotStarted(executorId: String, env: ExecutionEnvironment) {
@@ -170,27 +170,30 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
       }
     } ?: return
 
-    val form = console.resultsForm
-    if (form != null) {
-      reportProblem(form, problems, configurationSettings)
-      if (!isSuccessful(form.testsRootNode)) {
-        awaitSavingHistory(form.historyFileName)
-      }
+    val rootNode = formDescriptor.rootNode
+    if (rootNode.isDefect || rootNode.children.isEmpty()) {
+      val fileName = formDescriptor.historyFileName
+      val presentation = TestResultPresentation(rootNode).presentation
+      problems.add(FailureDescription(fileName, presentation.failedCount, presentation.ignoredCount, configurationSettings,
+                                      configurationSettings.name))
+      awaitSavingHistory(fileName)
     }
 
-    disposeConsole(console)
+    disposeConsole(formDescriptor.executionConsole)
   }
 
-  private fun onProcessStarted(descriptor: RunContentDescriptor, continuation: CancellableContinuation<ExecutionConsole?>) {
+  private fun onProcessStarted(descriptor: RunContentDescriptor, continuation: CancellableContinuation<TestResultsFormDescriptor?>) {
     val handler = descriptor.processHandler
     if (handler != null) {
       val executionConsole = descriptor.console
+      val resultsForm = executionConsole?.resultsForm
+      val formDescriptor = if (resultsForm != null) TestResultsFormDescriptor(executionConsole, resultsForm.testsRootNode, resultsForm.historyFileName) else null
       val processListener = object : ProcessAdapter() {
-        override fun processTerminated(event: ProcessEvent) = continuation.resume(executionConsole)
+        override fun processTerminated(event: ProcessEvent) = continuation.resume(formDescriptor)
       }
 
       handler.addProcessListener(processListener)
-      executionConsole?.resultsForm?.addEventsListener(object : TestResultsViewer.EventsListener {
+      resultsForm?.addEventsListener(object : TestResultsViewer.EventsListener {
         override fun onTestNodeAdded(sender: TestResultsViewer, test: SMTestProxy) = progress(details = test.getFullName())
       })
 
@@ -339,16 +342,4 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     }
   }
 
-  private fun reportProblem(resultsForm: SMTestRunnerResultsForm,
-                            problems: ArrayList<FailureDescription>,
-                            configuration: RunnerAndConfigurationSettings) {
-    val rootNode = resultsForm.testsRootNode
-    if (!isSuccessful(rootNode)) {
-      val presentation = TestResultPresentation(rootNode).presentation
-      problems.add(FailureDescription(resultsForm.historyFileName, presentation.failedCount, presentation.ignoredCount, configuration, configuration.name))
-    }
-  }
-
-  private fun isSuccessful(rootNode: @NotNull SMTestProxy.SMRootTestProxy) : Boolean =
-    !rootNode.isDefect && rootNode.children.isNotEmpty()
 }

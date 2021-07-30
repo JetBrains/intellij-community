@@ -15,6 +15,7 @@ class CommentLabel(text: String? = null) : JBLabel() {
     init {
         if (text != null) {
             this.text = text
+            setCopyable(true) // hyperlinks support
         }
         verticalAlignment = SwingConstants.TOP
         isFocusable = false

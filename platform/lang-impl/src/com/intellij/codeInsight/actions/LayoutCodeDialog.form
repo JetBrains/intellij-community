@@ -93,6 +93,14 @@
               <text resource-bundle="messages/CodeInsightBundle" key="checkbox.code.cleanup"/>
             </properties>
           </component>
+          <component id="3048c" class="com.intellij.ui.components.JBCheckBox" binding="myDoNotKeepLineBreaks">
+            <constraints>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/CodeInsightBundle" key="do.not.keep.line.breaks"/>
+            </properties>
+          </component>
         </children>
       </grid>
     </children>

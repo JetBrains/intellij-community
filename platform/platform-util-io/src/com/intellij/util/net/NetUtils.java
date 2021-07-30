@@ -1,6 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net;
 
+import com.github.markusbernhardt.proxy.ProxySearch;
+import com.github.markusbernhardt.proxy.selector.misc.BufferedProxySelector;
+import com.github.markusbernhardt.proxy.selector.pac.PacProxySelector;
+import com.github.markusbernhardt.proxy.selector.pac.UrlPacScriptSource;
+import com.google.common.net.HostAndPort;
+import com.google.common.net.InetAddresses;
+import com.google.common.net.InternetDomainName;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -201,5 +208,47 @@ public final class NetUtils {
 
   public static boolean isSniEnabled() {
     return SystemProperties.getBooleanProperty("jsse.enableSNIExtension", true);
+  }
+
+  static ProxySelector getProxySelector(@Nullable String pacUrlForUse) {
+    ProxySelector newProxySelector;
+    if (pacUrlForUse == null) {
+      ProxySearch proxySearch = ProxySearch.getDefaultProxySearch();
+      // cache 32 urls for up to 10 min
+      proxySearch.setPacCacheSettings(32, 10 * 60 * 1000, BufferedProxySelector.CacheScope.CACHE_SCOPE_HOST);
+      newProxySelector = proxySearch.getProxySelector();
+    }
+    else {
+      newProxySelector = new PacProxySelector(new UrlPacScriptSource(pacUrlForUse));
+    }
+    return newProxySelector;
+  }
+
+  public enum ValidHostInfo {
+    INVALID, VALID, VALID_PROXY
+  }
+  public static @NotNull ValidHostInfo isValidHost(@NotNull String host) {
+    try {
+      HostAndPort parsedHost = HostAndPort.fromString(host);
+      if (parsedHost.hasPort()) {
+        return ValidHostInfo.INVALID;
+      }
+      host = parsedHost.getHost();
+
+      try {
+        InetAddresses.forString(host);
+        return ValidHostInfo.VALID;
+      }
+      catch (IllegalArgumentException e) {
+        // it is not an IPv4 or IPv6 literal
+      }
+
+      InternetDomainName.from(host);
+    }
+    catch (IllegalArgumentException e) {
+      return ValidHostInfo.INVALID;
+    }
+
+    return ValidHostInfo.VALID_PROXY;
   }
 }

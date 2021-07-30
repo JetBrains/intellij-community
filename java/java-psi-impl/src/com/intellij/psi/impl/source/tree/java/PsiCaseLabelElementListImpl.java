@@ -92,6 +92,7 @@ public class PsiCaseLabelElementListImpl extends CompositePsiElement implements 
     // Do not resolve elements from the list of elements of the case rule
     if (lastParent != null) return true;
     for (PsiCaseLabelElement label : getElements()) {
+      if (place == label) return true;
       boolean shouldKeepGoing = label.processDeclarations(processor, state, null, place);
       if (!shouldKeepGoing) return false;
     }

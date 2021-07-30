@@ -36,7 +36,7 @@ import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -917,7 +917,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                        @NotNull BuildViewSettingsProvider buildViewSettingsProvider) {
       myProject = project;
       myPanel = new NonOpaquePanel(new BorderLayout());
-      myPanelWithProgress = new BuildProgressStripe(myPanel, parentDisposable, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+      myPanelWithProgress = new BuildProgressStripe(myPanel, parentDisposable, ProgressIndicatorBase.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
       myViewSettingsProvider = buildViewSettingsProvider;
       myExecutionConsoleFilters = executionConsoleFilters;
       Disposer.register(parentDisposable, this);

@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
@@ -9,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 // Assigns / store unique integral id for Data instances.
 // Btree stores mapping between integer hash code into integer that interpreted in following way:
@@ -19,6 +22,8 @@ import java.nio.file.Path;
 public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final int BTREE_PAGE_SIZE;
   private static final int DEFAULT_BTREE_PAGE_SIZE = 32768;
+
+  private static final boolean DO_EXPENSIVE_CHECKS = SystemProperties.getBooleanProperty("idea.persistent.enumerator.do.expensive.checks", false);
 
   static {
     BTREE_PAGE_SIZE = SystemProperties.getIntProperty("idea.btree.page.size", DEFAULT_BTREE_PAGE_SIZE);
@@ -49,6 +54,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private final boolean myInlineKeysNoMapping;
   private boolean myExternalKeysNoMapping;
 
+  private final @Nullable PersistentEnumeratorWal<Data> myWal;
+
   private static final int MAX_DATA_SEGMENT_LENGTH = 128;
 
   protected static final int VERSION = 8 + IntToIntBtree.version() + BTREE_PAGE_SIZE + INTERNAL_PAGE_SIZE + MAX_DATA_SEGMENT_LENGTH;
@@ -62,7 +69,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
                                    @NotNull KeyDescriptor<Data> dataDescriptor,
                                    int initialSize,
                                    @Nullable StorageLockContext lockContext) throws IOException {
-    this(file, dataDescriptor, initialSize, lockContext, 0);
+    this(file, dataDescriptor, initialSize, lockContext, 0, false);
   }
 
   public PersistentBTreeEnumerator(@NotNull Path file,
@@ -70,6 +77,15 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
                                    int initialSize,
                                    @Nullable StorageLockContext lockContext,
                                    int version) throws IOException {
+    this(file, dataDescriptor, initialSize, lockContext, version, false);
+  }
+
+  public PersistentBTreeEnumerator(@NotNull Path file,
+                                   @NotNull KeyDescriptor<Data> dataDescriptor,
+                                   int initialSize,
+                                   @Nullable StorageLockContext lockContext,
+                                   int version,
+                                   boolean enableWal) throws IOException {
     super(file,
           new ResizeableMappedFile(
             file,
@@ -117,6 +133,56 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         unlockStorageWrite();
       }
     }
+
+    diagnose();
+
+    myWal = enableWal ? new PersistentEnumeratorWal<>(dataDescriptor,
+                                                      false,
+                                                      file.resolveSibling(file.getFileName() + ".wal"),
+                                                      ConcurrencyUtil.newSameThreadExecutorService(),
+                                                      true) : null;
+  }
+
+  private void doExpensiveSanityCheck() {
+    try {
+      List<Data> storedData = new ArrayList<>();
+      iterateData(data -> {
+        storedData.add(data);
+        return true;
+      });
+
+      for (int i = 0; i < storedData.size(); i++) {
+        try {
+          Data data = storedData.get(i);
+          int id = i + 1;
+          if (tryEnumerate(data) != id) {
+            throw new IOException(myFile + " is corrupted");
+          }
+          if (myDataDescriptor.isEqual(valueOf(id), data)) {
+            throw new IOException(myFile + " is corrupted");
+          }
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+    }
+  }
+
+  @Override
+  public void diagnose() {
+    if (DO_EXPENSIVE_CHECKS && !myInlineKeysNoMapping) {
+      doExpensiveSanityCheck();
+    }
+  }
+
+  @Override
+  protected void markCorrupted() {
+    diagnose();
+    super.markCorrupted();
   }
 
   @NotNull
@@ -456,6 +522,9 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         assert !onlyCheckForExisting;
         int newValueId = writeData(value, valueHC);
         ++myValuesCount;
+        if (myWal != null) {
+          myWal.enumerate(value, newValueId);
+        }
 
         if (IOStatistics.DEBUG && (myValuesCount & IOStatistics.KEYS_FACTOR_MASK) == 0) {
           IOStatistics.dump("Index " +
@@ -523,6 +592,30 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     }
     finally {
       (onlyCheckForExisting ? getReadLock() : getWriteLock()).unlock();
+    }
+  }
+
+  @Override
+  public void force() {
+    try {
+      super.force();
+    }
+    finally {
+      if (myWal != null) {
+        myWal.flush();
+      }
+    }
+  }
+
+  @Override
+  public void close() throws IOException {
+    try {
+      super.close();
+    }
+    finally {
+      if (myWal != null) {
+        myWal.close();
+      }
     }
   }
 

@@ -140,6 +140,89 @@ class PersistentMapWalTest {
     Assert.assertEquals(expectedValue, restoredMap.get(key2))
   }
 
+  @Test
+  fun `test wal reopen`() {
+    val tempDir = tempDirectory.createDir()
+    val mapFile = tempDir.resolve("map")
+
+    val key1 = "xxx"
+    val key2 = "yyy"
+    val key3 = "zzz"
+    val key4 = "ttt"
+
+    val value1 = ByteArraySequence(byteArrayOf(1.toByte(), 2.toByte(), 3.toByte(), 4.toByte()))
+    val value2 = ByteArraySequence(byteArrayOf(5.toByte(), 6.toByte(), 7.toByte(), 8.toByte()))
+    val value3 = ByteArraySequence(byteArrayOf(9.toByte(), 10.toByte(), 11.toByte(), 12.toByte()))
+    val walFile = findWalFile(mapFile)
+
+    fillMap(mapFile) {
+      put(key1, value1)
+      put(key2, value2)
+      put(key3, value1)
+      remove(key2)
+      appendData(key3, AppendablePersistentMap.ValueDataAppender { it.write(value2.internalBuffer) })
+    }
+    fillMap(mapFile) {
+      appendData(key2, AppendablePersistentMap.ValueDataAppender { it.write(value3.internalBuffer) })
+      put(key4, value1)
+      remove(key4)
+      remove(key4)
+      remove(key4)
+    }
+
+    val restoredMap = restoreHashMapFromWal(walFile,
+                                            EnumeratorStringDescriptor.INSTANCE,
+                                            ByteSequenceDataExternalizer.INSTANCE)
+    Assert.assertEquals(setOf(key1, key2, key3), restoredMap.keys)
+    Assert.assertEquals(value1, restoredMap[key1])
+    Assert.assertEquals(value3, restoredMap[key2])
+    Assert.assertEquals(ByteArraySequence(value1.internalBuffer + value2.internalBuffer), restoredMap[key3])
+  }
+
+  @Test
+  fun `test wal compaction`() {
+    val tempDir = tempDirectory.createDir()
+    val mapFile = tempDir.resolve("map")
+
+    val key1 = "xxx"
+    val key2 = "yyy"
+    val key3 = "zzz"
+    val key4 = "ttt"
+
+    val value1 = ByteArraySequence(byteArrayOf(1.toByte(), 2.toByte(), 3.toByte(), 4.toByte()))
+    val value2 = ByteArraySequence(byteArrayOf(5.toByte(), 6.toByte(), 7.toByte(), 8.toByte()))
+    val value3 = ByteArraySequence(byteArrayOf(9.toByte(), 10.toByte(), 11.toByte(), 12.toByte()))
+    val walFile = findWalFile(mapFile)
+
+    fillMap(mapFile) {
+      put(key1, value1)
+      put(key2, value2)
+      put(key3, value1)
+      remove(key2)
+      appendData(key3, AppendablePersistentMap.ValueDataAppender { it.write(value2.internalBuffer) })
+      appendData(key2, AppendablePersistentMap.ValueDataAppender { it.write(value3.internalBuffer) })
+      put(key4, value1)
+      remove(key4)
+      remove(key4)
+      remove(key4)
+    }
+    val beforeCompactionSize = walFile.size()
+    fillMap(mapFile) {}
+    val afterCompactionSize = walFile.size()
+    Assert.assertTrue("before compaction size = $beforeCompactionSize, " +
+                      "after compaction size = $afterCompactionSize",
+                      beforeCompactionSize > afterCompactionSize)
+
+
+    val restoredMap = restoreHashMapFromWal(walFile,
+                                            EnumeratorStringDescriptor.INSTANCE,
+                                            ByteSequenceDataExternalizer.INSTANCE)
+    Assert.assertEquals(setOf(key1, key2, key3), restoredMap.keys)
+    Assert.assertEquals(value1, restoredMap[key1])
+    Assert.assertEquals(value3, restoredMap[key2])
+    Assert.assertEquals(ByteArraySequence(value1.internalBuffer + value2.internalBuffer), restoredMap[key3])
+  }
+
   private fun fillMap(mapFile: Path, operator: PersistentHashMap<String, ByteArraySequence>.() -> Unit) {
     PersistentMapBuilder
       .newBuilder(mapFile, EnumeratorStringDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE)

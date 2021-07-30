@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
 import com.intellij.internal.statistic.collectors.fus.TerminalFusAwareHandler
-import com.intellij.internal.statistic.collectors.fus.os.OsVersionUsageCollector
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.Version
 import com.intellij.terminal.TerminalShellCommandHandler
 import com.intellij.util.PathUtil
 import java.util.*
@@ -45,9 +45,8 @@ class TerminalUsageTriggerCollector {
 
     @JvmStatic
     fun triggerLocalShellStarted(project: Project, shellCommand: Array<String>) {
-      val osVersion = OsVersionUsageCollector.parse(SystemInfo.OS_VERSION)
       FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "local.exec", FeatureUsageData()
-        .addData("os-version", if (osVersion == null) "unknown" else osVersion.toCompactString())
+        .addData("os-version", Version.parseVersion(SystemInfo.OS_VERSION)?.toCompactString() ?: "unknown")
         .addData("shell", getShellNameForStat(shellCommand.firstOrNull()))
       )
     }

@@ -82,13 +82,11 @@ private fun hasBraces(oldPsi: KtBlockExpression): Boolean = oldPsi.lBrace != nul
 class KotlinUastElementFactory(project: Project) : UastElementFactory {
     private val psiFactory = KtPsiFactory(project)
 
-    @Deprecated("use version with context parameter")
     override fun createQualifiedReference(qualifiedName: String, context: UElement?): UQualifiedReferenceExpression? {
-        logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
         return createQualifiedReference(qualifiedName, context?.sourcePsi)
     }
 
-    /*override*/ fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression? {
+    override fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression? {
         return psiFactory.createExpression(qualifiedName).let {
             when (it) {
                 is KtDotQualifiedExpression -> KotlinUQualifiedReferenceExpression(it, null)

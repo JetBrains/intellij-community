@@ -119,7 +119,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
     try {
       persistentMap = new PersistentMapImpl<>(PersistentMapBuilder
                                                 .newBuilder(getStorageFile(), keyDescriptor, valueContainerExternalizer)
-                                                .withWal(myEnableWal && ENABLE_WAL)
+                                                .withWal(myEnableWal && ENABLE_WAL && !isReadOnly)
                                                 .setWalExecutor(SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Index Wal Pool"))
                                                 .withReadonly(isReadOnly)
                                                 .withCompactOnClose(compactOnClose));

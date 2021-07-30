@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -60,18 +60,12 @@ public final class ExpressionUtils {
 
   @Nullable
   public static Object computeConstantExpression(@Nullable PsiExpression expression) {
-    return computeConstantExpression(expression, false);
+    return JavaExpressionUtils.computeConstantExpression(expression);
   }
 
   @Nullable
   public static Object computeConstantExpression(@Nullable PsiExpression expression, boolean throwConstantEvaluationOverflowException) {
-    if (expression == null) {
-      return null;
-    }
-    final Project project = expression.getProject();
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiConstantEvaluationHelper constantEvaluationHelper = psiFacade.getConstantEvaluationHelper();
-    return constantEvaluationHelper.computeConstantExpression(expression, throwConstantEvaluationOverflowException);
+    return JavaExpressionUtils.computeConstantExpression(expression, throwConstantEvaluationOverflowException);
   }
 
   public static boolean isConstant(PsiField field) {

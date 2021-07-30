@@ -197,26 +197,30 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public boolean analyze(@NotNull PsiFile file, boolean updateWholeFile, @NotNull HighlightInfoHolder holder, @NotNull Runnable highlight) {
-    boolean success = true;
     try {
       prepare(Holder.CHECK_ELEMENT_LEVEL ? new CheckLevelHighlightInfoHolder(file, holder) : holder, file);
       if (updateWholeFile) {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         if (progress == null) throw new IllegalStateException("Must be run under progress");
-        RefCountHolder refCountHolder = RefCountHolder.get(file);
-        myRefCountHolder = refCountHolder;
         Project project = file.getProject();
         Document document = PsiDocumentManager.getInstance(project).getDocument(file);
         TextRange dirtyScope = document == null ? null : DaemonCodeAnalyzerEx.getInstanceEx(project).getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
         if (dirtyScope == null) dirtyScope = file.getTextRange();
+        RefCountHolder refCountHolder = RefCountHolder.get(file, dirtyScope);
+        if (refCountHolder == null) {
+          // RefCountHolder was GCed and queried again for some inner code block
+          // "highlight.run()" can't fill it again because it runs for only a subset of elements,
+          // so we have to restart the daemon for the whole file
+          return false;
+        }
+        myRefCountHolder = refCountHolder;
 
-        success = refCountHolder.analyze(file, dirtyScope, progress, () -> {
-          highlight.run();
-          ProgressManager.checkCanceled();
-          if (document != null) {
-            new PostHighlightingVisitor(file, document, refCountHolder).collectHighlights(holder, progress);
-          }
-        });
+        highlight.run();
+        ProgressManager.checkCanceled();
+        refCountHolder.storeReadyHolder(file);
+        if (document != null) {
+          new PostHighlightingVisitor(file, document, refCountHolder).collectHighlights(holder, progress);
+        }
       }
       else {
         myRefCountHolder = null;
@@ -240,7 +244,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myInsideConstructorOfClassCache.clear();
     }
 
-    return success;
+    return true;
   }
 
   protected void prepareToRunAsInspection(@NotNull HighlightInfoHolder holder) {
@@ -1365,9 +1369,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         JavaResolveResult[] results = JavaResolveUtil.resolveWithContainingFile(ref, resolver, true, true, myFile);
         return results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
       }
-      else {
-        return ref.advancedResolve(true);
-      }
+      return ref.advancedResolve(true);
     }
     catch (IndexNotReadyException e) {
       return null;
@@ -2024,6 +2026,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitGuardedPattern(PsiGuardedPattern pattern) {
     super.visitGuardedPattern(pattern);
     myHolder.add(checkFeature(pattern, HighlightingFeature.GUARDED_AND_PARENTHESIZED_PATTERNS));
+    if (myHolder.hasErrorResults()) return;
+    PsiExpression guardingExpr = pattern.getGuardingExpression();
+    if (guardingExpr == null) return;
+    // 14.30.1 Kinds of Patterns GuardedPattern: PrimaryPattern && ConditionalAndExpression
+    // 15.23. ConditionalAndExpression: Each operand of the conditional-and operator must be of type boolean or Boolean, or a compile-time error occurs.
+    if (!TypeConversionUtil.isBooleanType(guardingExpr.getType())) {
+      String message = JavaErrorBundle.message("incompatible.types", JavaHighlightUtil.formatType(PsiType.BOOLEAN),
+                                               JavaHighlightUtil.formatType(guardingExpr.getType()));
+      myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(guardingExpr).descriptionAndTooltip(message).create());
+    }
   }
 
   @Override

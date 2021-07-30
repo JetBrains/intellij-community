@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.*
@@ -253,6 +254,7 @@ private fun buildAnnotationProvider(ktType: KotlinType, context: PsiElement): Ty
         try {
             result.add(psiElementFactory.createAnnotationFromText(annotationText, context))
         } catch (e: Exception) {
+            if (e is ControlFlowException) throw e
             Logger.getInstance("org.jetbrains.uast.kotlin.KotlinInternalUastUtils")
                 .error("failed to create annotation from text", e, Attachment("annotationText.txt", annotationText))
         }

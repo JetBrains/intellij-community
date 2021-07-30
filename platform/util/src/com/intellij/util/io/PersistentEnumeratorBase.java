@@ -44,7 +44,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author max
  * @author jeka
  */
-public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>, Forceable, Closeable {
+public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>, Forceable, Closeable, SelfDiagnosing {
   protected static final Logger LOG = Logger.getInstance(PersistentEnumeratorBase.class);
   protected static final int NULL_ID = DataEnumeratorEx.NULL_ID;
 

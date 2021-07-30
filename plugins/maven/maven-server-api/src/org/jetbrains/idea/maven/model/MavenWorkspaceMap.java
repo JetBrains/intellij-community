@@ -1,12 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.model;
 
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class MavenWorkspaceMap implements Serializable {
   private final Map<MavenId, Data> myMapping = new HashMap<MavenId, Data>();
@@ -52,6 +55,18 @@ public class MavenWorkspaceMap implements Serializable {
   public MavenWorkspaceMap copy() {
     MavenWorkspaceMap result = new MavenWorkspaceMap();
     result.myMapping.putAll(myMapping);
+    return result;
+  }
+
+  //cannot use java.util.function here because of java 6 lang level
+  public static MavenWorkspaceMap copy(MavenWorkspaceMap workspaceMap, Function<String, String> transformer) {
+    MavenWorkspaceMap result = new MavenWorkspaceMap();
+    for (Map.Entry<MavenId, Data> entry : workspaceMap.myMapping.entrySet()) {
+      Data data = entry.getValue();
+      File outputFile = data.outputFile == null ? null : new File(transformer.fun(data.outputFile.getAbsolutePath()));
+      File file = new File(transformer.fun(data.file.getAbsolutePath()));
+      result.myMapping.put(entry.getKey(), new Data(data.originalId, file, outputFile));
+    }
     return result;
   }
 

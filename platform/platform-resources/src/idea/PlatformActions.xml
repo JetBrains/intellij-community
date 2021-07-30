@@ -737,7 +737,9 @@
           <action id="TabList" class="com.intellij.ide.actions.TabListAction"/>
           <separator/>
           <group id="CloseEditorsGroup">
-            <action id="CloseContent" class="com.intellij.ide.actions.CloseAction"/>
+            <action id="CloseContent" class="com.intellij.ide.actions.CloseAction">
+              <override-text place="EditorTabPopup"/>
+            </action>
             <action id="CloseAllEditorsButActive" class="com.intellij.ide.actions.CloseAllEditorsButActiveAction"/>
             <action id="CloseAllEditors" class="com.intellij.ide.actions.CloseAllEditorsAction"/>
             <action id="CloseAllUnpinnedEditors" class="com.intellij.ide.actions.CloseAllUnpinnedEditorsAction"/>

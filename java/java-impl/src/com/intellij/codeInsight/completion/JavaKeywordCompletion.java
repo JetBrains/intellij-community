@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -28,13 +29,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.openapi.util.Conditions.notInstanceOf;
 import static com.intellij.patterns.PsiJavaPatterns.*;
@@ -252,6 +251,8 @@ public class JavaKeywordCompletion {
     boolean statementPosition = isStatementPosition(myPosition);
     if (statementPosition) {
       addCaseDefault();
+
+      addPatternMatchingInSwitchCases();
       if (START_SWITCH.accepts(myPosition)) {
         return;
       }
@@ -291,14 +292,15 @@ public class JavaKeywordCompletion {
   }
 
   private void addCaseNullToSwitch() {
-    if (!isInsidePatternMatchingSwitch()) return;
+    if (!isInsideCaseLabel()) return;
 
     addKeyword(createKeyword(PsiKeyword.NULL));
   }
 
-  private boolean isInsidePatternMatchingSwitch() {
+  private boolean isInsideCaseLabel() {
     if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(myPosition)) return false;
     return psiElement().withSuperParent(2, PsiCaseLabelElementList.class).accepts(myPosition);
+
   }
 
   private void addVar() {
@@ -359,19 +361,71 @@ public class JavaKeywordCompletion {
 
   private void addCaseDefault() {
     PsiSwitchBlock switchBlock = getSwitchFromLabelPosition(myPosition);
-    if (switchBlock != null) {
-      addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CASE), TailType.INSERT_SPACE));
-      addKeyword(LookupElementDecorator.withInsertHandler(
-        new OverridableSpace(createKeyword(PsiKeyword.DEFAULT), TailTypes.forSwitchLabel(switchBlock)),
-        ADJUST_LINE_OFFSET));
-      if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(myPosition)) {
-        final LookupElement caseNull = LookupElementBuilder.create(PsiKeyword.CASE + " " + PsiKeyword.NULL)
-          .bold()
-          .withAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
-        final OverridableSpace element = new OverridableSpace(caseNull, TailTypes.forSwitchLabel(switchBlock));
-        addKeyword(LookupElementDecorator.withInsertHandler(element, ADJUST_LINE_OFFSET));
-      }
+    if (switchBlock == null) return;
+
+    addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CASE), TailType.INSERT_SPACE));
+
+    final OverridableSpace defaultCaseRule = new OverridableSpace(createKeyword(PsiKeyword.DEFAULT), TailTypes.forSwitchLabel(switchBlock));
+    addKeyword(LookupElementDecorator.withInsertHandler(defaultCaseRule, ADJUST_LINE_OFFSET));
+  }
+
+  private void addPatternMatchingInSwitchCases() {
+    if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(myPosition)) return;
+
+    PsiSwitchBlock switchBlock = getSwitchFromLabelPosition(myPosition);
+    if (switchBlock == null) return;
+
+    final PsiExpression selector = switchBlock.getExpression();
+    if (selector == null) return;
+
+    final PsiType selectorType = selector.getType();
+    if (selectorType == null || selectorType instanceof PsiPrimitiveType) return;
+
+    final TailType caseRuleTail = TailTypes.forSwitchLabel(switchBlock);
+    addKeyword(createCaseRule(PsiKeyword.NULL, caseRuleTail));
+    addKeyword(createCaseRule(PsiKeyword.DEFAULT, caseRuleTail));
+
+    addSealedHierarchyCases(selector, caseRuleTail);
+  }
+
+  private void addSealedHierarchyCases(@Nullable PsiExpression expression, @NotNull TailType caseRuleTail) {
+    if (expression == null) return;
+
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
+    if (aClass == null || aClass.isEnum()) return;
+
+    if (!aClass.hasModifierProperty(PsiModifier.SEALED)) return;
+
+    final PsiReferenceList list = aClass.getPermitsList();
+    final StreamEx<String> inheritors = list != null ? getFromPermittedList(list) : getFromHierarchy(aClass);
+
+    for (String inheritor : inheritors) {
+      final LookupElement rule = createCaseRule(inheritor, caseRuleTail);
+      addKeyword(rule);
     }
+  }
+
+  private static @NotNull StreamEx<String> getFromHierarchy(@NotNull PsiClass aClass) {
+    final Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(aClass).findAll();
+    return StreamEx.of(inheritors).map(PsiNamedElement::getName);
+  }
+
+  private static @NotNull StreamEx<String> getFromPermittedList(@NotNull PsiReferenceList list) {
+    final PsiJavaCodeReferenceElement[] elements = list.getReferenceElements();
+    return StreamEx.of(elements).map(PsiQualifiedReference::getReferenceName);
+  }
+
+  private static @NotNull LookupElement createCaseRule(String caseRuleName, TailType tailType) {
+    final String prefix = "case ";
+
+    final LookupElement lookupElement = LookupElementBuilder
+      .create(prefix + caseRuleName)
+      .bold()
+      .withPresentableText(prefix)
+      .withTailText(caseRuleName)
+      .withLookupString(caseRuleName);
+
+    return new JavaCompletionContributor.IndentingDecorator(TailTypeDecorator.withTail(lookupElement, tailType));
   }
 
   private static PsiSwitchBlock getSwitchFromLabelPosition(PsiElement position) {
@@ -553,7 +607,7 @@ public class JavaKeywordCompletion {
             PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiInstanceOfExpression.class, false);
           if (expr != null) {
             PsiExpression operand = expr.getOperand();
-            if (operand instanceof PsiPrefixExpression && 
+            if (operand instanceof PsiPrefixExpression &&
                 ((PsiPrefixExpression)operand).getOperationTokenType().equals(JavaTokenType.EXCL)) {
               PsiExpression negated = ((PsiPrefixExpression)operand).getOperand();
               if (negated != null) {

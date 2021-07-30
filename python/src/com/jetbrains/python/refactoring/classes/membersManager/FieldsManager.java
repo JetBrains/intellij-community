@@ -20,6 +20,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.psi.*;
@@ -110,7 +111,8 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
   @NotNull
   @Override
   public PyMemberInfo<PyTargetExpression> apply(@NotNull final PyTargetExpression input) {
-    return new PyMemberInfo<>(input, myStatic, input.getText(), isOverrides(input), this, false);
+    var parent = ObjectUtils.tryCast(input.getParent(), PyAssignmentStatement.class);
+    return new PyMemberInfo<>(input, parent != null ? parent : input, myStatic, input.getText(), isOverrides(input), this, false);
   }
 
   @Nullable

@@ -34,6 +34,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -428,6 +429,7 @@ public final class ScratchFileActions {
           return result.size() < 1000;
         }
       });
+      Collections.sort(result, Comparator.comparing(o -> o.getFile().getName(), NaturalComparator.INSTANCE));
       return result;
     }
 

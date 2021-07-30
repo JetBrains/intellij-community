@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("DeprecatedCallableAddReplaceWith", "ReplaceNegatedIsEmptyWithIsNotEmpty")
+@file:Suppress("DeprecatedCallableAddReplaceWith", "ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.*
@@ -38,7 +38,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.picocontainer.ComponentAdapter
-import org.picocontainer.MutablePicoContainer
 import org.picocontainer.PicoContainer
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -58,7 +57,7 @@ private val emptyConstructorMethodType = MethodType.methodType(Void.TYPE)
 abstract class ComponentManagerImpl @JvmOverloads constructor(
   internal val parent: ComponentManagerImpl?,
   setExtensionsRootArea: Boolean = parent == null
-) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), MutablePicoContainer, ComponentManagerEx, IComponentStoreOwner {
+) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), PicoContainer, ComponentManagerEx, IComponentStoreOwner {
   protected enum class ContainerState {
     PRE_INIT, COMPONENT_CREATED, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
   }
@@ -941,8 +940,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
       for (service in services) {
         val adapter = (componentKeyToAdapter.remove(service.`interface`) ?: continue) as ServiceComponentAdapter
         val instance = adapter.getInitializedInstance() ?: continue
-        val implClass = instance.javaClass
-        clearServiceHotCacheOnUnload(implClass)
         if (instance is Disposable) {
           Disposer.dispose(instance)
         }
@@ -956,7 +953,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
       while (iterator.hasNext()) {
         val adapter = iterator.next() as? LightServiceComponentAdapter ?: continue
         val instance = adapter.getComponentInstance(null)
-        serviceInstanceHotCache.remove(instance.javaClass)
         if ((instance.javaClass.classLoader as? PluginAwareClassLoader)?.pluginId == pluginId) {
           if (instance is Disposable) {
             Disposer.dispose(instance)
@@ -966,41 +962,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
         }
       }
     }
-  }
 
-  private fun clearServiceHotCacheOnUnload(implClass: Class<Any>) {
-    if (serviceInstanceHotCache.remove(implClass) != null || Modifier.isFinal(implClass.modifiers)) {
-      return
-    }
-
-    for (it in implClass.interfaces) {
-      if (serviceInstanceHotCache.remove(it) != null) {
-        return
-      }
-    }
-
-    var aClass: Class<*> = implClass.superclass
-    if (aClass === Object::class.java) {
-      return
-    }
-
-    do {
-      if (serviceInstanceHotCache.remove(aClass) != null) {
-        return
-      }
-
-      for (it in aClass.interfaces) {
-        if (serviceInstanceHotCache.remove(it) != null) {
-          return
-        }
-      }
-
-      aClass = aClass.superclass ?: break
-      if (aClass === Object::class.java) {
-        return
-      }
-    }
-    while (true)
+    serviceInstanceHotCache.clear()
   }
 
   @Internal
@@ -1263,7 +1226,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     }
   }
 
-  final override fun unregisterComponent(componentKey: Any): ComponentAdapter? {
+  fun unregisterComponent(componentKey: Any): ComponentAdapter? {
     assertComponentsSupported()
 
     val adapter = componentKeyToAdapter.remove(componentKey) ?: return null
@@ -1287,7 +1250,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     throw UnsupportedOperationException("Do not use getComponentInstanceOfType()")
   }
 
-  final override fun registerComponentInstance(componentKey: Any, componentInstance: Any): ComponentAdapter {
+  fun registerComponentInstance(componentKey: Any, componentInstance: Any): ComponentAdapter {
     assertComponentsSupported()
 
     val componentAdapter = object : ComponentAdapter {
@@ -1304,10 +1267,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     }
     componentAdapters.add(componentAdapter)
     return componentAdapter
-  }
-
-  final override fun registerComponentImplementation(componentKey: Any, componentImplementation: Class<*>): ComponentAdapter {
-    throw UnsupportedOperationException()
   }
 
   private fun assertComponentsSupported() {

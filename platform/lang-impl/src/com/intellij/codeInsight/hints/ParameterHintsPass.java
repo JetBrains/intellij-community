@@ -85,6 +85,7 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
     inlays.forEach(hint -> {
       int offset = hint.getOffset();
       if (!canShowHintsAtOffset(offset)) return;
+      if (ParameterNameHintsSuppressor.All.isSuppressedFor(myFile, hint)) return;
 
       String presentation = provider.getInlayPresentation(hint.getText());
       if (hint.isShowOnlyIfExistedBefore()) {

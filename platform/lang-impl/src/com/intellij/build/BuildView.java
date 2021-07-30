@@ -345,7 +345,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
       ExecutionEnvironment environment = myBuildDescriptor.getExecutionEnvironment();
       return environment == null ? null : environment.getRunProfile();
     }
-    if (LangDataKeys.EXECUTION_ENVIRONMENT.is(dataId)) {
+    if (ExecutionDataKeys.EXECUTION_ENVIRONMENT.is(dataId)) {
       return myBuildDescriptor.getExecutionEnvironment();
     }
     if (RESTART_ACTIONS.is(dataId)) {

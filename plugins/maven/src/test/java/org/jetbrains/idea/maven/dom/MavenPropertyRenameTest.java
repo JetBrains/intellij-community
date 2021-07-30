@@ -15,12 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom;
 
-import com.intellij.openapi.vfs.VfsUtilCore;
 import org.junit.Test;
-
-import java.io.File;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class MavenPropertyRenameTest extends MavenDomTestCase {
   @Override
@@ -128,33 +123,6 @@ public class MavenPropertyRenameTest extends MavenDomTestCase {
                        "<properties>" +
                        "  <xxx>value</xxx>" +
                        "</properties>");
-  }
-
-  @Test
-  public void testRenamingPropertyInResourceFile() throws Exception {
-    final File actual = VfsUtilCore.virtualToIoFile(
-      createProjectSubFile("src/main/resources/data.properties", "foo=test"));
-
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>module1</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<name>${f<caret>oo}</name>" +
-                     "<properties>" +
-                     "  <foo>value</foo>" +
-                     "</properties>");
-
-    assertRenameResult("xxx",
-                       "<groupId>test</groupId>" +
-                       "<artifactId>module1</artifactId>" +
-                       "<version>1</version>" +
-
-                       "<name>${xxx}</name>" +
-                       "<properties>" +
-                       "  <xxx>value</xxx>" +
-                       "</properties>");
-
-    assertThat(actual).hasContent("xxx=test");
   }
 
   @Test

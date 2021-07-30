@@ -212,4 +212,28 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
     importProject();
     assertTrue(myProjectsManager.hasScheduledImportsInTests());
   }
+
+  @Test
+  public void testCustomPomFileNamePom() throws Exception {
+    createProjectSubFile("m1/customName.pom", createPomXml(
+      "<artifactId>m1</artifactId>" +
+      "<version>1</version>" +
+
+      "<parent>" +
+      "  <groupId>test</groupId>" +
+      "  <artifactId>project</artifactId>" +
+      "  <version>1</version>" +
+      "</parent>"));
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
+
+                  "<modules>" +
+                  "  <module>m1/customName.pom</module>" +
+                  "</modules>");
+
+    assertModules("project", "m1");
+  }
 }

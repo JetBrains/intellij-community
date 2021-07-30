@@ -22,6 +22,7 @@ import net.miginfocom.layout.*
 import org.jetbrains.annotations.Nls
 import javax.swing.*
 import javax.swing.border.LineBorder
+import javax.swing.text.JTextComponent
 import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 
@@ -281,13 +282,13 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     return result
   }
 
-  override fun hideableRow(title: String, init: Row.() -> Unit): Row {
+  override fun hideableRow(title: String, incrementsIndent: Boolean, init: Row.() -> Unit): Row {
     val titledSeparator = HideableTitledSeparator(title)
     val separatorRow = createChildRow()
     separatorRow.addTitleComponent(titledSeparator, isEmpty = false)
     builder.hideableRowNestingLevel++
     try {
-      val panelRow = createChildRow(indent)
+      val panelRow = createChildRow(indent, incrementsIndent = incrementsIndent)
       panelRow.init()
       titledSeparator.row = panelRow
       titledSeparator.collapse()
@@ -535,27 +536,26 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     return this
   }
 
-  override fun row(label: String?, separated: Boolean, init: Row.() -> Unit): Row {
-    val newRow = super.row(label, separated, init)
-    if (newRow is MigLayoutRow) {
-      if (newRow.labeled && (newRow.components.size == 2)) {
-        var rowLabel = newRow.components[0]
-        if (rowLabel is JLabel) {
-          rowLabel.labelFor = newRow.components[1]
-        }
-        else {
-          rowLabel = newRow.components[1]
-          if (rowLabel is JLabel) {
-            rowLabel.labelFor = newRow.components[0]
-          }
-        }
+  private val labeledComponents = listOf(JTextComponent::class, JComboBox::class, JSpinner::class, JSlider::class)
+
+  /**
+   * Assigns next to label REASONABLE component with the label
+   */
+  override fun row(label: JLabel?, separated: Boolean, init: Row.() -> Unit): Row {
+    val result = super.row(label, separated, init)
+
+    if (label != null && result is MigLayoutRow && result.components.size > 1) {
+      val component = result.components[1]
+
+      if (labeledComponents.any { clazz -> clazz.isInstance(component) }) {
+          label.labelFor = component
       }
     }
-    return newRow
+    return result
   }
 }
 
-private class CellBuilderImpl<T : JComponent> internal constructor(
+private class CellBuilderImpl<T : JComponent>(
   private val builder: MigLayoutBuilder,
   private val row: MigLayoutRow,
   override val component: T,

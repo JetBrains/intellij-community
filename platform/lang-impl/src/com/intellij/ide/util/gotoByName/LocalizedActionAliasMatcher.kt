@@ -52,8 +52,13 @@ internal class DefaultBundleActionAliasMatcher : GotoActionAliasMatcher {
 
   companion object {
     var actions = lazy {
-      ResourceBundle.getBundle("defaultBundleActions.DefaultActionsBundle", Locale.getDefault(),
-                               DynamicBundle.findLanguageBundle()?.pluginDescriptor?.pluginClassLoader ?: return@lazy null)
+      try {
+        ResourceBundle.getBundle("defaultBundleActions.DefaultActionsBundle", Locale.getDefault(),
+                                 DynamicBundle.findLanguageBundle()?.pluginDescriptor?.pluginClassLoader ?: return@lazy null)
+      }
+      catch (e: Exception) {
+        null
+      }
     }
   }
 }

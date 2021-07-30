@@ -8,9 +8,7 @@ import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Modification
 import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesListener.Companion.subscribeOnDocumentsAndVirtualFilesChanges
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.Companion.whenNewFilesCreated
-import com.intellij.openapi.externalSystem.autoimport.settings.CachingAsyncSupplier
-import com.intellij.openapi.externalSystem.autoimport.settings.EdtAsyncSupplier.Companion.invokeOnEdt
-import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier.Companion.readAction
+import com.intellij.openapi.externalSystem.autoimport.settings.*
 import com.intellij.openapi.externalSystem.util.calculateCrc
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
@@ -39,7 +37,7 @@ class ProjectSettingsTracker(
 
   private val applyChangesOperation = AnonymousParallelOperationTrace(debugName = "Apply changes operation")
 
-  private val settingsProvider = ProjectSettingsProvider()
+  private val settingsAsyncSupplier = SettingsFilesAsyncSupplier()
 
   private fun calculateSettingsFilesCRC(settingsFiles: Set<String>): Map<String, Long> {
     val localFileSystem = LocalFileSystem.getInstance()
@@ -130,18 +128,19 @@ class ProjectSettingsTracker(
     }
   }
 
+  @Suppress("SameParameterValue")
   private fun submitSettingsFilesCRCCalculation(id: Any, callback: (Map<String, Long>) -> Unit) {
-    settingsProvider.supply({ settingsPaths ->
-      submitSettingsFilesCRCCalculation(id, settingsPaths, callback)
-    }, parentDisposable)
+    settingsAsyncSupplier.supply({ settingsPaths ->
+                                   submitSettingsFilesCRCCalculation(id, settingsPaths, callback)
+                                 }, parentDisposable)
   }
 
   private fun submitSettingsFilesRefresh(callback: (Set<String>) -> Unit) {
-    invokeOnEdt(settingsProvider::isBlocking, {
+    EdtAsyncSupplier.invokeOnEdt(projectTracker::isAsyncChangesProcessing, {
       val fileDocumentManager = FileDocumentManager.getInstance()
       fileDocumentManager.saveAllDocuments()
-      settingsProvider.invalidate()
-      settingsProvider.supply({ settingsPaths ->
+      settingsAsyncSupplier.invalidate()
+      settingsAsyncSupplier.supply({ settingsPaths ->
         val localFileSystem = LocalFileSystem.getInstance()
         val settingsFiles = settingsPaths.map { Path.of(it) }
         localFileSystem.refreshNioFiles(settingsFiles, projectTracker.isAsyncChangesProcessing, false) {
@@ -152,7 +151,10 @@ class ProjectSettingsTracker(
   }
 
   private fun submitSettingsFilesCRCCalculation(id: Any, settingsPaths: Set<String>, callback: (Map<String, Long>) -> Unit) {
-    readAction(settingsProvider::isBlocking, { calculateSettingsFilesCRC(settingsPaths) }, backgroundExecutor, this, id)
+    ReadAsyncSupplier.Builder { calculateSettingsFilesCRC(settingsPaths) }
+      .shouldKeepTasksAsynchronous { projectTracker.isAsyncChangesProcessing }
+      .coalesceBy(this, id)
+      .build(backgroundExecutor)
       .supply(callback, parentDisposable)
   }
 
@@ -175,8 +177,8 @@ class ProjectSettingsTracker(
   }
 
   init {
-    whenNewFilesCreated(settingsProvider::invalidate, parentDisposable)
-    subscribeOnDocumentsAndVirtualFilesChanges(settingsProvider, ProjectSettingsListener(), parentDisposable)
+    whenNewFilesCreated(settingsAsyncSupplier::invalidate, parentDisposable)
+    subscribeOnDocumentsAndVirtualFilesChanges(settingsAsyncSupplier, ProjectSettingsListener(), parentDisposable)
   }
 
   companion object {
@@ -229,13 +231,19 @@ class ProjectSettingsTracker(
     }
   }
 
-  private inner class ProjectSettingsProvider : CachingAsyncSupplier<Set<String>>() {
-    override fun get() = projectAware.settingsFiles
+  private inner class SettingsFilesAsyncSupplier : AsyncSupplier<Set<String>> {
+    private val cachingAsyncSupplier = CachingAsyncSupplier(
+      BackgroundAsyncSupplier.Builder(projectAware::settingsFiles)
+        .shouldKeepTasksAsynchronous(projectTracker::isAsyncChangesProcessing)
+        .build(backgroundExecutor))
+    private val supplier = BackgroundAsyncSupplier.Builder(cachingAsyncSupplier)
+      .shouldKeepTasksAsynchronous(projectTracker::isAsyncChangesProcessing)
+      .build(backgroundExecutor)
 
-    override fun isBlocking() = !projectTracker.isAsyncChangesProcessing
-
-    override fun supply(callback: (Set<String>) -> Unit, parentDisposable: Disposable) {
-      super.supply({ callback(it + settingsFilesStatus.get().oldCRC.keys) }, parentDisposable)
+    override fun supply(consumer: (Set<String>) -> Unit, parentDisposable: Disposable) {
+      supplier.supply({ consumer(it + settingsFilesStatus.get().oldCRC.keys) }, parentDisposable)
     }
+
+    fun invalidate() = cachingAsyncSupplier.invalidate()
   }
 }

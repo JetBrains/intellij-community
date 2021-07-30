@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
+import com.intellij.ide.impl.DataContextUtils;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,7 +54,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public final class Utils {
+public final class Utils extends DataContextUtils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
 
   public static final AnAction EMPTY_MENU_FILLER = new EmptyAction();
@@ -536,10 +537,6 @@ public final class Utils {
       result[0] = supplier.getAsBoolean();
     });
     return result[0];
-  }
-
-  public static boolean isFrozenDataContext(DataContext context) {
-    return context instanceof PreCachedDataContext && ((PreCachedDataContext)context).isFrozenDataContext();
   }
 
   static class ProcessCanceledWithReasonException extends ProcessCanceledException {

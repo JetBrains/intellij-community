@@ -37,14 +37,15 @@ abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase() {
     protected fun getReferentFilesForElementUnderCaret(): Set<String>? {
         val elementAtCaret = myFixture.elementAtCaret
         val declarationAtCaret = elementAtCaret.parentOfType<PsiNamedElement>(withSelf = true) ?: error("declaration at caret not found")
-        return getReferentFiles(declarationAtCaret)
+        return getReferentFiles(declarationAtCaret, true)
     }
 
-    protected fun getReferentFiles(element: PsiElement): Set<String>? {
+    protected fun getReferentFiles(element: PsiElement, withJavaIndex: Boolean): Set<String>? {
         val fromKotlinIndex = KotlinCompilerReferenceIndexService[project].findReferenceFilesInTests(element)
         val fromJavaIndex = CompilerReferenceService.getInstance(project)
-            .cast<CompilerReferenceServiceBase<*>>()
-            .getReferentFilesForTests(element)
+            .takeIf { withJavaIndex }
+            ?.cast<CompilerReferenceServiceBase<*>>()
+            ?.getReferentFilesForTests(element)
 
         if (fromKotlinIndex == null && fromJavaIndex == null) return null
         return mutableSetOf<String>().apply {

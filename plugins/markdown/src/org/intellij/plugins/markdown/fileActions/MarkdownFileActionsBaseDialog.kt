@@ -49,37 +49,24 @@ abstract class MarkdownFileActionsBaseDialog(
     createTargetDirField()
   }
 
-  override fun createCenterPanel(): JComponent {
-    val shortcutText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION))
+  override fun createCenterPanel(): JComponent = panel {
+    row(MarkdownBundle.message("markdown.import.export.dialog.new.name.label")) {
+      cell {
+        fileNameField(growX).withValidationOnApply { validateFileName(it) }.focused()
+      }
+    }
+    createFileTypeField()
+    row(MarkdownBundle.message("markdown.import.export.dialog.target.directory.label")) {
+      cell {
+        targetDirectoryField(growX).withValidationOnApply { validateTargetDir(it) }.focused()
+      }
+    }
+    row {
+      val settingsComponent = getSettingsComponents() ?: return@row
+      val panel = JPanel(BorderLayout()).apply { add(settingsComponent) }
 
-    return panel {
-      row(MarkdownBundle.message("markdown.import.export.dialog.new.name.label")) {
-        cell {
-          fileNameField(growX).withValidationOnApply { validateFileName(it) }.focused()
-        }
-      }
-      createFileTypeField()
-      row(MarkdownBundle.message("markdown.import.export.dialog.target.directory.label")) {
-        cell {
-          targetDirectoryField(growX).withValidationOnApply { validateTargetDir(it) }.focused()
-        }
-      }
-      row {
-        val settingsComponent = getSettingsComponents() ?: return@row
-        val panel = JPanel(BorderLayout()).apply { add(settingsComponent) }
-
-        component(panel).withValidationOnApply {
-          settingsComponent.validateCallbacks.find { it.invoke() != null }?.invoke()
-        }
-      }
-      row {
-        cell {
-          label(
-            MarkdownBundle.message("markdown.import.export.dialog.path.completion.shortcut", shortcutText),
-            UIUtil.ComponentStyle.SMALL,
-            UIUtil.FontColor.BRIGHTER
-          )
-        }
+      component(panel).withValidationOnApply {
+        settingsComponent.validateCallbacks.find { it.invoke() != null }?.invoke()
       }
     }
   }

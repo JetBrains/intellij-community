@@ -1,9 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight;
 
-import com.google.common.base.Preconditions;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
@@ -31,6 +31,7 @@ import java.util.Objects;
  * @author Dennis.Ushakov
  */
 public class PyCustomMember extends UserDataHolderBase {
+  private static final Logger LOG = Logger.getInstance(PyCustomMember.class);
   private static final Key<ParameterizedCachedValue<PyClass, PsiElement>>
     RESOLVE = Key.create("resolve");
   private final String myName;
@@ -279,7 +280,7 @@ public class PyCustomMember extends UserDataHolderBase {
    * @param customInfo custom info to add
    */
   public PyCustomMember withCustomTypeInfo(@NotNull final PyCustomMemberTypeInfo<?> customInfo) {
-    Preconditions.checkState(myTypeName != null, "Cant add custom type info if no type provided");
+    LOG.assertTrue(myTypeName != null, "Cant add custom type info if no type provided");
     myCustomTypeInfo = customInfo;
     return this;
   }

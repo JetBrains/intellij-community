@@ -25,10 +25,6 @@ public final class SlowOperations {
   public static final String GENERIC = "generic";
   public static final String FAST_TRACK = "  fast track  ";
 
-  private static final String[] misbehavingFrames = {
-    "org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler",
-    "com.intellij.apiwatcher.plugin.presentation.bytecode.UsageHighlighter",
-  };
   private static int ourAlwaysAllow = -1;
   private static @NotNull FList<@NotNull String> ourStack = FList.emptyList();
 
@@ -70,6 +66,12 @@ public final class SlowOperations {
    * @see com.intellij.openapi.actionSystem.ex.ActionUtil#underModalProgress
    */
   public static void assertSlowOperationsAreAllowed() {
+    if (!EDT.isCurrentThreadEdt()) {
+      return;
+    }
+    if (isInsideActivity(FAST_TRACK)) {
+      throw new ProcessCanceledException();
+    }
     if (isAlwaysAllowed()) {
       return;
     }
@@ -77,17 +79,11 @@ public final class SlowOperations {
       return;
     }
     Application application = ApplicationManager.getApplication();
-    if (!application.isDispatchThread()) {
-      return;
-    }
     if (application.isWriteAccessAllowed() && !Registry.is("ide.slow.operations.assertion.write.action")) {
       return;
     }
     if (ourStack.isEmpty() && !Registry.is("ide.slow.operations.assertion.other", false)) {
       return;
-    }
-    if (isInsideActivity(FAST_TRACK)) {
-      throw new ProcessCanceledException();
     }
     for (String activity : ourStack) {
       if (!Registry.is("ide.slow.operations.assertion." + activity, true)) {
@@ -99,18 +95,12 @@ public final class SlowOperations {
     if (ThrowableInterner.intern(throwable) != throwable) {
       return;
     }
-    String stackTrace = ExceptionUtil.currentStackTrace();
-    for (String t : misbehavingFrames) {
-      if (stackTrace.contains(t)) {
-        return;
-      }
-    }
     LOG.error("Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.");
   }
 
   @ApiStatus.Internal
   public static boolean isInsideActivity(@NotNull String activityName) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    EDT.assertIsEdt();
     for (String activity : ourStack) {
       if (activityName == activity) {
         return true;
@@ -152,7 +142,7 @@ public final class SlowOperations {
   }
 
   public static @NotNull AccessToken allowSlowOperations(@NotNull @NonNls String activityName) {
-    if (isAlwaysAllowed() || !EDT.isCurrentThreadEdt()) {
+    if (!EDT.isCurrentThreadEdt()) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
 

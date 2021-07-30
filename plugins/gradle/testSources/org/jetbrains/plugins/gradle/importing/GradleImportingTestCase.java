@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.importing;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
@@ -188,6 +189,9 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   @NotNull
   private String requireRealJdkHome() {
+    if (myWSLDistribution != null) {
+      return requireWslJdkHome(myWSLDistribution);
+    }
     JavaVersion javaRuntimeVersion = JavaVersion.current();
     assumeTestJavaRuntime(javaRuntimeVersion);
     GradleVersion baseVersion = getCurrentGradleBaseVersion();
@@ -211,6 +215,14 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     else {
       return IdeaTestUtil.requireRealJdkHome();
     }
+  }
+
+  private String requireWslJdkHome(WSLDistribution distribution) {
+    String jdkPath = System.getProperty("wsl.jdk.path");
+    if (jdkPath == null) {
+      jdkPath = "/usr/lib/jvm/java-11-openjdk-amd64";
+    }
+    return distribution.getWindowsPath(jdkPath);
   }
 
   protected void collectAllowedRoots(final List<String> roots, PathAssembler.LocalDistribution distribution) {
@@ -256,6 +268,11 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
   public static Collection<Object[]> data() {
+    String gradleVersionsString = System.getProperty("gradle.versions.to.run");
+    if (gradleVersionsString != null && !gradleVersionsString.isEmpty()) {
+      String[] gradleVersionsToRun = gradleVersionsString.split(",");
+      return ContainerUtil.map(gradleVersionsToRun, it -> new String[]{it});
+    }
     return Arrays.asList(SUPPORTED_GRADLE_VERSIONS);
   }
 

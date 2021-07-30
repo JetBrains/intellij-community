@@ -36,7 +36,7 @@ class RunToolbarMainMultipleProcessStartedAction : ComboBoxAction(), RTRunConfig
       }
 
       activeProcesses.getText()?.let {
-        e.presentation.text = it
+        e.presentation.setText(it, false)
         true
       } ?: false
     } ?: false
@@ -58,6 +58,8 @@ class RunToolbarMainMultipleProcessStartedAction : ComboBoxAction(), RTRunConfig
         }
 
         super.presentationChanged(event)
+
+        isEnabled = true
       }
 
       override fun getPreferredSize(): Dimension {

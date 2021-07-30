@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
-import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -18,6 +17,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
@@ -114,7 +114,7 @@ final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
     result.add(NAMED_SCOPES_TOTAL_SHARED.metric(sharedScopes.length));
 
     String basePath = project.getBasePath();
-    if (basePath != null && FileUtil.toSystemDependentName(basePath).startsWith(WSLDistribution.UNC_PREFIX)) {
+    if (basePath != null && FileUtil.toSystemDependentName(basePath).startsWith(WslConstants.UNC_PREFIX)) {
       result.add(PROJECT_IN_WSL.metric());
     }
 

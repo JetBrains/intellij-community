@@ -396,7 +396,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
   }
 
   fun `test qualified reference`() {
-    val reference = uastElementFactory.createQualifiedReference("java.util.List", myFixture.file.toUElement())
+    val reference = uastElementFactory.createQualifiedReference("java.util.List", myFixture.file)
     TestCase.assertEquals("java.util.List", reference?.sourcePsi?.text)
   }
 }

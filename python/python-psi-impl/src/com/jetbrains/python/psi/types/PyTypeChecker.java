@@ -288,15 +288,8 @@ public final class PyTypeChecker {
     }
 
     if (actual instanceof PyTypedDictType) {
-      if (!((PyTypedDictType)actual).isInferred()) {
-        final Optional<Boolean> match = PyTypedDictType.Companion.checkStructuralCompatibility(expected, (PyTypedDictType)actual, context);
-        if (match.isPresent()) {
-          return match;
-        }
-      }
-      if (expected instanceof PyTypedDictType) {
-        return Optional.of(PyTypedDictType.Companion.match((PyTypedDictType)expected, (PyTypedDictType)actual, context));
-      }
+      final Optional<Boolean> match = PyTypedDictType.Companion.match(expected, (PyTypedDictType)actual, context);
+      if (match.isPresent()) return match;
     }
 
     final PyClass superClass = expected.getPyClass();

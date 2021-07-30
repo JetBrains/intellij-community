@@ -45,7 +45,10 @@ public class PyBlock implements ASTBlock {
                                                                       PyElementTypes.PARENTHESIZED_EXPRESSION,
                                                                       PyElementTypes.SLICE_EXPRESSION,
                                                                       PyElementTypes.SUBSCRIPTION_EXPRESSION,
-                                                                      PyElementTypes.GENERATOR_EXPRESSION);
+                                                                      PyElementTypes.GENERATOR_EXPRESSION,
+                                                                      PyElementTypes.SEQUENCE_PATTERN,
+                                                                      PyElementTypes.MAPPING_PATTERN,
+                                                                      PyElementTypes.PATTERN_ARGUMENT_LIST);
 
   private static final TokenSet ourCollectionLiteralTypes = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION,
                                                                             PyElementTypes.LIST_COMP_EXPRESSION,
@@ -67,7 +70,10 @@ public class PyBlock implements ASTBlock {
                                                                          PyElementTypes.GENERATOR_EXPRESSION,
                                                                          PyElementTypes.FUNCTION_DECLARATION,
                                                                          PyElementTypes.CALL_EXPRESSION,
-                                                                         PyElementTypes.FROM_IMPORT_STATEMENT);
+                                                                         PyElementTypes.FROM_IMPORT_STATEMENT,
+                                                                         PyElementTypes.SEQUENCE_PATTERN,
+                                                                         PyElementTypes.MAPPING_PATTERN,
+                                                                         PyElementTypes.PATTERN_ARGUMENT_LIST);
 
   private static final boolean ALIGN_CONDITIONS_WITHOUT_PARENTHESES = false;
 
@@ -274,21 +280,28 @@ public class PyBlock implements ASTBlock {
         childIndent = parenthesised ? Indent.getContinuationIndent() : Indent.getContinuationWithoutFirstIndent();
       }
     }
-    else if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION || parentType == PyElementTypes.LIST_COMP_EXPRESSION) {
-      if ((childType == PyTokenTypes.RBRACKET && !settings.HANG_CLOSING_BRACKETS) || childType == PyTokenTypes.LBRACKET) {
+    else if (parentType == PyElementTypes.OR_PATTERN) {
+      childAlignment = getAlignmentForChildren();
+    }
+    else if (parentType == PyElementTypes.SEQUENCE_PATTERN || parentType == PyElementTypes.MAPPING_PATTERN) {
+      if (PyTokenTypes.CLOSE_BRACES.contains(childType) && !settings.HANG_CLOSING_BRACKETS ||
+          PyTokenTypes.OPEN_BRACES.contains(childType)) {
         childIndent = Indent.getNoneIndent();
       }
       else {
-        childIndent = settings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS ? Indent.getContinuationIndent() : Indent.getNormalIndent();
+        childIndent = Indent.getNormalIndent();
       }
     }
-    else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION || parentType == PyElementTypes.SET_LITERAL_EXPRESSION ||
-             parentType == PyElementTypes.SET_COMP_EXPRESSION || parentType == PyElementTypes.DICT_COMP_EXPRESSION) {
-      if ((childType == PyTokenTypes.RBRACE && !settings.HANG_CLOSING_BRACKETS) || childType == PyTokenTypes.LBRACE) {
+    else if (ourCollectionLiteralTypes.contains(parentType)) {
+      if ((PyTokenTypes.CLOSE_BRACES.contains(childType) && !settings.HANG_CLOSING_BRACKETS) || 
+          PyTokenTypes.OPEN_BRACES.contains(childType)) {
         childIndent = Indent.getNoneIndent();
       }
+      else if (settings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS) {
+        childIndent = Indent.getContinuationIndent();
+      }
       else {
-        childIndent = settings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS ? Indent.getContinuationIndent() : Indent.getNormalIndent();
+        childIndent = Indent.getNormalIndent();
       }
     }
     else if (parentType == PyElementTypes.STRING_LITERAL_EXPRESSION) {
@@ -361,7 +374,9 @@ public class PyBlock implements ASTBlock {
         childIndent = useWiderIndent ? Indent.getContinuationIndent() : Indent.getNormalIndent();
       }
     }
-    else if (parentType == PyElementTypes.ARGUMENT_LIST || parentType == PyElementTypes.PARAMETER_LIST) {
+    else if (parentType == PyElementTypes.ARGUMENT_LIST ||
+             parentType == PyElementTypes.PATTERN_ARGUMENT_LIST ||
+             parentType == PyElementTypes.PARAMETER_LIST) {
       if (childType == PyTokenTypes.RPAR && !settings.HANG_CLOSING_BRACKETS) {
         childIndent = Indent.getNoneIndent();
       }

@@ -8,6 +8,7 @@ import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.PerformanceWatcher
+import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.hprof.action.SystemTempFilenameSupplier
 import com.intellij.diagnostic.hprof.analysis.AnalyzeClassloaderReferencesGraph
 import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
@@ -173,7 +174,7 @@ object DynamicPlugins {
   }
 
   private fun pluginsSortedByDependency(descriptors: List<IdeaPluginDescriptorImpl>, load: Boolean): List<IdeaPluginDescriptorImpl> {
-    val plugins = getTopologicallySorted(descriptors = descriptors, pluginSet = PluginManagerCore.getPluginSet(), withOptional = true)
+    val plugins = PluginManagerCore.getPluginSet().sortTopologically(descriptors)
     return if (load) plugins else plugins.asReversed()
   }
 
@@ -503,12 +504,14 @@ object DynamicPlugins {
           @Suppress("TestOnlyProblems")
           (ProjectManager.getInstanceIfCreated() as? ProjectManagerImpl)?.disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests()
 
-          if (options.disable) {
-            PluginManagerCore.setPluginSet(pluginSet.updateEnabledPlugins())
+          val newPluginSet = if (options.disable) {
+            pluginSet.updateEnabledPlugins()
           }
           else {
-            PluginManagerCore.setPluginSet(pluginSet.removePluginAndUpdateEnabledPlugins(pluginDescriptor))
+            pluginSet.removePluginAndUpdateEnabledPlugins(pluginDescriptor)
           }
+
+          PluginManagerCore.setPluginSet(newPluginSet)
         }
         finally {
           try {
@@ -990,7 +993,11 @@ private fun loadOptionalDependenciesOnPlugin(dependencyPlugin: IdeaPluginDescrip
   val mainToModule = LinkedHashMap<IdeaPluginDescriptorImpl, MutableList<IdeaPluginDescriptorImpl>>()
 
   processOptionalDependenciesOnPlugin(dependencyPlugin, pluginSet, isLoaded = false) { mainDescriptor, subDescriptor ->
-    mainToModule.computeIfAbsent(mainDescriptor) { mutableListOf() }.add(subDescriptor)
+    val subDescriptors = mainToModule.computeIfAbsent(mainDescriptor) { mutableListOf() }
+    if (subDescriptors.any { it === subDescriptor }) {
+      throw PluginException("Descriptor has already been added: $subDescriptor", subDescriptor.pluginId)
+    }
+    subDescriptors.add(subDescriptor)
   }
 
   if (mainToModule.isEmpty()) {

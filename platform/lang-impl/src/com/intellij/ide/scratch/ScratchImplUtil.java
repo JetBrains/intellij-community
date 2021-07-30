@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.terminal.TerminalUtils;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
@@ -269,12 +270,36 @@ final class ScratchImplUtil {
   static @Nullable TextExtractor getTextExtractor(@Nullable Component component) {
     return component instanceof JTextComponent ? new TextComponentExtractor((JTextComponent)component) :
            component instanceof JList ? new ListExtractor((JList<?>)component) :
-           component instanceof JTree ? new TreeExtractor((JTree)component) : null;
+           component instanceof JTree ? new TreeExtractor((JTree)component) :
+           TerminalUtils.isTerminalComponent(component) ? new TerminalExtractor(component) :
+           null;
   }
 
   interface TextExtractor {
     boolean hasSelection();
-    String extractText();
+    @Nullable String extractText();
+  }
+
+  private static class TerminalExtractor implements TextExtractor {
+    final Component component;
+
+    TerminalExtractor(@Nullable Component dataContext) {
+      component = dataContext;
+    }
+
+    @Override
+    public boolean hasSelection() {
+      return TerminalUtils.hasSelectionInTerminal(component);
+    }
+
+    @Override
+    public String extractText() {
+      if (TerminalUtils.hasSelectionInTerminal(component)) {
+        return TerminalUtils.getSelectedTextInTerminal(component);
+      }
+      String text = TerminalUtils.getTextInTerminal(component);
+      return StringUtil.isEmptyOrSpaces(text) ? null : text;
+    }
   }
 
   private static class TextComponentExtractor implements TextExtractor {
@@ -284,7 +309,7 @@ final class ScratchImplUtil {
 
     @Override
     public boolean hasSelection() {
-      return !StringUtil.isEmpty(comp.getSelectedText());
+      return comp.getSelectionStart() != comp.getSelectionEnd();
     }
 
     @Override

@@ -124,7 +124,9 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     if (elseExpression instanceof PsiConditionalExpression) {
       Map<Integer, PsiExpression> m = extractConditions((PsiConditionalExpression)elseExpression);
       if (m == null) return null;
-      result.putAll(m);
+      for (var entry : m.entrySet()) {
+        if (result.put(entry.getKey(), entry.getValue()) != null) return null;
+      }
       return result;
     }
     return storeCondition(result, null, elseExpression) ? result : null;

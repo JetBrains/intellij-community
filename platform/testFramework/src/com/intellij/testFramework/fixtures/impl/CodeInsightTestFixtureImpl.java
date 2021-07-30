@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.analysis.AnalysisScope;
@@ -1396,9 +1396,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public PsiFile configureByText(@NotNull final String fileName, @NotNull final String text) {
     assertInitialized();
-    VirtualFile vFile;
+    VirtualFile vFile = createFile(fileName, text);
+    configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile));
+    return getFile();
+  }
+
+  @Override
+  public VirtualFile createFile(@NotNull String fileName, @NotNull String text) {
+    assertInitialized();
     try {
-      vFile = WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
+      return WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
         final VirtualFile file;
         if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
           final VirtualFile root = LightPlatformTestCase.getSourceRoot();
@@ -1431,8 +1438,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile));
-    return getFile();
   }
 
   @Override

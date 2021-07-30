@@ -1,4 +1,5 @@
 import java.io.Serializable;
+import java.util.function.Function;
 
 class Test {
 
@@ -32,4 +33,18 @@ class Test1 {
   {
     Object c0 = (A & B) ()->{};
   }
+}
+
+
+class Test2 {
+    {
+        foo(i -> i);
+        foo1(i -> i);
+        foo2(i -> i);
+    }
+
+    private static <T extends Function<?, ?> & A<?>>                     void foo(T t) { }
+    private static <T extends Function<?, ?> & Serializable>             void foo1(T t) { }
+    private static <T extends Function<Integer, Integer> & Serializable> void foo2(T t) { }
+    interface A<K> {}
 }

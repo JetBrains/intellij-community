@@ -149,4 +149,8 @@ public interface StatusBar extends StatusBarInfo, Disposable {
     public static final String POSITION_PANEL = "Position";
     public static final String LINE_SEPARATOR_PANEL = "LineSeparator";
   }
+
+  void startRefreshIndication(@NlsContexts.Tooltip String tooltipText);
+
+  void stopRefreshIndication();
 }

@@ -136,6 +136,9 @@
 
     <applicationService serviceImplementation="com.intellij.ui.jcef.JBCefStartup" preload="true" os="mac"/>
 
+    <applicationService serviceInterface="com.intellij.ide.ui.IdeUiService"
+                                          serviceImplementation="com.intellij.ide.ui.IdeUiServiceImpl"/>
+
     <applicationService serviceInterface="com.intellij.execution.ExecutorRegistry"
                         serviceImplementation="com.intellij.execution.ExecutorRegistryImpl"/>
 
@@ -285,6 +288,8 @@
     <fileEditorProvider implementation="com.intellij.ide.plugins.UIComponentEditorProvider"/>
     <iconProvider implementation="com.intellij.ide.plugins.UIComponentVirtualFile$UIComponentVirtualFileIconProvider"/>
 
+    <diff.editor.diffRequestProcessorEditorCustomizer implementation="com.intellij.diff.editor.DefaultDiffFileEditorCustomizer"/>
+
     <editorTabColorProvider implementation="com.intellij.diff.editor.VcsEditorTabColorProvider" order="first"/>
 
     <fileIconProvider implementation="com.intellij.diff.editor.DiffFileIconProvider"/>
@@ -346,6 +351,9 @@
                              key="password.safe.configurable"
                              id="application.passwordSafe"/>
 
+    <applicationService serviceInterface="com.intellij.credentialStore.CredentialStoreUiService"
+                        serviceImplementation="com.intellij.credentialStore.CredentialStoreUiServiceImpl"/>
+
     <applicationService serviceInterface="com.intellij.execution.process.ElevationService"
                         serviceImplementation="com.intellij.execution.process.elevation.ElevationServiceImpl"/>
 
@@ -400,7 +408,12 @@
 
     <applicationService serviceInterface="com.intellij.execution.process.ProcessHandlerFactory"
                         serviceImplementation="com.intellij.execution.process.ProcessHandlerFactoryImpl" />
+    <applicationService serviceInterface="com.intellij.execution.process.ColoredOutputTypeRegistry"
+                        serviceImplementation="com.intellij.execution.process.ColoredOutputTypeRegistryImpl" />
     <applicationService serviceImplementation="com.intellij.ide.CommandLineWaitingManager" />
+
+    <applicationService serviceImplementation="com.intellij.ide.CommandLineCustomHandler$StartupService" preload="true" />
+    <commandLineCustomHandler implementation="com.intellij.ide.impl.JetBrainsProtocolCommandLineHandler" />
 
     <applicationService serviceImplementation="com.intellij.diagnostic.HeapDumpAnalysisSupport"/>
 
@@ -725,7 +738,6 @@
 
     <statistics.counterUsagesCollector groupId="vfs" version="2"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.IndexingStatisticsCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.task.impl.ProjectTaskManagerStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.externalSystem.statistics.ProjectImportCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.service.fus.collectors.UIEventLogger"/>
@@ -760,7 +772,8 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"/>
     <postStartupActivity implementation="com.intellij.featureStatistics.ProductivityFeaturesRegistryImpl$EventLogSubscribeActivity"/>
     <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.FeatureUsageEventLoggerProvider"/>
-    <statistic.eventLog.fusStateEventTracker implementation="com.intellij.featureStatistics.fusCollectors.SystemStateMonitor"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.OsDataCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.IdeSessionDataCollector"/>
     <statistic.eventLog.fusStateEventTracker implementation="com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventScheduler"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.WSLInstallationsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.impl.TrustedProjectsStatistics" />
@@ -785,7 +798,7 @@
                         serviceImplementation="com.intellij.openapi.application.impl.AsyncExecutionServiceImpl"/>
 
     <preloadingActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity"/>
-    <postStartupActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity"/>
+    <postStartupActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity" order="last"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.OptionsTopHitProvider$ProjectLevelProvidersAdapter"/>
     <applicationService serviceImplementation="com.intellij.ide.ui.TopHitCache"/>
 
@@ -866,8 +879,6 @@
                         serviceImplementation="com.intellij.openapi.editor.impl.FontFamilyServiceImpl"
                         preload="notHeadless"/>
 
-    <jbProtocolCommand implementation="com.intellij.openapi.project.impl.JBProtocolOpenProjectCommand"/>
-    <jbProtocolCommand implementation="com.intellij.openapi.application.JBProtocolShutdownCommand"/>
     <jbProtocolCommand implementation="com.intellij.navigation.JBProtocolNavigateCommand"/>
 
     <intentionAction>
@@ -1197,8 +1208,8 @@
     <notificationGroup id="Built-in Server" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Password Safe" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Tutorials" displayType="BALLOON"/>
-    <notificationGroup id="Test Results: Run" displayType="TOOL_WINDOW" toolWindowId="Run" />
-    <notificationGroup id="Test Results: Debug" displayType="TOOL_WINDOW" toolWindowId="Debug" />
+    <notificationGroup id="Test Results: Run" displayType="TOOL_WINDOW" toolWindowId="Run" isLogByDefault="false"/>
+    <notificationGroup id="Test Results: Debug" displayType="TOOL_WINDOW" toolWindowId="Debug" isLogByDefault="false"/>
     <notificationGroup id="feedback.form" displayType="BALLOON" bundle="messages.ApplicationBundle" key="feedback.form.notification.group"/>
 
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
@@ -1235,6 +1246,7 @@
     <postStartupActivity implementation="com.intellij.openapi.util.registry.RegistryToAdvancedSettingsMigration"/>
 
     <advancedSetting id="ide.show.fileType.icon.in.titleBar" default="false" groupKey="group.advanced.settings.ui"/>
+    <advancedSetting id="ide.macos.disable.native.shortcut.symbols" default="false" groupKey="group.advanced.settings.ui"/>
     <advancedSetting id="ide.max.recent.projects" default="50" groupKey="group.advanced.settings.ide"/>
     <advancedSetting id="ide.max.recent.files" default="50" groupKey="group.advanced.settings.ide" service="com.intellij.ide.ui.UISettings" property="recentFilesLimit"/>
     <advancedSetting id="ide.max.recent.locations" default="25" groupKey="group.advanced.settings.ide" service="com.intellij.ide.ui.UISettings" property="recentLocationsLimit"/>

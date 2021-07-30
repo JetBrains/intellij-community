@@ -4,8 +4,8 @@ package training.project
 import com.intellij.UtilBundle
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.URLUtil
-import org.apache.commons.lang.StringUtils
 import java.io.*
 import java.net.URL
 import java.util.jar.JarFile
@@ -27,7 +27,7 @@ object FileUtils {
     while (entries.hasMoreElements()) {
       val entry = entries.nextElement()
       if (entry.name.startsWith(prefix)) {
-        val filename = StringUtils.removeStart(entry.name, prefix)
+        val filename = StringUtil.trimStart(entry.name, prefix)
 
         val f = File(destDir, filename)
 
@@ -121,7 +121,7 @@ object FileUtils {
     if (lastIndexOf == -1) throw IOException("Invalid Jar path format")
     val splitIdx = lastIndexOf + 4 // ".jar"
     val filePath = path.substring(0, splitIdx)
-    val pathInsideJar = path.substring(splitIdx + 2 ,path.length) // remove "!/"
+    val pathInsideJar = path.substring(splitIdx + 2, path.length) // remove "!/"
     return Pair(filePath, pathInsideJar)
   }
 }

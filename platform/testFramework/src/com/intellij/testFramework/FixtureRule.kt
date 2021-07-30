@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
 import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
@@ -21,12 +21,12 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.roots.impl.libraries.LibraryTableTracker
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.project.TestProjectManager
 import com.intellij.project.stateStore
@@ -52,7 +52,7 @@ open class ApplicationRule : TestRule {
     }
   }
 
-  final override fun apply(base: Statement, description: Description): Statement? {
+  final override fun apply(base: Statement, description: Description): Statement {
     return object : Statement() {
       override fun evaluate() {
         before(description)
@@ -78,7 +78,7 @@ open class ApplicationRule : TestRule {
  * Rule should be used only and only if you open projects in a custom way in test cases and cannot use [ProjectRule].
  */
 class ProjectTrackingRule : TestRule {
-  override fun apply(base: Statement, description: Description): Statement? {
+  override fun apply(base: Statement, description: Description): Statement {
     return object : Statement() {
       override fun evaluate() {
         (ProjectManager.getInstance() as TestProjectManager).startTracking().use {

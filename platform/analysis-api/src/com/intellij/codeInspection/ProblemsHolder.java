@@ -73,21 +73,20 @@ public class ProblemsHolder {
     return file != null && myFile.getViewProvider() == file.getViewProvider();
   }
 
-  private void redirectProblem(@NotNull final ProblemDescriptor problem, @NotNull final PsiElement target) {
-    final PsiElement original = problem.getPsiElement();
-    final VirtualFile vFile = original.getContainingFile().getVirtualFile();
+  private void redirectProblem(@NotNull ProblemDescriptor problem, @NotNull PsiElement target) {
+    PsiElement original = problem.getPsiElement();
+    VirtualFile vFile = original.getContainingFile().getVirtualFile();
     assert vFile != null;
-    final String path = FileUtil.toSystemIndependentName(vFile.getPath());
+    String path = FileUtil.toSystemIndependentName(vFile.getPath());
 
     String description = XmlStringUtil.stripHtml(problem.getDescriptionTemplate());
 
-    final String template =
-      AnalysisBundle.message("inspection.redirect.template",
-                             description, path, original.getTextRange().getStartOffset(), vFile.getName());
+    String template = AnalysisBundle.message("inspection.redirect.template",
+                                             description, path, original.getTextRange().getStartOffset(), vFile.getName());
 
 
-    final InspectionManager manager = InspectionManager.getInstance(original.getProject());
-    final ProblemDescriptor newProblem =
+    InspectionManager manager = InspectionManager.getInstance(original.getProject());
+    ProblemDescriptor newProblem =
       manager.createProblemDescriptor(target, template, (LocalQuickFix)null, problem.getHighlightType(), isOnTheFly());
     registerProblem(newProblem);
   }
@@ -185,7 +184,7 @@ public class ProblemsHolder {
   }
 
   public ProblemDescriptor @NotNull [] getResultsArray() {
-    final List<ProblemDescriptor> problems = getResults();
+    List<ProblemDescriptor> problems = getResults();
     return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 

@@ -392,6 +392,21 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/stepOver/inlineCallInForRangeExpression.kt");
         }
 
+        @TestMetadata("inlineCallWithDefaultLambda.kt")
+        public void testInlineCallWithDefaultLambda() throws Exception {
+            runTest("testData/stepping/stepOver/inlineCallWithDefaultLambda.kt");
+        }
+
+        @TestMetadata("inlineCallWithDefaultParameters.kt")
+        public void testInlineCallWithDefaultParameters() throws Exception {
+            runTest("testData/stepping/stepOver/inlineCallWithDefaultParameters.kt");
+        }
+
+        @TestMetadata("inlineCallWithDefaultParametersAndReceiver.kt")
+        public void testInlineCallWithDefaultParametersAndReceiver() throws Exception {
+            runTest("testData/stepping/stepOver/inlineCallWithDefaultParametersAndReceiver.kt");
+        }
+
         @TestMetadata("inlineFunInClassInitializer.kt")
         public void testInlineFunInClassInitializer() throws Exception {
             runTest("testData/stepping/stepOver/inlineFunInClassInitializer.kt");
@@ -715,6 +730,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
         @TestMetadata("stepOverInsideInlineFun.kt")
         public void testStepOverInsideInlineFun() throws Exception {
             runTest("testData/stepping/stepOver/stepOverInsideInlineFun.kt");
+        }
+
+        @TestMetadata("stepOverInvokeMethod.kt")
+        public void testStepOverInvokeMethod() throws Exception {
+            runTest("testData/stepping/stepOver/stepOverInvokeMethod.kt");
         }
 
         @TestMetadata("stepOverReifiedParam.kt")
@@ -1241,6 +1261,26 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/smartStepIntoInterfaceImpl.kt");
         }
 
+        @TestMetadata("smartStepIntoLambdasOnManyLines.kt")
+        public void testSmartStepIntoLambdasOnManyLines() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoLambdasOnManyLines.kt");
+        }
+
+        @TestMetadata("smartStepIntoLambdasOnOneLine.kt")
+        public void testSmartStepIntoLambdasOnOneLine() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoLambdasOnOneLine.kt");
+        }
+
+        @TestMetadata("smartStepIntoSamLambdaFromJavaFunInterface.kt")
+        public void testSmartStepIntoSamLambdaFromJavaFunInterface() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoSamLambdaFromJavaFunInterface.kt");
+        }
+
+        @TestMetadata("smartStepIntoSamLambdaFromKotlinFunInterface.kt")
+        public void testSmartStepIntoSamLambdaFromKotlinFunInterface() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoSamLambdaFromKotlinFunInterface.kt");
+        }
+
         @TestMetadata("smartStepIntoStoredLambda.kt")
         public void testSmartStepIntoStoredLambda() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoStoredLambda.kt");
@@ -1279,6 +1319,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
         @TestMetadata("stepOutInlineFunctionStdlib.kt")
         public void testStepOutInlineFunctionStdlib() throws Exception {
             runTest("testData/stepping/custom/stepOutInlineFunctionStdlib.kt");
+        }
+
+        @TestMetadata("stepOverInvokeMethodInLambda.kt")
+        public void testStepOverInvokeMethodInLambda() throws Exception {
+            runTest("testData/stepping/custom/stepOverInvokeMethodInLambda.kt");
         }
 
         @TestMetadata("stepOverNonLocalReturnInLambda.kt")

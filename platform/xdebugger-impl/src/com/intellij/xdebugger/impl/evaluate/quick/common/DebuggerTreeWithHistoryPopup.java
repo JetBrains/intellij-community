@@ -30,7 +30,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
 
-import static com.intellij.xdebugger.impl.inline.XDebuggerTreeInlayPopup.updateDebugPopupBounds;
+import static com.intellij.xdebugger.impl.inline.XDebuggerTreeInlayPopup.setAutoResize;
 
 final class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D> {
   @NonNls private final static String DIMENSION_SERVICE_KEY = "DebuggerActiveHint";
@@ -123,20 +123,7 @@ final class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryConta
       return;
     }
     myPopup.show(new RelativePoint(myEditor.getContentComponent(), myPoint));
-
-    ((XDebuggerTree)tree).addTreeListener(new XDebuggerTreeListener() {
-      @Override
-      public void childrenLoaded(@NotNull XDebuggerTreeNode node,
-                                 @NotNull List<? extends XValueContainerNode<?>> children,
-                                 boolean last) {
-        if (last) {
-          updateDebugPopupBounds(tree, myToolbar, myPopup);
-          ((XDebuggerTree)tree).removeTreeListener(this);
-        }
-      }
-    });
-
-    updateDebugPopupBounds(tree, myToolbar, myPopup);
+    setAutoResize(tree, myToolbar, myPopup);
   }
 
   private void resize(final TreePath path, JTree tree) {

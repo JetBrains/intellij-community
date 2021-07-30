@@ -124,7 +124,7 @@ abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationPr
         }
     }
 
-    override fun listRepositoriesInModule(module: ProjectModule): Collection<UnifiedDependencyRepository> = runReadAction {
-        DependencyModifierService.getInstance(module.nativeModule.project).declaredRepositories(module.nativeModule)
-    }
+    override fun listRepositoriesInModule(module: ProjectModule): Collection<UnifiedDependencyRepository> =
+        DependencyModifierService.getInstance(module.nativeModule.project)
+            .declaredRepositories(module.nativeModule)
 }

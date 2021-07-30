@@ -17,15 +17,13 @@ class WslMavenRemoteProcessSupportFactory : MavenRemoteProcessSupportFactory {
                       vmOptions: String?,
                       mavenDistribution: MavenDistribution,
                       project: Project,
-                      debugPort: Int?,
-                      multimoduleDirectory: String?): MavenRemoteProcessSupport {
+                      debugPort: Int?): MavenRemoteProcessSupport {
     val wslDistribution = project.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
                           ?: throw IllegalArgumentException("Project $project is not WSL based!")
     MavenLog.LOG.info("Use WSL maven distribution at ${mavenDistribution}")
     trigger(project, MavenActionsUsagesCollector.ActionID.StartWslMavenServer)
     val wslMavenDistribution = toWslMavenDistribution(mavenDistribution, wslDistribution)
-    return WslMavenServerRemoteProcessSupport(wslDistribution, jdk, vmOptions,
-                                              wslMavenDistribution, project, debugPort, multimoduleDirectory)
+    return WslMavenServerRemoteProcessSupport(wslDistribution, jdk, vmOptions, wslMavenDistribution, project, debugPort)
   }
 
   private fun toWslMavenDistribution(mavenDistribution: MavenDistribution, wslDistribution: WSLDistribution): WslMavenDistribution {

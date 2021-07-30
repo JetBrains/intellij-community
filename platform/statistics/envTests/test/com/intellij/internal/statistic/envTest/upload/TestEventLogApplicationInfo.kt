@@ -7,7 +7,6 @@ import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService
 import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsService
 import java.io.File
-import java.nio.file.Path
 
 internal const val SETTINGS_ROOT = "settings/%s/%s.json"
 
@@ -24,15 +23,13 @@ internal class TestEventLogApplicationInfo(recorderId: String, private val setti
 
 internal class TestEventLogRecorderConfig(recorderId: String, logFiles: List<File>, val sendEnabled: Boolean = true)
   : EventLogInternalRecorderConfig(recorderId) {
-  private val evenLogFilesProvider = object : EventLogFilesProvider {
-    override fun getLogFilesDir(): Path? = null
-
-    override fun getLogFiles(): List<EventLogFile> = logFiles.map { EventLogFile(it) }
+  private val evenLogFilesProvider = object : FilesToSendProvider {
+    override fun getFilesToSend(): List<EventLogFile> = logFiles.map { EventLogFile(it) }
   }
 
   override fun isSendEnabled(): Boolean = sendEnabled
 
-  override fun getLogFilesProvider(): EventLogFilesProvider = evenLogFilesProvider
+  override fun getFilesToSendProvider(): FilesToSendProvider = evenLogFilesProvider
 }
 
 internal fun newSendService(container: ApacheContainer,

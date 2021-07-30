@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
@@ -25,7 +25,6 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
 import org.jetbrains.kotlin.idea.test.*
@@ -188,7 +187,7 @@ private fun Module.createFacetWithAdditionalSetup(
     additionalSetup: KotlinFacetSettings.() -> Unit
 ) {
     WriteAction.run<Throwable> {
-        val modelsProvider = IdeModifiableModelsProviderImpl(project)
+        val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
         with(getOrCreateFacet(modelsProvider, useProjectSettings).configuration.settings) {
             initializeIfNeeded(
                 this@createFacetWithAdditionalSetup,

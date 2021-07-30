@@ -7989,6 +7989,61 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/javaClassOnCompanion")
+    public abstract static class JavaClassOnCompanion extends AbstractQuickFixTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/javaClassOnCompanion/replaceWithClassJava")
+        public static class ReplaceWithClassJava extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("hasType.kt")
+            public void testHasType() throws Exception {
+                runTest("testData/quickfix/javaClassOnCompanion/replaceWithClassJava/hasType.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/quickfix/javaClassOnCompanion/replaceWithClassJava/simple.kt");
+            }
+
+            @TestMetadata("withName.kt")
+            public void testWithName() throws Exception {
+                runTest("testData/quickfix/javaClassOnCompanion/replaceWithClassJava/withName.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/javaClassOnCompanion/replaceWithCompanionClassJava")
+        public static class ReplaceWithCompanionClassJava extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("hasType.kt")
+            public void testHasType() throws Exception {
+                runTest("testData/quickfix/javaClassOnCompanion/replaceWithCompanionClassJava/hasType.kt");
+            }
+
+            @TestMetadata("namedCompanion.kt")
+            public void testNamedCompanion() throws Exception {
+                runTest("testData/quickfix/javaClassOnCompanion/replaceWithCompanionClassJava/namedCompanion.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/quickfix/javaClassOnCompanion/replaceWithCompanionClassJava/simple.kt");
+            }
+
+            @TestMetadata("withName.kt")
+            public void testWithName() throws Exception {
+                runTest("testData/quickfix/javaClassOnCompanion/replaceWithCompanionClassJava/withName.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/kdocMissingDocumentation")
     public static class KdocMissingDocumentation extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -13357,6 +13412,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/changePrimaryConstructorParameterTypeOnPropertyDelegate.kt");
             }
 
+            @TestMetadata("convertKClassToJavaClass.kt")
+            public void testConvertKClassToJavaClass() throws Exception {
+                runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/convertKClassToJavaClass.kt");
+            }
+
+            @TestMetadata("convertKClassToJavaClassVariable.kt")
+            public void testConvertKClassToJavaClassVariable() throws Exception {
+                runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/convertKClassToJavaClassVariable.kt");
+            }
+
             @TestMetadata("multiFakeOverride.kt")
             public void testMultiFakeOverride() throws Exception {
                 runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/multiFakeOverride.kt");
@@ -14279,9 +14344,19 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/when/noElseInWhenWithoutBranches.kt");
         }
 
+        @TestMetadata("notRedundantBranch.kt")
+        public void testNotRedundantBranch() throws Exception {
+            runTest("testData/quickfix/when/notRedundantBranch.kt");
+        }
+
         @TestMetadata("removeRedundantBranch.kt")
         public void testRemoveRedundantBranch() throws Exception {
             runTest("testData/quickfix/when/removeRedundantBranch.kt");
+        }
+
+        @TestMetadata("removeRedundantCondition.kt")
+        public void testRemoveRedundantCondition() throws Exception {
+            runTest("testData/quickfix/when/removeRedundantCondition.kt");
         }
 
         @TestMetadata("removeRedundantElse.kt")

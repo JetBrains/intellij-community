@@ -205,6 +205,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
       myFixture.copyFileToProject("ExtensionsDependencies-content.subDescriptor.xml",
                                   "/ExtensionsDependencies-content/ExtensionsDependencies-content.subDescriptor.xml")
 
+    myFixture.addFileToProject("dummy-descriptor.xml","<idea-plugin></idea-plugin>")
     doHighlightingTest("ExtensionsDependencies.xml",
                        "ExtensionsDependencies-plugin.xml")
 

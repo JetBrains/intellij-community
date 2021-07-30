@@ -82,6 +82,8 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   private boolean myShowBrowserHover = true;
   private boolean myShowBrowserHoverXml = false;
   DefaultBrowserPolicy defaultBrowserPolicy = DefaultBrowserPolicy.SYSTEM;
+  ReloadMode webServerReloadMode = ReloadMode.RELOAD_ON_SAVE;
+  ReloadMode webPreviewReloadMode = ReloadMode.RELOAD_ON_CHANGE;
 
   public WebBrowserManager() {
     browsers = new ArrayList<>(getPredefinedBrowsers());
@@ -144,11 +146,27 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     return defaultBrowserPolicy;
   }
 
+  @NotNull
+  public ReloadMode getWebServerReloadMode() {
+    return webServerReloadMode;
+  }
+
+  @NotNull
+  public ReloadMode getWebPreviewReloadMode() {
+    return webPreviewReloadMode;
+  }
+
   @Override
   public Element getState() {
     Element state = new Element("state");
     if (defaultBrowserPolicy != DefaultBrowserPolicy.SYSTEM) {
       state.setAttribute("default", StringUtil.toLowerCase(defaultBrowserPolicy.name()));
+    }
+    if (webServerReloadMode != ReloadMode.RELOAD_ON_SAVE) {
+      state.setAttribute("serverReloadMode", StringUtil.toLowerCase(webServerReloadMode.name()));
+    }
+    if (webPreviewReloadMode != ReloadMode.RELOAD_ON_CHANGE) {
+      state.setAttribute("previewReloadMode", StringUtil.toLowerCase(webPreviewReloadMode.name()));
     }
     if (!myShowBrowserHover) {
       state.setAttribute("showHover", "false");
@@ -249,14 +267,22 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
 
   @Override
   public void loadState(@NotNull Element element) {
-    String defaultValue = element.getAttributeValue("default");
-    if (!StringUtil.isEmpty(defaultValue)) {
-      try {
-        defaultBrowserPolicy = DefaultBrowserPolicy.valueOf(StringUtil.toUpperCase(defaultValue));
+    try {
+      String defaultValue = element.getAttributeValue("default");
+      if (!StringUtil.isEmpty(defaultValue)) {
+          defaultBrowserPolicy = DefaultBrowserPolicy.valueOf(StringUtil.toUpperCase(defaultValue));
       }
-      catch (IllegalArgumentException e) {
-        LOG.warn(e);
+      String serverReload = element.getAttributeValue("serverReloadMode");
+      if (!StringUtil.isEmpty(serverReload)) {
+        webServerReloadMode = ReloadMode.valueOf(StringUtil.toUpperCase(serverReload));
       }
+      String previewReload = element.getAttributeValue("previewReloadMode");
+      if (!StringUtil.isEmpty(previewReload)) {
+        webPreviewReloadMode = ReloadMode.valueOf(StringUtil.toUpperCase(previewReload));
+      }
+    }
+    catch (IllegalArgumentException e) {
+      LOG.warn(e);
     }
 
     myShowBrowserHover = !"false".equals(element.getAttributeValue("showHover"));

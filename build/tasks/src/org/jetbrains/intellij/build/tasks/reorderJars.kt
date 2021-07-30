@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.tasks
 
 import com.intellij.util.lang.ImmutableZipEntry
@@ -10,8 +10,6 @@ import org.jetbrains.intellij.build.io.info
 import org.jetbrains.intellij.build.io.warn
 import java.io.InputStream
 import java.lang.System.Logger
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
@@ -31,14 +29,14 @@ fun main(args: Array<String>) {
               bootClassPathJarNames = listOf("bootstrap.jar", "util.jar", "jdom.jar", "log4j.jar", "jna.jar"),
               stageDir = Path.of(args[2]),
               antLibDir = null,
-              platformPrefix = "idea", logger = System.getLogger(""))
+              mainJarName = "idea.jar", logger = System.getLogger(""))
 }
 
 fun reorderJars(homeDir: Path,
                 targetDir: Path,
                 bootClassPathJarNames: Iterable<String>,
                 stageDir: Path,
-                platformPrefix: String,
+                mainJarName: String,
                 antLibDir: Path?,
                 logger: Logger) {
   val libDir = homeDir.resolve("lib")
@@ -50,10 +48,14 @@ fun reorderJars(homeDir: Path,
     else -> "linux"
   }
 
-  val sourceToNames = readClassLoadingLog(PackageIndexBuilder::class.java.classLoader.getResourceAsStream("$classifier/class-report.txt")!!, homeDir)
+  val sourceToNames = readClassLoadingLog(
+    classLoadingLog = PackageIndexBuilder::class.java.classLoader.getResourceAsStream("$classifier/class-report.txt")!!,
+    rootDir = homeDir,
+    mainJarName = mainJarName
+  )
   val coreClassLoaderFiles = computeAppClassPath(sourceToNames, libDir, antLibDir)
 
-  logger.log(Logger.Level.INFO, "Reordering *.jar files in $homeDir")
+  logger.info("Reordering *.jar files in $homeDir")
   doReorderJars(sourceToNames = sourceToNames, sourceDir = homeDir, targetDir = targetDir, logger = logger)
   val resultFile = libDir.resolve("classpath.txt")
   Files.writeString(resultFile, coreClassLoaderFiles.joinToString(separator = "\n") { libDir.relativize(it).toString() })
@@ -83,12 +85,15 @@ private inline fun addJarsFromDir(dir: Path, consumer: (Sequence<Path>) -> Unit)
   }
 }
 
-internal fun readClassLoadingLog(classLoadingLog: InputStream, rootDir: Path): Map<Path, List<String>> {
+internal fun readClassLoadingLog(classLoadingLog: InputStream, rootDir: Path, mainJarName: String): Map<Path, List<String>> {
   val sourceToNames = LinkedHashMap<Path, MutableList<String>>()
   classLoadingLog.bufferedReader().forEachLine {
     val data = it.split(':', limit = 2)
-    val source = rootDir.resolve(data[1])
-    sourceToNames.computeIfAbsent(source) { mutableListOf() }.add(data[0])
+    var sourcePath = data[1]
+    if (sourcePath == "lib/idea.jar") {
+      sourcePath = "lib/$mainJarName"
+    }
+    sourceToNames.computeIfAbsent(rootDir.resolve(sourcePath)) { mutableListOf() }.add(data[0])
   }
   return sourceToNames
 }
@@ -156,21 +161,13 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): 
       }
     })
 
-    packageIndexBuilder.add(entries)
-
     Files.createDirectories(tempJarFile.parent)
     FileChannel.open(tempJarFile, RW_CREATE_NEW).use { outChannel ->
       val zipCreator = ZipFileWriter(outChannel, deflater = null)
+      writeEntries(entries.iterator(), zipCreator, zipFile, packageIndexBuilder)
+      packageIndexBuilder.writeDirs(zipCreator)
       packageIndexBuilder.writePackageIndex(zipCreator)
-      writeEntries(entries, zipCreator, zipFile)
-      writeDirs(packageIndexBuilder.dirsToCreate, zipCreator)
-
-      val comment = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN)
-      comment.putInt(1759251304)
-      comment.putShort(orderedNames.size.toShort())
-      comment.flip()
-
-      zipCreator.finish(comment)
+      zipCreator.finish()
     }
   }
 
@@ -187,25 +184,17 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): 
   return PackageIndexEntry(path = resultJarFile, packageIndexBuilder.classPackageHashSet, packageIndexBuilder.resourcePackageHashSet)
 }
 
-internal fun writeDirs(dirsToCreate: Set<String>, zipCreator: ZipFileWriter) {
-  if (dirsToCreate.isEmpty()) {
-    return
-  }
-
-  val list = dirsToCreate.toMutableList()
-  list.sort()
-  for (name in list) {
-    // name in our ImmutableZipEntry doesn't have ending slash
-    zipCreator.addDirEntry(if (name.endsWith('/')) name else "$name/")
-  }
-}
-
-internal fun writeEntries(entries: List<ImmutableZipEntry>, zipCreator: ZipFileWriter, sourceZipFile: ImmutableZipFile) {
+internal fun writeEntries(entries: Iterator<ImmutableZipEntry>,
+                          zipCreator: ZipFileWriter,
+                          sourceZipFile: ImmutableZipFile,
+                          packageIndexBuilder: PackageIndexBuilder) {
   for (entry in entries) {
-    val name = entry.name
     if (entry.isDirectory) {
       continue
     }
+
+    val name = entry.name
+    packageIndexBuilder.addFile(name)
 
     // by intention not the whole original ZipArchiveEntry is copied,
     // but only name, method and size are copied - that's enough and should be enough

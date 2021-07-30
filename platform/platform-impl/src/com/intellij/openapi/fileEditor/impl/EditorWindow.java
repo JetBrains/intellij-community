@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
@@ -377,7 +376,7 @@ public final class EditorWindow {
   void updateFileBackgroundColor(@NotNull VirtualFile file) {
     int index = findFileEditorIndex(file);
     if (index != -1) {
-      Color color = EditorTabPresentationUtil.getEditorTabBackgroundColor(getManager().getProject(), file, this);
+      Color color = EditorTabPresentationUtil.getEditorTabBackgroundColor(getManager().getProject(), file);
       setBackgroundColorAt(index, color);
     }
   }
@@ -400,6 +399,11 @@ public final class EditorWindow {
 
   public void requestFocus(boolean forced) {
     myTabbedPane.requestFocus(forced);
+  }
+
+  public void toFront() {
+    Window window = UIUtil.getWindow(myTabbedPane.getComponent());
+    UIUtil.toFront(window);
   }
 
   protected static class TComp extends JPanel implements DataProvider, EditorWindowHolder {
@@ -600,7 +604,7 @@ public final class EditorWindow {
 
       Splitter splitter = new OnePixelSplitter(orientation == JSplitPane.VERTICAL_SPLIT, 0.5f, 0.1f, 0.9f);
       splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, Boolean.TRUE);
-      EditorWindow res = new EditorWindow(myOwner, myOwner.parentDisposable);
+      EditorWindow res = new EditorWindow(myOwner, myOwner);
       EditorWithProviderComposite selectedEditor = getSelectedEditor();
       panel.remove(myTabbedPane.getComponent());
       panel.add(splitter, BorderLayout.CENTER);
@@ -1044,7 +1048,7 @@ public final class EditorWindow {
     int index = findFileEditorIndex(file);
     if (index != -1) {
       setTitleAt(index, SlowOperations.allowSlowOperations(
-        () -> EditorTabPresentationUtil.getEditorTabTitle(getManager().getProject(), file, this)
+        () -> EditorTabPresentationUtil.getEditorTabTitle(getManager().getProject(), file)
       ));
       setToolTipTextAt(index, UISettings.getInstance().getShowTabsTooltips()
                               ? getManager().getFileTooltipText(file)

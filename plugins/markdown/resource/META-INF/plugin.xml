@@ -70,7 +70,7 @@ Includes the following features:</p>
     <multiHostInjector implementation="org.intellij.plugins.markdown.injection.CodeFenceInjector"/>
 
     <completion.contributor language="Markdown"
-                            implementationClass="org.intellij.plugins.markdown.injection.LanguageListCompletionContributor"/>
+                            implementationClass="org.intellij.plugins.markdown.editor.MarkdownCompletionContributor"/>
 
     <fileEditorProvider implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
 
@@ -159,11 +159,13 @@ Includes the following features:</p>
 
     <intentionAction>
       <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
-      <category>Markdown</category>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>org.intellij.plugins.markdown.editor.images.MarkdownConfigureImageIntention</className>
-      <category>Markdown</category>
+      <bundleName>messages.MarkdownBundle</bundleName>
+      <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
     <notificationGroup id="Markdown" displayType="BALLOON"/>
 

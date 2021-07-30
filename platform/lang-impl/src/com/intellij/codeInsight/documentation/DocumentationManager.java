@@ -15,6 +15,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.actions.WindowAction;
+import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
@@ -540,7 +541,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(element.getProject()) {
       @Override
       public void updatePopup(Object lookupItemObject) {
-        PsiElement psiElement = toPsi(lookupItemObject);
+        PsiElement psiElement = PSIPresentationBgRendererWrapper.toPsi(lookupItemObject);
         if (psiElement != null) {
           doShowJavaDocInfo(psiElement, requestFocus, this, original, null, null,
                             useStoredPopupSize, onAutoUpdate);
@@ -592,7 +593,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                             true, onAutoUpdate);
           return;
         }
-        PsiElement psiElement = toPsi(lookupItemObject);
+        PsiElement psiElement = PSIPresentationBgRendererWrapper.toPsi(lookupItemObject);
         if (psiElement != null) {
           doShowJavaDocInfo(psiElement, false, this, originalElement, closeCallback,
                             null, true, onAutoUpdate);
@@ -1124,6 +1125,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         else if (text.isEmpty()) {
           return null;
         }
+        else if (precalculatedDocumentation != null) {
+          return text; // text == precalculatedDocumentation in this case; don't decorate it
+        }
         else {
           return decorate(element, text, collector.effectiveUrl, provider);
         }
@@ -1262,12 +1266,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   public void navigateByLink(@NotNull DocumentationComponent component, @Nullable PsiElement context, @NotNull String url) {
     myPrecalculatedDocumentation = null;
     component.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-    PsiElement psiElement = context;
+    PsiElement psiElement = context != null ? context : component.getElement();
     if (psiElement == null) {
-      psiElement = component.getElement();
-      if (psiElement == null) {
-        return;
-      }
+      return;
     }
     PsiManager manager = PsiManager.getInstance(getProject(psiElement));
     if (url.equals("external_doc")) {
@@ -1296,11 +1297,18 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     }
     else if (url.startsWith(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL)) {
-      Pair<@NotNull PsiElement, @Nullable String> target = getTarget(psiElement, url);
-      if (target != null) {
-        cancelAndFetchDocInfoByLink(component,
-                                    new MyCollector(myProject, target.first, null, target.second, false, false));
-      }
+      ActionCallback callback = createActionCallback();
+      callback.doWhenProcessed(() -> component.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)));
+      ReadAction.nonBlocking(
+        () -> getTarget(psiElement, url)
+      ).finishOnUiThread(ModalityState.defaultModalityState(), target -> {
+        if (target == null) {
+          callback.setDone();
+          return;
+        }
+        cancelAndFetchDocInfoByLink(component, new MyCollector(myProject, target.first, null, target.second, callback, false, false));
+      }).submit(AppExecutorUtil.getAppExecutorService());
+      return;
     }
     else {
       DocumentationProvider provider = getProviderFromElement(psiElement);
@@ -1312,11 +1320,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           ExternalDocumentationHandler externalHandler = (ExternalDocumentationHandler)p;
           if (externalHandler.canFetchDocumentationLink(url)) {
             String ref = externalHandler.extractRefFromLink(url);
-            PsiElement finalPsiElement = psiElement;
-            cancelAndFetchDocInfoByLink(component, new DocumentationCollector(finalPsiElement, url, ref, p, false) {
+            cancelAndFetchDocInfoByLink(component, new DocumentationCollector(psiElement, url, ref, p, false) {
               @Override
               public String getDocumentation() {
-                return externalHandler.fetchExternalDocumentation(url, finalPsiElement);
+                return externalHandler.fetchExternalDocumentation(url, psiElement);
               }
             });
             processed = true;

@@ -1,5 +1,5 @@
 match x:
     case Class(
-    <caret>
+        <caret>
     ):
         pass

@@ -10,7 +10,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -233,7 +233,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
           fileAnnotation.reload(newFileAnnotation);
         }, myProject.getDisposed());
       },
-      ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
+      ProgressIndicatorBase.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
     );
 
     if (fileRevisions != null) {

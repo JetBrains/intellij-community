@@ -15,6 +15,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -37,12 +38,17 @@ internal class ModuleBridgeImpl(
       WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
         override fun beforeChanged(event: VersionedStorageChange) {
           event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
-            if (it.entity.persistentId() == moduleEntityId) {
-              val currentStore = entityStorage.current
-              val storage = if (currentStore is WorkspaceEntityStorageBuilder) currentStore.toStorage() else currentStore
-              entityStorage = VersionedEntityStorageOnStorage(storage)
-              assert(entityStorage.current.resolve(
-                moduleEntityId) != null) { "Cannot resolve module $moduleEntityId. Current store: $currentStore" }
+            if (it.entity.persistentId() != moduleEntityId) return@forEach
+
+            if (event.storageBefore.moduleMap.getDataByEntity(it.entity) != this@ModuleBridgeImpl) return@forEach
+
+            val currentStore = entityStorage.current
+            val storage = if (currentStore is WorkspaceEntityStorageBuilder) currentStore.toStorage() else currentStore
+            entityStorage = VersionedEntityStorageOnStorage(storage)
+            assert(entityStorage.current.resolve(moduleEntityId) != null) {
+              // If we ever get this assertion, replace use `event.storeBefore` instead of current
+              // As it made in ArtifactBridge
+              "Cannot resolve module $moduleEntityId. Current store: $currentStore"
             }
           }
         }
@@ -139,11 +145,13 @@ internal class ModuleBridgeImpl(
       }
     }
     else {
-      WriteAction.runAndWait<RuntimeException> {
-        WorkspaceModel.getInstance(project).updateProjectModel { builder ->
-          val entity = builder.findModuleEntity(this)
-          if (entity != null) {
-            updateOptionInEntity(builder, entity)
+      if (getOptionValue(key) != value) {
+        WriteAction.runAndWait<RuntimeException> {
+          WorkspaceModel.getInstance(project).updateProjectModel { builder ->
+            val entity = builder.findModuleEntity(this)
+            if (entity != null) {
+              updateOptionInEntity(builder, entity)
+            }
           }
         }
       }

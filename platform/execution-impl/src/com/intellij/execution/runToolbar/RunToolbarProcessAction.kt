@@ -8,11 +8,17 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.compound.SettingsAndEffectiveTarget
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import javax.swing.Icon
 
 open class RunToolbarProcessAction(override val process: RunToolbarProcess, val executor: Executor) : ExecutorRegistryImpl.ExecutorAction(executor), ExecutorRunToolbarAction, DumbAware {
 
   override fun displayTextInToolbar(): Boolean {
     return true
+  }
+
+  override fun getInformativeIcon(project: Project, selectedConfiguration: RunnerAndConfigurationSettings): Icon {
+    return executor.icon
   }
 
   override fun actionPerformed(e: AnActionEvent) {

@@ -137,6 +137,8 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     myActiveVcs = vcs;
     myVcsHistoryProvider = vcsHistoryProvider;
 
+    setIsDecorated(false);
+
     myComments = new JEditorPane(UIUtil.HTML_MIME, "");
     myComments.setPreferredSize(new JBDimension(150, 100));
     myComments.setEditable(false);

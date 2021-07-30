@@ -469,12 +469,16 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
 
         if (declaration is KtEnumEntry) {
             val enumClass = declaration.containingClass()?.takeIf { it.isEnum() }
-            if (enumClass != null
-                && ReferencesSearch.search(KotlinReferencesSearchParameters(enumClass, useScope)).any(::hasBuiltInEnumFunctionReference)
-            ) return true
+            if (hasBuiltInEnumFunctionReference(enumClass, useScope)) return true
         }
 
         return referenceUsed || checkPrivateDeclaration(declaration, descriptor)
+    }
+
+    private fun hasBuiltInEnumFunctionReference(enumClass: KtClass?, useScope: SearchScope): Boolean {
+        if (enumClass == null) return false
+        return enumClass.anyDescendantOfType(KtExpression::isReferenceToBuiltInEnumFunction) ||
+                ReferencesSearch.search(KotlinReferencesSearchParameters(enumClass, useScope)).any(::hasBuiltInEnumFunctionReference)
     }
 
     private fun hasBuiltInEnumFunctionReference(reference: PsiReference): Boolean {

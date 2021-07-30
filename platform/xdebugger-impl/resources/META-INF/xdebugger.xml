@@ -26,9 +26,6 @@
     <applicationService serviceInterface="com.intellij.xdebugger.XDebuggerUtil"
                         serviceImplementation="com.intellij.xdebugger.impl.XDebuggerUtilImpl"/>
 
-    <projectService serviceInterface="com.intellij.ui.XDebugSessionService"
-                    serviceImplementation="com.intellij.xdebugger.impl.ui.XDebugSessionServiceImpl"/>
-
     <projectService serviceInterface="com.intellij.xdebugger.XDebuggerManager"
                     serviceImplementation="com.intellij.xdebugger.impl.XDebuggerManagerImpl"
                     preload="notLightEdit"/>
@@ -97,12 +94,13 @@
       <separator text="Debug"/>
       <group id="RunToolbarDebugMoreActionSubGroupName"/>
       <reference ref="XDebugger.AttachGroup"/>
-      <add-to-group group-id="RunToolbarMoreActionGroup"/>
+      <add-to-group group-id="RunToolbarMainMoreActionGroup"/>
     </group>
 
     <group id="RunToolbarDebuggerAdditionalActions">
       <action id="RunToolbarResumeAction" class="com.intellij.xdebugger.impl.runToolbar.RunToolbarResumeAction" icon="AllIcons.Actions.Resume"/>
       <action id="RunToolbarPauseAction" class="com.intellij.xdebugger.impl.runToolbar.RunToolbarPauseAction" icon="AllIcons.Actions.Pause"/>
+      <!--<action id="RunToolbarHotSwapAction" class="com.intellij.debugger.actions.RunToolbarHotSwapAction" icon="com.intellij.icons.AllIcons.Actions.BuildAutoReloadChanges"/>-->
       <add-to-group group-id="RunToolbarAdditionalProcessActions"/>
     </group>
 

@@ -6,6 +6,8 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfiguratorSetting
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfiguratorSettingReference
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingReference
 import org.jetbrains.kotlin.tools.projectWizard.core.service.JvmTargetVersionsProviderService
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildFileIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
@@ -14,6 +16,7 @@ import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.*
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.maven.MavenPropertyIR
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
+import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.buildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.*
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
@@ -35,11 +38,53 @@ interface JvmModuleConfigurator : ModuleConfiguratorWithTests {
                 targetJvmVersion in jvmTargetVersions
             }
         }
+
+        val testFramework by enumSetting<KotlinTestFramework>(
+            KotlinNewProjectWizardBundle.message("module.configurator.tests.setting.framework"),
+            neededAtPhase = GenerationPhase.PROJECT_GENERATION
+        ) {
+            filter = filter@{ reference, kotlinTestFramework ->
+                val module = getModule(reference) ?: return@filter false
+                val configurator = module.configurator
+                when {
+                    kotlinTestFramework == KotlinTestFramework.NONE -> {
+                        val parent = module.parent
+                        module.kind != ModuleKind.target
+                                || parent == null
+                                || parentHasKotlinTestUnchecked(parent)
+                    }
+                    configurator == MppModuleConfigurator -> kotlinTestFramework == KotlinTestFramework.COMMON
+                    configurator is ModuleConfiguratorWithModuleType -> configurator.moduleType in kotlinTestFramework.moduleTypes
+                    else -> false
+                }
+            }
+            defaultValue = dynamic { reference ->
+                if (buildSystemType == BuildSystemType.Jps) return@dynamic KotlinTestFramework.NONE
+                val module = getModule(reference) ?: return@dynamic KotlinTestFramework.NONE
+                module.configurator.safeAs<ModuleConfiguratorWithTests>()?.defaultTestFramework()
+            }
+        }
+
+        private fun Reader.parentHasKotlinTestUnchecked(module: Module): Boolean =
+            settingValue(module, ModuleConfiguratorWithTests.useKotlinTest) == false
+
+        private fun getModule(reference: SettingReference<*, *>): Module? {
+            if (reference !is ModuleConfiguratorSettingReference<*, *>) return null
+            return reference.module
+        }
     }
 
     override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> = buildList {
-        +super.getConfiguratorSettings()
         +targetJvmVersion
+        +testFramework
+    }
+
+    override fun ModuleConfiguratorContext.getTestFramework(reader: Reader, module: Module): KotlinTestFramework {
+        return reader { testFramework.reference.settingValue }
+    }
+
+    override fun Reader.getTestFramework(module: Module): KotlinTestFramework {
+        return inContextOfModuleConfigurator(module) { testFramework.reference.settingValue }
     }
 }
 

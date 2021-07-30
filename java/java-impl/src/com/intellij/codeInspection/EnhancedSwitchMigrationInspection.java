@@ -3,13 +3,12 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
@@ -19,8 +18,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
+import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -139,7 +142,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     if (body == null) return null;
     List<OldSwitchStatementBranch> branches = extractBranches(body, switchStatement);
     if (branches == null || branches.isEmpty()) return null;
-    boolean isExhaustive = isExhaustiveSwitch(branches, expression);
+    boolean isExhaustive = isExhaustiveSwitch(branches, switchStatement);
     return runInspections(switchStatement, isExhaustive, branches);
   }
 
@@ -174,33 +177,18 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     return switchBlock;
   }
 
-  private static boolean isExhaustiveSwitch(List<OldSwitchStatementBranch> branches, PsiExpression expressionBeingSwitched) {
+  private static boolean isExhaustiveSwitch(List<OldSwitchStatementBranch> branches, PsiSwitchStatement switchStatement) {
     for (OldSwitchStatementBranch branch : branches) {
       if (branch.isDefault()) return true;
+      if (existsDefaultLabelElement(branch.myLabelStatement)) return true;
     }
-    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expressionBeingSwitched.getType());
-    if (aClass == null || !aClass.isEnum()) return false;
-    Set<String> names = StreamEx.of(aClass.getAllFields())
-      .select(PsiEnumConstant.class)
-      .map(PsiEnumConstant::getName)
-      .toSet();
-    for (OldSwitchStatementBranch branch : branches) {
-      for (PsiCaseLabelElement caseValue : branch.getCurrentBranchCaseLabelElements()) {
-        PsiReferenceExpression reference = tryCast(caseValue, PsiReferenceExpression.class);
-        if (reference != null) {
-          PsiEnumConstant enumConstant = tryCast(reference.resolve(), PsiEnumConstant.class);
-          if (enumConstant != null) {
-            names.remove(enumConstant.getName());
-          }
-        }
-      }
-    }
-    return names.isEmpty();
+    CompletenessResult completenessResult = PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness(switchStatement);
+    return completenessResult == CompletenessResult.COMPLETE_WITHOUT_TOTAL || completenessResult == CompletenessResult.COMPLETE_WITH_TOTAL;
   }
 
   private static boolean isConvertibleBranch(OldSwitchStatementBranch branch, boolean allowMultipleStatements) {
     int length = branch.getStatements().length;
-    if (length == 0) return branch.isFallthrough();
+    if (length == 0) return branch.isFallthrough() || branch.isDefault();
     if (branch.isFallthrough()) return false;
     if (allowMultipleStatements) return true;
     return length == 1;
@@ -420,12 +408,12 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     List<SwitchExpressionBranch> newBranches = new ArrayList<>();
     boolean hasAssignedBranch = false;
     boolean wasDefault = false;
-    boolean existsTotalPatternInBranch = false;
     for (OldSwitchStatementBranch branch : branches) {
       if (!isConvertibleBranch(branch, false)) return null;
-      if (branch.isFallthrough() && branch.getStatements().length == 0) continue;
+      PsiStatement[] statements = branch.getStatements();
+      if (branch.isFallthrough() && statements.length == 0) continue;
       // Only single statement branches are convertible now
-      PsiStatement first = branch.getStatements()[0];
+      PsiStatement first = statements.length > 0 ? statements[0] : null;
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(first);
       PsiExpression rExpression = null;
       if (assignment != null) {
@@ -454,18 +442,15 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       else {
         wasDefault = existsDefaultLabelElement(branch.myLabelStatement);
       }
-      if (!wasDefault && !existsTotalPatternInBranch) {
-        existsTotalPatternInBranch = existsTotalPatternInBranch(branch.myLabelStatement);
-      }
       newBranches.add(new SwitchExpressionBranch(isDefault, branch.getCaseLabelElements(), result, branch.getRelatedStatements()));
     }
     if (assignedVariable == null || !hasAssignedBranch) return null;
     boolean isRightAfterDeclaration = isRightAfterDeclaration(anchor, assignedVariable);
-    if (!wasDefault && !existsTotalPatternInBranch) {
+    if (!wasDefault && !isExhaustive) {
       SwitchExpressionBranch defaultBranch = getVariableAssigningDefaultBranch(assignedVariable, isRightAfterDeclaration, statement);
       if (defaultBranch != null) {
         newBranches.add(defaultBranch);
-      } else if (!isExhaustive) {
+      } else {
         return null;
       }
     }
@@ -476,23 +461,6 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     PsiCaseLabelElementList labelElementList = statement.getCaseLabelElementList();
     if (labelElementList == null) return false;
     return ContainerUtil.exists(labelElementList.getElements(), el -> el instanceof PsiDefaultCaseLabelElement);
-  }
-
-  private static boolean existsTotalPatternInBranch(@NotNull PsiSwitchLabelStatement statement) {
-    PsiCaseLabelElementList labelElementList = statement.getCaseLabelElementList();
-    if (labelElementList == null) return false;
-    PsiSwitchBlock switchBlock = statement.getEnclosingSwitchBlock();
-    if (switchBlock == null) return false;
-    PsiExpression selectorExpr = switchBlock.getExpression();
-    if (selectorExpr == null) return false;
-    PsiType selectorType = selectorExpr.getType();
-    if (selectorType == null) return false;
-    for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
-      if (labelElement instanceof PsiPattern) {
-        if (JavaPsiPatternUtil.isTotalForType((PsiPattern)labelElement, selectorType)) return true;
-      }
-    }
-    return false;
   }
 
   @Nullable

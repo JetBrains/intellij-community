@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
@@ -314,5 +314,13 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
   public int getElementPriority(@NotNull Object element,
                                 @NotNull String searchPattern) {
     return myDelegate.getElementPriority(getItem(element), searchPattern);
+  }
+
+  @Nullable
+  public static PsiElement toPsi(Object o) {
+    if (o instanceof PsiElement) return (PsiElement)o;
+    if (o instanceof PsiItemWithPresentation) return ((PsiItemWithPresentation)o).getItem();
+
+    return null;
   }
 }

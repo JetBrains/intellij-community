@@ -1,14 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.*;
-import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
-import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
-import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
@@ -19,11 +16,16 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsActions.ActionText;
@@ -48,6 +50,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.InvokerSupplier;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EmptyIcon;
@@ -76,6 +81,8 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
+
+import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.*;
 
 public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject {
   private static final Logger LOG = Logger.getInstance(AbstractProjectViewPane.class);
@@ -325,6 +332,29 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   public void addToolbarActions(@NotNull DefaultActionGroup actionGroup) {
   }
 
+  /**
+   * @return array of user objects from {@link TreePath#getLastPathComponent() last components} of the selected paths in the tree
+   */
+  @RequiresEdt
+  public final @Nullable Object @NotNull [] getSelectedUserObjects() {
+    TreePath[] paths = getSelectionPaths();
+    return paths == null
+           ? ArrayUtil.EMPTY_OBJECT_ARRAY
+           : ArrayUtil.toObjectArray(ContainerUtil.map(paths, TreeUtil::getLastUserObject));
+  }
+
+  /**
+   * @return array of user objects from single selected path in the tree,
+   * or {@code null} if there is no selection or more than 1 path is selected
+   */
+  @RequiresEdt
+  public final @Nullable Object @Nullable [] getSingleSelectedPathUserObjects() {
+    TreePath singlePath = getSelectedPath();
+    return singlePath == null
+           ? null
+           : ArrayUtil.toObjectArray(ContainerUtil.map(singlePath.getPath(), TreeUtil::getUserObject));
+  }
+
   @NotNull
   protected <T extends NodeDescriptor<?>> List<T> getSelectedNodes(@NotNull Class<T> nodeClass) {
     TreePath[] paths = getSelectionPaths();
@@ -353,15 +383,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   @Override
   public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) return getTreeExpander();
-
-    if (myTreeStructure instanceof AbstractTreeStructureBase) {
-      @SuppressWarnings("unchecked")
-      List<AbstractTreeNode<?>> nodes = (List)getSelectedNodes(AbstractTreeNode.class);
-      Object data = ((AbstractTreeStructureBase)myTreeStructure).getDataFromProviders(nodes, dataId);
-      if (data != null) {
-        return data;
-      }
-    }
 
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       TreePath[] paths = getSelectionPaths();
@@ -411,6 +432,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return elements.length == 1 ? elements[0] : null;
   }
 
+  /**
+   * @deprecated use {@link #getSelectedUserObjects()} and {@link #getElementsFromNode(Object)}
+   */
+  @Deprecated
   public final PsiElement @NotNull [] getSelectedPSIElements() {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return PsiElement.EMPTY_ARRAY;
@@ -419,6 +444,135 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       result.addAll(getElementsFromNode(path.getLastPathComponent()));
     }
     return PsiUtilCore.toPsiElementArray(result);
+  }
+
+  @RequiresEdt
+  public final @Nullable DataProvider selectionProvider() {
+    Object[] selectedUserObjects = getSelectedUserObjects();
+    if (selectedUserObjects.length == 0) {
+      return null;
+    }
+    Object[] singleSelectedPathUserObjects = getSingleSelectedPathUserObjects();
+    return dataId -> getDataFromSelection(selectedUserObjects, singleSelectedPathUserObjects, dataId);
+  }
+
+  @RequiresReadLock(generateAssertion = false)
+  @RequiresBackgroundThread(generateAssertion = false)
+  private @Nullable Object getDataFromSelection(
+    @Nullable Object @NotNull [] selectedUserObjects,
+    @Nullable Object @Nullable [] singleSelectedPathUserObjects,
+    @NotNull String dataId
+  ) {
+    Object treeStructureData = getFromTreeStructure(selectedUserObjects, dataId);
+    if (treeStructureData != null) {
+      return treeStructureData;
+    }
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      final PsiElement[] elements = getPsiElements(selectedUserObjects);
+      return elements.length == 1 ? elements[0] : null;
+    }
+    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      PsiElement[] elements = getPsiElements(selectedUserObjects);
+      return elements.length > 0 ? elements : null;
+    }
+    if (PlatformDataKeys.PROJECT_CONTEXT.is(dataId)) {
+      Object selected = getSingleNodeElement(selectedUserObjects);
+      return selected instanceof Project ? selected : null;
+    }
+    if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
+      Object selected = getSingleNodeElement(selectedUserObjects);
+      return moduleContext(myProject, selected);
+    }
+    if (LangDataKeys.MODULE_CONTEXT_ARRAY.is(dataId)) {
+      return getSelectedModules(selectedUserObjects);
+    }
+    if (ProjectView.UNLOADED_MODULES_CONTEXT_KEY.is(dataId)) {
+      return Collections.unmodifiableList(getSelectedUnloadedModules(selectedUserObjects));
+    }
+    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+      Module[] modules = getSelectedModules(selectedUserObjects);
+      if (modules != null || !getSelectedUnloadedModules(selectedUserObjects).isEmpty()) {
+        return ModuleDeleteProvider.getInstance();
+      }
+      LibraryOrderEntry orderEntry = getSelectedLibrary(singleSelectedPathUserObjects);
+      if (orderEntry != null) {
+        return new DetachLibraryDeleteProvider(myProject, orderEntry);
+      }
+      return myDeletePSIElementProvider;
+    }
+    if (ModuleGroup.ARRAY_DATA_KEY.is(dataId)) {
+      final List<ModuleGroup> selectedElements = getSelectedValues(selectedUserObjects, ModuleGroup.class);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new ModuleGroup[0]);
+    }
+    if (LibraryGroupElement.ARRAY_DATA_KEY.is(dataId)) {
+      final List<LibraryGroupElement> selectedElements = getSelectedValues(selectedUserObjects, LibraryGroupElement.class);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new LibraryGroupElement[0]);
+    }
+    if (NamedLibraryElement.ARRAY_DATA_KEY.is(dataId)) {
+      final List<NamedLibraryElement> selectedElements = getSelectedValues(selectedUserObjects, NamedLibraryElement.class);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[0]);
+    }
+    if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
+      return getSelectedValues(selectedUserObjects);
+    }
+    return null;
+  }
+
+  private @Nullable Object getFromTreeStructure(@Nullable Object @NotNull [] selectedUserObjects, @NotNull String dataId) {
+    if (!(myTreeStructure instanceof AbstractTreeStructureBase)) {
+      return null;
+    }
+    List<AbstractTreeNode<?>> nodes = new ArrayList<>(selectedUserObjects.length);
+    for (Object userObject : selectedUserObjects) {
+      if (userObject instanceof AbstractTreeNode) {
+        nodes.add((AbstractTreeNode<?>)userObject);
+      }
+    }
+    return ((AbstractTreeStructureBase)myTreeStructure).getDataFromProviders(nodes, dataId);
+  }
+
+  @RequiresReadLock(generateAssertion = false)
+  @RequiresBackgroundThread(generateAssertion = false)
+  private @NotNull PsiElement @NotNull [] getPsiElements(@Nullable Object @NotNull [] selectedUserObjects) {
+    List<PsiElement> result = new ArrayList<>();
+    for (Object userObject : selectedUserObjects) {
+      ContainerUtil.addAllNotNull(result, getElementsFromNode(userObject));
+    }
+    return PsiUtilCore.toPsiElementArray(result);
+  }
+
+  private static @Nullable Object getSingleNodeElement(@Nullable Object @NotNull [] selectedUserObjects) {
+    if (selectedUserObjects.length != 1) {
+      return null;
+    }
+    return getNodeElement(selectedUserObjects[0]);
+  }
+
+  private @NotNull Module @Nullable [] getSelectedModules(@Nullable Object @NotNull [] selectedUserObjects) {
+    List<Module> result = moduleContexts(myProject, getSelectedValues(selectedUserObjects));
+    return result.isEmpty() ? null : result.toArray(Module.EMPTY_ARRAY);
+  }
+
+  private @NotNull List<@NotNull UnloadedModuleDescription> getSelectedUnloadedModules(@Nullable Object @NotNull [] selectedUserObjects) {
+    return unloadedModules(myProject, getSelectedValues(selectedUserObjects));
+  }
+
+  private <T> @NotNull List<@NotNull T> getSelectedValues(@Nullable Object @NotNull [] selectedUserObjects, @NotNull Class<T> aClass) {
+    return ContainerUtil.filterIsInstance(getSelectedValues(selectedUserObjects), aClass);
+  }
+
+  public final @Nullable Object @NotNull [] getSelectedValues(@Nullable Object @NotNull [] selectedUserObjects) {
+    List<Object> result = new ArrayList<>(selectedUserObjects.length);
+    for (Object userObject : selectedUserObjects) {
+      Object valueFromNode = getValueFromNode(userObject);
+      if (valueFromNode instanceof Object[]) {
+        Collections.addAll(result, (Object[])valueFromNode);
+      }
+      else {
+        result.add(valueFromNode);
+      }
+    }
+    return ArrayUtil.toObjectArray(result);
   }
 
   private @Nullable PsiElement getFirstElementFromNode(@Nullable Object node) {
@@ -448,6 +602,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return null;
   }
 
+  /**
+   * @deprecated use {@link #getSelectedUserObjects()} and {@link #getSelectedValues(Object[])}
+   */
+  @Deprecated
   public final Object @NotNull [] getSelectedElements() {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return PsiElement.EMPTY_ARRAY;
@@ -834,6 +992,15 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return true;
   }
 
+  @NotNull
+   private static Color getFileForegroundColor(@NotNull Project project, @NotNull VirtualFile file) {
+    FileEditorManager manager = FileEditorManager.getInstance(project);
+    if (manager instanceof FileEditorManagerImpl) {
+      return ((FileEditorManagerImpl)manager).getFileColor(file);
+    }
+    return UIUtil.getLabelForeground();
+  }
+
   private final class MyDragSource implements DnDSource {
     @Override
     public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
@@ -927,8 +1094,8 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       setFont(UIUtil.getTreeFont());
       setOpaque(true);
       if (file != null) {
-        setBackground(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file, null));
-        setForeground(EditorTabPresentationUtil.getFileForegroundColor(myProject, file));
+        setBackground(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file));
+        setForeground(getFileForegroundColor(myProject, file));
       } else {
         setForeground(RenderingUtil.getForeground(getTree(), true));
         setBackground(RenderingUtil.getBackground(getTree(), true));
@@ -997,6 +1164,20 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   AsyncProjectViewSupport getAsyncSupport() {
     return null;
   }
+
+  private final DeleteProvider myDeletePSIElementProvider = new ProjectViewDeleteElementProvider() {
+
+    @Override
+    protected PsiElement @NotNull [] getSelectedPSIElements(@NotNull DataContext dataContext) {
+      return AbstractProjectViewPane.this.getSelectedPSIElements();
+    }
+
+    @Override
+    protected Boolean hideEmptyMiddlePackages(@NotNull DataContext dataContext) {
+      Project project = dataContext.getData(CommonDataKeys.PROJECT);
+      return project != null && ProjectView.getInstance(project).isHideEmptyMiddlePackages(AbstractProjectViewPane.this.getId());
+    }
+  };
 
   @NotNull
   static List<TreeVisitor> createVisitors(Object @NotNull ... objects) {

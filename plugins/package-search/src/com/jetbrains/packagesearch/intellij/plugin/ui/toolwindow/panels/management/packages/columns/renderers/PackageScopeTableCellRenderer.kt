@@ -5,7 +5,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBComboBoxLabel
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ScopeViewModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.colors
 import net.miginfocom.swing.MigLayout
 import javax.swing.JPanel
@@ -24,7 +24,7 @@ internal object PackageScopeTableCellRenderer : TableCellRenderer {
     ) = JPanel(MigLayout("al left center, insets 0 8 0 0")).apply {
         table.colors.applyTo(this, isSelected)
 
-        val bgColor = if (!isSelected && value is ScopeViewModel.InstallablePackage) {
+        val bgColor = if (!isSelected && value is UiPackageModel.SearchResult) {
             PackageSearchUI.ListRowHighlightBackground
         } else {
             background
@@ -38,8 +38,8 @@ internal object PackageScopeTableCellRenderer : TableCellRenderer {
             icon = AllIcons.General.LinkDropTriangle
 
             text = when (value) {
-                is ScopeViewModel.InstalledPackage -> scopesMessage(value.installedScopes, value.defaultScope)
-                is ScopeViewModel.InstallablePackage -> value.selectedScope.displayName
+                is UiPackageModel.Installed -> scopesMessage(value.declaredScopes, value.defaultScope)
+                is UiPackageModel.SearchResult -> value.selectedScope.displayName
                 else -> throw IllegalArgumentException("The value is expected to be a ScopeViewModel, but wasn't.")
             }
         }

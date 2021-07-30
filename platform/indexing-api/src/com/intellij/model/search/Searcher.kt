@@ -2,6 +2,8 @@
 package com.intellij.model.search
 
 import com.intellij.util.Query
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.ApiStatus.OverrideOnly
 
 /**
  * Example:
@@ -19,7 +21,31 @@ import com.intellij.util.Query
 interface Searcher<P : SearchParameters<R>, R : Any> {
 
   /**
-   * @return read-only collection of queries to be executed when the search is run with `parameters`
+   * @return read-only collection of results, which can be obtained from [parameters],
+   * meaning they don't require indexes or otherwise long-running computations
    */
-  fun collectSearchRequests(parameters: P): Collection<@JvmWildcard Query<out R>>
+  @RequiresReadLock
+  fun collectImmediateResults(parameters: P): Collection<@JvmWildcard R> {
+    return emptyList()
+  }
+
+  /**
+   * @return read-only collection of queries to be executed when the search is run with [parameters]
+   * @see collectSearchRequest
+   */
+  @RequiresReadLock
+  fun collectSearchRequests(parameters: P): Collection<@JvmWildcard Query<out R>> {
+    return listOfNotNull(collectSearchRequest(parameters))
+  }
+
+  /**
+   * This function exists for convenience of a searcher implementation which yields zero (`null`) or one additional query.
+   *
+   * @return query to be executed when the search is run with [parameters]
+   */
+  @OverrideOnly
+  @RequiresReadLock
+  fun collectSearchRequest(parameters: P): Query<out R>? {
+    return null
+  }
 }

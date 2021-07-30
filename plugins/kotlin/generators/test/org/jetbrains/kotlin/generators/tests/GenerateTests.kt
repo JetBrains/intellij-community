@@ -59,7 +59,6 @@ import org.jetbrains.kotlin.idea.editor.AbstractMultiLineStringIndentTest
 import org.jetbrains.kotlin.idea.editor.backspaceHandler.AbstractBackspaceHandlerTest
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
-import org.jetbrains.kotlin.idea.filters.AbstractKotlinExceptionFilterTest
 import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyWithLibTest
@@ -260,6 +259,22 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractClassNameCalculatorTest> {
             model("classNameCalculator")
+        }
+
+        testClass<AbstractKotlinExceptionFilterTest> {
+            model("exceptionFilter", pattern = """^([^\.]+)$""".toRegex(), isRecursive = false)
+        }
+    }
+
+    testGroup("copyright/tests") {
+        testClass<AbstractUpdateKotlinCopyrightTest> {
+            model("update", pattern = KT_OR_KTS, testMethodName = "doTest")
+        }
+    }
+
+    testGroup("coverage/tests") {
+        testClass<AbstractKotlinCoverageOutputFilesTest> {
+            model("outputFiles")
         }
     }
 
@@ -697,10 +712,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("copyPaste/moveDeclarations", pattern = KT_WITHOUT_DOTS, testMethodName = "doTest")
         }
 
-        testClass<AbstractUpdateKotlinCopyrightTest> {
-            model("copyright", pattern = KT_OR_KTS, testMethodName = "doTest")
-        }
-
         testClass<AbstractHighlightExitPointsTest> {
             model("exitPoints")
         }
@@ -781,10 +792,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("editor/optimizeImports/common", pattern = KT_WITHOUT_DOTS)
         }
 
-        testClass<AbstractKotlinExceptionFilterTest> {
-            model("debugger/exceptionFilter", pattern = """^([^\.]+)$""".toRegex(), isRecursive = false)
-        }
-
         testClass<AbstractStubBuilderTest> {
             model("stubs", pattern = KT)
         }
@@ -840,10 +847,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("refactoring/pushDown/k2k", pattern = KT, flatten = true, testClassName = "K2K", testMethodName = "doKotlinTest")
             model("refactoring/pushDown/k2j", pattern = KT, flatten = true, testClassName = "K2J", testMethodName = "doKotlinTest")
             model("refactoring/pushDown/j2k", pattern = JAVA, flatten = true, testClassName = "J2K", testMethodName = "doJavaTest")
-        }
-
-        testClass<AbstractKotlinCoverageOutputFilesTest> {
-            model("coverage/outputFiles")
         }
 
         testClass<AbstractBytecodeToolWindowTest> {
@@ -1144,7 +1147,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("gradle/gradle-idea", testDataPath = "../../idea/tests/testData") {
+    testGroup("gradle/gradle-idea/tests", testDataPath = "../../../idea/tests/testData") {
         testClass<AbstractGradleConfigureProjectByChangingFileTest> {
             model("configuration/gradle", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestGradle")
             model("configuration/gsk", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestGradle")
@@ -1289,7 +1292,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("project-wizard/idea", testDataPath = "../cli/testData") {
+    testGroup("project-wizard/tests", testDataPath = "../cli/testData") {
         fun MutableTSuite.allBuildSystemTests(relativeRootPath: String) {
             for (testClass in listOf("GradleKts", "GradleGroovy", "Maven")) {
                 model(

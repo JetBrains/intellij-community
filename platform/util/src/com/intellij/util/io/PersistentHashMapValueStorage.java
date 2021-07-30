@@ -57,7 +57,7 @@ public final class PersistentHashMapValueStorage {
     private final boolean myReadOnly;
     private final boolean myCompactChunksWithValueDeserialization;
     private final boolean myHasNoChunks;
-    private final boolean myDoCompression;
+    private final boolean myUseCompression;
 
     private CreationTimeOptions(@NotNull IOCancellationCallback callback,
                                 boolean readOnly,
@@ -68,15 +68,19 @@ public final class PersistentHashMapValueStorage {
       myReadOnly = readOnly;
       myCompactChunksWithValueDeserialization = compactChunksWithValueDeserialization;
       myHasNoChunks = hasNoChunks;
-      myDoCompression = doCompression;
+      myUseCompression = doCompression;
     }
 
     int getVersion() {
-      return (myHasNoChunks ? 10 : 0) * 31 + (myDoCompression ? 0x13 : 0);
+      return (myHasNoChunks ? 10 : 0) * 31 + (myUseCompression ? 0x13 : 0);
     }
 
     boolean isReadOnly() {
       return myReadOnly;
+    }
+
+    boolean useCompression() {
+      return myUseCompression;
     }
 
     @NotNull
@@ -86,7 +90,7 @@ public final class PersistentHashMapValueStorage {
         true,
         myCompactChunksWithValueDeserialization,
         myHasNoChunks,
-        myDoCompression
+        myUseCompression
       );
     }
 
@@ -157,7 +161,7 @@ public final class PersistentHashMapValueStorage {
     myPath = path;
     myOptions = options;
 
-    if (myOptions.myDoCompression) {
+    if (myOptions.useCompression()) {
       myCompressedAppendableFile = new MyCompressedAppendableFile();
       mySize = myCompressedAppendableFile.length();
     }

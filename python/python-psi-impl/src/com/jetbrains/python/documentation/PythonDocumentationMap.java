@@ -82,17 +82,10 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     myState = state;
 
     addAbsentEntriesFromDefaultState(myState);
-    removeEntriesThatHandledSpecially(myState);
-  }
-
-  private static void removeEntriesThatHandledSpecially(@NotNull State state) {
-    ArrayList<String> strings = Lists.newArrayList("django", "numpy", "scipy");
-    // those packages are handled by implementations of PythonDocumentationLinkProvider
-    state.setEntries(Maps.filterEntries(state.getEntries(), entry -> entry != null && !strings.contains(entry.getKey())));
   }
 
   private static void addAbsentEntriesFromDefaultState(@NotNull State state) {
-    state.getEntries().putAll(DEFAULT_ENTRIES);
+    DEFAULT_ENTRIES.forEach((key, value) -> state.getEntries().putIfAbsent(key, value));
   }
 
   public Map<String, String> getEntries() {

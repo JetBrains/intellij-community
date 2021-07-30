@@ -11,6 +11,9 @@
     <extensionPoint qualifiedName="com.intellij.structuralsearch.filterProvider"
                     interface="com.intellij.structuralsearch.plugin.ui.filters.FilterProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.structuralsearch.specialXmlTagExtractor"
+                    interface="com.intellij.structuralsearch.SpecialElementExtractor"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

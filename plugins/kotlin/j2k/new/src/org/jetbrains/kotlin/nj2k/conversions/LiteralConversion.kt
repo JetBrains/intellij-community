@@ -69,6 +69,7 @@ class LiteralConversion(context: NewJ2kConverterContext) : RecursiveApplicableCo
                 String.format("%s\\u%04x", leadingBackslashes, Integer.parseInt(matchResult.groupValues[2], 8))
             else matchResult.value
         }.replace("""(?<!\\)\$([A-Za-z]+|\{)""".toRegex(), "\\\\$0")
+            .replace( "\\f", "\\u000c")
 
 
     private fun JKLiteralExpression.convertCharLiteral() =

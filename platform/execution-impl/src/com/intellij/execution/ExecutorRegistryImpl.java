@@ -312,7 +312,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       presentation.setText(text);
     }
 
-    private Icon getInformativeIcon(@NotNull Project project, @NotNull RunnerAndConfigurationSettings selectedConfiguration) {
+    protected Icon getInformativeIcon(@NotNull Project project, @NotNull RunnerAndConfigurationSettings selectedConfiguration) {
       ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
       RunConfiguration configuration = selectedConfiguration.getConfiguration();
       if (configuration instanceof RunnerIconProvider) {

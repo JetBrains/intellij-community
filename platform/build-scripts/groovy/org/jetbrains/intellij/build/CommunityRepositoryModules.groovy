@@ -106,7 +106,7 @@ final class CommunityRepositoryModules {
       withModule("intellij.gradle.toolingExtension", "gradle-tooling-extension-api.jar")
       withModule("intellij.gradle.toolingExtension.impl", "gradle-tooling-extension-impl.jar")
       withModule("intellij.gradle.toolingProxy")
-      withProjectLibrary("Gradle")
+      withProjectLibrary("Gradle", "", true)
     },
     plugin("intellij.packageSearch"),
     plugin("intellij.externalSystem.dependencyUpdater"),
@@ -143,6 +143,8 @@ final class CommunityRepositoryModules {
     },
     plugin("intellij.java.coverage") {
       withModule("intellij.java.coverage.rt")
+      // explicitly pack JaCoCo as a separate JAR
+      withModuleLibrary("JaCoCo", "intellij.java.coverage", "jacoco.jar")
     },
     plugin("intellij.java.decompiler") {
       directoryName = "java-decompiler"
@@ -164,9 +166,8 @@ final class CommunityRepositoryModules {
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
     // required for android plugin
-    plugin("intellij.android.smali") {
-      withModule("intellij.android.smali")
-    },
+    plugin("intellij.android.androidCwm"),
+    plugin("intellij.android.smali"),
     plugin("intellij.completionMlRanking"),
     plugin("intellij.completionMlRankingModels") {
       bundlingRestrictions.includeInEapOnly = true

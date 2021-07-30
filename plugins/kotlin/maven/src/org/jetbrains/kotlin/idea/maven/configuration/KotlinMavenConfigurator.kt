@@ -47,7 +47,7 @@ protected constructor(
 
     override fun getStatus(moduleSourceRootGroup: ModuleSourceRootGroup): ConfigureKotlinStatus {
         val module = moduleSourceRootGroup.baseModule
-        if (module.getBuildSystemType() != Maven)
+        if (module.getBuildSystemType() != BuildSystemType.Maven)
             return ConfigureKotlinStatus.NON_APPLICABLE
 
         val psi = runReadAction { findModulePomFile(module) }

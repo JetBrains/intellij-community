@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -14,7 +13,7 @@ import com.intellij.execution.testframework.*;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -71,7 +70,7 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction implements
     e.getPresentation().setEnabled(isActive(e));
   }
 
-  private boolean isActive(@NotNull AnActionEvent e) {
+  public boolean isActive(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) {
       return false;
@@ -82,12 +81,8 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction implements
       return false;
     }
 
-    ExecutionEnvironment environment = e.getData(LangDataKeys.EXECUTION_ENVIRONMENT);
-    if (environment == null) {
-      return false;
-    }
-    RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
-    if (settings != null && !settings.getType().isDumbAware() && DumbService.isDumb(project)) {
+    RunProfile profile = model.getProperties().getConfiguration();
+    if (profile instanceof RunConfiguration && !((RunConfiguration)profile).getType().isDumbAware() && DumbService.isDumb(project)) {
       return false;
     }
 
@@ -128,7 +123,7 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction implements
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    ExecutionEnvironment environment = e.getData(LangDataKeys.EXECUTION_ENVIRONMENT);
+    ExecutionEnvironment environment = e.getData(ExecutionDataKeys.EXECUTION_ENVIRONMENT);
     if (environment == null) {
       return;
     }

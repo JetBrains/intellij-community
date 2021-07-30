@@ -32,6 +32,9 @@
     <editor.backspaceModeOverride language="yaml" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>
     <lang.psiStructureViewFactory language="yaml" implementationClass="org.jetbrains.yaml.structureView.YAMLStructureViewFactory"/>
     <langCodeStyleSettingsProvider implementation="org.jetbrains.yaml.YAMLLanguageCodeStyleSettingsProvider"/>
+    <lang.whiteSpaceFormattingStrategy language="yaml"
+                                       implementationClass="org.jetbrains.yaml.formatter.YamlWhiteSpaceFormattingStrategy"/>
+    <stripTrailingSpacesFilterFactory implementation="org.jetbrains.yaml.formatter.YamlStripTrailingSpacesFilterFactory"/>
     <qualifiedNameProvider implementation="org.jetbrains.yaml.navigation.YAMLQualifiedNameProvider"/>
     <pom.declarationSearcher implementation="org.jetbrains.yaml.navigation.YAMLScalarKeyDeclarationSearcher"/>
     <fileBasedIndex implementation="org.jetbrains.yaml.navigation.YAMLKeysIndex"/>

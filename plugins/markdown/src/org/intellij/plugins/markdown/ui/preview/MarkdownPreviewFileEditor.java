@@ -284,7 +284,7 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
         String currentHtml = "<html><head></head>" + html + "</html>";
         if (!currentHtml.equals(myLastRenderedHtml)) {
           myLastRenderedHtml = currentHtml;
-          myPanel.setHtml(myLastRenderedHtml, mainEditor.getCaretModel().getOffset());
+          myPanel.setHtml(myLastRenderedHtml, mainEditor.getCaretModel().getOffset(), myFile.toNioPath().getParent());
         }
 
         synchronized (REQUESTS_LOCK) {

@@ -668,7 +668,8 @@
       <reference id="RunToolbarProcessActionGroup"/>
       <reference id="RunToolbarStopAction"/>
       <action id="RunToolbarMainMultipleStopAction" class="com.intellij.execution.runToolbar.RunToolbarMainMultipleStopAction" icon="AllIcons.Actions.Suspend"/>
-      <reference id="RunToolbarMoreActionGroup"/>
+      <group id="RunToolbarMainMoreActionGroup" icon="AllIcons.Actions.More" popup="true" class="com.intellij.execution.runToolbar.RunToolbarMoreActionGroup"/>
+
     </group>
 
     <group id="ProjectViewPopupMenuRefactoringGroup" compact="true">

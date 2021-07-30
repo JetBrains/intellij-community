@@ -435,13 +435,15 @@ idea.fatal.error.notification=disabled
   }
 
   private DistributionJARsBuilder compilePlatformAndPluginModules(@NotNull Set<PluginLayout> pluginsToPublish) {
-    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, "$buildContext.applicationInfo", pluginsToPublish)
-    compileModules(distributionJARsBuilder.getModulesForPluginsToPublish())
+    DistributionJARsBuilder distBuilder = new DistributionJARsBuilder(buildContext, pluginsToPublish)
+    compileModules(distBuilder.getModulesForPluginsToPublish())
 
-    //we need this to ensure that all libraries which may be used in the distribution are resolved, even if product modules don't depend on them (e.g. JUnit5)
-    CompilationTasks.create(buildContext).resolveProjectDependencies()
-    CompilationTasks.create(buildContext).buildProjectArtifacts(distributionJARsBuilder.includedProjectArtifacts)
-    return distributionJARsBuilder
+    // we need this to ensure that all libraries which may be used in the distribution are resolved,
+    // even if product modules don't depend on them (e.g. JUnit5)
+    CompilationTasks compilationTasks = CompilationTasks.create(buildContext)
+    compilationTasks.resolveProjectDependencies()
+    compilationTasks.buildProjectArtifacts(distBuilder.includedProjectArtifacts)
+    return distBuilder
   }
 
   @Override
@@ -483,11 +485,11 @@ idea.fatal.error.notification=disabled
            distributionJARsBuilder.buildJARs()
            DistributionJARsBuilder.buildAdditionalArtifacts(buildContext, distributionJARsBuilder.projectStructureMapping)
            scramble(buildContext)
-           DistributionJARsBuilder.reorderJars(buildContext)
+           reorderJars(buildContext)
          }
          else {
            buildContext.messages.info("Skipped building product distributions because 'intellij.build.target.os' property is set to '$BuildOptions.OS_NONE'")
-           DistributionJARsBuilder.reorderJars(buildContext)
+           reorderJars(buildContext)
            DistributionJARsBuilder.buildSearchableOptions(buildContext, distributionJARsBuilder.getModulesForPluginsToPublish())
            distributionJARsBuilder.buildNonBundledPlugins(true)
          }
@@ -576,17 +578,15 @@ idea.fatal.error.notification=disabled
     checkProductProperties()
     checkPluginModules(mainPluginModules, "mainPluginModules", buildContext.productProperties.productLayout.allNonTrivialPlugins)
     copyDependenciesFile()
-    def pluginsToPublish = new LinkedHashSet<PluginLayout>(
-      DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules))
-    def distributionJARsBuilder = compilePlatformAndPluginModules(pluginsToPublish)
+    Set<PluginLayout> pluginsToPublish = DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules)
+    DistributionJARsBuilder distributionJARsBuilder = compilePlatformAndPluginModules(pluginsToPublish)
     DistributionJARsBuilder.buildSearchableOptions(buildContext, distributionJARsBuilder.getModulesForPluginsToPublish())
     distributionJARsBuilder.buildNonBundledPlugins(true)
   }
 
   @Override
   void generateProjectStructureMapping(File targetFile) {
-    new DistributionJARsBuilder(buildContext, buildContext.applicationInfo?.getAppInfoXml())
-      .generateProjectStructureMapping(targetFile)
+    new DistributionJARsBuilder(buildContext).generateProjectStructureMapping(targetFile.toPath())
   }
 
   private void setupJBre(String targetArch = null) {
@@ -711,7 +711,7 @@ idea.fatal.error.notification=disabled
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private void scramble(BuildContext buildContext) {
+  private static void scramble(BuildContext buildContext) {
     if (!buildContext.productProperties.scrambleMainJar) {
       return
     }
@@ -1010,7 +1010,7 @@ idea.fatal.error.notification=disabled
     distributionJARsBuilder.buildJARs()
     DistributionJARsBuilder.buildInternalUtilities(buildContext)
     scramble(buildContext)
-    DistributionJARsBuilder.reorderJars(buildContext)
+    reorderJars(buildContext)
     layoutShared()
     Map<String, String> checkerConfig = buildContext.productProperties.versionCheckerConfig
     if (checkerConfig != null) {
@@ -1040,7 +1040,7 @@ idea.fatal.error.notification=disabled
       }
     }
 
-    DistributionJARsBuilder.reorderJars(buildContext)
+    reorderJars(buildContext)
     JvmArchitecture arch = CpuArch.isArm64() ? JvmArchitecture.aarch64 : JvmArchitecture.x64
     if (includeBinAndRuntime) {
       setupJBre(arch.name())
@@ -1104,5 +1104,19 @@ idea.fatal.error.notification=disabled
       Files.move(distBinDir.resolve("inspect.sh"), targetPath, StandardCopyOption.REPLACE_EXISTING)
       buildContext.patchInspectScript(targetPath)
     }
+  }
+
+  private static void reorderJars(@NotNull BuildContext buildContext) {
+    if (buildContext.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
+      return
+    }
+
+    BuildHelper.getInstance(buildContext).reorderJars
+      .invokeWithArguments(buildContext.paths.distAllDir, buildContext.paths.distAllDir,
+                           buildContext.getBootClassPathJarNames(),
+                           buildContext.paths.tempDir,
+                           buildContext.productProperties.productLayout.mainJarName,
+                           buildContext.productProperties.isAntRequired ? Path.of(buildContext.paths.communityHome, "lib/ant/lib") : null,
+                           buildContext.messages)
   }
 }

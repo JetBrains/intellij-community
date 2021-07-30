@@ -93,6 +93,9 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
      * otherwise returns type inferred by [context].
      */
     fun promoteToLiteral(expression: PyExpression, expected: PyType?, context: TypeEvalContext): PyType? {
+      if (expected is PyTypedDictType) {
+        return null
+      }
       if (PyTypeUtil.toStream(if (expected is PyGenericType) expected.bound else expected).any { containsLiteral(it) }) {
         return fromLiteralValue(expression, context)
       }

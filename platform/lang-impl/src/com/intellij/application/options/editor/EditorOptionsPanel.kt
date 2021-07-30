@@ -137,9 +137,20 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
   override fun getDependencies(): Collection<BaseExtensionPointName<*>> = setOf(EP_NAME)
 
   override fun createPanel(): DialogPanel {
+    lateinit var chkEnableWheelFontSizeChange: JCheckBox
     return panel {
       titledRow(message("group.advanced.mouse.usages")) {
-        row { checkBox(enableWheelFontChange) }
+        row {
+          checkBox(enableWheelFontChange).also { chkEnableWheelFontSizeChange = it.component }
+          row {
+            cell {
+              buttonGroup({ editorSettings.isWheelFontChangePersistent }, { editorSettings.isWheelFontChangePersistent = it }) {
+                radioButton(message("radio.enable.ctrl.mousewheel.changes.font.size.current"), false).enableIf(chkEnableWheelFontSizeChange.selected)
+                radioButton(message("radio.enable.ctrl.mousewheel.changes.font.size.all"), true).enableIf(chkEnableWheelFontSizeChange.selected)
+              }
+            }
+          }
+        }
         row {
           cell(isFullWidth = true) {
             checkBox(enableDnD)

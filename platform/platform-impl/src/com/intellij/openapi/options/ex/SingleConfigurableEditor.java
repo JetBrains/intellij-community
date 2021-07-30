@@ -180,6 +180,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
 
     public ApplyAction() {
       super(CommonBundle.getApplyButtonText());
+      setEnabled(false); // should be disabled initially. the same as com.intellij.openapi.options.newEditor.ConfigurableEditor.init
       final Runnable updateRequest = new Runnable() {
         @Override
         public void run() {

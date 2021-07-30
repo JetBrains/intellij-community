@@ -42,7 +42,6 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
@@ -53,6 +52,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -79,7 +79,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import static com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW;
 
 @DirtyUI
-public class EditorsSplitters extends IdePanePanel implements UISettingsListener {
+public class EditorsSplitters extends IdePanePanel implements UISettingsListener, Disposable {
   private static final Key<Activity> OPEN_FILES_ACTIVITY = Key.create("open.files.activity");
   private static final Logger LOG = Logger.getInstance(EditorsSplitters.class);
   @NonNls private static final String PINNED = "pinned";
@@ -97,15 +97,13 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   int myInsideChange;
   private final MyFocusWatcher myFocusWatcher;
   private final Alarm myIconUpdaterAlarm;
-  final Disposable parentDisposable;
   private final UIBuilder myUIBuilder = new UIBuilder();
   private EditorColorsScheme colorScheme;
 
-  EditorsSplitters(@NotNull FileEditorManagerImpl manager, boolean createOwnDockableContainer, @NotNull Disposable parentDisposable) {
+  EditorsSplitters(@NotNull FileEditorManagerImpl manager) {
     super(new BorderLayout());
 
-    myIconUpdaterAlarm = new Alarm(parentDisposable);
-    this.parentDisposable = parentDisposable;
+    myIconUpdaterAlarm = new Alarm(this);
 
     setBackground(JBColor.namedColor("Editor.background", IdeBackgroundUtil.getIdeBackgroundColor()));
     PropertyChangeListener l = e -> {
@@ -116,23 +114,19 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     };
 
     UIManager.getDefaults().addPropertyChangeListener(l);
-    Disposer.register(parentDisposable, () -> UIManager.getDefaults().removePropertyChangeListener(l));
+    Disposer.register(this, () -> UIManager.getDefaults().removePropertyChangeListener(l));
 
     myManager = manager;
 
     myFocusWatcher = new MyFocusWatcher();
-    Disposer.register(parentDisposable, () -> myFocusWatcher.deinstall(this));
+    Disposer.register(this, () -> myFocusWatcher.deinstall(this));
 
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
     setTransferHandler(new MyTransferHandler());
     clear();
 
-    if (createOwnDockableContainer) {
-      DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myManager.getProject(), this, false);
-      DockManager.getInstance(manager.getProject()).register(dockable, parentDisposable);
-    }
-
-    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
+    MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect(this);
+    busConnection.subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
       @Override
       public void activeKeymapChanged(@Nullable Keymap keymap) {
         invalidate();
@@ -141,11 +135,14 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     });
 
     colorScheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
-    ApplicationManager.getApplication().getMessageBus().connect(myManager).subscribe(LafManagerListener.TOPIC, laf -> {
+    busConnection.subscribe(LafManagerListener.TOPIC, laf -> {
       colorScheme = EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
     });
+  }
 
-    Disposer.register(parentDisposable, () -> setDropTarget(null));
+  @Override
+  public void dispose() {
+    setDropTarget(null);
   }
 
   @NotNull
@@ -429,7 +426,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     ReadAction
       .nonBlocking(() -> IconUtil.computeFileIcon(file, Iconable.ICON_FLAG_READ_STATUS, myManager.getProject()))
       .coalesceBy(this, "icon", file)
-      .expireWith(parentDisposable)
+      .expireWith(this)
       .expireWhen(() -> !file.isValid())
       .finishOnUiThread(ModalityState.any(), icon -> updateFileIconImmediately(file, icon))
       .submit(NonUrgentExecutor.getInstance());
@@ -708,7 +705,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   @NotNull
   private EditorWindow createEditorWindow() {
-    return new EditorWindow(this, parentDisposable);
+    return new EditorWindow(this, this);
   }
 
   /**

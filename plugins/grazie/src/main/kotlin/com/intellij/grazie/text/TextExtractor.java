@@ -9,7 +9,11 @@ import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SyntaxTraverser;
@@ -100,7 +104,20 @@ public abstract class TextExtractor {
   private static boolean isSuitable(TextContent content, PsiElement psi) {
     return content.intersectsRange(psi.getTextRange()) &&
            !hasIntersectingInjection(content, psi.getContainingFile()) &&
-           !isSuppressionComment(content);
+           !isSuppressionComment(content) &&
+           !isCopyrightComment(content);
+  }
+
+  private static boolean isCopyrightComment(TextContent content) {
+    return (content.getDomain() == TextContent.TextDomain.COMMENTS || content.getDomain() == TextContent.TextDomain.DOCUMENTATION) &&
+           StringUtil.containsIgnoreCase(content.toString(), "Copyright") &&
+           isAtFileStart(content);
+  }
+
+  private static boolean isAtFileStart(TextContent content) {
+    PsiFile file = content.getCommonParent().getContainingFile();
+    int textStart = content.textOffsetToFile(0);
+    return file.getViewProvider().getContents().subSequence(0, textStart).chars().noneMatch(Character::isLetterOrDigit);
   }
 
   private static boolean isSuppressionComment(TextContent content) {

@@ -150,13 +150,11 @@ public class StringUtilRt {
           shiftOffsets(offsetsToKeep, buffer.length(), 1, newSeparator.length());
         }
       }
+      else if (buffer == null) {
+        intactLength++;
+      }
       else {
-        if (buffer == null) {
-          intactLength++;
-        }
-        else {
-          buffer.append(c);
-        }
+        buffer.append(c);
       }
     }
     return buffer == null ? text : buffer;

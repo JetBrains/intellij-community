@@ -2,17 +2,13 @@
 package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -237,7 +233,7 @@ public final class PyNames {
   /**
    * Contains all known predefined names of "__foo__" form.
    */
-  public static final Set<String> UNDERSCORED_ATTRIBUTES = ImmutableSet.of(
+  public static final Set<String> UNDERSCORED_ATTRIBUTES = Set.of(
     "__all__",
     "__annotations__",
     "__author__",
@@ -266,7 +262,7 @@ public final class PyNames {
     "__version__"
   );
 
-  public static final Set<String> COMPARISON_OPERATORS = ImmutableSet.of(
+  public static final Set<String> COMPARISON_OPERATORS = Set.of(
     "__eq__",
     "__ne__",
     "__lt__",
@@ -277,7 +273,7 @@ public final class PyNames {
     "__contains__"
   );
 
-  public static final Set<String> SUBSCRIPTION_OPERATORS = ImmutableSet.of(
+  public static final Set<String> SUBSCRIPTION_OPERATORS = Set.of(
     GETITEM,
     SETITEM,
     DELITEM
@@ -303,178 +299,184 @@ public final class PyNames {
   private static final BuiltinDescription _self_key_descr = new BuiltinDescription("(self, key)");
   private static final BuiltinDescription _exit_descr = new BuiltinDescription("(self, exc_type, exc_val, exc_tb)");
 
-  private static final ImmutableMap<String, BuiltinDescription> BuiltinMethods = ImmutableMap.<String, BuiltinDescription>builder()
-    .put(ABS, _only_self_descr)
-    .put("__add__", _self_other_descr)
-    .put("__and__", _self_other_descr)
-      //_BuiltinMethods.put("__all__", _only_self_descr);
-      //_BuiltinMethods.put("__author__", _only_self_descr);
-      //_BuiltinMethods.put("__bases__", _only_self_descr);
-    .put("__call__", new BuiltinDescription("(self, *args, **kwargs)"))
-    .put("__ceil__", _only_self_descr)
-      //_BuiltinMethods.put("__class__", _only_self_descr);
-    .put("__cmp__", _self_other_descr)
-    .put("__coerce__", _self_other_descr)
-    .put(COMPLEX, _only_self_descr)
-    .put("__contains__", _self_item_descr)
-    .put("__copy__", _only_self_descr)
-      //_BuiltinMethods.put("__debug__", _only_self_descr);
-    .put("__deepcopy__", new BuiltinDescription("(self, memodict={})"))
-    .put("__del__", _only_self_descr)
-    .put("__delete__", new BuiltinDescription("(self, instance)"))
-    .put("__delattr__", _self_item_descr)
-    .put("__delitem__", _self_key_descr)
-    .put("__delslice__", new BuiltinDescription("(self, i, j)"))
-      //_BuiltinMethods.put("__dict__", _only_self_descr);
-    .put("__divmod__", _self_other_descr)
-      //_BuiltinMethods.put("__doc__", _only_self_descr);
-      //_BuiltinMethods.put("__docformat__", _only_self_descr);
-    .put("__enter__", _only_self_descr)
-    .put("__exit__", _exit_descr)
-    .put("__eq__", _self_other_descr)
-      //_BuiltinMethods.put("__file__", _only_self_descr);
-    .put(FLOAT, _only_self_descr)
-    .put("__floor__", _only_self_descr)
-    .put("__floordiv__", _self_other_descr)
-      //_BuiltinMethods.put("__future__", _only_self_descr);
-    .put("__ge__", _self_other_descr)
-    .put("__get__", new BuiltinDescription("(self, instance, owner)"))
-    .put("__getattr__", _self_item_descr)
-    .put("__getattribute__", _self_item_descr)
-    .put("__getinitargs__", _only_self_descr)
-    .put("__getitem__", _self_item_descr)
-    .put("__getnewargs__", _only_self_descr)
-      //_BuiltinMethods.put("__getslice__", new BuiltinDescription("(self, i, j)"));
-    .put("__getstate__", _only_self_descr)
-    .put("__gt__", _self_other_descr)
-    .put("__hash__", _only_self_descr)
-    .put("__hex__", _only_self_descr)
-    .put("__iadd__", _self_other_descr)
-    .put("__iand__", _self_other_descr)
-    .put("__idiv__", _self_other_descr)
-    .put("__ifloordiv__", _self_other_descr)
-      //_BuiltinMethods.put("__import__", _only_self_descr);
-    .put("__ilshift__", _self_other_descr)
-    .put("__imod__", _self_other_descr)
-    .put("__imul__", _self_other_descr)
-    .put("__index__", _only_self_descr)
-    .put(INIT, _only_self_descr)
-    .put(INT, _only_self_descr)
-    .put("__invert__", _only_self_descr)
-    .put("__ior__", _self_other_descr)
-    .put("__ipow__", _self_other_descr)
-    .put("__irshift__", _self_other_descr)
-    .put("__isub__", _self_other_descr)
-    .put("__iter__", _only_self_descr)
-    .put("__itruediv__", _self_other_descr)
-    .put("__ixor__", _self_other_descr)
-    .put("__le__", _self_other_descr)
-    .put("__len__", _only_self_descr)
-    .put("__long__", _only_self_descr)
-    .put("__lshift__", _self_other_descr)
-    .put("__lt__", _self_other_descr)
-      //_BuiltinMethods.put("__members__", _only_self_descr);
-      //_BuiltinMethods.put("__metaclass__", _only_self_descr);
-    .put("__missing__", _self_key_descr)
-    .put("__mod__", _self_other_descr)
-      //_BuiltinMethods.put("__mro__", _only_self_descr);
-    .put("__mul__", _self_other_descr)
-      //_BuiltinMethods.put("__name__", _only_self_descr);
-    .put("__ne__", _self_other_descr)
-    .put("__neg__", _only_self_descr)
-    .put(NEW, new BuiltinDescription("(cls, *args, **kwargs)"))
-    .put("__oct__", _only_self_descr)
-    .put("__or__", _self_other_descr)
-      //_BuiltinMethods.put("__path__", _only_self_descr);
-    .put("__pos__", _only_self_descr)
-    .put("__pow__", new BuiltinDescription("(self, power, modulo=None)"))
-    .put("__radd__", _self_other_descr)
-    .put("__rand__", _self_other_descr)
-    .put("__rdiv__", _self_other_descr)
-    .put("__rdivmod__", _self_other_descr)
-    .put("__reduce__", _only_self_descr)
-    .put("__reduce_ex__", new BuiltinDescription("(self, protocol)"))
-    .put("__repr__", _only_self_descr)
-    .put("__reversed__", _only_self_descr)
-    .put("__rfloordiv__", _self_other_descr)
-    .put("__rlshift__", _self_other_descr)
-    .put("__rmod__", _self_other_descr)
-    .put("__rmul__", _self_other_descr)
-    .put("__ror__", _self_other_descr)
-    .put("__rpow__", _self_other_descr)
-    .put("__rrshift__", _self_other_descr)
-    .put("__rshift__", _self_other_descr)
-    .put("__rsub__", _self_other_descr)
-    .put("__rtruediv__", _self_other_descr)
-    .put("__rxor__", _self_other_descr)
-    .put("__set__", new BuiltinDescription("(self, instance, value)"))
-    .put("__setattr__", new BuiltinDescription("(self, key, value)"))
-    .put("__setitem__", new BuiltinDescription("(self, key, value)"))
-    .put("__setslice__", new BuiltinDescription("(self, i, j, sequence)"))
-    .put("__setstate__", new BuiltinDescription("(self, state)"))
-    .put(SIZEOF, _only_self_descr)
-      //_BuiltinMethods.put("__self__", _only_self_descr);
-      //_BuiltinMethods.put("__slots__", _only_self_descr);
-    .put("__str__", _only_self_descr)
-    .put("__sub__", _self_other_descr)
-    .put("__truediv__", _self_other_descr)
-    .put("__trunc__", _only_self_descr)
-    .put("__unicode__", _only_self_descr)
-      //_BuiltinMethods.put("__version__", _only_self_descr);
-    .put("__xor__", _self_other_descr)
-    .build();
+  @SuppressWarnings("JavacQuirks")
+  private static final Map<String, BuiltinDescription> BuiltinMethods = Map.ofEntries(
+    Map.entry(ABS, _only_self_descr),
+    Map.entry("__add__", _self_other_descr),
+    Map.entry("__and__", _self_other_descr),
+      //_BuiltinMethodsMap.entry("__all__", _only_self_descr);
+      //_BuiltinMethodsMap.entry("__author__", _only_self_descr);
+      //_BuiltinMethodsMap.entry("__bases__", _only_self_descr);
+    Map.entry("__call__", new BuiltinDescription("(self, *args, **kwargs)")),
+    Map.entry("__ceil__", _only_self_descr),
+      //_BuiltinMethodsMap.entry("__class__", _only_self_descr);
+    Map.entry("__cmp__", _self_other_descr),
+    Map.entry("__coerce__", _self_other_descr),
+    Map.entry(COMPLEX, _only_self_descr),
+    Map.entry("__contains__", _self_item_descr),
+    Map.entry("__copy__", _only_self_descr),
+      //_BuiltinMethodsMap.entry("__debug__", _only_self_descr);
+    Map.entry("__deepcopy__", new BuiltinDescription("(self, memodict={})")),
+    Map.entry("__del__", _only_self_descr),
+    Map.entry("__delete__", new BuiltinDescription("(self, instance)")),
+    Map.entry("__delattr__", _self_item_descr),
+    Map.entry("__delitem__", _self_key_descr),
+    Map.entry("__delslice__", new BuiltinDescription("(self, i, j)")),
+      //_BuiltinMethodsMap.entry("__dict__", _only_self_descr);
+    Map.entry("__divmod__", _self_other_descr),
+      //_BuiltinMethodsMap.entry("__doc__", _only_self_descr);
+      //_BuiltinMethodsMap.entry("__docformat__", _only_self_descr);
+    Map.entry("__enter__", _only_self_descr),
+    Map.entry("__exit__", _exit_descr),
+    Map.entry("__eq__", _self_other_descr),
+      //_BuiltinMethodsMap.entry("__file__", _only_self_descr);
+    Map.entry(FLOAT, _only_self_descr),
+    Map.entry("__floor__", _only_self_descr),
+    Map.entry("__floordiv__", _self_other_descr),
+      //_BuiltinMethodsMap.entry("__future__", _only_self_descr);
+    Map.entry("__ge__", _self_other_descr),
+    Map.entry("__get__", new BuiltinDescription("(self, instance, owner)")),
+    Map.entry("__getattr__", _self_item_descr),
+    Map.entry("__getattribute__", _self_item_descr),
+    Map.entry("__getinitargs__", _only_self_descr),
+    Map.entry("__getitem__", _self_item_descr),
+    Map.entry("__getnewargs__", _only_self_descr),
+      //_BuiltinMethodsMap.entry("__getslice__", new BuiltinDescription("(self, i, j)"));
+    Map.entry("__getstate__", _only_self_descr),
+    Map.entry("__gt__", _self_other_descr),
+    Map.entry("__hash__", _only_self_descr),
+    Map.entry("__hex__", _only_self_descr),
+    Map.entry("__iadd__", _self_other_descr),
+    Map.entry("__iand__", _self_other_descr),
+    Map.entry("__idiv__", _self_other_descr),
+    Map.entry("__ifloordiv__", _self_other_descr),
+      //_BuiltinMethodsMap.entry("__import__", _only_self_descr);
+    Map.entry("__ilshift__", _self_other_descr),
+    Map.entry("__imod__", _self_other_descr),
+    Map.entry("__imul__", _self_other_descr),
+    Map.entry("__index__", _only_self_descr),
+    Map.entry(INIT, _only_self_descr),
+    Map.entry(INT, _only_self_descr),
+    Map.entry("__invert__", _only_self_descr),
+    Map.entry("__ior__", _self_other_descr),
+    Map.entry("__ipow__", _self_other_descr),
+    Map.entry("__irshift__", _self_other_descr),
+    Map.entry("__isub__", _self_other_descr),
+    Map.entry("__iter__", _only_self_descr),
+    Map.entry("__itruediv__", _self_other_descr),
+    Map.entry("__ixor__", _self_other_descr),
+    Map.entry("__le__", _self_other_descr),
+    Map.entry("__len__", _only_self_descr),
+    Map.entry("__long__", _only_self_descr),
+    Map.entry("__lshift__", _self_other_descr),
+    Map.entry("__lt__", _self_other_descr),
+      //_BuiltinMethodsMap.entry("__members__", _only_self_descr);
+      //_BuiltinMethodsMap.entry("__metaclass__", _only_self_descr);
+    Map.entry("__missing__", _self_key_descr),
+    Map.entry("__mod__", _self_other_descr),
+      //_BuiltinMethodsMap.entry("__mro__", _only_self_descr);
+    Map.entry("__mul__", _self_other_descr),
+      //_BuiltinMethodsMap.entry("__name__", _only_self_descr);
+    Map.entry("__ne__", _self_other_descr),
+    Map.entry("__neg__", _only_self_descr),
+    Map.entry(NEW, new BuiltinDescription("(cls, *args, **kwargs)")),
+    Map.entry("__oct__", _only_self_descr),
+    Map.entry("__or__", _self_other_descr),
+      //_BuiltinMethodsMap.entry("__path__", _only_self_descr);
+    Map.entry("__pos__", _only_self_descr),
+    Map.entry("__pow__", new BuiltinDescription("(self, power, modulo=None)")),
+    Map.entry("__radd__", _self_other_descr),
+    Map.entry("__rand__", _self_other_descr),
+    Map.entry("__rdiv__", _self_other_descr),
+    Map.entry("__rdivmod__", _self_other_descr),
+    Map.entry("__reduce__", _only_self_descr),
+    Map.entry("__reduce_ex__", new BuiltinDescription("(self, protocol)")),
+    Map.entry("__repr__", _only_self_descr),
+    Map.entry("__reversed__", _only_self_descr),
+    Map.entry("__rfloordiv__", _self_other_descr),
+    Map.entry("__rlshift__", _self_other_descr),
+    Map.entry("__rmod__", _self_other_descr),
+    Map.entry("__rmul__", _self_other_descr),
+    Map.entry("__ror__", _self_other_descr),
+    Map.entry("__rpow__", _self_other_descr),
+    Map.entry("__rrshift__", _self_other_descr),
+    Map.entry("__rshift__", _self_other_descr),
+    Map.entry("__rsub__", _self_other_descr),
+    Map.entry("__rtruediv__", _self_other_descr),
+    Map.entry("__rxor__", _self_other_descr),
+    Map.entry("__set__", new BuiltinDescription("(self, instance, value)")),
+    Map.entry("__setattr__", new BuiltinDescription("(self, key, value)")),
+    Map.entry("__setitem__", new BuiltinDescription("(self, key, value)")),
+    Map.entry("__setslice__", new BuiltinDescription("(self, i, j, sequence)")),
+    Map.entry("__setstate__", new BuiltinDescription("(self, state)")),
+    Map.entry(SIZEOF, _only_self_descr),
+      //_BuiltinMethodsMap.entry("__self__", _only_self_descr);
+      //_BuiltinMethodsMap.entry("__slots__", _only_self_descr);
+    Map.entry("__str__", _only_self_descr),
+    Map.entry("__sub__", _self_other_descr),
+    Map.entry("__truediv__", _self_other_descr),
+    Map.entry("__trunc__", _only_self_descr),
+    Map.entry("__unicode__", _only_self_descr),
+      //_BuiltinMethodsMap.entry("__version__", _only_self_descr);
+    Map.entry("__xor__", _self_other_descr));
 
-  public static final ImmutableMap<String, BuiltinDescription> PY2_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
-    .putAll(BuiltinMethods)
-    .put("__nonzero__", _only_self_descr)
-    .put("__div__", _self_other_descr)
-    .put(NEXT, _only_self_descr)
-    .build();
+  private static final Map<String, BuiltinDescription> PY2_BUILTIN_METHODS = concat(
+    BuiltinMethods,
+    Map.entry("__nonzero__", _only_self_descr),
+    Map.entry("__div__", _self_other_descr),
+    Map.entry(NEXT, _only_self_descr));
 
-  public static final ImmutableMap<String, BuiltinDescription> PY3_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
-    .putAll(BuiltinMethods)
-    .put("__bool__", _only_self_descr)
-    .put(BYTES, _only_self_descr)
-    .put("__format__", new BuiltinDescription("(self, format_spec)"))
-    .put("__instancecheck__", new BuiltinDescription("(self, instance)"))
-    .put(PREPARE, new BuiltinDescription("(metacls, name, bases)"))
-    .put(ROUND, new BuiltinDescription("(self, n=None)"))
-    .put("__subclasscheck__", new BuiltinDescription("(self, subclass)"))
-    .put(DUNDER_NEXT, _only_self_descr)
-    .build();
+  private static final Map<String, BuiltinDescription> PY3_BUILTIN_METHODS = concat(
+    BuiltinMethods,
+    Map.entry("__bool__", _only_self_descr),
+    Map.entry(BYTES, _only_self_descr),
+    Map.entry("__format__", new BuiltinDescription("(self, format_spec)")),
+    Map.entry("__instancecheck__", new BuiltinDescription("(self, instance)")),
+    Map.entry(PREPARE, new BuiltinDescription("(metacls, name, bases)")),
+    Map.entry(ROUND, new BuiltinDescription("(self, n=None)")),
+    Map.entry("__subclasscheck__", new BuiltinDescription("(self, subclass)")),
+    Map.entry(DUNDER_NEXT, _only_self_descr));
 
-  public static final ImmutableMap<String, BuiltinDescription> PY35_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
-    .putAll(PY3_BUILTIN_METHODS)
-    .put("__imatmul__", _self_other_descr)
-    .put("__matmul__", _self_other_descr)
-    .put("__rmatmul__", _self_other_descr)
-    .put(DUNDER_AWAIT, _only_self_descr)
-    .put(AENTER, _only_self_descr)
-    .put(AEXIT, _exit_descr)
-    .put(AITER, _only_self_descr)
-    .put(ANEXT, _only_self_descr)
-    .build();
+  private static final Map<String, BuiltinDescription> PY35_BUILTIN_METHODS = concat(
+    PY3_BUILTIN_METHODS,
+    Map.entry("__imatmul__", _self_other_descr),
+    Map.entry("__matmul__", _self_other_descr),
+    Map.entry("__rmatmul__", _self_other_descr),
+    Map.entry(DUNDER_AWAIT, _only_self_descr),
+    Map.entry(AENTER, _only_self_descr),
+    Map.entry(AEXIT, _exit_descr),
+    Map.entry(AITER, _only_self_descr),
+    Map.entry(ANEXT, _only_self_descr));
 
-  public static final ImmutableMap<String, BuiltinDescription> PY36_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
-    .putAll(PY35_BUILTIN_METHODS)
-    .put(INIT_SUBCLASS, new BuiltinDescription("(cls, **kwargs)"))
-    .put("__set_name__", new BuiltinDescription("(self, owner, name)"))
-    .put("__fspath__", _only_self_descr)
-    .build();
+  /**
+   * @deprecated use {@link #getBuiltinMethods(LanguageLevel)} instead
+   */
+  @Deprecated
+  public static final ImmutableMap<String, BuiltinDescription> PY36_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder().putAll(concat(
+    PY35_BUILTIN_METHODS,
+    Map.entry(INIT_SUBCLASS, new BuiltinDescription("(cls, **kwargs)")),
+    Map.entry("__set_name__", new BuiltinDescription("(self, owner, name)")),
+    Map.entry("__fspath__", _only_self_descr))).build();
 
-  public static final ImmutableMap<String, BuiltinDescription> PY37_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
-    .putAll(PY36_BUILTIN_METHODS)
-    .put(CLASS_GETITEM, new BuiltinDescription("(cls, item)"))
-    .put("__mro_entries__", new BuiltinDescription("(self, bases)"))
-    .build();
+  private static final Map<String, BuiltinDescription> PY37_BUILTIN_METHODS = concat(
+    PY36_BUILTIN_METHODS,
+    Map.entry(CLASS_GETITEM, new BuiltinDescription("(cls, item)")),
+    Map.entry("__mro_entries__", new BuiltinDescription("(self, bases)")));
 
   @NotNull
-  private static final ImmutableMap<String, BuiltinDescription> PY37_MODULE_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
-    .put("__getattr__", new BuiltinDescription("(name)"))
-    .put("__dir__", new BuiltinDescription("()"))
-    .build();
+  private static final Map<String, BuiltinDescription> PY37_MODULE_BUILTIN_METHODS = Map.of(
+    "__getattr__", new BuiltinDescription("(name)"),
+    "__dir__", new BuiltinDescription("()"));
 
-  public static ImmutableMap<String, BuiltinDescription> getBuiltinMethods(LanguageLevel level) {
+  @SafeVarargs
+  private static <K,V> Map<K,V> concat(Map<? extends K, ? extends V> map, Map.Entry<K,V>... additional) {
+    Map<K, V> r = new HashMap<>(map);
+    r.putAll(Map.ofEntries(additional));
+    return Map.copyOf(r);
+  }
+
+  @NotNull
+  public static Map<String, BuiltinDescription> getBuiltinMethods(@NotNull LanguageLevel level) {
     if (level.isAtLeast(LanguageLevel.PYTHON37)) {
       return PY37_BUILTIN_METHODS;
     }
@@ -548,7 +550,7 @@ public final class PyNames {
   /**
    * Contains keywords as of CPython 2.5.
    */
-  public static final Set<String> KEYWORDS = ImmutableSet.of(
+  public static final Set<String> KEYWORDS = Set.of(
     AND,
     DEL,
     FROM,
@@ -582,7 +584,7 @@ public final class PyNames {
     TRY
   );
 
-  public static final Set<String> BUILTIN_INTERFACES = ImmutableSet.of(
+  public static final Set<String> BUILTIN_INTERFACES = Set.of(
     CALLABLE, HASHABLE, ITERABLE, ITERATOR, SIZED, CONTAINER, SEQUENCE, MAPPING, ABC_COMPLEX, ABC_REAL, ABC_RATIONAL, ABC_INTEGRAL,
     ABC_NUMBER
   );
@@ -594,7 +596,7 @@ public final class PyNames {
    * @return true iff the name is either a keyword or a reserved name, like None.
    */
   public static boolean isReserved(@NonNls String name) {
-    return KEYWORDS.contains(name) || NONE.equals(name);
+    return name != null && KEYWORDS.contains(name) || NONE.equals(name);
   }
 
   // NOTE: includes unicode only good for py3k
@@ -660,7 +662,7 @@ public final class PyNames {
    * <p/>
    * Attributes {@code __doc__}, {@code __dict__} and {@code __module__} should be inherited from object.
    */
-  public static final Set<String> FUNCTION_SPECIAL_ATTRIBUTES = ImmutableSet.of(
+  public static final Set<String> FUNCTION_SPECIAL_ATTRIBUTES = Set.of(
     "__defaults__",
     "__globals__",
     "__closure__",
@@ -668,7 +670,7 @@ public final class PyNames {
     "__name__"
   );
 
-  public static final Set<String> LEGACY_FUNCTION_SPECIAL_ATTRIBUTES = ImmutableSet.of(
+  public static final Set<String> LEGACY_FUNCTION_SPECIAL_ATTRIBUTES = Set.of(
     "func_defaults",
     "func_globals",
     "func_closure",
@@ -678,11 +680,11 @@ public final class PyNames {
     "func_dict"
   );
 
-  public static final Set<String> PY3_ONLY_FUNCTION_SPECIAL_ATTRIBUTES = ImmutableSet.of("__annotations__", "__kwdefaults__");
+  public static final Set<String> PY3_ONLY_FUNCTION_SPECIAL_ATTRIBUTES = Set.of("__annotations__", "__kwdefaults__");
 
-  public static final Set<String> METHOD_SPECIAL_ATTRIBUTES = ImmutableSet.of("__func__", "__self__", "__name__");
+  public static final Set<String> METHOD_SPECIAL_ATTRIBUTES = Set.of("__func__", "__self__", "__name__");
 
-  public static final Set<String> LEGACY_METHOD_SPECIAL_ATTRIBUTES = ImmutableSet.of("im_func", "im_self", "im_class");
+  public static final Set<String> LEGACY_METHOD_SPECIAL_ATTRIBUTES = Set.of("im_func", "im_self", "im_class");
 
   public static final String MRO = "mro";
 }

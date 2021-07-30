@@ -12,14 +12,12 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
-import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
 import com.intellij.util.io.write
 import com.intellij.util.lang.ClassPath
@@ -31,20 +29,16 @@ import java.lang.invoke.MethodType
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.ForkJoinPool
 import java.util.function.Consumer
 
 class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   init {
-    // Since the measurement requires OptionsTopHitProvider.Activity to fire lastOptionTopHitProviderFinishedForProject,
-    // and OptionsTopHitProvider.Activity is not available in test or headless mode:
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode || app.isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.INSTANCE
     }
   }
-
-  private var startUpFinishedCounter = AtomicInteger()
 
   private var pluginCostMap: Map<String, Object2LongMap<String>>? = null
 
@@ -128,16 +122,12 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
 
       val currentReport = w.toByteBuffer()
 
+      if (System.getProperty("idea.log.perf.stats", "false").toBoolean()) {
+        w.writeToLog(LOG)
+      }
+
       val perfFilePath = System.getProperty("idea.log.perf.stats.file")
       if (!perfFilePath.isNullOrBlank()) {
-        val app = ApplicationManager.getApplication()
-        if (!app.isUnitTestMode &&
-            SystemProperties.getBooleanProperty("idea.log.perf.stats",
-                                                app.isInternal ||
-                                                ApplicationInfoEx.getInstanceEx().build.isSnapshot)) {
-          w.writeToLog(LOG)
-        }
-
         LOG.info("StartUp Measurement report was written to: $perfFilePath")
         Path.of(perfFilePath).write(currentReport)
       }
@@ -203,31 +193,18 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
 
     private fun completed() {
       ActivityImpl.listener = null
-      reportIfAnotherAlreadySet(projectName)
-    }
-  }
 
-  override fun lastOptionTopHitProviderFinishedForProject(project: Project) {
-    reportIfAnotherAlreadySet(project.name)
+      StartUpMeasurer.stopPluginCostMeasurement()
+      // don't report statistic from here if we want to measure project import duration
+      if (!java.lang.Boolean.getBoolean("idea.collect.project.import.performance")) {
+        logStats(projectName)
+      }
+    }
   }
 
   override fun reportStatistics(project: Project) {
-    NonUrgentExecutor.getInstance().execute {
+    ForkJoinPool.commonPool().execute {
       logStats(project.name)
-    }
-  }
-
-  private fun reportIfAnotherAlreadySet(projectName: String) {
-    // or StartUpPerformanceReporter activity will be finished first, or OptionsTopHitProvider.Activity
-    if (startUpFinishedCounter.incrementAndGet() == 2) {
-      startUpFinishedCounter.set(0)
-      StartUpMeasurer.stopPluginCostMeasurement()
-      // Don't report statistic from here if we want to measure project import duration
-      if (SystemProperties.getBooleanProperty("idea.collect.project.import.performance", false)) return
-      // even if this activity executed in a pooled thread, better if it will not affect start-up in any way
-      NonUrgentExecutor.getInstance().execute {
-        logStats(projectName)
-      }
     }
   }
 
@@ -251,7 +228,7 @@ private fun computePluginCostMap(): MutableMap<String, Object2LongOpenHashMap<St
   for (plugin in PluginManagerCore.getLoadedPlugins()) {
     val id = plugin.pluginId.idString
     val classLoader = (plugin as IdeaPluginDescriptorImpl).pluginClassLoader as? PluginAwareClassLoader ?: continue
-    val costPerPhaseMap = result.getOrPut(id) {
+    val costPerPhaseMap = result.computeIfAbsent(id) {
       val m = Object2LongOpenHashMap<String>()
       m.defaultReturnValue(-1)
       m

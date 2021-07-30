@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class LineBreakpoint
@@ -161,10 +161,10 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   }
 
   protected boolean acceptLocation(final DebugProcessImpl debugProcess, ReferenceType classType, final Location loc) {
-    Method method = loc.method();
     // Some frameworks may create synthetic methods with lines mapped to user code, see IDEA-143852
     // if (DebuggerUtils.isSynthetic(method)) { return false; }
     if (isAnonymousClass(classType)) {
+      Method method = loc.method();
       if ((method.isConstructor() && loc.codeIndex() == 0) || method.isBridge()) return false;
     }
     SourcePosition position = debugProcess.getPositionManager().getSourcePosition(loc);

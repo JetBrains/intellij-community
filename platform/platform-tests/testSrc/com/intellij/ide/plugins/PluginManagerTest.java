@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.IoTestUtil;
@@ -27,14 +28,15 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 
 import static com.intellij.ide.plugins.DynamicPluginsTestUtil.loadDescriptorInTest;
 import static com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
+import static java.util.Objects.requireNonNull;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.*;
@@ -127,8 +129,8 @@ public class PluginManagerTest {
   }
 
   @Test
+  @Bombed(user = "Vladimir Krivosheev / Andrew Kozlow", day = 1, month = Calendar.SEPTEMBER, year = 2021)
   public void testSimplePluginSort() throws Exception {
-    // muted failure, investigation is assigned
      doPluginSortTest("simplePluginSort", false);
   }
 
@@ -159,7 +161,7 @@ public class PluginManagerTest {
     assertPluginPreInstalled(loadingResult, descriptorInstalled.getPluginId());
   }
 
-  private @NotNull static PluginLoadingResult createPluginLoadingResult(boolean checkModuleDependencies) {
+  private static @NotNull PluginLoadingResult createPluginLoadingResult(boolean checkModuleDependencies) {
     BuildNumber buildNumber = BuildNumber.fromString("2042.42");
     return new PluginLoadingResult(Collections.emptyMap(), () -> buildNumber, checkModuleDependencies);
   }
@@ -213,14 +215,13 @@ public class PluginManagerTest {
     assertNotNull(checkCompatibility(ideVersion, sinceBuild, untilBuild));
   }
 
-  @Nullable
-  private static String checkCompatibility(String ideVersion, String sinceBuild, String untilBuild) {
+  private static @Nullable String checkCompatibility(String ideVersion, String sinceBuild, String untilBuild) {
     IdeaPluginDescriptor mock = EasyMock.niceMock(IdeaPluginDescriptor.class);
     expect(mock.getSinceBuild()).andReturn(sinceBuild).anyTimes();
     expect(mock.getUntilBuild()).andReturn(untilBuild).anyTimes();
     replay(mock);
     PluginLoadingError error =
-      PluginManagerCore.checkBuildNumberCompatibility(mock, Objects.requireNonNull(BuildNumber.fromString(ideVersion)));
+      PluginManagerCore.checkBuildNumberCompatibility(mock, requireNonNull(BuildNumber.fromString(ideVersion)));
     return error != null ? error.getDetailedMessage() : null;
   }
 
@@ -228,8 +229,7 @@ public class PluginManagerTest {
     assertNull(checkCompatibility(ideVersion, sinceBuild, untilBuild));
   }
 
-  private static @NotNull PluginManagerState loadAndInitializeDescriptors(@NotNull String testDataName, boolean isBundled)
-    throws IOException, XMLStreamException {
+  private static PluginManagerState loadAndInitializeDescriptors(String testDataName, boolean isBundled) throws IOException, XMLStreamException {
     Path file = Path.of(getTestDataPath(), testDataName);
     DescriptorListLoadingContext parentContext =
       new DescriptorListLoadingContext(Collections.emptySet(), createPluginLoadingResult(true), false, false, false, false);
@@ -257,7 +257,7 @@ public class PluginManagerTest {
                                                       @Nullable RawPluginDescriptor readInto) {
         for (XmlElement child : root.children) {
           if (child.name.equals("config-file-idea-plugin")) {
-            String url = Objects.requireNonNull(child.getAttributeValue("url"));
+            String url = requireNonNull(child.getAttributeValue("url"));
             if (url.endsWith("/" + relativePath)) {
               try {
                 return XmlReader.readModuleDescriptor(elementAsBytes(child), readContext, this, dataLoader, null, readInto, null);
@@ -271,12 +271,11 @@ public class PluginManagerTest {
         throw new AssertionError("Unexpected: " + relativePath);
       }
 
-      @NotNull
       @Override
-      public RawPluginDescriptor resolveModuleFile(@NotNull ReadModuleContext readContext,
-                                                   @NotNull DataLoader dataLoader,
-                                                   @NotNull String path,
-                                                   @Nullable RawPluginDescriptor readInto) {
+      public @NotNull RawPluginDescriptor resolveModuleFile(@NotNull ReadModuleContext readContext,
+                                                            @NotNull DataLoader dataLoader,
+                                                            @NotNull String path,
+                                                            @Nullable RawPluginDescriptor readInto) {
         return resolvePath(readContext, dataLoader, path, readInto);
       }
     };
@@ -286,7 +285,7 @@ public class PluginManagerTest {
         continue;
       }
 
-      Path pluginPath = Path.of(Objects.requireNonNull(element.getAttributeValue("url")));
+      Path pluginPath = Path.of(StringUtil.trimStart(requireNonNull(element.getAttributeValue("url")), "file://"));
       IdeaPluginDescriptorImpl descriptor = PluginDescriptorTestKt.createFromDescriptor(
         pluginPath, isBundled, elementAsBytes(element), parentContext, pathResolver, new LocalFsDataLoader(pluginPath));
       parentContext.result.add(descriptor,  /* overrideUseIfCompatible = */ false);

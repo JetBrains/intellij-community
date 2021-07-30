@@ -300,6 +300,7 @@ interface ModuleConfigurator : DisplayableSettingItem, EntitiesOwnerDescriptor {
             +RealNativeTargetConfigurator.configurators
             +NativeForCurrentSystemTarget
             +JsBrowserTargetConfigurator
+            +MppLibJsBrowserTargetConfigurator
             +JsNodeTargetConfigurator
             +CommonTargetConfigurator
             +JvmTargetConfigurator

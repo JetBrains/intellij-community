@@ -1,0 +1,15 @@
+{
+    "usages": [
+        "Main.java",
+        "JavaWrite.java",
+        "JavaRead.java"
+    ],
+    "shouldBeUsage" : [
+        "KotlinWrite.kt",
+        "KotlinRead.kt",
+        "KotlinBySuper.kt",
+        "Kotlin.kt",
+        "KotlinClassRead.kt",
+        "KotlinClassWrite.kt"
+    ]
+}

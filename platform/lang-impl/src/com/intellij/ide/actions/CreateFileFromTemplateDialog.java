@@ -153,6 +153,14 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     }
 
     @Override
+    public Builder setDefaultText(String text) {
+      JTextField nameField = myDialog.getNameField();
+      nameField.setText(text);
+      nameField.selectAll();
+      return this;
+    }
+
+    @Override
     public Builder addKind(@Nls @NotNull String name, @Nullable Icon icon, @NotNull String templateName,
                            @Nullable InputValidator extraValidator) {
       myDialog.getKindCombo().addItem(name, icon, templateName);
@@ -232,6 +240,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     @NotNull private final Project myProject;
 
     private @NlsContexts.PopupTitle String myTitle = LangBundle.message("popup.title.default.title");
+    private String myDefaultText = null;
     private final List<Trinity<String, Icon, String>> myTemplatesList = new ArrayList<>();
     private InputValidator myInputValidator;
     private final Map<String, InputValidator> myExtraValidators = new HashMap<>();
@@ -242,6 +251,12 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     @Override
     public Builder setTitle(@NlsContexts.PopupTitle String title) {
       myTitle = title;
+      return this;
+    }
+
+    @Override
+    public Builder setDefaultText(String text) {
+      myDefaultText = text;
       return this;
     }
 
@@ -299,6 +314,11 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       };
 
       JBPopup popup = NewItemPopupUtil.createNewItemPopup(myTitle, contentPanel, contentPanel.getNameField());
+      if (myDefaultText != null) {
+        JTextField textField = contentPanel.getTextField();
+        textField.setText(myDefaultText);
+        textField.selectAll();
+      }
       contentPanel.setApplyAction(e -> {
         String newElementName = contentPanel.getEnteredName();
         if (StringUtil.isEmptyOrSpaces(newElementName)) return;
@@ -346,6 +366,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   public interface Builder {
     Builder setTitle(@DialogTitle String title);
     Builder setValidator(InputValidator validator);
+    Builder setDefaultText(String text);
     Builder setDialogOwner(@Nullable Component owner);
 
     default Builder addKind(@NlsContexts.ListItem @NotNull String kind, @Nullable Icon icon, @NonNls @NotNull String templateName) {

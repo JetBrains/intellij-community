@@ -26,6 +26,7 @@ public class LastRunReformatCodeOptionsProvider {
   private static final String REARRANGE_ENTRIES_KEY    = "LayoutCode.rearrangeEntries";
   private static final String CODE_CLEANUP_KEY         = "LayoutCode.codeCleanup";
   private static final String PROCESS_CHANGED_TEXT_KEY = "LayoutCode.processChangedText";
+  private static final String DO_NOT_KEEP_LINE_BREAKS_KEY = "LayoutCode.doNotKeepLineBreaks";
 
   private final PropertiesComponent myPropertiesComponent;
 
@@ -86,6 +87,14 @@ public class LastRunReformatCodeOptionsProvider {
   public boolean isRearrangeCode(@NotNull Language language) {
     String key = getRearrangeCodeKeyFor(language);
     return myPropertiesComponent.getBoolean(key);
+  }
+
+  public boolean isDoNotKeepLineBreaks() {
+    return myPropertiesComponent.getBoolean(DO_NOT_KEEP_LINE_BREAKS_KEY);
+  }
+
+  public void setDoNotKeepLineBreaks(boolean value) {
+    myPropertiesComponent.setValue(DO_NOT_KEEP_LINE_BREAKS_KEY, value);
   }
 
   private static String getRearrangeCodeKeyFor(@NotNull Language language) {

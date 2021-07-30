@@ -60,14 +60,10 @@ class ModuleSettingsComponent(
         settingsList.setComponents(moduleSettingComponents)
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun createTemplatesListComponentForModule(module: Module): ModuleTemplateComponent? {
-        val templates = read { availableTemplatesFor(module) }.takeIf { it.isNotEmpty() } ?: return null
-        val templatesWithNoneTemplate = buildList {
-            add(NoneTemplate)
-            addAll(templates)
-        }
-        return ModuleTemplateComponent(context, module, templatesWithNoneTemplate, uiEditorUsagesStats) {
+        // we don't display the component for a single template (nothing to choose from)
+        val templates = read { availableTemplatesFor(module) }.takeIf { it.size > 1 } ?: return null
+        return ModuleTemplateComponent(context, module, templates, uiEditorUsagesStats) {
             updateModule(module)
             component.updateUI()
         }

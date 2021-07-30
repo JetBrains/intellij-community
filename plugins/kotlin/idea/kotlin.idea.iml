@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="3" platform="JVM 1.8" allPlatforms="JVM [1.8]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xopt-in=kotlin.io.path.ExperimentalPathApi" />
+          <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xopt-in=kotlin.io.path.ExperimentalPathApi -Xopt-in=org.jetbrains.kotlin.idea.KotlinPluginInternalApi" />
         </compilerSettings>
         <compilerArguments>
           <option name="languageVersion" value="1.4" />
@@ -37,7 +37,6 @@
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="completion-ranking-kotlin" level="project" />
-    <orderEntry type="library" scope="TEST" name="javaslang" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="gson" level="project" />
@@ -53,11 +52,10 @@
     <orderEntry type="module" module-name="kotlin.formatter" />
     <orderEntry type="module" module-name="kotlin.j2k.idea" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence" />
     <orderEntry type="module" module-name="kotlin.scripting" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.core" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" exported="" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.statistics" exported="" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
@@ -68,21 +66,16 @@
     <orderEntry type="module" module-name="intellij.java.ui" />
     <orderEntry type="module" module-name="intellij.java.execution" />
     <orderEntry type="module" module-name="intellij.java.compiler" />
-    <orderEntry type="module" module-name="intellij.gradle.common" />
-    <orderEntry type="module" module-name="intellij.markdown" />
     <orderEntry type="module" module-name="intellij.regexp" />
-    <orderEntry type="module" module-name="intellij.spellchecker" />
-    <orderEntry type="module" module-name="intellij.copyright" />
     <orderEntry type="library" name="jaxb-api" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" name="fastutil-min" level="project" />
-    <orderEntry type="module" module-name="intellij.completionMlRanking" />
     <orderEntry type="module" module-name="intellij.platform.structuralSearch" />
     <orderEntry type="module" module-name="intellij.platform.duplicates.analysis" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="library" name="intellij-markdown" level="project" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
-    <orderEntry type="module" module-name="intellij.grazie" />
+    <orderEntry type="library" name="Velocity" level="project" />
   </component>
 </module>

@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
@@ -14,7 +14,6 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -112,7 +111,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     }, withEditorDiffPreview, this);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     JBLoadingPanel changesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
-                                                           ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+                                                           ProgressIndicatorBase.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
       @Override
       public Dimension getMinimumSize() {
         return VcsLogUiUtil.expandToFitToolbar(super.getMinimumSize(), myChangesBrowser.getToolbar().getComponent());
@@ -263,9 +262,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     }
     else if (VcsLogInternalDataKeys.VCS_LOG_VISIBLE_ROOTS.is(dataId)) {
       return VcsLogUtil.getAllVisibleRoots(myLogData.getRoots(), myFilterUi.getFilters());
-    }
-    else if (ChangesBrowserBase.DATA_KEY.is(dataId)) {
-      return myChangesBrowser;
     }
     else if (QuickActionProvider.KEY.is(dataId)) {
       return new QuickActionProvider() {

@@ -2,7 +2,6 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
-import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -29,6 +28,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
@@ -172,7 +172,7 @@ public final class JavaSdkImpl extends JavaSdk {
   @Override
   public String getVMExecutablePath(@NotNull Sdk sdk) {
     String binPath = getBinPath(sdk);
-    if (binPath.startsWith(WSLDistribution.UNC_PREFIX)) {
+    if (binPath.startsWith(WslConstants.UNC_PREFIX)) {
       return binPath + "/java";
     }
     return binPath + File.separator + VM_EXE_NAME;

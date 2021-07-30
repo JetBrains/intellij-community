@@ -20,6 +20,8 @@ import java.util.*
 private val LOG: Logger
   get() = PluginManagerCore.getLogger()
 
+private val checkCompatibilityFlag = System.getProperty("idea.plugin.check.compatibility", "true") != "false"
+
 @ApiStatus.Internal
 class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
                                val path: Path,
@@ -273,7 +275,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   }
 
   private fun checkCompatibility(context: DescriptorListLoadingContext) {
-    if (isBundled || (sinceBuild == null && untilBuild == null)) {
+    if (isBundled || !checkCompatibilityFlag || (sinceBuild == null && untilBuild == null)) {
       return
     }
 
@@ -479,13 +481,30 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun isRequireRestart() = isRestartRequired
 
-  override fun equals(other: Any?) = this === other || id == if (other is IdeaPluginDescriptorImpl) other.id else null
+  override fun equals(other: Any?): Boolean {
+    if (this === other) {
+      return true
+    }
+    if (other !is IdeaPluginDescriptorImpl) {
+      return false
+    }
+    return id == other.id && descriptorPath == other.descriptorPath
+  }
 
-  override fun hashCode() = id.hashCode()
+  override fun hashCode(): Int {
+    return 31 * id.hashCode() + (descriptorPath?.hashCode() ?: 0)
+  }
 
   override fun toString(): String {
-    return "PluginDescriptor(name=$name, id=$id, descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
-           "path=${pluginPathToUserString(path)}, version=$version, package=$packagePrefix), isBundled=$isBundled"
+    return "PluginDescriptor(" +
+           "name=$name, " +
+           "id=$id, " +
+           "descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
+           "path=${pluginPathToUserString(path)}, " +
+           "version=$version, " +
+           "package=$packagePrefix, " +
+           "isBundled=$isBundled" +
+           ")"
   }
 }
 

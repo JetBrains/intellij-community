@@ -32,6 +32,8 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="library" name="org.codehaus.groovy:groovy" level="project" />
   </component>
   <component name="copyright">
     <Base>

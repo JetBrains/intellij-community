@@ -67,7 +67,7 @@ public class GeneralModuleType extends ModuleType<ModuleBuilder>{
 
     @Override
     public boolean isAvailable() {
-      return Registry.is("general.project.type", false);
+      return Registry.is("general.project.type", true);
     }
   }
 }

@@ -9,9 +9,8 @@ import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
 import org.jetbrains.intellij.build.impl.LayoutBuilder
 import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry.LibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
-import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -80,7 +79,7 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
 
   val moduleNameToPlugin = HashMap<String, BuildItem>()
   val pluginLayouts = bundledMainModuleNames.mapNotNull { mainModuleName ->
-    // by intention we don't use buildContext.findModule as getPluginsByModules does - module name must match
+    // by intention, we don't use buildContext.findModule as getPluginsByModules does - module name must match
     // (old module names are not supported)
     var item = mainModuleToNonTrivialPlugin.get(mainModuleName)
     if (item == null) {
@@ -109,7 +108,7 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
     artifact.outputPath = "$artifactOutDir/${PathUtilRt.getFileName(artifact.outputPath)}"
   }
 
-  val builder = DistributionJARsBuilder(buildContext, null)
+  val builder = DistributionJARsBuilder(buildContext)
 
   // initial building
   val start = System.currentTimeMillis()
@@ -138,11 +137,8 @@ private fun createLibClassPath(buildContext: BuildContext,
       is ModuleOutputEntry -> {
         classPath.add(buildContext.getModuleOutputPath(buildContext.findRequiredModule(entry.moduleName)))
       }
-      is ProjectLibraryEntry -> {
+      is LibraryFileEntry -> {
         classPath.add(entry.libraryFile.toString())
-      }
-      is ModuleLibraryFileEntry -> {
-        classPath.add(entry.libraryFilePath)
       }
       else -> throw UnsupportedOperationException("Entry $entry is not supported")
     }

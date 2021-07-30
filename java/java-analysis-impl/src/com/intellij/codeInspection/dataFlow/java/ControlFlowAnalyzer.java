@@ -66,7 +66,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private final boolean myInlining;
   private final DfaValueFactory myFactory;
   private final TrapTracker myTrapTracker;
-  private ControlFlowImpl myCurrentFlow;
+  private ControlFlow myCurrentFlow;
   private final Map<PsiExpression, NullabilityProblemKind<? super PsiExpression>> myCustomNullabilityProblems = new HashMap<>();
   private ExpressionBlockContext myExpressionBlockContext;
 
@@ -112,8 +112,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new FlushFieldsInstruction());
   }
 
-  private @Nullable ControlFlowImpl buildControlFlow() {
-    myCurrentFlow = new ControlFlowImpl(myFactory, myCodeFragment);
+  private @Nullable ControlFlow buildControlFlow() {
+    myCurrentFlow = new ControlFlow(myFactory, myCodeFragment);
     addInstruction(new FinishElementInstruction(null)); // to initialize LVA
     try {
       if(myCodeFragment instanceof PsiClass) {
@@ -2211,15 +2211,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       return new ControlFlowAnalyzer(targetFactory, psiBlock, false).buildControlFlow();
     }
     PsiFile file = psiBlock.getContainingFile();
-    ConcurrentMap<PsiElement, Optional<ControlFlowImpl>> fileMap =
+    ConcurrentMap<PsiElement, Optional<ControlFlow>> fileMap =
       CachedValuesManager.getCachedValue(file, () ->
         CachedValueProvider.Result.create(new ConcurrentHashMap<>(), PsiModificationTracker.MODIFICATION_COUNT));
-    Optional<ControlFlowImpl> cf = fileMap.computeIfAbsent(psiBlock, psi -> {
+    Optional<ControlFlow> cf = fileMap.computeIfAbsent(psiBlock, psi -> {
       DfaValueFactory factory = new DfaValueFactory(file.getProject());
-      ControlFlowImpl flow = new ControlFlowAnalyzer(factory, psiBlock, true).buildControlFlow();
+      ControlFlow flow = new ControlFlowAnalyzer(factory, psiBlock, true).buildControlFlow();
       return Optional.ofNullable(flow);
     });
-    return cf.map(flow -> new ControlFlowImpl(flow, targetFactory)).orElse(null);
+    return cf.map(flow -> new ControlFlow(flow, targetFactory)).orElse(null);
   }
 
   private static class CannotAnalyzeException extends RuntimeException {

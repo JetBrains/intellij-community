@@ -4,7 +4,6 @@ import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import org.apache.commons.lang3.StringUtils
-import java.util.Locale
 
 internal sealed class PackageModel(
     val groupId: String,
@@ -12,9 +11,9 @@ internal sealed class PackageModel(
     val remoteInfo: ApiStandardPackage?
 ) : Comparable<PackageModel> {
 
-    val identifier = "$groupId:$artifactId".toLowerCase(Locale.ROOT)
+    val identifier = "$groupId:$artifactId".lowercase()
 
-    val sortKey = (StringUtils.normalizeSpace(remoteInfo?.name) ?: identifier).toLowerCase(Locale.ROOT)
+    val sortKey = (StringUtils.normalizeSpace(remoteInfo?.name) ?: identifier).lowercase()
 
     val isKotlinMultiplatform = remoteInfo?.mpp != null
 
@@ -83,17 +82,18 @@ internal sealed class PackageModel(
         fun getLatestInstalledVersion(): PackageVersion = usageInfo.maxByOrNull { it.version }?.version
             ?: throw IllegalStateException("An installed package must always have at least one usage")
 
-        override val searchableInfo = buildString {
-            appendLine(identifier)
-            for (usage in usageInfo) {
-                appendLine(usage.version)
-            }
+        override val searchableInfo =
+            buildString {
+                appendLine(identifier)
+                for (usage in usageInfo) {
+                    appendLine(usage.version)
+                }
 
-            if (remoteInfo != null) {
-                appendLine(remoteInfo.description)
-                appendLine(remoteInfo.name)
-            }
-        }.toLowerCase(Locale.ROOT)
+                if (remoteInfo != null) {
+                    appendLine(remoteInfo.description)
+                    appendLine(remoteInfo.name)
+                }
+            }.lowercase()
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -110,21 +110,25 @@ internal sealed class PackageModel(
             result = 31 * result + searchableInfo.hashCode()
             return result
         }
+
+        override fun toString(): String = "Installed(usageInfo=$usageInfo, searchableInfo='$searchableInfo')"
     }
 
     class SearchResult(
         groupId: String,
         artifactId: String,
-        remoteInfo: ApiStandardPackage
+        remoteInfo: ApiStandardPackage,
+        val uiState: SearchResultUiState?
     ) : PackageModel(groupId, artifactId, remoteInfo) {
 
         override fun additionalAvailableVersions(): List<PackageVersion> = emptyList()
 
-        override val searchableInfo = buildString {
-            appendLine(identifier)
-            appendLine(remoteInfo.description)
-            appendLine(remoteInfo.name)
-        }.toLowerCase(Locale.ROOT)
+        override val searchableInfo =
+            buildString {
+                appendLine(identifier)
+                appendLine(remoteInfo.description)
+                appendLine(remoteInfo.name)
+            }.lowercase()
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -138,17 +142,20 @@ internal sealed class PackageModel(
         override fun hashCode(): Int {
             return searchableInfo.hashCode()
         }
+
+        override fun toString(): String = "SearchResult(searchableInfo='$searchableInfo')"
     }
 
     companion object {
 
-        fun fromSearchResult(remoteInfo: ApiStandardPackage): SearchResult? {
+        fun fromSearchResult(remoteInfo: ApiStandardPackage, uiState: SearchResultUiState? = null): SearchResult? {
             if (remoteInfo.versions.isEmpty()) return null
 
             return SearchResult(
                 remoteInfo.groupId,
                 remoteInfo.artifactId,
-                remoteInfo = remoteInfo
+                remoteInfo = remoteInfo,
+                uiState = uiState
             )
         }
 

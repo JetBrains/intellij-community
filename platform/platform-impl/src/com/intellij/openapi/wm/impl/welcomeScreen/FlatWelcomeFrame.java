@@ -38,7 +38,6 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.DefaultFrameHeader;
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
@@ -79,9 +78,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   public static final String BOTTOM_PANEL = "BOTTOM_PANEL";
   public static final int DEFAULT_HEIGHT = USE_TABBED_WELCOME_SCREEN ? 600 : 460;
   public static final int MAX_DEFAULT_WIDTH = 800;
-  private AbstractWelcomeScreen myScreen;
+  private final AbstractWelcomeScreen myScreen;
   private WelcomeBalloonLayoutImpl myBalloonLayout;
   private boolean myDisposed;
+  private DefaultFrameHeader myHeader;
 
   public FlatWelcomeFrame() {
     SplashManager.hideBeforeShow(this);
@@ -89,6 +89,19 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     JRootPane rootPane = getRootPane();
     myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8));
     myScreen = USE_TABBED_WELCOME_SCREEN ? new TabbedWelcomeScreen() : new FlatWelcomeScreen();
+
+    if (IdeFrameDecorator.isCustomDecorationActive()) {
+      myHeader = new DefaultFrameHeader(this);
+      JComponent holder = CustomFrameDialogContent
+        .getCustomContentHolder(this, myScreen.getWelcomePanel(), myHeader);
+      setContentPane(holder);
+    }
+    else {
+      if (USE_TABBED_WELCOME_SCREEN && SystemInfoRt.isMac) {
+        rootPane.setJMenuBar(new WelcomeFrameMenuBar());
+      }
+      setContentPane(myScreen.getWelcomePanel());
+    }
 
     IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane) {
       @Override
@@ -132,21 +145,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     connection.subscribe(LafManagerListener.TOPIC, new LafManagerListener() {
       @Override
       public void lookAndFeelChanged(@NotNull LafManager source) {
-        if (myScreen != null) {
-          Disposer.dispose(myScreen);
-        }
         if (myBalloonLayout != null) {
           Disposer.dispose(myBalloonLayout);
         }
         myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8));
-        if (USE_TABBED_WELCOME_SCREEN) {
-          int selectedIndex = ((TabbedWelcomeScreen)myScreen).getSelectedIndex();
-          myScreen = new TabbedWelcomeScreen();
-          ((TabbedWelcomeScreen)myScreen).setSelectedIndex(selectedIndex);
-        }
-        else {
-          myScreen = new FlatWelcomeScreen();
-        }
         updateComponentsAndResize();
         repaint();
       }
@@ -161,7 +163,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
     });
 
-    WelcomeFrame.setupCloseAction(this);
+    setupCloseAction();
     MnemonicHelper.init(this);
     Disposer.register(app, this);
 
@@ -173,17 +175,17 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       ModalityState.NON_MODAL);
   }
 
+  protected void setupCloseAction() {
+    WelcomeFrame.setupCloseAction(this);
+  }
+
   private void updateComponentsAndResize() {
     int defaultHeight = DEFAULT_HEIGHT;
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       Color backgroundColor = UIManager.getColor("WelcomeScreen.background");
-      FrameHeader header = new DefaultFrameHeader(this);
       if (backgroundColor != null) {
-        header.setBackground(backgroundColor);
+        myHeader.setBackground(backgroundColor);
       }
-      JComponent holder = CustomFrameDialogContent
-        .getCustomContentHolder(this, myScreen.getWelcomePanel(), header);
-      setContentPane(holder);
     }
     else {
       if (USE_TABBED_WELCOME_SCREEN && SystemInfoRt.isMac) {
@@ -215,7 +217,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     setTitle("");
     setTitle(getWelcomeFrameTitle());
     AppUIUtil.updateWindowIcon(this);
-
   }
 
   @Override
@@ -364,7 +365,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         g.setColor(JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND);
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
-        Color backgroundBorder = JBUI.CurrentTheme.DragAndDrop.Area.BORDER_COLOR;
+        Color backgroundBorder = JBUI.CurrentTheme.DragAndDrop.BORDER_COLOR;
         g.setColor(backgroundBorder);
         g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
         g.drawRect(bounds.x + 1, bounds.y + 1, bounds.width - 2, bounds.height - 2);
@@ -399,13 +400,15 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.X_AXIS));
       toolbar.add(WelcomeScreenComponentFactory.createErrorsLink(this));
       toolbar.add(createEventsLink());
-      toolbar.add(WelcomeScreenComponentFactory.createActionLink(FlatWelcomeFrame.this, IdeBundle.message("action.Anonymous.text.configure"),
-                                                                 IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE,
-                                                                 AllIcons.General.GearPlain, UIUtil.findComponentOfType(frame.getRootPane(), JList.class)));
+      toolbar
+        .add(WelcomeScreenComponentFactory.createActionLink(FlatWelcomeFrame.this, IdeBundle.message("action.Anonymous.text.configure"),
+                                                            IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE,
+                                                            AllIcons.General.GearPlain,
+                                                            UIUtil.findComponentOfType(frame.getRootPane(), JList.class)));
       toolbar
         .add(WelcomeScreenComponentFactory
                .createActionLink(FlatWelcomeFrame.this, IdeBundle.message("action.GetHelp"), IdeActions.GROUP_WELCOME_SCREEN_DOC, null, null
-        ));
+               ));
       panel.add(toolbar, BorderLayout.EAST);
 
       panel.setBorder(JBUI.Borders.empty(0, 0, 8, 11));
@@ -477,7 +480,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
             TouchbarDataKeys.putActionDescriptor(action).setContextComponent(link);
           }
           WelcomeScreenFocusManager.installFocusable(FlatWelcomeFrame.this, button, action, KeyEvent.VK_DOWN,
-                                                     KeyEvent.VK_UP, UIUtil.findComponentOfType(FlatWelcomeFrame.this.getComponent(), JList.class)
+                                                     KeyEvent.VK_UP,
+                                                     UIUtil.findComponentOfType(FlatWelcomeFrame.this.getComponent(), JList.class)
           );
 
           panel.add(button);

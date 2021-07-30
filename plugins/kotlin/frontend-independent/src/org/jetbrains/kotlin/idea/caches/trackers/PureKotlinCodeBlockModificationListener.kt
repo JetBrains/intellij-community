@@ -74,7 +74,9 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
 
         private inline fun isFormattingChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) { it is PsiWhiteSpace }
 
-        private inline fun isStringLiteralChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) { it?.elementType == KtTokens.REGULAR_STRING_PART }
+        private inline fun isStringLiteralChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) {
+            it?.elementType == KtTokens.REGULAR_STRING_PART && it?.psi?.getTopmostParentOfType<KtAnnotationEntry>() == null
+        }
 
         /**
          * Has to be aligned with [getInsideCodeBlockModificationScope] :

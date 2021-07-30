@@ -1311,9 +1311,18 @@ public final class BuildManager implements Disposable {
     }
 
     cmdLine.addParameter("-Djava.awt.headless=true");
-    if (sdkVersion != null && sdkVersion.compareTo(JavaSdkVersion.JDK_1_9) < 0) {
-      //-Djava.endorsed.dirs is not supported in JDK 9+, may result in abnormal process termination
-      cmdLine.addParameter("-Djava.endorsed.dirs=\"\""); // turn off all jre customizations for predictable behaviour
+    if (sdkVersion != null) {
+      if (sdkVersion.compareTo(JavaSdkVersion.JDK_1_9) < 0) {
+        //-Djava.endorsed.dirs is not supported in JDK 9+, may result in abnormal process termination
+        cmdLine.addParameter("-Djava.endorsed.dirs=\"\""); // turn off all jre customizations for predictable behaviour
+      }
+      if (sdkVersion.isAtLeast(JavaSdkVersion.JDK_16)) {
+        // enable javac-related reflection tricks in JPS
+        cmdLine.addParameter("--add-opens");
+        cmdLine.addParameter("jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED");
+        cmdLine.addParameter("--add-opens");
+        cmdLine.addParameter("jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED");
+      }
     }
     if (IS_UNIT_TEST_MODE) {
       cmdLine.addParameter("-Dtest.mode=true");
@@ -1338,6 +1347,9 @@ public final class BuildManager implements Disposable {
 
     if (Registry.is("compiler.build.report.statistics")) {
       cmdLine.addParameter("-D" + GlobalOptions.REPORT_BUILD_STATISTICS + "=true");
+    }
+    if (Registry.is("compiler.natural.int.multimap.impl")) {  // todo: temporary flag to evaluate experimental multimap implementation
+      cmdLine.addParameter("-Djps.mappings.natural.int.multimap.impl=true");
     }
 
     // third party libraries tweaks

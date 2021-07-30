@@ -1,13 +1,13 @@
 package com.jetbrains.packagesearch.intellij.plugin
 
-import com.intellij.AbstractBundle
+import com.intellij.DynamicBundle
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.util.function.Supplier
 
 private const val BUNDLE_NAME = "messages.packageSearchBundle"
 
-object PackageSearchBundle : AbstractBundle(BUNDLE_NAME) {
+object PackageSearchBundle : DynamicBundle(BUNDLE_NAME) {
 
     @Nls
     fun message(

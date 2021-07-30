@@ -25,10 +25,12 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -1321,5 +1323,87 @@ public class StructureImportingTest extends MavenMultiVersionImportingTestCase {
                           "</dependencies>");
 
     doImportProjects(Collections.singletonList(myProjectPom), false, "profile-test");
+  }
+
+  @Test
+  public void testProjectWithMavenConfigCustomUserSettingsXml() throws IOException {
+    createProjectSubFile(".mvn/maven.config", "-s .mvn/custom-settings.xml");
+    createProjectSubFile(".mvn/custom-settings.xml",
+                         "<settings>\n" +
+                         "    <profiles>\n" +
+                         "        <profile>\n" +
+                         "            <id>custom1</id>\n" +
+                         "            <properties>\n" +
+                         "                <projectName>customName</prop>\n" +
+                         "            </properties>\n" +
+                         "        </profile>\n" +
+                         "    </profiles>\n" +
+                         "    <activeProfiles>\n" +
+                         "        <activeProfile>custom1</activeProfile>\n" +
+                         "    </activeProfiles>" +
+                         "</settings>");
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>${projectName}</artifactId>" +
+                     "<version>1</version>");
+
+    MavenGeneralSettings settings = getMavenGeneralSettings();
+    settings.setUserSettingsFile("");
+    settings.setUseMavenConfig(true);
+    importProject();
+    assertModules("customName");
+  }
+
+  @Test
+  public void testProjectWithActiveProfilesFromSettingsXml() throws IOException {
+    updateSettingsXml("<activeProfiles>\n" +
+                      "  <activeProfile>one</activeProfile>\n" +
+                      "</activeProfiles>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>${projectName}</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <properties>" +
+                     "      <projectName>project-one</projectName>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    importProject();
+    assertModules("project-one");
+  }
+
+  @Test
+  public void testProjectWithActiveProfilesAndInnactiveFromSettingsXml() throws IOException {
+    updateSettingsXml("<activeProfiles>\n" +
+                      "  <activeProfile>one</activeProfile>\n" +
+                      "  <activeProfile>two</activeProfile>\n" +
+                      "</activeProfiles>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>${projectName}</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<profiles>" +
+                     "  <profile>" +
+                     "    <id>one</id>" +
+                     "    <properties>" +
+                     "      <projectName>project-one</projectName>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "  <profile>" +
+                     "    <id>two</id>" +
+                     "    <properties>" +
+                     "      <projectName>project-two</projectName>" +
+                     "    </properties>" +
+                     "  </profile>" +
+                     "</profiles>");
+
+    List<String> disabledProfiles = Collections.singletonList("one");
+    doImportProjects(Collections.singletonList(myProjectPom), true, disabledProfiles);
+    assertModules("project-two");
   }
 }

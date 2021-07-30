@@ -129,7 +129,7 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
 
     if (isCompatible(descriptor) &&
         (overrideUseIfCompatible || VersionComparatorUtil.compare(descriptor.version, prevDescriptor.version) > 0)) {
-      PluginManagerCore.getLogger().info("${descriptor.pluginPath} overrides ${prevDescriptor.pluginPath}")
+      PluginManagerCore.getLogger().info("$descriptor overrides $prevDescriptor")
       idMap.put(pluginId, descriptor)
       return true
     }

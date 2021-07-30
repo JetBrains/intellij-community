@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
@@ -20,7 +21,8 @@ import java.util.Set;
  * Creates map or set with canonicalized path hash strategy.
  */
 public final class FileCollectionFactory {
-  private static final HashingStrategy<File> FILE_HASH_STRATEGY = new HashingStrategy.Serializable<File>() {
+  private interface SerializableHashingStrategy<T> extends HashingStrategy<T>, Serializable {}
+  private static final HashingStrategy<File> FILE_HASH_STRATEGY = new SerializableHashingStrategy<File>() {
     @Override
     public int hashCode(@Nullable File o) {
       return FileUtilRt.pathHashCode(o == null ? null : o.getPath());
@@ -31,22 +33,6 @@ public final class FileCollectionFactory {
       return FileUtilRt.pathsEqual(a == null ? null : a.getPath(), b == null ? null : b.getPath());
     }
   };
-
-  private static final HashingStrategy<String> FILE_PATH_HASH_STRATEGY = new HashingStrategy.Serializable<String>() {
-    @Override
-    public int hashCode(@Nullable String value) {
-      return FileUtilRt.pathHashCode(value);
-    }
-
-    @Override
-    public boolean equals(@Nullable String val1, @Nullable String val2) {
-      return FileUtilRt.pathsEqual(val1, val2);
-    }
-  };
-
-  public static @NotNull <V> Map<String, V> createCanonicalFilePathMap() {
-    return CollectionFactory.createCustomHashingStrategyMap(FILE_PATH_HASH_STRATEGY);
-  }
 
   /**
    * Create linked map with canonicalized key hash strategy.

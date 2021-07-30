@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import java.io.File
 
-fun descriptorByFileDirective(testDataFile: File): KotlinWithJdkAndRuntimeLightProjectDescriptor {
+fun descriptorByFileDirective(testDataFile: File, languageLevel: LanguageLevel = LanguageLevel.JDK_1_8): KotlinWithJdkAndRuntimeLightProjectDescriptor {
     return object : KotlinWithJdkAndRuntimeLightProjectDescriptor() {
         private fun projectDescriptorByFileDirective(): LightProjectDescriptor {
             val fileText = FileUtil.loadFile(testDataFile, true)
@@ -37,7 +37,7 @@ fun descriptorByFileDirective(testDataFile: File): KotlinWithJdkAndRuntimeLightP
 
         override fun configureModule(module: Module, model: ModifiableRootModel) {
             super.configureModule(module, model)
-            model.getModuleExtension(LanguageLevelModuleExtension::class.java).languageLevel = LanguageLevel.JDK_1_8
+            model.getModuleExtension(LanguageLevelModuleExtension::class.java).languageLevel = languageLevel
         }
     }
 }

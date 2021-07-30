@@ -4,10 +4,12 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.NioFiles
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
 import java.nio.file.*
@@ -121,7 +123,9 @@ final class WinExeInstallerBuilder {
 
     // Log final nsi directory to make debugging easier
     def logDir = new File(buildContext.paths.buildOutputRoot, "log")
-    FileUtil.copyDir(nsiConfDir.toFile(), new File(logDir, "nsi"))
+    def nsiLogDir = new File(logDir, "nsi")
+    NioFiles.deleteRecursively(nsiLogDir.toPath())
+    FileUtil.copyDir(nsiConfDir.toFile(), nsiLogDir)
 
     ant.unzip(src: "$communityHome/build/tools/NSIS.zip", dest: box)
     buildContext.messages.block("Running NSIS tool to build .exe installer for Windows") {
@@ -153,8 +157,9 @@ final class WinExeInstallerBuilder {
     if (!new File(installerPath).exists()) {
       buildContext.messages.error("Windows installer wasn't created.")
     }
-
-    buildContext.signExeFile(installerPath)
+    buildContext.executeStep("Signing $installerPath", BuildOptions.WIN_SIGN_STEP) {
+      buildContext.signFile(installerPath)
+    }
     buildContext.notifyArtifactBuilt(installerPath)
     return installerPath
   }

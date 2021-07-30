@@ -42,7 +42,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
-import com.intellij.usages.impl.actions.RuleAction;
+import com.intellij.usages.impl.actions.MergeSameLineUsagesAction;
 import com.intellij.usages.rules.*;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -71,7 +71,10 @@ import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
@@ -163,7 +166,6 @@ public class UsageViewImpl implements UsageViewEx {
   // to speed up the expanding (see getExpandedDescendants() here and UsageViewTreeCellRenderer.customizeCellRenderer())
   private boolean myExpandingCollapsing;
   private final UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
-  private Usage myOriginUsage;
   @Nullable private Action myRerunAction;
   private final ExecutorService updateRequests = AppExecutorUtil
     .createBoundedApplicationPoolExecutor("Usage View Update Requests", AppExecutorUtil.getAppExecutorService(),
@@ -460,28 +462,7 @@ public class UsageViewImpl implements UsageViewEx {
     public int hashCode() {
       return Objects.hash(nodeChangeType, parentNode, childNode);
     }
-
-    private boolean isValid() {
-      boolean parentValid = !parentNode.isStructuralChangeDetected();
-
-      boolean childValid = true;
-      if (childNode != null) {
-        childValid = !childNode.isStructuralChangeDetected();
-      }
-
-      return parentValid && childValid;
-    }
   }
-
-  /**
-   * Executes a new appendUsage request with the updateRequests executor
-   */
-  private final Consumer<Usage> invalidatedUsagesConsumer = (@NotNull Usage usage) -> {
-    if (!getPresentation().isDetachedMode() && !isDisposed) {
-      myUsageNodes.remove(usage);
-      addUpdateRequest(() -> ReadAction.run(() -> doAppendUsage(usage)));
-    }
-  };
 
 
   /**
@@ -588,9 +569,6 @@ public class UsageViewImpl implements UsageViewEx {
 
         if (!addedToThisNode.isEmpty()) {
           for (NodeChange change : addedToThisNode) {
-            if (!change.isValid()) {
-              continue;
-            }
             Node childNode = change.childNode;
             if (childNode == null) {
               continue;
@@ -912,7 +890,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   protected void addFilteringActions(@NotNull DefaultActionGroup group, boolean includeExtensionPoints) {
     if (getPresentation().isMergeDupLinesAvailable()) {
-      MergeDupLines mergeDupLines = new MergeDupLines();
+      MergeSameLineUsagesAction mergeDupLines = new MergeSameLineUsagesAction();
       JComponent component = myRootPanel;
       if (component != null) {
         mergeDupLines.registerCustomShortcutSet(mergeDupLines.getShortcutSet(), component, this);
@@ -1241,23 +1219,6 @@ public class UsageViewImpl implements UsageViewEx {
     associatedProgress = indicator;
   }
 
-  private static final class MergeDupLines extends RuleAction {
-    private MergeDupLines() {
-      super(UsageViewBundle.message("action.merge.same.line"), AllIcons.Toolbar.Filterdups);
-      setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK)));
-    }
-
-    @Override
-    protected boolean getOptionValue(@NotNull AnActionEvent e) {
-      return getUsageViewSettings(e).isFilterDuplicatedLine();
-    }
-
-    @Override
-    protected void setOptionValue(@NotNull AnActionEvent e, boolean value) {
-      getUsageViewSettings(e).setFilterDuplicatedLine(value);
-    }
-  }
-
   private final class ShowSettings extends AnAction implements UpdateInBackground {
     private ShowSettings() {
       super(UsageViewBundle.message("action.text.usage.view.settings"), null, AllIcons.General.GearPlain);
@@ -1392,7 +1353,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
     reportToFUS(usage);
 
-    UsageNode child = myBuilder.appendOrGet(usage, isFilterDuplicateLines(), edtModelToSwingNodeChangesQueue, invalidatedUsagesConsumer);
+    UsageNode child = myBuilder.appendOrGet(usage, isFilterDuplicateLines(), edtModelToSwingNodeChangesQueue);
     myUsageNodes.put(usage, child == null ? NULL_NODE : child);
 
     if (child != null && getPresentation().isExcludeAvailable()) {
@@ -2280,16 +2241,27 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   /**
+   * @deprecated store origin usage elsewhere
+   */
+  @Deprecated private Usage myOriginUsage;
+
+  /**
    * The element the "find usages" action was invoked on.
    * E.g. if the "find usages" was invoked on the reference "getName(2)" pointing to the method "getName()" then the origin usage is this reference.
+   *
+   * @deprecated store origin usage elsewhere
    */
+  @Deprecated
   public void setOriginUsage(@NotNull Usage usage) {
     myOriginUsage = usage;
   }
 
   /**
    * true if the {@param usage} points to the element the "find usages" action was invoked on
+   *
+   * @deprecated store origin usage elsewhere
    */
+  @Deprecated
   public boolean isOriginUsage(@NotNull Usage usage) {
     return
       myOriginUsage instanceof UsageInfo2UsageAdapter &&

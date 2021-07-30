@@ -32,9 +32,8 @@ internal class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
                        mavenDistribution: WslMavenDistribution,
                        debugPort: Int?,
                        val myProject: Project,
-                       val remoteHost: String,
-                       multimoduleDirectory: String?
-) : MavenServerCMDState(jdk, vmOptions, mavenDistribution, debugPort, multimoduleDirectory) {
+                       val remoteHost: String
+) : MavenServerCMDState(jdk, vmOptions, mavenDistribution, debugPort) {
 
   override fun getMavenOpts(): Map<String, String> {
     return getPropertiesFromMavenOpts(myWslDistribution)

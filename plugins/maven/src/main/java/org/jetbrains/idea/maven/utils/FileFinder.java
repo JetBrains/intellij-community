@@ -6,10 +6,11 @@ import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.model.MavenConstants;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -63,7 +64,18 @@ public final class FileFinder {
 
   private static List<VirtualFile> getOriginalPoms(@NotNull List<VirtualFile> pomFiles) {
     if (pomFiles.size() < 2) return pomFiles;
-    List<VirtualFile> originalPoms = ContainerUtil.filter(pomFiles, vf -> MavenUtil.isPomFileName(vf.getName()));
+
+    List<VirtualFile> originalPoms = new ArrayList<>();
+    for (VirtualFile file : pomFiles) {
+      if (file.getName().equals(MavenConstants.POM_XML)) {
+        return Collections.singletonList(file);
+      }
+      if (MavenUtil.isPomFileName(file.getName())) {
+        originalPoms.add(file);
+      }
+    }
+
+
     return originalPoms.isEmpty() ? pomFiles : originalPoms;
   }
 }

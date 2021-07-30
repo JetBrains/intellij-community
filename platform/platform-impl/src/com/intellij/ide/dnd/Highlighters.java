@@ -221,6 +221,13 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     public int getMask() {
       return RECTANGLE;
     }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      g.setColor(JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND);
+      g.fillRect(0, 0, getWidth(), getHeight());
+      super.paintComponent(g);
+    }
   }
 
   private static class HorizontalLinesHighlighter extends AbstractComponentHighlighter {

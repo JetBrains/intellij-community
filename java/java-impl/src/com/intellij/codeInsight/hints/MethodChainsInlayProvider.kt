@@ -32,7 +32,7 @@ class MethodChainsInlayProvider : AbstractCallChainHintsProvider<PsiMethodCallEx
   override val dotQualifiedClass: Class<PsiMethodCallExpression>
     get() = PsiMethodCallExpression::class.java
 
-  override fun getTypeComputationContext(globalDotQualifiedExpression: PsiMethodCallExpression) {
+  override fun getTypeComputationContext(topmostDotQualifiedExpression: PsiMethodCallExpression) {
     // Java implementation doesn't use any additional type computation context
   }
 

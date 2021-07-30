@@ -1851,8 +1851,6 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     updateAll(myProjectPom);
 
-    MyLoggingListener l = new MyLoggingListener();
-
     createProfilesXmlOldStyle("<profile>" +
                               "  <id>one</id>" +
                               "  <activation>" +
@@ -1864,7 +1862,10 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
                               "</profile>");
 
     updateAll(myProjectPom);
-    assertEquals("updated: project deleted: <none> ", l.log);
+
+    List<VirtualFile> existingManagedFiles = myTree.getExistingManagedFiles();
+    List<VirtualFile> obsoleteFiles = myTree.getRootProjectsFiles();
+    assertEquals(existingManagedFiles, obsoleteFiles);
   }
 
   @Test 

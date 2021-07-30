@@ -6053,6 +6053,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertOrdinaryPropertyToLazy/basic.kt");
         }
 
+        @TestMetadata("const.kt")
+        public void testConst() throws Exception {
+            runTest("testData/intentions/convertOrdinaryPropertyToLazy/const.kt");
+        }
+
         @TestMetadata("noInitializer.kt")
         public void testNoInitializer() throws Exception {
             runTest("testData/intentions/convertOrdinaryPropertyToLazy/noInitializer.kt");
@@ -6149,6 +6154,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("noParameterUnderCaret.kt")
         public void testNoParameterUnderCaret() throws Exception {
             runTest("testData/intentions/convertParameterToReceiver/noParameterUnderCaret.kt");
+        }
+
+        @TestMetadata("parameterOfObjectFunction.kt")
+        public void testParameterOfObjectFunction() throws Exception {
+            runTest("testData/intentions/convertParameterToReceiver/parameterOfObjectFunction.kt");
         }
 
         @TestMetadata("topLevelFun.kt")
@@ -6435,6 +6445,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("const.kt")
+        public void testConst() throws Exception {
+            runTest("testData/intentions/convertPropertyInitializerToGetter/const.kt");
+        }
+
         @TestMetadata("errorType.kt")
         public void testErrorType() throws Exception {
             runTest("testData/intentions/convertPropertyInitializerToGetter/errorType.kt");
@@ -6521,6 +6536,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("blockBody.kt")
         public void testBlockBody() throws Exception {
             runTest("testData/intentions/convertPropertyToFunction/blockBody.kt");
+        }
+
+        @TestMetadata("const.kt")
+        public void testConst() throws Exception {
+            runTest("testData/intentions/convertPropertyToFunction/const.kt");
         }
 
         @TestMetadata("delegatingProperty.kt")
@@ -7025,6 +7045,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertSealedClassToEnum/outOfRange.kt");
         }
 
+        @TestMetadata("sealedInterface.kt")
+        public void testSealedInterface() throws Exception {
+            runTest("testData/intentions/convertSealedClassToEnum/sealedInterface.kt");
+        }
+
         @TestMetadata("withNonObjectInheritors.kt")
         public void testWithNonObjectInheritors() throws Exception {
             runTest("testData/intentions/convertSealedClassToEnum/withNonObjectInheritors.kt");
@@ -7041,6 +7066,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public static class ConvertSecondaryConstructorToPrimary extends AbstractIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("assignmentToGlobalVariable.kt")
+        public void testAssignmentToGlobalVariable() throws Exception {
+            runTest("testData/intentions/convertSecondaryConstructorToPrimary/assignmentToGlobalVariable.kt");
         }
 
         @TestMetadata("defaultValueChain.kt")

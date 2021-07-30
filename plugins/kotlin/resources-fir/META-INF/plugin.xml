@@ -17,23 +17,26 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
 
   <depends optional="true" config-file="gradle.xml">com.intellij.gradle</depends>
   <depends optional="true" config-file="gradle-java.xml">org.jetbrains.plugins.gradle</depends>
-  <depends optional="true" config-file="gradle-groovy.xml">org.intellij.groovy</depends>
+  <depends optional="true" config-file="dep-groovy.xml">org.intellij.groovy</depends>
   <depends optional="true" config-file="maven-common.xml">org.jetbrains.idea.maven</depends>
-  <depends optional="true" config-file="maven.xml">org.jetbrains.idea.maven</depends>
-  <depends optional="true" config-file="git4idea.xml">Git4Idea</depends>
+  <depends optional="true" config-file="dep-maven.xml">org.jetbrains.idea.maven</depends>
+  <depends optional="true" config-file="dep-git.xml">Git4Idea</depends>
+  <depends optional="true" config-file="dep-jvm-decompiler.xml">org.jetbrains.java.decompiler</depends>
 
   <!-- ULTIMATE-PLUGIN-PLACEHOLDER -->
 
   <!-- CIDR-PLUGIN-PLACEHOLDER-START -->
   <depends>com.intellij.modules.idea</depends>
   <depends>com.intellij.modules.java</depends>
-  <depends optional="true" config-file="kotlin-copyright.xml">com.intellij.copyright</depends>
+  <depends optional="true" config-file="dep-copyright.xml">com.intellij.copyright</depends>
 <!--  <depends optional="true" config-file="dep-injection.xml">org.intellij.intelliLang</depends>-->
   <!-- CIDR-PLUGIN-PLACEHOLDER-END -->
 
   <xi:include href="indexes.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="jps.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="idea.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="project-wizard.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="dep-spellchecker.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="caches.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <xi:include href="extensions/ide-frontend-independent.xml" xpointer="xpointer(/idea-plugin/*)"/>

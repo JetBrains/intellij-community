@@ -30,7 +30,10 @@ import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import kotlin.math.max
 
-internal class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: Editor?, val predefinedFile: VirtualFile?) : Disposable {
+internal class LessonExecutor(val lesson: KLesson,
+                              val project: Project,
+                              initialEditor: Editor?,
+                              val predefinedFile: VirtualFile?) : Disposable {
   private data class TaskInfo(val content: () -> Unit,
                               var restoreIndex: Int,
                               var taskProperties: TaskProperties?,
@@ -44,7 +47,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
                               val removeAfterDoneMessages: MutableList<Int> = mutableListOf())
 
   var predefinedEditor: Editor? by WeakReferenceDelegator(initialEditor)
-  private set
+    private set
 
   private val selectedEditor: Editor?
     get() {
@@ -269,10 +272,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
 
   private fun rehighlightPreviousComponent() {
     val taskInfo = taskActions[currentTaskIndex]
-    val function = taskInfo.rehighlightComponent
-    if (function == null) {
-      return
-    }
+    val function = taskInfo.rehighlightComponent ?: return
     val condition = continuePreviousHighlighting
     ApplicationManager.getApplication().executeOnPooledThread {
       var ui = taskInfo.userVisibleInfo?.ui
@@ -425,9 +425,9 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
       }
     }
     // A little bit hacky here: visual index should be shown only for the first paragraph.
-    // But is is passed here for all paragraphs.
+    // But it is passed here for all paragraphs.
     // But... LessonMessagePane will draw number only for the first active paragraph :)
-    LessonManager.instance.addMessage(text, !hasDetection, taskInfo.taskVisualIndex)
+    LessonManager.instance.addMessage(text, !hasDetection, taskInfo.taskVisualIndex, useInternalParagraphStyle = removeAfterDone)
   }
 
   private fun addAllInactiveMessages() {

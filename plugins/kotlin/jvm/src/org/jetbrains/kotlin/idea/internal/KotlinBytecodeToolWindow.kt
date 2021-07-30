@@ -162,15 +162,17 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
         val optionPanel = JPanel(FlowLayout())
         add(optionPanel, BorderLayout.NORTH)
 
+        val decompilerFacade = KotlinJvmDecompilerFacade.getInstance()
+
         decompile = JButton(KotlinJvmBundle.message("button.text.decompile"))
-        if (KotlinDecompilerService.getInstance() != null) {
+        if (decompilerFacade != null) {
             optionPanel.add(decompile)
             decompile.addActionListener {
                 val location = Location.fromEditor(FileEditorManager.getInstance(myProject).selectedTextEditor, myProject)
                 val file = location.kFile
                 if (file != null) {
                     try {
-                        showDecompiledCode(file)
+                        decompilerFacade.showDecompiledCode(file)
                     } catch (ex: DecompileFailedException) {
                         LOG.info(ex)
                         Messages.showErrorDialog(

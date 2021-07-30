@@ -370,7 +370,8 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   }
 
   protected void updatePreview() {
-    myPreview.open(isNotNullAndSelected(getShowPreview()) ? getSelectedNode() : null);
+    Node node = isNotNullAndSelected(getShowPreview()) ? getSelectedNode() : null;
+    myPreview.open(node == null ? null : node.getDescriptor());
   }
 
   private void invokeLater(@NotNull Runnable runnable) {

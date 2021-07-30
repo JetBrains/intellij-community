@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("KotlinUtils")
 
 package com.intellij.util
@@ -13,3 +13,6 @@ inline fun <T> T?.alsoIfNull(block: () -> Unit): T? {
   }
   return this
 }
+
+inline fun <T> T.applyIf(condition: Boolean, body: T.() -> T): T =
+  if (condition) body() else this

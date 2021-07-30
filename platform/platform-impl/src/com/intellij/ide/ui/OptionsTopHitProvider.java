@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.diagnostic.StartUpPerformanceService;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.OptionDescription;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.*;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
 
 public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvider, SearchTopHitProvider {
@@ -180,14 +178,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
     @Override
     public void runActivity(@NotNull Project project) {
       // for given project
-      ForkJoinPool.commonPool().execute(() -> {
-        if (project.isDisposed()) {
-          return;
-        }
-
-        cacheAll(null, project);
-        StartUpPerformanceService.getInstance().lastOptionTopHitProviderFinishedForProject(project);
-      });
+      cacheAll(null, project);
     }
 
     private static void cacheAll(@Nullable ProgressIndicator indicator, @Nullable Project project) {

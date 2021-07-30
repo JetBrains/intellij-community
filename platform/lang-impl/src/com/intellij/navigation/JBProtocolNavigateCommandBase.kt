@@ -14,9 +14,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JBProtocolCommand
-import com.intellij.openapi.application.JetBrainsProtocolHandler.FRAGMENT_PARAM_NAME
+import com.intellij.openapi.application.JBProtocolCommand.FRAGMENT_PARAM_NAME
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.progress.ProgressIndicator
@@ -30,6 +31,7 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.PsiNavigateUtil
 import java.io.File
@@ -200,14 +202,8 @@ private fun parsePosition(range: String): LogicalPosition? {
 
 class PathNavigator(val project: Project, val parameters: Map<String, String>, val pathText: String) {
   fun navigate() {
-    val matcher = PATH_WITH_LOCATION.matcher(pathText)
-    if (!matcher.matches()) {
-      return
-    }
 
-    var path: String? = matcher.group(PATH_GROUP)
-    val line: String? = matcher.group(LINE_GROUP)
-    val column: String? = matcher.group(COLUMN_GROUP)
+    var (path, line, column) = parseNavigatePath(pathText)
 
     if (path == null) {
       return
@@ -233,7 +229,27 @@ class PathNavigator(val project: Project, val parameters: Map<String, String>, v
 
   fun performEditorAction(textEditor: TextEditor, line: String?, column: String?) {
     val editor = textEditor.editor
-    editor.caretModel.moveToOffset(editor.logicalPositionToOffset(LogicalPosition(line?.toInt() ?: 0, column?.toInt() ?: 0)))
+
+    val position = LogicalPosition(line?.toInt() ?: 0, column?.toInt() ?: 0)
+    editor.caretModel.removeSecondaryCarets()
+    editor.caretModel.moveToLogicalPosition(position)
+    editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
+    editor.selectionModel.removeSelection()
+    IdeFocusManager.getGlobalInstance().requestFocus(editor.contentComponent, true)
+
     setSelections(parameters, project)
   }
+}
+
+fun parseNavigatePath(pathText: String): Triple<String?, String?, String?> {
+  val matcher = PATH_WITH_LOCATION.matcher(pathText)
+  if (!matcher.matches()) {
+    return Triple(null, null, null)
+  }
+
+  var path: String? = matcher.group(PATH_GROUP)
+  val line: String? = matcher.group(LINE_GROUP)
+  val column: String? = matcher.group(COLUMN_GROUP)
+
+  return Triple(path, line, column)
 }

@@ -103,7 +103,8 @@ class ValidationInfoBuilder(val component: JComponent) {
 interface CellBuilder<out T : JComponent> {
   val component: T
 
-  fun comment(@DetailedDescription text: String, maxLineLength: Int = 70, forComponent: Boolean = false): CellBuilder<T>
+  fun comment(@DetailedDescription text: String, maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH,
+              forComponent: Boolean = false): CellBuilder<T>
   fun commentComponent(component: JComponent, forComponent: Boolean = false): CellBuilder<T>
   fun focused(): CellBuilder<T>
   fun withValidationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T>
@@ -124,6 +125,20 @@ interface CellBuilder<out T : JComponent> {
    * If this method is called, the value of the component will be stored to the backing property only if the component is enabled.
    */
   fun applyIfEnabled(): CellBuilder<T>
+
+  @ApiStatus.Experimental
+  fun accessibleName(name: String): CellBuilder<T> {
+    component.accessibleContext.accessibleName = name
+
+    return this
+  }
+
+  @ApiStatus.Experimental
+  fun accessibleDescription(description: String): CellBuilder<T> {
+    component.accessibleContext.accessibleDescription = description
+
+    return this
+  }
 
   fun <V> withBinding(
     componentGet: (T) -> V,
@@ -404,8 +419,9 @@ abstract class Cell : BaseBuilder {
       .applyToComponent { bind(property) }
   }
 
-  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null): CellBuilder<JBTextField> {
-    return intTextField(prop.toBinding(), columns, range)
+  @JvmOverloads
+  fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null, step: Int? = null): CellBuilder<JBTextField> {
+    return intTextField(prop.toBinding(), columns, range, step)
   }
 
   @JvmOverloads

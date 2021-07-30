@@ -13,14 +13,13 @@ public class LocalMavenServerRemoteProcessSupport extends AbstractMavenServerRem
                                               @Nullable String vmOptions,
                                               @NotNull MavenDistribution mavenDistribution,
                                               @NotNull Project project,
-                                              @Nullable Integer debugPort,
-                                              @Nullable String multimoduleDirectory) {
-    super(jdk, vmOptions, mavenDistribution, project, debugPort, multimoduleDirectory);
+                                              @Nullable Integer debugPort) {
+    super(jdk, vmOptions, mavenDistribution, project, debugPort);
   }
 
   @Override
   protected RunProfileState getRunProfileState(@NotNull Object target, @NotNull Object configuration, @NotNull Executor executor) {
-    return new MavenServerCMDState(myJdk, myOptions, myDistribution, myDebugPort, myMultimoduleDirectory);
+    return new MavenServerCMDState(myJdk, myOptions, myDistribution, myDebugPort);
   }
 
   @Override

@@ -16,7 +16,6 @@
 
 package com.intellij.coverage;
 
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,7 +27,6 @@ public interface CoverageSuiteListener {
    *
    * @param suite the new suite corresponding to this coverage
    */
-  @RequiresBackgroundThread
   default void coverageGathered(@NotNull CoverageSuite suite) {}
 
   /**

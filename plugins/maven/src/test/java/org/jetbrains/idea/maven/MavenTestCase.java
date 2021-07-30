@@ -16,7 +16,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -79,6 +78,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     super.setUp();
 
 
+    setupErrorLoggingFor_IDEA_274474();
     setUpFixtures();
     myProject = myTestFixture.getProject();
     setupWsl();
@@ -119,8 +119,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
     if (wslMsId == null) return;
     List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
     if (distributions.isEmpty()) throw new IllegalStateException("no WSL distributions configured!");
-    myWSLDistribution = distributions.stream().filter(it -> wslMsId.equals(it.getMsId())).findFirst().orElseThrow(
-      () -> new IllegalStateException("Distribution " + wslMsId + " was not found"));
+    myWSLDistribution = distributions.stream().filter(it -> wslMsId.equals(it.getMsId())).findFirst()
+      .orElseThrow(() -> new IllegalStateException("Distribution " + wslMsId + " was not found"));
     String jdkPath = System.getProperty("wsl.jdk.path");
     if (jdkPath == null) {
       jdkPath = "/usr/lib/jvm/java-11-openjdk-amd64";
@@ -129,6 +129,18 @@ public abstract class MavenTestCase extends UsefulTestCase {
     Sdk wslSdk = getWslSdk(myWSLDistribution.getWindowsPath(jdkPath));
     WriteAction.runAndWait(() -> ProjectRootManagerEx.getInstanceEx(myProject).setProjectSdk(wslSdk));
     assertTrue(new File(myWSLDistribution.getWindowsPath(myWSLDistribution.getUserHome())).isDirectory());
+  }
+
+  private void setupErrorLoggingFor_IDEA_274474() {
+    LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
+      @Override
+      public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
+        if (t.getMessage().contains("The network name cannot be found") && message.contains("Couldn't read shelf information")) {
+          return false;
+        }
+        return super.processError(category, message, t, details);
+      }
+    });
   }
 
   private Sdk getWslSdk(String jdkPath) {

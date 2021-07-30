@@ -5,6 +5,7 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetProgressIndicator;
 import com.intellij.execution.target.TargetedCommandLineBuilder;
@@ -36,7 +37,11 @@ public final class JdkUtil {
    * see <a href="https://youtrack.jetbrains.com/issue/IDEA-126859#comment=27-778948">IDEA-126859</a> for additional details
    */
   public static final String PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL = "idea.do.not.escape.classpath.url";
-  public static final String PROPERTY_DYNAMIC_CLASSPATH = "dynamic.classpath";
+  /**
+   * @deprecated Please use ExecutionUtil.PROPERTY_DYNAMIC_CLASSPATH
+   */
+  @Deprecated
+  public static final String PROPERTY_DYNAMIC_CLASSPATH = ExecutionUtil.PROPERTY_DYNAMIC_CLASSPATH;
 
   private JdkUtil() { }
 
@@ -127,7 +132,7 @@ public final class JdkUtil {
   public static boolean useDynamicClasspath(@Nullable Project project) {
     boolean hasDynamicProperty = Boolean.parseBoolean(System.getProperty("idea.dynamic.classpath", "false"));
     return project != null
-           ? PropertiesComponent.getInstance(project).getBoolean(PROPERTY_DYNAMIC_CLASSPATH, hasDynamicProperty)
+           ? PropertiesComponent.getInstance(project).getBoolean(ExecutionUtil.PROPERTY_DYNAMIC_CLASSPATH, hasDynamicProperty)
            : hasDynamicProperty;
   }
 

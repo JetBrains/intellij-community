@@ -31,7 +31,7 @@ sealed class KotlinStepAction {
     class KotlinStepOver(private val tokensToSkip: Set<LocationToken>, private val callerInfo: StepOverCallerInfo) : KotlinStepAction() {
         override fun apply(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl, ignoreBreakpoints: Boolean) {
             val filter = KotlinStepOverFilter(debugProcess.project, tokensToSkip, callerInfo)
-            return KotlinStepActionFactory(debugProcess).createKotlinStepOverAction(filter).contextAction(suspendContext)
+            KotlinStepActionFactory.createStepOverCommand(debugProcess, suspendContext, ignoreBreakpoints, filter).contextAction(suspendContext)
         }
     }
 

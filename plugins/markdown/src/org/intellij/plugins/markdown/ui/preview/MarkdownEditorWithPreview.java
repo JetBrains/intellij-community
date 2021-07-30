@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.TextEditorWithPreview;
 import com.intellij.openapi.util.Key;
@@ -73,7 +74,8 @@ public class MarkdownEditorWithPreview extends TextEditorWithPreview {
         return;
       }
       final Editor editor = event.getEditor();
-      int currentLine = EditorUtil.yPositionToLogicalLine(editor, editor.getScrollingModel().getVerticalScrollOffset());
+      int y = editor.getScrollingModel().getVerticalScrollOffset();
+      int currentLine = editor instanceof EditorImpl ? editor.yToVisualLine(y) : y / editor.getLineHeight();
       if (currentLine == previousLine) {
         return;
       }

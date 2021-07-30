@@ -398,6 +398,8 @@ public class RunConfigurationStorageUi {
       default:
         throw new IllegalStateException("Unexpected value: " + myRCStorageType);
     }
+    myRCStorageTypeInitial = myRCStorageType;
+    myFolderPathIfStoredInArbitraryFileInitial = myFolderPathIfStoredInArbitraryFile;
   }
 
   private static class RunConfigurationStoragePopup {

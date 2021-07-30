@@ -340,7 +340,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         return;
       }
       Component focusOwner = fm.getFocusOwner();
-      DockContainer container = myDockManager.getContainerFor(focusOwner);
+      DockContainer container = myDockManager.getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
       if (container instanceof DockableEditorTabbedContainer) {
         result.setResult(((DockableEditorTabbedContainer)container).getSplitters());
       }
@@ -369,10 +369,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       focusOwner = fm.getLastFocusedFor(fm.getLastFocusedIdeWindow());
     }
 
-    DockContainer container = myDockManager.getContainerFor(focusOwner);
+    DockContainer container = myDockManager.getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
     if (container == null) {
       focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-      container = myDockManager.getContainerFor(focusOwner);
+      container = myDockManager.getContainerFor(focusOwner, DockableEditorTabbedContainer.class::isInstance);
     }
 
     if (container instanceof DockableEditorTabbedContainer) {
@@ -389,7 +389,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       synchronized (myInitLock) {
         result = mySplitters;
         if (result == null) {
-          result = new EditorsSplitters(this, true, this);
+          result = new EditorsSplitters(this);
+          DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myProject, result, false);
+          DockManager.getInstance(myProject).register(dockable, this);
+          Disposer.register(this, dockable);
+
           mySplitters = result;
         }
       }
@@ -417,7 +421,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
    *         file's status
    */
   @NotNull
-  Color getFileColor(@NotNull VirtualFile file) {
+  public Color getFileColor(@NotNull VirtualFile file) {
     FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     Color statusColor = fileStatusManager != null ? fileStatusManager.getStatus(file).getColor() : UIUtil.getLabelForeground();
     if (statusColor == null) statusColor = UIUtil.getLabelForeground();
@@ -2108,7 +2112,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   public EditorsSplitters getSplittersFor(Component c) {
     EditorsSplitters splitters = null;
-    DockContainer dockContainer = myDockManager.getContainerFor(c);
+    DockContainer dockContainer = myDockManager.getContainerFor(c, DockableEditorTabbedContainer.class::isInstance);
     if (dockContainer instanceof DockableEditorTabbedContainer) {
       splitters = ((DockableEditorTabbedContainer)dockContainer).getSplitters();
     }

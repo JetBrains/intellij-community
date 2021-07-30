@@ -142,9 +142,7 @@ class ClassLoaderConfigurator(
       }
       else if (loader !== coreLoader) {
         // e.g. `.env` plugin in an old format and doesn't explicitly specify dependency on a new extracted modules
-        if (!plugin.isBundled) {
-          addContentModulesIfNeeded(dependency)
-        }
+        p.content.modules.mapTo(dependencies) { it.requireDescriptor() }
         // must be after adding implicit module class loaders
         dependencies.add(p)
       }
@@ -197,30 +195,6 @@ class ClassLoaderConfigurator(
 
     // reset to ensure that stalled data will be not reused somehow later
     dependencies.clear()
-  }
-
-  private fun addContentModulesIfNeeded(dependency: PluginDependency) {
-    when (dependency.pluginId.idString) {
-      "Docker" -> {
-        pluginSet.findEnabledModule("intellij.clouds.docker.file")?.let {
-          dependencies.add(it)
-        }
-        pluginSet.findEnabledModule("intellij.clouds.docker.remoteRun")?.let {
-          dependencies.add(it)
-        }
-      }
-      "com.intellij.diagram" -> {
-        // https://youtrack.jetbrains.com/issue/IDEA-266323
-        pluginSet.findEnabledModule("intellij.diagram.java")?.let {
-          dependencies.add(it)
-        }
-      }
-      "com.intellij.modules.clion" -> {
-        pluginSet.findEnabledModule("intellij.profiler.clion")?.let {
-          dependencies.add(it)
-        }
-      }
-    }
   }
 
   private fun configureCorePlugin(plugin: IdeaPluginDescriptorImpl, postTasks: MutableList<() -> Unit>) {

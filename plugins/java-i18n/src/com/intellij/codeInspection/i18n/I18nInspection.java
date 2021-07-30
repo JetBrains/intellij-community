@@ -3,15 +3,22 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.externalAnnotation.NonNlsAnnotationProvider;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.restriction.AnnotationContext;
+import com.intellij.codeInspection.restriction.StringFlowUtil;
 import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.i18n.JavaI18nBundle;
+import com.intellij.lang.jvm.JvmModifiersOwner;
+import com.intellij.lang.jvm.actions.AnnotationRequestsKt;
+import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -42,11 +49,13 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.intellij.codeInspection.restriction.StringFlowUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.intellij.lang.annotations.RegExp;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
@@ -596,14 +605,31 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
       NlsInfo targetInfo = getExpectedNlsInfo(myHolder.getProject(), ref, value, new HashSet<>(), myOnTheFly, true);
       if (targetInfo instanceof NlsInfo.Localized) {
-        AddAnnotationFix fix =
-          new AddAnnotationFix(((NlsInfo.Localized)targetInfo).suggestAnnotation(target), target, AnnotationUtil.NON_NLS);
-        AddAnnotationFix fixSafe = null;
-        if (JavaPsiFacade.getInstance(target.getProject()).findClass(NlsInfo.NLS_SAFE, target.getResolveScope()) != null) {
-          fixSafe = new MarkAsSafeFix(target);
+        List<LocalQuickFix> fixes = new ArrayList<>();
+        String fqn = ((NlsInfo.Localized)targetInfo).suggestAnnotation(target);
+        ExternalAnnotationsManager.AnnotationPlace annotationPlace = AddAnnotationPsiFix.choosePlace(fqn, target);
+        boolean addNullSafe = JavaPsiFacade.getInstance(target.getProject()).findClass(NlsInfo.NLS_SAFE, target.getResolveScope()) != null;
+        if (annotationPlace == ExternalAnnotationsManager.AnnotationPlace.IN_CODE && target instanceof JvmModifiersOwner) {
+          fixes.addAll(IntentionWrapper.wrapToQuickFixes(JvmElementActionFactories.createAddAnnotationActions((JvmModifiersOwner)target, AnnotationRequestsKt.annotationRequest(fqn)), sourcePsi.getContainingFile()));
+          if (addNullSafe) {
+            for (IntentionAction action : JvmElementActionFactories.createAddAnnotationActions((JvmModifiersOwner)target, AnnotationRequestsKt.annotationRequest(NlsInfo.NLS_SAFE))) {
+              fixes.add(new IntentionWrapper(action, sourcePsi.getContainingFile()) {
+                @Override
+                public @NotNull String getFamilyName() {
+                  return JavaI18nBundle.message("intention.family.name.mark.as.nlssafe");
+                }
+              });
+            }
+          }
+        }
+        else {
+          fixes.add(new AddAnnotationFix(fqn, target, AnnotationUtil.NON_NLS));
+          if (addNullSafe) {
+            fixes.add(new MarkAsSafeFix(target));
+          }
         }
         String description = JavaI18nBundle.message("inspection.i18n.message.non.localized.passed.to.localized");
-        myHolder.registerProblem(sourcePsi, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix, fixSafe);
+        myHolder.registerProblem(sourcePsi, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
     }
 

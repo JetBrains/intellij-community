@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -93,12 +93,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
 import static com.intellij.find.actions.ShowUsagesActionHandler.getSecondInvocationHint;
 import static com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode.USAGES_WITH_DEFAULT_OPTIONS;
-import static com.intellij.util.ui.UIUtil.runWhenHidden;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public class ShowUsagesAction extends AnAction implements PopupAction, HintManagerImpl.ActionToIgnore {
@@ -371,22 +371,15 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     Project project = parameters.project;
-    Editor editor = parameters.editor;
-
     UsageViewImpl usageView = createUsageView(project);
-    if (editor != null) {
-      PsiReference reference = TargetElementUtil.findReference(editor);
-      if (reference != null) {
-        UsageInfo2UsageAdapter origin = new UsageInfo2UsageAdapter(new UsageInfo(reference));
-        usageView.setOriginUsage(origin);
-      }
-    }
 
     final SearchScope searchScope = actionHandler.getSelectedScope();
     final AtomicInteger outOfScopeUsages = new AtomicInteger();
     AtomicBoolean manuallyResized = new AtomicBoolean();
 
-    ShowUsagesTable table = new ShowUsagesTable(new ShowUsagesTableCellRenderer(usageView, outOfScopeUsages, searchScope), usageView);
+    Predicate<? super Usage> originUsageCheck = originUsageCheck(parameters.editor);
+    var renderer = new ShowUsagesTableCellRenderer(project, originUsageCheck, outOfScopeUsages, searchScope);
+    var table = new ShowUsagesTable(renderer);
     AsyncProcessIcon processIcon = new AsyncProcessIcon("xxx");
     TitlePanel statusPanel = new TitlePanel();
     statusPanel.add(processIcon, BorderLayout.WEST);
@@ -485,7 +478,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       int totalCount = copy.size();
       int visibleCount = totalCount - filteredOutCount;
       statusPanel.setText(getStatusString(!processIcon.isDisposed(), hasMore, visibleCount, totalCount));
-      rebuildTable(usageView, data, table, popup, parameters.popupPosition, parameters.minWidth, manuallyResized);
+      rebuildTable(project, originUsageCheck, data, table, popup, parameters.popupPosition, parameters.minWidth, manuallyResized);
     });
 
     MessageBusConnection messageBusConnection = project.getMessageBus().connect(usageView);
@@ -593,6 +586,18 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         return ShowUsagesSettings.getInstance().getState();
       }
     };
+  }
+
+  private static @NotNull Predicate<? super Usage> originUsageCheck(@Nullable Editor editor) {
+    if (editor != null) {
+      PsiReference reference = TargetElementUtil.findReference(editor);
+      if (reference != null) {
+        UsageInfo originUsageInfo = new UsageInfo(reference);
+        return usage -> usage instanceof UsageInfo2UsageAdapter &&
+                        ((UsageInfo2UsageAdapter)usage).getUsageInfo().equals(originUsageInfo);
+      }
+    }
+    return __ -> false;
   }
 
   private static boolean showPopupIfNeedTo(@NotNull JBPopup popup, @NotNull RelativePoint popupPosition) {
@@ -885,12 +890,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       builder.setAutoselectOnMouseMove(true).setItemChoosenCallback(itemChoseCallback).setCloseOnEnter(true);
     }
 
-    popupRef.set((AbstractPopup)builder.createPopup());
-    JComponent content = popupRef.get().getContent();
-    Disposer.register(popupRef.get(), contentDisposable);
+    AbstractPopup popup = (AbstractPopup)builder.createPopup();
+    JComponent content = popup.getContent();
+    Disposer.register(popup, contentDisposable);
 
     // Set title text alignment
-    CaptionPanel caption = popupRef.get().getTitle();
+    CaptionPanel caption = popup.getTitle();
     if (caption instanceof TitlePanel) {
       TitlePanel titlePanel = (TitlePanel)caption;
       titlePanel.getLabel().setHorizontalAlignment(SwingConstants.LEFT);
@@ -908,8 +913,17 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       action.registerCustomShortcutSet(action.getShortcutSet(), content);
     }
     /* save toolbar actions for using later, in automatic filter toggling in {@link #restartShowUsagesWithFiltersToggled(List} */
-    popupRef.get().setUserData(addCodePreview ? Arrays.asList(filteringGroup, contentSplitter) : Collections.singletonList(filteringGroup));
-    return popupRef.get();
+    popup.setUserData(addCodePreview ? Arrays.asList(filteringGroup, contentSplitter) : Collections.singletonList(filteringGroup));
+    popup.setDataProvider(dataId -> {
+      if (UsageView.USAGE_VIEW_SETTINGS_KEY.is(dataId)) {
+        return usageView.getUsageViewSettings();
+      }
+      else {
+        return null;
+      }
+    });
+    popupRef.set(popup);
+    return popup;
   }
 
   @NotNull
@@ -1049,7 +1063,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     return width;
   }
 
-  private static void rebuildTable(@NotNull UsageViewImpl usageView,
+  private static void rebuildTable(@NotNull Project project,
+                                   @NotNull Predicate<? super Usage> originUsageCheck,
                                    @NotNull List<UsageNode> data,
                                    @NotNull ShowUsagesTable table,
                                    @Nullable AbstractPopup popup,
@@ -1072,7 +1087,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       // do not pre-select the usage under caret by default
       if (newSelection == 0 && table.getModel().getRowCount() > 1) {
         Object valueInTopRow = table.getModel().getValueAt(0, 0);
-        if (valueInTopRow instanceof UsageNode && usageView.isOriginUsage(((UsageNode)valueInTopRow).getUsage())) {
+        if (valueInTopRow instanceof UsageNode && originUsageCheck.test(((UsageNode)valueInTopRow).getUsage())) {
           newSelection++;
         }
       }
@@ -1085,7 +1100,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         calcMaxWidth(table); // compute column widths
       }
       else {
-        PropertiesComponent properties = PropertiesComponent.getInstance(usageView.getProject());
+        PropertiesComponent properties = PropertiesComponent.getInstance(project);
         setPopupSize(table, popup, popupPosition, minWidth, properties.isValueSet(PREVIEW_PROPERTY_KEY), data.size());
       }
     }
@@ -1231,7 +1246,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       ShowUsagesActionState state = getState(project);
       state.continuation = showUsagesInMaximalScopeRunnable(parameters, actionHandler);
       Runnable clearContinuation = () -> state.continuation = null;
-      runWhenHidden(label, clearContinuation);
 
       if (editor == null || editor.isDisposed() || !UIUtil.isShowing(editor.getContentComponent())) {
         int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;

@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build
 
 
-import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 
 final class JavaPluginLayout {
@@ -18,8 +17,8 @@ final class JavaPluginLayout {
       withModule("intellij.platform.jps.build.javac.rt", "jps-builders-6.jar")
       withModule("intellij.java.aetherDependencyResolver", "aether-dependency-resolver.jar")
       withModule("intellij.java.jshell.protocol", "jshell-protocol.jar")
-      withModule("intellij.java.resources", BaseLayout.PLATFORM_JAR)
-      withModule("intellij.java.resources.en", BaseLayout.PLATFORM_JAR)
+      withModule("intellij.java.resources", mainJarName)
+      withModule("intellij.java.resources.en", mainJarName)
 
       // JavacRemoteProto generated against protobuf-java6; don't let it sneak into the IDE classpath and shadow its JavacRemoteProto.
       withModule("intellij.platform.jps.build.javac.rt.rpc", "rt/jps-javac-rt-rpc.jar")
@@ -70,7 +69,7 @@ final class JavaPluginLayout {
         "intellij.java.typeMigration",
         "intellij.java.featuresTrainer"
       ].each {
-        withModule(it, "java-impl.jar")
+        withModule(it, mainJarName)
       }
 
       withArtifact("debugger-agent", "rt")
@@ -79,9 +78,11 @@ final class JavaPluginLayout {
       withProjectLibrary("jgoodies-common")
       withProjectLibrary("jps-javac-extension")
       withProjectLibrary("jb-jdi")
-      withProjectLibrary("precompiled_jshell-frontend")
 
       withModuleLibrary("debugger-memory-agent", "intellij.java.debugger.memory.agent", "")
+      // explicitly pack jshell-frontend and sa-jdwp as a separate JARs
+      withModuleLibrary("jshell-frontend", "intellij.java.execution.impl", "jshell-frontend.jar")
+      withModuleLibrary("sa-jdwp", "intellij.java.debugger.impl", "sa-jdwp.jar")
 
       withResourceArchive("../jdkAnnotations", "lib/jdkAnnotations.jar")
 

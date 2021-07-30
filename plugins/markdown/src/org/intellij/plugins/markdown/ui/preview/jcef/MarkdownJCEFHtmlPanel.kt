@@ -10,6 +10,7 @@ import org.intellij.plugins.markdown.extensions.jcef.MarkdownJCEFPreviewExtensio
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
+import java.nio.file.Path
 import kotlin.random.Random
 
 class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getClassUrl()), MarkdownHtmlPanel {
@@ -24,6 +25,7 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
       <!DOCTYPE html>
       <html>
         <head>
+          <title>IntelliJ Markdown Preview</title>
           <meta http-equiv="Content-Security-Policy" content="$contentSecurityPolicy"/>
           <meta name="markdown-position-attribute-name" content="${HtmlGenerator.SRC_ATTRIBUTE_NAME}"/>
           $scriptingLines
@@ -56,7 +58,7 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
       browserPipe.addBrowserEvents(event)
       browserPipe.subscribe(event, handler)
     }
-    super.setHtml(indexContent)
+    super<JCEFHtmlPanel>.setHtml(indexContent)
   }
 
   private fun updateDom(renderClosure: String, initialScrollOffset: Int) {
@@ -91,15 +93,16 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(isOffScreenRendering(), null, getCla
     cefBrowser.executeJavaScript(code, null, 0)
   }
 
-  override fun setHtml(html: String, initialScrollOffset: Int) {
-    updateDom(IncrementalDOM.generateRenderClosure(html), initialScrollOffset)
+  override fun setHtml(html: String, initialScrollOffset: Int, baseUrl: Path?) {
+    val builder = IncrementalDOMBuilder(html, baseUrl)
+    updateDom(builder.generateRenderClosure(), initialScrollOffset)
     firstUpdate = false
   }
 
   override fun reloadWithOffset(offset: Int) {
     delayedContent = null
     firstUpdate = true
-    super.setHtml(indexContent)
+    super<JCEFHtmlPanel>.setHtml(indexContent)
     updateDom(previousRenderClosure, offset)
   }
 

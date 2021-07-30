@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public final class ShowDiffAction implements AnActionExtensionProvider {
+public class ShowDiffAction implements AnActionExtensionProvider {
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return true; // order="last"

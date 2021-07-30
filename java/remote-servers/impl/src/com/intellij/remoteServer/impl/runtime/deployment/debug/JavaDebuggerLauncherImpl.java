@@ -21,8 +21,8 @@ import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.runtime.deployment.debug.JavaDebugConnectionData;
 import com.intellij.remoteServer.runtime.deployment.debug.JavaDebugServerModeHandler;
@@ -112,7 +112,7 @@ public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
 
     RemoteServerDebugEnvironment(Project project, RemoteConnection remoteConnection, RunProfile runProfile) {
       myProject = project;
-      mySearchScope = GlobalSearchScopes.executionScope(project, runProfile);
+      mySearchScope = ExecutionSearchScopes.executionScope(project, runProfile);
       myRemoteConnection = remoteConnection;
       myRunProfile = runProfile;
     }

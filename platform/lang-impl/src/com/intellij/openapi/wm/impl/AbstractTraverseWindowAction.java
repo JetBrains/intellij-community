@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ActiveWindowsWatcher;
@@ -26,7 +26,7 @@ public abstract class AbstractTraverseWindowAction extends AnAction {
       }
 
       if (!ActiveWindowsWatcher.isTheCurrentWindowOnTheActivatedList(window)) {
-        if (AppUIUtil.isInFullscreen(window)) {
+        if (AppUIUtil.isInFullScreen(window)) {
           switchFullScreenFrame((JFrame)window);
         }
         return;

@@ -22,7 +22,7 @@ final class PluginLayout extends BaseLayout {
   BiFunction<Path, String, String> versionEvaluator = { pluginXmlFile, ideVersion -> ideVersion } as BiFunction<Path, String, String>
   boolean directoryNameSetExplicitly
   PluginBundlingRestrictions bundlingRestrictions
-  Collection<String> pathsToScramble = []
+  final List<String> pathsToScramble = new ArrayList<>()
   Collection<String> scrambleClasspathPlugins = []
   BiPredicate<BuildContext, File> scrambleClasspathFilter = { context, file -> return true } as BiPredicate<BuildContext, File>
   String zkmScriptStub

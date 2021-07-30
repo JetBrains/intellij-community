@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSet
 import org.jetbrains.kotlin.annotation.plugin.ide.AnnotationBasedPluginModel
 import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup
 import org.jetbrains.kotlin.idea.compilerPlugin.modifyCompilerArgumentsForPlugin
-import org.jetbrains.kotlin.idea.configuration.GradleProjectImportHandler
+import org.jetbrains.kotlin.idea.gradle.configuration.GradleProjectImportHandler
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import java.io.File

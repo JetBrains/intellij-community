@@ -5,6 +5,7 @@ import com.intellij.codeInsight.PsiEquivalenceUtil
 import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.find.FindManager
 import com.intellij.java.refactoring.JavaRefactoringBundle
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -76,9 +77,10 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     val changes = duplicates.flatMap { it.changedExpressions.map(ChangedExpression::pattern) }.toSet()
     fun isEquivalent(pattern: PsiElement, candidate: PsiElement) = pattern !in changes && finder.isEquivalent(pattern, candidate)
     duplicates = duplicates.mapNotNull { finder.createDuplicate(it.pattern, it.candidate, ::isEquivalent) }
-    val allParameters = duplicates
-      .fold(options.inputParameters) { parameters, duplicate ->  updateParameters(parameters, duplicate.changedExpressions)}
-    val elementsToReplace = MethodExtractor().prepareRefactoringElements(options.copy(inputParameters = allParameters, methodName = method.name))
+
+    val updatedParameters: List<InputParameter> = findNewParameters(options.inputParameters, duplicates)
+
+    val elementsToReplace = MethodExtractor().prepareRefactoringElements(options.copy(inputParameters = updatedParameters, methodName = method.name))
 
     //TODO clean up
     val initialParameters = options.inputParameters.flatMap(InputParameter::references).toSet()
@@ -88,9 +90,15 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     val oldMethodCall = PsiTreeUtil.findChildOfType(calls.first(), PsiMethodCallExpression::class.java)
     val newMethodCall = PsiTreeUtil.findChildOfType(elementsToReplace.callElements.first(), PsiMethodCallExpression::class.java)
     val parametrizedDuplicatesNumber = duplicates.size - exactDuplicates.size
-    val changeSignature = SignatureSuggesterPreviewDialog(method, elementsToReplace.method, oldMethodCall, newMethodCall, parametrizedDuplicatesNumber).showAndGet()
-    if (!changeSignature) {
-      duplicates = exactDuplicates
+    fun confirmChangeSignature(): Boolean {
+      val dialog = SignatureSuggesterPreviewDialog(method, elementsToReplace.method, oldMethodCall, newMethodCall, parametrizedDuplicatesNumber)
+      return dialog.showAndGet()
+    }
+    if (parametrizedDuplicatesNumber > 0){
+      val changeSignature = isSilentMode || confirmChangeSignature()
+      if (!changeSignature) {
+        duplicates = exactDuplicates
+      }
     }
 
     duplicates = confirmDuplicates(project, editor, duplicates)
@@ -104,7 +112,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     duplicates.forEach { duplicate ->
       val duplicateOptions = findExtractOptions(duplicate.candidate)
       val expressionMap = duplicate.changedExpressions.associate { (pattern, candidate) -> pattern to candidate }
-      val duplicateParameters = allParameters.map { parameter -> parameter.copy(references = parameter.references.map { expression -> expressionMap[expression]!! }) }
+      val duplicateParameters = updatedParameters.map { parameter -> parameter.copy(references = parameter.references.map { expression -> expressionMap[expression]!! }) }
 
       //TODO extract duplicate
       val builder = CallBuilder(duplicateOptions.project, duplicateOptions.elements.first())
@@ -120,7 +128,15 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     }
   }
 
+  private val isSilentMode = ApplicationManager.getApplication().isUnitTestMode
+
+  private fun findNewParameters(parameters: List<InputParameter>, duplicates: List<Duplicate>): List<InputParameter> {
+    return duplicates
+      .fold(parameters) { updatedParameters, duplicate -> updateParameters(updatedParameters, duplicate.changedExpressions) }
+  }
+
   private fun confirmDuplicates(project: Project, editor: Editor, duplicates: List<Duplicate>): List<Duplicate> {
+    if (isSilentMode) return duplicates
     val confirmedDuplicates = mutableListOf<Duplicate>()
     duplicates.forEach { duplicate ->
       val highlighters = ArrayList<RangeHighlighter>()
@@ -177,7 +193,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
         groups.add(mutableListOf(expression))
       }
     }
-    return groups
+    return groups.sortedBy { group: List<PsiExpression> -> group.minOf { expression -> expression.textRange.startOffset } }
   }
 
   private fun isEqual(first: PsiExpression, second: PsiExpression): Boolean {

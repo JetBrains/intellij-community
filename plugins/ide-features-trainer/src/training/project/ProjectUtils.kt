@@ -120,7 +120,7 @@ object ProjectUtils {
     try {
       place.createDirectories()
     }
-    catch(e: IOException) {
+    catch (e: IOException) {
       return false
     }
     return true
@@ -185,7 +185,8 @@ object ProjectUtils {
 
   fun learningProjectUrl(langSupport: LangSupport) =
     langSupport.javaClass.classLoader.getResource(langSupport.projectResourcePath)
-    ?: throw IllegalArgumentException("No project ${langSupport.projectResourcePath} in resources for ${langSupport.primaryLanguage} IDE learning course")
+    ?: throw IllegalArgumentException("No project ${langSupport.projectResourcePath} in resources " +
+                                      "for ${langSupport.primaryLanguage} IDE learning course")
 
   private fun chooseParentDirectoryForLearningProject(langSupport: LangSupport): Path? {
     val descriptor = FileChooserDescriptor(false, true, false, false, false, false)
@@ -231,7 +232,8 @@ object ProjectUtils {
     val notificationGroup = NotificationGroup.findRegisteredGroup("IDE Features Trainer")
                             ?: error("Not found notificationGroup for IDE Features Trainer")
     return notificationGroup.createNotification(LearnBundle.message("learn.project.initializing.jdk.download.notification.title"),
-                                                LearnBundle.message("learn.project.initializing.jdk.download.notification.message", ApplicationNamesInfo.getInstance().fullProductName),
+                                                LearnBundle.message("learn.project.initializing.jdk.download.notification.message",
+                                                                    ApplicationNamesInfo.getInstance().fullProductName),
                                                 NotificationType.INFORMATION)
   }
 
@@ -254,13 +256,13 @@ object ProjectUtils {
     runReadAction {
       VfsUtilCore.visitChildrenRecursively(root, object : VirtualFileVisitor<Void>() {
         override fun visitFile(file: VirtualFile): Boolean {
-          if(file.name == ".idea" ||
-             file.name == "git" ||
-             file.name == ".git" ||
-             file.name == ".gitignore" ||
-             file.name == "venv" ||
-             file.name == FEATURE_TRAINER_VERSION ||
-             file.name.endsWith(".iml")) return false
+          if (file.name == ".idea" ||
+              file.name == "git" ||
+              file.name == ".git" ||
+              file.name == ".gitignore" ||
+              file.name == "venv" ||
+              file.name == FEATURE_TRAINER_VERSION ||
+              file.name.endsWith(".iml")) return false
 
           val path = file.toNioPath()
 

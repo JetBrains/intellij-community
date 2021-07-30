@@ -553,7 +553,7 @@ public final class PluginManagerCore {
                                         @NotNull PluginSet pluginSet,
                                         @NotNull List<Supplier<@Nls String>> errors,
                                         @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
-    CachingSemiGraph<PluginId> graph = CachingSemiGraphKt.createPluginIdGraph(descriptors, pluginSet, true);
+    CachingSemiGraph<PluginId> graph = CachingSemiGraph.Companion.createPluginIdGraph(descriptors, pluginSet, true);
     DFSTBuilder<PluginId> builder = new DFSTBuilder<>(graph);
     if (builder.isAcyclic()) {
       return;
@@ -906,7 +906,7 @@ public final class PluginManagerCore {
     Map<PluginId, String> disabledIds = new HashMap<>();
 
     // topological sort based on required dependencies only
-    List<IdeaPluginDescriptorImpl> sortedRequired = CachingSemiGraphKt.getTopologicallySorted(descriptors, rawPluginSet, false);
+    List<IdeaPluginDescriptorImpl> sortedRequired = rawPluginSet.sortTopologically(descriptors, false);
 
     Map<PluginId, IdeaPluginDescriptorImpl> enabledPluginIds = new HashMap<>();
     Map<String, PluginContentDescriptor.ModuleItem> enabledModuleV2Ids = new HashMap<>();
@@ -949,7 +949,7 @@ public final class PluginManagerCore {
     }
 
     // topological sort based on all (required and optional) dependencies
-    List<IdeaPluginDescriptorImpl> allPlugins = CachingSemiGraphKt.getTopologicallySorted(sortedRequired, rawPluginSet, true);
+    List<IdeaPluginDescriptorImpl> allPlugins = rawPluginSet.sortTopologically(sortedRequired, true);
     List<IdeaPluginDescriptorImpl> enabledPlugins = PluginSet.Companion.getOnlyEnabledPlugins(allPlugins);
     Java11Shim java11Shim = Java11Shim.INSTANCE;
     if (!context.result.incompletePlugins.isEmpty()) {
