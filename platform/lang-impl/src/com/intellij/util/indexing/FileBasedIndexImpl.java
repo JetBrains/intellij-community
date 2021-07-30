@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -40,6 +40,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.psi.stubs.SerializedStubTree;
@@ -775,7 +776,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (!needsFileContentLoading(indexId)) {
       return true; //indexed eagerly in foreground while building unindexed file list
     }
-    if (filter == GlobalSearchScope.EMPTY_SCOPE) {
+    if (filter == GlobalSearchScope.EMPTY_SCOPE || 
+        filter instanceof DelegatingGlobalSearchScope && ((DelegatingGlobalSearchScope)filter).getDelegate() == GlobalSearchScope.EMPTY_SCOPE) {
       return false;
     }
     if (project == null) {
