@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -21,7 +20,7 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.tabs.impl.TabLabel
 import java.awt.datatransfer.StringSelection
 
-abstract class CopyPathProvider : DumbAwareAction(), UpdateInBackground {
+abstract class CopyPathProvider : AnAction(), UpdateInBackground {
   override fun update(e: AnActionEvent) {
     val dataContext = e.dataContext
     val editor = CommonDataKeys.EDITOR.getData(dataContext)
@@ -115,7 +114,7 @@ class CopySourceRootPathProvider : DumbAwareCopyPathProvider() {
     }
 }
 
-class CopyTBXReferenceProvider : DumbAwareCopyPathProvider() {
+class CopyTBXReferenceProvider : CopyPathProvider() {
   override fun getQualifiedName(project: Project,
                                 elements: List<PsiElement>,
                                 editor: Editor?,
