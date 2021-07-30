@@ -9,35 +9,43 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 public interface CustomComponentAction {
   Key<JComponent> COMPONENT_KEY = Key.create("customComponent");
   Key<AnAction> ACTION_KEY = Key.create("customComponentAction");
 
   /**
-   * @return custom JComponent that represents action in UI.
-   * You (as a client/implementor) or this interface are not allowed to invoke
-   * this method directly. Only action system can invoke it!
+   * Creates a new component that represents action in various toolbars.
    * <br/>
-   * <br/>
-   * The component should not be stored in the action instance because it may
-   * be shown on several toolbars simultaneously. Use {@link CustomComponentAction#COMPONENT_KEY}
-   * to retrieve current component from a Presentation instance in {@link AnAction#update(AnActionEvent)} method.
+   * <ul>
+   *   <li>The method shall always return a new component instance.
+   *   Do not store or cache the component in the action instance or anywhere else.
+   *   That is because several toolbars can show the same action simultaneously.</li>
+   *   <li>Configure listeners, and register {@link com.intellij.openapi.Disposable} if needed in the component {@link Component#addNotify()}.
+   *   That is because a component can be created and then thrown away without really going to the screen.
+   *   </li>
+   *   <li>Do not access and refresh the component in {@link AnAction#update(AnActionEvent)} method using {@link CustomComponentAction#COMPONENT_KEY}.
+   *   That is especially true for actions capable of updating their presentations on a background thread.
+   *   Instead, a {@link java.beans.PropertyChangeListener} shall be used to synchronize the provided {@link Presentation} and the component state.
+   *   That is because an update can be called on any presentation and the result can be thrown away without really applying.</li>
+   * </ul>
+   * For more details see how {@link com.intellij.openapi.actionSystem.impl.ActionButton} is implemented.
    */
-  @NotNull
-  default JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place, @NotNull DataContext dataContext) {
-    return createCustomComponent(presentation, place);
+  default @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+    return createCustomComponent(presentation);
   }
 
-  @NotNull
-  default JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    return createCustomComponent(presentation);
+
+  /** @deprecated Use {@link CustomComponentAction#createCustomComponent(Presentation, String)} */
+  @Deprecated
+  default @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place, @NotNull DataContext dataContext) {
+    return createCustomComponent(presentation, place);
   }
 
   /** @deprecated Use {@link CustomComponentAction#createCustomComponent(Presentation, String)} */
   @Deprecated
-  @NotNull
-  default JComponent createCustomComponent(@NotNull Presentation presentation) {
+  default @NotNull JComponent createCustomComponent(@NotNull Presentation presentation) {
     throw new AssertionError();
   }
 }
