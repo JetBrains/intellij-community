@@ -36,7 +36,7 @@ public final class Main {
   public static final int INSTANCE_CHECK_FAILED = 6;
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
-  // reserved (doesn't seem to ever be used): public static final int OUT_OF_MEMORY = 9;
+  public static final int UNKNOWN_COMMAND = 9;
   // reserved (permanently if launchers will perform the check): public static final int UNSUPPORTED_JAVA_VERSION = 10;
   public static final int PRIVACY_POLICY_REJECTION = 11;
   public static final int INSTALLATION_CORRUPTED = 12;

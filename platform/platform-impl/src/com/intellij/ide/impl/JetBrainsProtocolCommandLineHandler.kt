@@ -5,16 +5,19 @@ import com.intellij.ide.CliResult
 import com.intellij.ide.CommandLineCustomHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JBProtocolCommand
-import com.intellij.util.concurrency.FutureResult
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.util.Ref
 import java.util.concurrent.Future
 
 class JetBrainsProtocolCommandLineHandler : CommandLineCustomHandler {
   override fun process(args: List<String>): Future<CliResult>? {
     val command = args[0]
-    if (command.startsWith(JBProtocolCommand.PROTOCOL)) {
-      ApplicationManager.getApplication().invokeLater { JBProtocolCommand.execute(command) }
-      return FutureResult(CliResult.OK)
-    }
-    return null
+    if (!command.startsWith(JBProtocolCommand.PROTOCOL)) return null
+
+    val result = Ref<Future<CliResult>>()
+    ApplicationManager.getApplication().invokeAndWait(
+      { result.set(JBProtocolCommand.execute(command)) },
+      ModalityState.NON_MODAL)
+    return result.get()
   }
 }
