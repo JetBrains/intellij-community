@@ -103,6 +103,8 @@
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyDictKeyNamesCompletionContributor"/>
     <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.codeInsight.completion.PyDictLiteralCompletionContributor"/>
+    <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyParameterCompletionContributor"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyMetaClassCompletionContributor"/>
