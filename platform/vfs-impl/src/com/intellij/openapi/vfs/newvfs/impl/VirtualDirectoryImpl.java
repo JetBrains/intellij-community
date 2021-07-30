@@ -541,11 +541,19 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   public VirtualFileSystemEntry doFindChildById(int id) {
     int i = ArrayUtil.indexOf(myData.myChildrenIds, id);
     if (i >= 0) {
-      return getVfsData().getFileById(id, this, true);
+      VirtualFileSystemEntry fileById = getVfsData().getFileById(id, this, true);
+      if (fileById != null) {
+        LOG.assertTrue(fileById.getId() == id);
+      }
+      return fileById;
     }
 
     String name = ourPersistence.getName(id);
-    return findChild(name, false, false, getFileSystem());
+    VirtualFileSystemEntry fileByName = findChild(name, false, false, getFileSystem());
+    if (fileByName != null) {
+      LOG.assertTrue(fileByName.getId() == id, "Name storage is in inconsistent state");
+    }
+    return fileByName;
   }
 
   @Override
