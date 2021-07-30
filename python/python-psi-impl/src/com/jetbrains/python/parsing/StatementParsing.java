@@ -173,7 +173,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           }
         }
         if (!myBuilder.eof()) {
-          assert matchToken(PyTokenTypes.DEDENT);
+          assert myBuilder.getTokenType() == PyTokenTypes.DEDENT;
+          myBuilder.advanceLexer();
         }
       }
       else {
@@ -940,7 +941,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         endMarker.done(elType);
       }
       if (indentFound && !myBuilder.eof()) {
-        assert matchToken(PyTokenTypes.DEDENT);
+        assert myBuilder.getTokenType() == PyTokenTypes.DEDENT;
+        myBuilder.advanceLexer();
       }
     }
     else {
