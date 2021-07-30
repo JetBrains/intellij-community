@@ -26,11 +26,12 @@ public class JUnit4CustomParameterizedIntegrationTest extends AbstractTestFramew
     return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/params/") + mySrc;
   }
 
-  @Parameterized.Parameters(name = "{0}")
+  @Parameterized.Parameters(name = "{1}")
   public static Collection<Object[]> data() {
     return Arrays.asList(createParams("com.tngtech.junit.dataprovider:junit4-dataprovider:2.6", "dataProvider", "[1: 1]"),
                          createParams("com.carrotsearch.randomizedtesting:randomizedtesting-runner:2.7.8", "randomizedtesting", "[value=1]"),
-                         createParams("com.google.testparameterinjector:test-parameter-injector:1.3", "testparameterinjector", "[1]")
+                         createParams("com.google.testparameterinjector:test-parameter-injector:1.3", "testparameterinjector", "[1]"),
+                         createParams("com.google.testparameterinjector:test-parameter-injector:1.3", "testparameterinjectorfield", "[a=1]")
     );
   }
 
