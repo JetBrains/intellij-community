@@ -70,10 +70,20 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     doTest();
   }
 
-  public void testIdentifierHighlighterForPatternVariable() {
-    PsiFile file = myFixture.configureByFile(getTestName(false) + ".java");
-    PsiElement element = myFixture.getElementAtCaret();
-    assertSize(3, IdentifierHighlighterPass.getUsages(element, file, true));
+  public void testHighlighterForPatternVariableInSwitch() {
+    testIdentifierHighlighter(3);
+  }
+
+  public void testHighlighterForPatternVariableInIf() {
+    testIdentifierHighlighter(2);
+  }
+
+  public void testHighlighterForPatternVariableInIfElse() {
+    testIdentifierHighlighter(4);
+  }
+
+  public void testHighlighterForPatternVariableInLocalVariable() {
+    testIdentifierHighlighter(2);
   }
 
   public void testGuardWithInstanceOfPatternMatching() {
@@ -91,5 +101,11 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
+  }
+
+  private void testIdentifierHighlighter(int expectedUsages) {
+    PsiFile file = myFixture.configureByFile(getTestName(false) + ".java");
+    PsiElement element = myFixture.getElementAtCaret();
+    assertSize(expectedUsages, IdentifierHighlighterPass.getUsages(element, file, true));
   }
 }
