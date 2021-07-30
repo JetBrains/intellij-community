@@ -28,6 +28,10 @@ object KotlinConverter : BaseKotlinConverter {
             field = value
         }
 
+    override fun forceUInjectionHost(): Boolean {
+        return forceUInjectionHost
+    }
+
     override fun convertExpression(
         expression: KtExpression,
         givenParent: UElement?,
