@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints;
 
 
@@ -31,10 +17,10 @@ import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.hints.HintUtilsKt.getLanguageForSettingKey;
 
-public class MethodInfoBlacklistFilter implements HintInfoFilter {
+public class MethodInfoExcludeListFilter implements HintInfoFilter {
   private final List<Matcher> myMatchers;
 
-  public MethodInfoBlacklistFilter(Set<String> list) {
+  public MethodInfoExcludeListFilter(Set<String> list) {
     myMatchers = list.stream()
       .map((item) -> MatcherConstructor.INSTANCE.createMatcher(item))
       .filter((e) -> e != null)
@@ -42,9 +28,9 @@ public class MethodInfoBlacklistFilter implements HintInfoFilter {
   }
 
   @NotNull
-  public static MethodInfoBlacklistFilter forLanguage(@NotNull Language language) {
-    Set<String> list = fullBlacklist(language);
-    return new MethodInfoBlacklistFilter(list);
+  public static MethodInfoExcludeListFilter forLanguage(@NotNull Language language) {
+    Set<String> list = fullExcludelist(language);
+    return new MethodInfoExcludeListFilter(list);
   }
 
   @Override
@@ -57,26 +43,26 @@ public class MethodInfoBlacklistFilter implements HintInfoFilter {
   }
 
   @NotNull
-  private static Set<String> fullBlacklist(Language language) {
+  private static Set<String> fullExcludelist(Language language) {
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
     if (provider == null) {
       return Collections.emptySet();
     }
 
-    Set<String> blackList = blacklist(language);
+    Set<String> excludeList = excludeList(language);
     Language dependentLanguage = provider.getBlackListDependencyLanguage();
     if (dependentLanguage != null) {
-      blackList = ContainerUtil.union(blackList, blacklist(dependentLanguage));
+      excludeList = ContainerUtil.union(excludeList, excludeList(dependentLanguage));
     }
-    return blackList;
+    return excludeList;
   }
 
   @NotNull
-  private static Set<String> blacklist(@NotNull Language language) {
+  private static Set<String> excludeList(@NotNull Language language) {
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
     if (provider != null) {
       ParameterNameHintsSettings settings = ParameterNameHintsSettings.getInstance();
-      Diff diff = settings.getBlackListDiff(getLanguageForSettingKey(language));
+      Diff diff = settings.getExcludeListDiff(getLanguageForSettingKey(language));
       return diff.applyOn(provider.getDefaultBlackList());
     }
     return Collections.emptySet();

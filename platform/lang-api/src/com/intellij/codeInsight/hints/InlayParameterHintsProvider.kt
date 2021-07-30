@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
@@ -25,14 +25,14 @@ object InlayParameterHintsExtension : LanguageExtension<InlayParameterHintsProvi
  * @property offset offset in document where hint should be shown
  * @property isShowOnlyIfExistedBefore defines if hint should be shown only if it was present in editor before update
  *
- * @property isFilterByBlacklist allows to prevent hints from filtering by blacklist matcher (possible use in completion hints)
+ * @property isFilterByExcludeList allows to prevent hints from filtering by blacklist matcher (possible use in completion hints)
  * @property relatesToPrecedingText whether hint is associated with previous or following text
  * @property widthAdjustment allows resulting hint's width to match certain editor text's width, see [HintWidthAdjustment]
  */
 class InlayInfo(val text: String,
                 val offset: Int,
                 val isShowOnlyIfExistedBefore: Boolean,
-                val isFilterByBlacklist: Boolean,
+                val isFilterByExcludeList: Boolean,
                 val relatesToPrecedingText: Boolean,
                 val widthAdjustment: HintWidthAdjustment?) {
 

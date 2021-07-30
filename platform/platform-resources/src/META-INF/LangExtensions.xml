@@ -793,7 +793,7 @@
       <className>com.intellij.formatting.contextConfiguration.ConfigureCodeStyleOnSelectedFragment</className>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.hints.BlacklistCurrentMethodIntention</className>
+      <className>com.intellij.codeInsight.hints.AddToExcludeListCurrentMethodIntention</className>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.hints.DisableCustomHintsOption</className>

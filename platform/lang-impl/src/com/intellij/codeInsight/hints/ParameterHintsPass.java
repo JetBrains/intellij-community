@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints;
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
@@ -43,7 +43,7 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
   }
 
   public static void syncUpdate(@NotNull PsiElement element, @NotNull Editor editor) {
-    MethodInfoBlacklistFilter filter = MethodInfoBlacklistFilter.forLanguage(element.getLanguage());
+    MethodInfoExcludeListFilter filter = MethodInfoExcludeListFilter.forLanguage(element.getLanguage());
     ParameterHintsPass pass = new ParameterHintsPass(element, editor, filter, true);
     try {
       pass.doCollectInformation(new ProgressIndicatorBase());
@@ -79,7 +79,7 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
 
     Stream<InlayInfo> inlays = hints.stream();
     if (!showHints) {
-      inlays = inlays.filter(inlayInfo -> !inlayInfo.isFilterByBlacklist());
+      inlays = inlays.filter(inlayInfo -> !inlayInfo.isFilterByExcludeList());
     }
 
     inlays.forEach(hint -> {
