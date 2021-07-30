@@ -812,6 +812,64 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/multiModuleQuickFix/functionTypeReceiverToParameter")
+    public static class FunctionTypeReceiverToParameter extends AbstractQuickFixMultiModuleTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("classFunctionConstructor")
+        public void testClassFunctionConstructor() throws Exception {
+            runTest("testData/multiModuleQuickFix/functionTypeReceiverToParameter/classFunctionConstructor/");
+        }
+
+        @TestMetadata("classFunctionParameter")
+        public void testClassFunctionParameter() throws Exception {
+            runTest("testData/multiModuleQuickFix/functionTypeReceiverToParameter/classFunctionParameter/");
+        }
+
+        @TestMetadata("classFunctionReturn")
+        public void testClassFunctionReturn() throws Exception {
+            runTest("testData/multiModuleQuickFix/functionTypeReceiverToParameter/classFunctionReturn/");
+        }
+
+        @TestMetadata("classProperty")
+        public void testClassProperty() throws Exception {
+            runTest("testData/multiModuleQuickFix/functionTypeReceiverToParameter/classProperty/");
+        }
+
+        @TestMetadata("functionParameter")
+        public void testFunctionParameter() throws Exception {
+            runTest("testData/multiModuleQuickFix/functionTypeReceiverToParameter/functionParameter/");
+        }
+
+        @TestMetadata("functionReturn")
+        public void testFunctionReturn() throws Exception {
+            runTest("testData/multiModuleQuickFix/functionTypeReceiverToParameter/functionReturn/");
+        }
+
+        @TestMetadata("interfaceFunctionParameter")
+        public void testInterfaceFunctionParameter() throws Exception {
+            runTest("testData/multiModuleQuickFix/functionTypeReceiverToParameter/interfaceFunctionParameter/");
+        }
+
+        @TestMetadata("interfaceFunctionReturn")
+        public void testInterfaceFunctionReturn() throws Exception {
+            runTest("testData/multiModuleQuickFix/functionTypeReceiverToParameter/interfaceFunctionReturn/");
+        }
+
+        @TestMetadata("interfaceProperty")
+        public void testInterfaceProperty() throws Exception {
+            runTest("testData/multiModuleQuickFix/functionTypeReceiverToParameter/interfaceProperty/");
+        }
+
+        @TestMetadata("property")
+        public void testProperty() throws Exception {
+            runTest("testData/multiModuleQuickFix/functionTypeReceiverToParameter/property/");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/makeOverridenMemberOpen")
     public static class MakeOverridenMemberOpen extends AbstractQuickFixMultiModuleTest {
         private void runTest(String testDataFilePath) throws Exception {
