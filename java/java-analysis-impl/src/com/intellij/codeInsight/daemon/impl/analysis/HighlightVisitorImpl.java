@@ -1306,6 +1306,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       String text = JavaErrorBundle.message("cannot.resolve.symbol", ((PsiNamedElement)resolved).getName());
       final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(text).create();
 
+       if (HighlightUtil.isCallToStaticMember(parent)) {
+        QuickFixAction.registerQuickFixAction(info, new RemoveNewKeywordFix(parent));
+      }
+
       myHolder.add(info);
     }
 

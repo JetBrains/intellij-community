@@ -2958,13 +2958,6 @@ public final class HighlightUtil {
 
     PsiElement refParent = ref.getParent();
 
-    if (!(resolved instanceof PsiClass) && isCallToStaticMember(refParent)) {
-      final String text = JavaErrorBundle.message("redundant.new.keyword", refName.getText());
-      final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(text).create();
-      QuickFixAction.registerQuickFixAction(info, new RemoveNewKeywordFix(refParent));
-      return info;
-    }
-
     PsiElement granny;
     if (refParent instanceof PsiReferenceExpression && (granny = refParent.getParent()) instanceof PsiMethodCallExpression) {
       PsiReferenceExpression referenceToMethod = ((PsiMethodCallExpression)granny).getMethodExpression();
@@ -3080,7 +3073,7 @@ public final class HighlightUtil {
    * @return true if the new expression can actually be a call to a class member (field or method), false otherwise.
    */
   @Contract(value = "null -> false", pure = true)
-  private static boolean isCallToStaticMember(@Nullable PsiElement element) {
+  static boolean isCallToStaticMember(@Nullable PsiElement element) {
     if (!(element instanceof PsiNewExpression)) return false;
 
     final PsiNewExpression newExpression = (PsiNewExpression)element;
