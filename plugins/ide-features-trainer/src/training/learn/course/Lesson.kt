@@ -2,7 +2,7 @@
 package training.learn.course
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Version
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.Nls
@@ -77,7 +77,7 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
 
   internal fun isNewLesson(): Boolean {
     val availableSince = properties.availableSince ?: return false
-    val lessonVersion = Version.parseVersion(availableSince) ?: return false
+    val lessonVersion = BuildNumber.fromString(availableSince) ?: return false
     val previousOpenedVersion = CourseManager.instance.previousOpenedVersion ?: return true
     return previousOpenedVersion < lessonVersion
   }

@@ -9,7 +9,7 @@ import training.learn.course.KLesson
 import training.learn.course.LessonProperties
 
 abstract class GitLesson(@NonNls id: String, @Nls name: String) : KLesson(id, name) {
-  override val properties = LessonProperties(availableSince = "2021.2")
+  override val properties = LessonProperties(availableSince = "212")
 
   override fun prepare(project: Project) {
     GitProjectUtil.restoreGitLessonsFiles(project)
