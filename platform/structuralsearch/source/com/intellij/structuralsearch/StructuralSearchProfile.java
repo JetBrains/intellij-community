@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -284,11 +284,6 @@ public abstract class StructuralSearchProfile {
   @NotNull
   public PsiElement extendMatchedByDownUp(@NotNull PsiElement node) {
     return node;
-  }
-
-  @NotNull
-  public PsiElement extendMatchOnePsiFile(@NotNull PsiElement file) {
-    return file;
   }
 
   public LanguageFileType getDefaultFileType(@Nullable LanguageFileType fileType) {

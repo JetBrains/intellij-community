@@ -195,15 +195,6 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return targetNode;
   }
 
-  @Override
-  public @NotNull PsiElement extendMatchOnePsiFile(@NotNull PsiElement file) {
-    if (file instanceof PsiIdentifier) {
-      // Searching in previous results
-      file = file.getParent();
-    }
-    return file;
-  }
-
   @NotNull
   @Override
   public PsiElement getPresentableElement(@NotNull PsiElement element) {
