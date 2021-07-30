@@ -4,10 +4,13 @@ package com.intellij.ide.actions;
 import com.intellij.ide.AboutPopupDescriptionProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.nls.NlsMessages;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
@@ -22,6 +25,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -54,6 +58,22 @@ public class AboutDialog extends DialogWrapper {
     setTitle(IdeBundle.message("about.popup.about.app", appName));
 
     init();
+  }
+
+  @Override
+  protected JComponent createSouthPanel() {
+    JComponent result = super.createSouthPanel();
+
+    // Register copy action on buttons panel only, because it conflicts with copyable labels in center panel
+    new DumbAwareAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        copyAboutInfoToClipboard();
+        close(OK_EXIT_CODE);
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("meta C", "control C"), result, getDisposable());
+
+    return result;
   }
 
   @Override
@@ -165,7 +185,7 @@ public class AboutDialog extends DialogWrapper {
     }
 
     String text = String.join(EOL, lines); //NON-NLS
-    box.add(label(text));
+    box.add(label(text, getDefaultTextFont()));
     addEmptyLine(box);
 
     //Link to open-source projects
@@ -185,7 +205,7 @@ public class AboutDialog extends DialogWrapper {
     box.add(panel);
 
     //Copyright
-    box.add(label(AboutPopup.getCopyrightText()));
+    box.add(label(AboutPopup.getCopyrightText(), getDefaultTextFont()));
     addEmptyLine(box);
 
     return box;
@@ -197,12 +217,6 @@ public class AboutDialog extends DialogWrapper {
 
   private static void addEmptyLine(Box box) {
     box.add(Box.createVerticalStrut(18));
-  }
-
-  private static JLabel label(@NlsContexts.Label String text) {
-    JBLabel label = new JBLabel(text).withFont(getDefaultTextFont());
-    label.setCopyable(true);
-    return label;
   }
 
   private static JLabel label(@NlsContexts.Label String text, JBFont font) {
