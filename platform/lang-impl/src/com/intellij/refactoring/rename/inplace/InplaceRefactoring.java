@@ -1019,7 +1019,10 @@ public abstract class InplaceRefactoring {
       finally {
         if (!bind) {
           try {
-            ((EditorImpl)InjectedLanguageEditorUtil.getTopLevelEditor(myEditor)).stopDumbLater();
+            Editor editor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
+            if (editor instanceof EditorImpl) {
+              ((EditorImpl)editor).stopDumbLater();
+            }
           }
           finally {
             FinishMarkAction.finish(myProject, myEditor, myMarkAction);
