@@ -113,7 +113,8 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
         }
         return nextParent.getParent();
       }
-      if (nextParent instanceof PsiPattern || nextParent instanceof PsiCaseLabelElementList) {
+      if (nextParent instanceof PsiPattern || nextParent instanceof PsiCaseLabelElementList ||
+          (parent instanceof PsiPattern && nextParent instanceof PsiInstanceOfExpression)) {
         continue;
       }
       return parent;
