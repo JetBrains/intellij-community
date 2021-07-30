@@ -1372,14 +1372,16 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     Set<ID<?,?>> indexesProvidedByExtensions = new HashSet<>();
     Ref<Boolean> wasFullyIndexedByInfrastructureExtensions = Ref.create(true);
     Ref<FileType> fileTypeRef = Ref.create();
-    Project guessedProject = project != null ? project : ProjectUtil.guessProjectForFile(file);
+
+    //todo check file still from project
+    int inputId = getFileId(file);
+    Project guessedProject = project != null ? project : myIndexableFilesFilterHolder.findProjectForFile(inputId);
     IndexedFileImpl indexedFile = new IndexedFileImpl(file, guessedProject);
 
     FileTypeManagerEx.getInstanceEx().freezeFileTypeTemporarilyIn(file, () -> {
       ProgressManager.checkCanceled();
       FileContentImpl fc = null;
 
-      int inputId = getFileId(file);
       Set<ID<?, ?>> currentIndexedStates = new HashSet<>(IndexingStamp.getNontrivialFileIndexedStates(inputId));
       List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(indexedFile);
       //noinspection ForLoopReplaceableByForEach
@@ -1648,8 +1650,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       boolean includeFilesFromOtherProjects = restrictedTo == null && project == null;
       List<VirtualFile> virtualFilesToBeUpdatedForProject = ContainerUtil.filter(
         allFilesToUpdate,
-        new ProjectFilesCondition(projectIndexableFiles(project), filter, restrictedTo,
-                                  includeFilesFromOtherProjects)
+        new ProjectFilesCondition(projectIndexableFiles(project), filter, restrictedTo, includeFilesFromOtherProjects)
       );
 
       if (!virtualFilesToBeUpdatedForProject.isEmpty()) {
@@ -1789,7 +1790,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     // handle 'content-less' indices separately
     boolean fileIsDirectory = file.isDirectory();
-    IndexedFileImpl indexedFile = new IndexedFileImpl(file, ProjectUtil.guessProjectForFile(file));
+    IndexedFileImpl indexedFile = new IndexedFileImpl(file, myIndexableFilesFilterHolder.findProjectForFile(fileId));
 
     if (!contentChange) {
       FileContent fileContent = null;

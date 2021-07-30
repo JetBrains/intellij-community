@@ -32,6 +32,8 @@ internal sealed class ProjectIndexableFilesFilterHolder {
 
   abstract fun removeFile(fileId: Int)
 
+  abstract fun findProjectForFile(fileId: Int): Project?
+
   abstract fun runHealthCheck()
 }
 
@@ -82,6 +84,15 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
     for (filter in myProjectFilters.values) {
       filter.removeFileId(fileId)
     }
+  }
+
+  override fun findProjectForFile(fileId: Int): Project? {
+    for ((project, filter) in myProjectFilters) {
+      if (filter.containsFileId(fileId)) {
+        return project
+      }
+    }
+    return null
   }
 
   override fun runHealthCheck() {
