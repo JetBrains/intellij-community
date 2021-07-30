@@ -51,8 +51,9 @@ class ArchiveUtils {
       TarInputStream inputStream = new TarInputStream(new GZIPInputStream(Files.newInputStream(archiveFile)))
       try {
         TarEntry entry
+        String altEntryPath = "./$entryPath"
         while (null != (entry = inputStream.getNextEntry())) {
-          if (entry.name == entryPath) {
+          if (entry.name == entryPath || entry.name == altEntryPath) {
             return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8)
           }
         }
