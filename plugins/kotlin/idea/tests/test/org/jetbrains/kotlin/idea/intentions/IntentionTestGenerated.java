@@ -5339,9 +5339,19 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("Foo.kt")
+        public void testFoo() throws Exception {
+            runTest("testData/intentions/convertFunctionTypeReceiverToParameter/Foo.kt");
+        }
+
         @TestMetadata("function.kt")
         public void testFunction() throws Exception {
             runTest("testData/intentions/convertFunctionTypeReceiverToParameter/function.kt");
+        }
+
+        @TestMetadata("functionReturnType.kt")
+        public void testFunctionReturnType() throws Exception {
+            runTest("testData/intentions/convertFunctionTypeReceiverToParameter/functionReturnType.kt");
         }
 
         @TestMetadata("notInFunctionParameter.kt")
@@ -5367,6 +5377,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("primaryConstructor.kt")
         public void testPrimaryConstructor() throws Exception {
             runTest("testData/intentions/convertFunctionTypeReceiverToParameter/primaryConstructor.kt");
+        }
+
+        @TestMetadata("property.kt")
+        public void testProperty() throws Exception {
+            runTest("testData/intentions/convertFunctionTypeReceiverToParameter/property.kt");
         }
 
         @TestMetadata("secondaryConstructor.kt")
