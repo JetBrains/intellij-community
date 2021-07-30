@@ -58,7 +58,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -585,18 +584,6 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
               selectRows(new int[]{modelRow}, true);
             }          }
         }, true);
-
-        AbstractButton button = UIUtil.uiTraverser(panel).filter(JButton.class).first();
-        if (button != null) {
-          AtomicInteger clickCount = new AtomicInteger();
-          button.addActionListener(e -> clickCount.incrementAndGet());
-          SwingUtilities.invokeLater(() -> {
-            if (clickCount.get() == 0 && myTable.getEditorComponent() == panel) {
-              button.doClick();
-            }
-          });
-        }
-
         return panel;
       }
 
