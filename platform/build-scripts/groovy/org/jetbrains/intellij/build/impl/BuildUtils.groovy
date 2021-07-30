@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
@@ -176,6 +177,13 @@ final class BuildUtils {
     String convertedData = StringUtilRt.convertLineSeparators(data, newLineSeparator)
     if (data != convertedData) {
       Files.writeString(file, convertedData)
+    }
+  }
+
+  static List<File> getPluginJars(String pluginPath) {
+    File libFile = new File(pluginPath, "lib")
+    return libFile.list { _, name -> FileUtil.extensionEquals(name, "jar") }.collect { jarName ->
+      new File(libFile, jarName)
     }
   }
 }

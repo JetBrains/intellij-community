@@ -198,22 +198,7 @@ final class BuildTasksImpl extends BuildTasks {
       this.buildContext = buildContext
     }
 
-    protected static List<File> jars(String pluginPath) {
-      File libFile = new File(pluginPath, "lib")
-      return libFile.list { _, name -> FileUtil.extensionEquals(name, "jar") }.collect { jarName ->
-        new File(libFile, jarName)
-      }
-    }
-
     Set<String> customize(Set<String> ideClasspath) {
-      List<Path> additionalPluginPaths = buildContext.productProperties.getAdditionalPluginPaths(buildContext)
-      for (Path pluginPath : additionalPluginPaths) {
-        for (File jarFile : jars(pluginPath.toString())) {
-          if (ideClasspath.add(jarFile.absolutePath)) {
-            buildContext.messages.debug("$jarFile from plugin $pluginPath")
-          }
-        }
-      }
       return ideClasspath
     }
   }
@@ -251,6 +236,14 @@ final class BuildTasksImpl extends BuildTasks {
     jvmArgs.addAll(BuildUtils.propertiesToJvmArgs(systemProperties))
     jvmArgs.addAll(vmOptions)
 
+    List<Path> additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
+    for (Path pluginPath : additionalPluginPaths) {
+      for (File jarFile : BuildUtils.getPluginJars(pluginPath.toString())) {
+        if (ideClasspath.add(jarFile.absolutePath)) {
+          context.messages.debug("$jarFile from plugin $pluginPath")
+        }
+      }
+    }
     ideClasspath = classpathCustomizer.customize(ideClasspath)
 
     disableCompatibleIgnoredPlugins(context, tempDir.resolve("config"), pluginsToDisable)
