@@ -16,8 +16,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.SwitchUtils;
 
 import java.util.*;
 
@@ -93,7 +93,7 @@ class SwitchStatementBranch {
   }
 
   void addCaseValues(PsiSwitchLabelStatementBase label, boolean defaultAlwaysExecuted) {
-    if (isDefaultLabel(label)) {
+    if (SwitchUtils.isDefaultLabel(label)) {
       setDefault();
       setAlwaysExecuted(defaultAlwaysExecuted);
     }
@@ -105,12 +105,5 @@ class SwitchStatementBranch {
         }
       }
     }
-  }
-
-  private static boolean isDefaultLabel(PsiSwitchLabelStatementBase label) {
-    if (label.isDefaultCase()) return true;
-    PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
-    if (labelElementList == null) return false;
-    return ContainerUtil.exists(labelElementList.getElements(), element -> element instanceof PsiDefaultCaseLabelElement);
   }
 }
