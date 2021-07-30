@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -62,6 +62,9 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
 
   @Override
   public void processQuery(@NotNull SearchParameters p, @NotNull Processor<? super PsiFunctionalExpression> consumer) {
+    if (ReadAction.compute(() -> p.getEffectiveSearchScope()) == GlobalSearchScope.EMPTY_SCOPE) {
+      return;
+    }
     Session session = ReadAction.compute(() -> new Session(p, consumer));
     session.processResults();
     if (!session.filesLookedInside.isEmpty() && LOG.isDebugEnabled()) {
