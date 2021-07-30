@@ -301,7 +301,7 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
 
                     assertNotNull(
                         "$file: Kotlin configuration producer should produce configuration for ${function.fqName?.asString()}",
-                        KotlinRunConfigurationProducer.getEntryPointContainer(function),
+                        KotlinMainFunctionLocatingService.getEntryPointContainer(function),
                     )
                 } else {
                     try {
@@ -315,12 +315,12 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
                     if (text.startsWith("// entryPointExists")) {
                         assertNotNull(
                             "$file: Kotlin configuration producer should produce configuration for ${function.fqName?.asString()}",
-                            KotlinRunConfigurationProducer.getEntryPointContainer(function),
+                            KotlinMainFunctionLocatingService.getEntryPointContainer(function),
                         )
                     } else {
                         assertNull(
                             "Kotlin configuration producer shouldn't produce configuration for ${function.fqName?.asString()}",
-                            KotlinRunConfigurationProducer.getEntryPointContainer(function),
+                            KotlinMainFunctionLocatingService.getEntryPointContainer(function),
                         )
                     }
                 }
