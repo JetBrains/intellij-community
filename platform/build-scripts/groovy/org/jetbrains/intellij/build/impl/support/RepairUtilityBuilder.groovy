@@ -126,6 +126,11 @@ class RepairUtilityBuilder {
 
   private static Map<Binary, Path> buildBinaries(BuildContext buildContext) {
     buildContext.messages.block("Building repair-utility") {
+      if (SystemInfoRt.isWindows) {
+        // FIXME: Linux containers on Windows should be fine
+        buildContext.messages.warning("Cannot be built on Windows")
+        return [:] as Map<Binary, Path>
+      }
       Path projectHome = repairUtilityProjectHome(buildContext)
       if (projectHome == null) {
         return [:] as Map<Binary, Path>
