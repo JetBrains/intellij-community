@@ -189,8 +189,10 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   public @NotNull PsiElement extendMatchedByDownUp(@NotNull PsiElement targetNode) {
     if (targetNode instanceof PsiIdentifier) {
       targetNode = targetNode.getParent();
-      final PsiElement parent = targetNode.getParent();
-      if (parent instanceof PsiTypeElement || parent instanceof PsiStatement) targetNode = parent;
+    }
+    final PsiElement parent = targetNode.getParent();
+    if (parent instanceof PsiTypeElement || parent instanceof PsiStatement || parent instanceof PsiLocalVariable) {
+      targetNode = parent;
     }
     return targetNode;
   }

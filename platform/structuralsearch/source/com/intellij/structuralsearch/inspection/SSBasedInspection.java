@@ -357,7 +357,10 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       else {
         final Matcher newMatcher = buildCompiledConfiguration(configuration, project);
         if (newMatcher != null) {
-          newMatcher.getMatchContext().setSink(new InspectionResultSink());
+          MatchContext context = newMatcher.getMatchContext();
+          context.setSink(new InspectionResultSink());
+          // ssr should never match recursively because this is handled by the inspection visitor
+          context.setShouldRecursivelyMatch(false);
         }
         result.put(configuration, newMatcher);
       }
