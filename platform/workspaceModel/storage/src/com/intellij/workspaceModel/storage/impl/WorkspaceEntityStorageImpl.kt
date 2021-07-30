@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.storage.impl
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ObjectUtils
@@ -277,6 +278,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: WorkspaceEntityStorage) {
     try {
       lockWrite()
+      replaceWith as AbstractEntityStorage
+      applyDiffProtection(replaceWith, "replaceBySource")
       ReplaceBySourceAsGraph.replaceBySourceAsGraph(this, replaceWith, sourceFilter)
     }
     finally {
@@ -357,10 +360,28 @@ internal class WorkspaceEntityStorageBuilderImpl(
     try {
       lockWrite()
       diff as WorkspaceEntityStorageBuilderImpl
+      applyDiffProtection(diff, "addDiff")
       AddDiffOperation(this, diff).addDiff()
     }
     finally {
       unlockWrite()
+    }
+  }
+
+  private fun applyDiffProtection(diff: AbstractEntityStorage, method: String) {
+    LOG.trace { "Applying $method. Builder: $diff" }
+    if (diff.storageIsAlreadyApplied) {
+      LOG.error("Builder is already applied.\n Info: \n${diff.applyInfo}")
+    }
+    else {
+      diff.storageIsAlreadyApplied = true
+      var info = "Applying builder using $method. Previous stack trace >>>>\n"
+      if (LOG.isTraceEnabled) {
+        val currentStackTrace = ExceptionUtil.currentStackTrace()
+        info += "\n$currentStackTrace"
+      }
+      info += "<<<<"
+      diff.applyInfo = info
     }
   }
 
@@ -539,6 +560,9 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   internal abstract val indexes: StorageIndexes
 
   internal var brokenConsistency: Boolean = false
+
+  internal var storageIsAlreadyApplied = false
+  internal var applyInfo: String? = null
 
   override fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E> {
     @Suppress("UNCHECKED_CAST")

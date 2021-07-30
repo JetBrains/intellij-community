@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.service.project;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -50,6 +51,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModelsProvider {
+  public static final Logger LOG = Logger.getInstance(IdeModifiableModelsProviderImpl.class);
   public static final Key<IdeModifiableModelsProviderImpl> MODIFIABLE_MODELS_PROVIDER_KEY = Key.create("IdeModelsProvider");
   private LibraryTable.ModifiableModel myLibrariesModel;
   private WorkspaceEntityStorage initialStorage;
@@ -127,6 +129,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   @Override
   public void commit() {
+    LOG.trace("Applying commit for IdeaModifiableModelProvider");
     workspaceModelCommit();
   }
 
@@ -187,7 +190,11 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
       }
       myModifiableModels.values().forEach(ModifiableModel::commit);
       WorkspaceModel.getInstance(myProject).updateProjectModel(builder -> {
-        builder.addDiff(getActualStorageBuilder());
+        WorkspaceEntityStorageBuilder storageBuilder = getActualStorageBuilder();
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Apply builder in ModifiableModels commit. builder: " + storageBuilder);
+        }
+        builder.addDiff(storageBuilder);
         return null;
       });
 
