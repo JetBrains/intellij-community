@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
-import org.jetbrains.uast.kotlin.createKDocNameSimpleNameReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.uast.UElement
@@ -19,7 +18,7 @@ class KotlinUIdentifier constructor(
     givenParent: UElement?
 ) : UIdentifier(sourcePsi, givenParent) {
 
-    override val javaPsi: PsiElement? by lazy(javaPsiSupplier) // don't know any real need to call it in production
+    override val javaPsi: PsiElement? by lz(javaPsiSupplier) // don't know any real need to call it in production
 
     override val psi: PsiElement?
         get() = javaPsi ?: sourcePsi
@@ -40,11 +39,11 @@ class KotlinUIdentifier constructor(
         return false
     }
 
-    override val uastParent: UElement? by lazy {
-        if (givenParent != null) return@lazy givenParent
-        val parent = sourcePsi?.parent ?: return@lazy null
+    override val uastParent: UElement? by lz {
+        if (givenParent != null) return@lz givenParent
+        val parent = sourcePsi?.parent ?: return@lz null
 
-        return@lazy if (parent is KDocName && parent.getQualifier() != null) // e.g. for UElement in org.jetbrains.uast.UElement
+        return@lz if (parent is KDocName && parent.getQualifier() != null) // e.g. for UElement in org.jetbrains.uast.UElement
             createKDocNameSimpleNameReference(parentKDocName = parent, givenParent = null)
         else
             getIdentifierParentForCall(parent) ?: parent.toUElement()

@@ -22,21 +22,17 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.*
+import org.jetbrains.uast.kotlin.internal.firKotlinUastPlugin
 import org.jetbrains.uast.kotlin.internal.toPsiMethod
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 
 interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderService {
+
+    override val languagePlugin: UastLanguagePlugin
+        get() = firKotlinUastPlugin
+
     override val baseKotlinConverter: BaseKotlinConverter
         get() = FirKotlinConverter
-
-    override fun convertParent(uElement: UElement): UElement? {
-        // TODO
-        return null
-    }
-
-    override fun convertParent(uElement: UElement, parent: PsiElement?): UElement? {
-        TODO("Not yet implemented")
-    }
 
     override fun convertValueArguments(ktCallElement: KtCallElement, parent: UElement): List<UNamedExpression>? {
         analyseForUast(ktCallElement) {
@@ -46,6 +42,16 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 // TODO: it.key.isSpread() ?
                 KotlinUNamedExpression.create(name, it.key, parent)
             }
+        }
+    }
+
+    override fun findAttributeValueExpression(uAnnotation: KotlinUAnnotation, arg: ValueArgument): UExpression? {
+        val annotationEntry = uAnnotation.sourcePsi
+        analyseForUast(annotationEntry) {
+            val resolvedAnnotationCall = annotationEntry.resolveCall() as? KtAnnotationCall ?: return null
+            val parameter = resolvedAnnotationCall.argumentMapping[arg] ?: return null
+            val namedExpression = uAnnotation.attributeValues.find { it.name == parameter.name.asString() }
+            return namedExpression?.expression as? KotlinUVarargExpression ?: namedExpression
         }
     }
 

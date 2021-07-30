@@ -15,7 +15,7 @@ public abstract annotation MyAnnotation5 {
 
 public final class Test1 {
     @org.jetbrains.annotations.NotNull private var bar: int
-    public fun Test1(@org.jetbrains.annotations.NotNull bar: int) = UastEmptyExpression
+    public fun Test1(@org.jetbrains.annotations.NotNull @MyAnnotation bar: int) = UastEmptyExpression
     @MyAnnotation
     public final fun getBar() : int = UastEmptyExpression
     @MyAnnotation
@@ -24,7 +24,7 @@ public final class Test1 {
 
 public final class Test2 {
     @org.jetbrains.annotations.NotNull @MyAnnotation5 private var bar: int
-    public fun Test2(@org.jetbrains.annotations.NotNull @MyAnnotation3 bar: int) = UastEmptyExpression
+    public fun Test2(@org.jetbrains.annotations.NotNull bar: int) = UastEmptyExpression
     @MyAnnotation
     public final fun getBar() : int = UastEmptyExpression
     @MyAnnotation2

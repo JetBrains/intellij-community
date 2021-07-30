@@ -8,7 +8,7 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolute
 
 abstract class AbstractFE1LegacyUastIdentifiersTest : AbstractFE1UastIdentifiersTest(), LegacyUastIdentifiersTestBase {
-    // TODO: better not to see exceptions from legacy UAST
+    // TODO: better not to see exceptions from FE1.0 UAST
     @OptIn(ExperimentalPathApi::class)
     private val whitelist : Set<String> = setOf(
         "uast-kotlin/testData/DestructuringDeclaration.kt",
