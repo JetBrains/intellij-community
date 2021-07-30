@@ -30,8 +30,8 @@ internal class LearnToolWindowFactory : ToolWindowFactoryEx, DumbAware {
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-    val strictVersion = ApplicationInfo.getInstance().strictVersion
-    PropertiesComponent.getInstance().setValue(LEARNING_PANEL_OPENED_IN, strictVersion)
+    val currentBuildStr = ApplicationInfo.getInstance().build.asStringWithoutProductCodeAndSnapshot()
+    PropertiesComponent.getInstance().setValue(LEARNING_PANEL_OPENED_IN, currentBuildStr)
     val learnToolWindow = LearnToolWindow(project, toolWindow)
     val contentManager = toolWindow.contentManager
     val content = contentManager.factory.createContent(learnToolWindow, null, false)

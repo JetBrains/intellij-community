@@ -18,6 +18,7 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindow
@@ -219,4 +220,8 @@ internal val iftPluginIsUsing: Boolean get() = LessonStateManager.getPassedLesso
 internal const val SHOW_NEW_LESSONS_NOTIFICATION = "ift.show.new.lessons.notification"
 internal const val LEARNING_PANEL_OPENED_IN = "ift.learning.panel.opened.in"
 internal val learningPanelWasOpenedInCurrentVersion: Boolean
-  get() = PropertiesComponent.getInstance().getValue(LEARNING_PANEL_OPENED_IN) == ApplicationInfo.getInstance().strictVersion
+  get() {
+    val savedValue = PropertiesComponent.getInstance().getValue(LEARNING_PANEL_OPENED_IN) ?: return false
+    val savedBuild = BuildNumber.fromString(savedValue) ?: return false
+    return savedBuild >= ApplicationInfo.getInstance().build
+  }

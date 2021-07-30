@@ -27,5 +27,6 @@ object FeatureUsageStatisticConsts {
   const val SHOW_NEW_LESSONS = "show_new_lessons"
   const val NEED_SHOW_NEW_LESSONS_NOTIFICATIONS = "need_show_new_lessons_notifications"
   const val NEW_LESSONS_COUNT = "new_lessons_count"
+  const val LAST_BUILD_LEARNING_OPENED = "last_build_learning_opened"
   const val SHOULD_SHOW_NEW_LESSONS = "show_it"
 }

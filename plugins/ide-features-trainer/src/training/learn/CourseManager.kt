@@ -9,7 +9,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Version
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.KeyedLazyInstanceEP
 import com.intellij.util.containers.ContainerUtil
@@ -30,17 +30,17 @@ import training.util.switchOnExperimentalLessons
 @Service(Service.Level.APP)
 class CourseManager internal constructor() : Disposable {
 
-  val previousOpenedVersion: Version?
+  val previousOpenedVersion: BuildNumber?
 
   init {
-    val strVersion = PropertiesComponent.getInstance().getValue(LEARNING_PANEL_OPENED_IN)
-    previousOpenedVersion = if (strVersion == null) {
+    val strBuild = PropertiesComponent.getInstance().getValue(LEARNING_PANEL_OPENED_IN)
+    previousOpenedVersion = if (strBuild == null) {
       null
     }
     else {
-      val parseVersion = Version.parseVersion(strVersion)
+      val parseVersion = BuildNumber.fromString(strBuild)
       if (parseVersion == null) {
-        thisLogger().error("Cannot parse previous version $strVersion")
+        thisLogger().error("Cannot parse previous version $strBuild")
       }
       parseVersion
     }
@@ -70,7 +70,7 @@ class CourseManager internal constructor() : Disposable {
       return lessonsForModules.filter {
         if (it.passed) return@filter false // It is strange situation actually
         val availableSince = it.properties.availableSince ?: return@filter false
-        val lessonVersion = Version.parseVersion(availableSince)
+        val lessonVersion = BuildNumber.fromString(availableSince)
         if (lessonVersion == null) {
           thisLogger().error("Invalid lesson version: $availableSince")
           return@filter false
