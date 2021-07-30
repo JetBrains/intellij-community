@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -442,7 +441,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
     myComponentHint = new MyComponentHint(myPanel);
     EditorUtil.disposeWithEditor(myEditor, this);
-    DynamicPlugins.onPluginUnload(this, () -> Disposer.dispose(this));
+    DynamicPlugins.INSTANCE.onPluginUnload(this, () -> Disposer.dispose(this));
   }
 
   public void hide() {

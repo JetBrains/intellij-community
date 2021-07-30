@@ -33,6 +33,7 @@ import java.util.function.Predicate;
  */
 public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataConsumer {
   private static final boolean isParallelCapable = registerAsParallelCapable();
+  private static final ClassLoader appClassLoader = UrlClassLoader.class.getClassLoader();
 
   private static final ThreadLocal<Boolean> skipFindingResource = new ThreadLocal<>();
 
@@ -216,6 +217,10 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
   @Override
   protected Class<?> findClass(@NotNull String name) throws ClassNotFoundException {
+    if (name.startsWith("com.intellij.util.lang.")) {
+      return appClassLoader.loadClass(name);
+    }
+
     Class<?> clazz;
     try {
       clazz = classPath.findClass(name, classDataConsumer);
@@ -361,7 +366,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   @ApiStatus.Internal
-  @ApiStatus.Experimental
   public @Nullable BiPredicate<String, Boolean> resolveScopeManager;
 
   public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) throws IOException {
@@ -425,7 +429,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
       }
     }
 
-    // trying to speedup the common case when there are no "//" or "/."
+    // trying to speed up the common case when there are no "//" or "/."
     int index = -1;
     do {
       index = path.indexOf('/', index + 1);

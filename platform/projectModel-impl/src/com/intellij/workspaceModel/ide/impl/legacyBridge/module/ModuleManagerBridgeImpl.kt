@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.ProjectTopics
@@ -85,8 +85,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     val (unloadedEntities, loadedEntities) = entities.partition { it.name in unloadedModuleNames }
     LOG.debug { "Loading modules for ${loadedEntities.size} entities" }
 
-    val plugins = PluginManagerCore.getLoadedPlugins(null)
-    val precomputedExtensionModel = precomputeExtensionModel(plugins)
+    val precomputedExtensionModel = precomputeExtensionModel()
 
     val tasks = loadedEntities.map { moduleEntity ->
       ForkJoinTask.adapt(Callable {
@@ -278,7 +277,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
   fun createModuleInstance(moduleEntity: ModuleEntity, versionedStorage: VersionedEntityStorage,
                                              diff: WorkspaceEntityStorageDiffBuilder?, isNew: Boolean,
                                              precomputedExtensionModel: PrecomputedExtensionModel?): ModuleBridge {
-    val plugins = PluginManagerCore.getLoadedPlugins(null)
+    val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
     val corePlugin = plugins.find { it.pluginId == PluginManagerCore.CORE_ID }
     val moduleFileUrl = getModuleVirtualFileUrl(moduleEntity)
 
@@ -289,7 +288,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
                               diff = diff)
 
     module.registerComponents(corePlugin = corePlugin,
-                              plugins = plugins,
+                              modules = plugins,
                               app = ApplicationManager.getApplication(),
                               precomputedExtensionModel = precomputedExtensionModel,
                               listenerCallbacks = null)

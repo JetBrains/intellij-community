@@ -1,4 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
@@ -80,14 +81,14 @@ internal class ClassLoaderConfiguratorTest {
 
     val plugins = loadDescriptors(rootDir).getEnabledPlugins()
     assertThat(plugins).hasSize(2)
-    val barPlugin = plugins[1]
-    assertThat(barPlugin.id.idString).isEqualTo("2-bar")
+    val barPlugin = plugins.get(1)
+    assertThat(barPlugin.pluginId.idString).isEqualTo("2-bar")
 
-    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSet.createPluginSet(plugins, plugins))
-    plugins.forEach(classLoaderConfigurator::configure)
+    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSetBuilder(plugins).computeEnabledModuleMap().createPluginSet())
+    classLoaderConfigurator.configure()
 
     assertThat((barPlugin.classLoader as PluginClassLoader)._getParents().map { it.descriptorPath })
-      .containsExactly("com.example.sub.xml", null)
+      .containsExactly(null, "com.example.sub.xml")
   }
 
   @Suppress("PluginXmlValidity")
@@ -128,8 +129,8 @@ internal class ClassLoaderConfiguratorTest {
     val plugins = loadResult.getEnabledPlugins()
     assertThat(plugins).hasSize(2)
 
-    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSet.createPluginSet(plugins, plugins))
-    plugins.forEach(classLoaderConfigurator::configure)
+    val classLoaderConfigurator = ClassLoaderConfigurator(PluginSetBuilder(plugins).computeEnabledModuleMap().createPluginSet())
+    classLoaderConfigurator.configure()
     return loadResult
   }
 }
@@ -142,7 +143,7 @@ private fun loadDescriptors(dir: Path): PluginLoadingResult {
   val paths = dir.directoryStreamIfExists { it.sorted() }!!
   context.use {
     for (file in paths) {
-      result.add(loadDescriptor(file, false, context) ?: continue, false)
+      result.add(loadDescriptor(file, context) ?: continue, false)
     }
   }
   result.finishLoading()

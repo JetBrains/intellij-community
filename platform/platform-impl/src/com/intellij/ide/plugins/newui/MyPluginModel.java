@@ -840,7 +840,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   boolean requiresRestart(@NotNull IdeaPluginDescriptor descriptor) {
     return myRequiresRestart
       .computeIfAbsent(descriptor instanceof IdeaPluginDescriptorImpl ? (IdeaPluginDescriptorImpl)descriptor : null,
-                       it -> it == null || DynamicPlugins.checkCanUnloadWithoutRestart(it) != null);
+                       it -> it == null || DynamicPlugins.INSTANCE.checkCanUnloadWithoutRestart(it) != null);
   }
 
   boolean isUninstalled(@NotNull IdeaPluginDescriptor descriptor) {

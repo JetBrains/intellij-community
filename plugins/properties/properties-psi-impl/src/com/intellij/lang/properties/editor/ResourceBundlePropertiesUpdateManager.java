@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.lang.properties.IProperty;
@@ -186,16 +186,16 @@ public final class ResourceBundlePropertiesUpdateManager {
       }
     }));
     DFSTBuilder<String> dfstBuilder = new DFSTBuilder<>(generator);
-    final boolean acyclic = dfstBuilder.isAcyclic();
+    boolean acyclic = dfstBuilder.isAcyclic();
     if (acyclic) {
+      List<String> sortedNodes = new ArrayList<>(generator.getNodes());
       if (isAlphaSorted[0]) {
-        final List<String> sortedNodes = new ArrayList<>(generator.getNodes());
         sortedNodes.sort(String.CASE_INSENSITIVE_ORDER);
-        return Pair.create(sortedNodes, true);
-      } else {
-        final List<String> dfsNodes = dfstBuilder.getSortedNodes();
-        Collections.reverse(dfsNodes);
-        return Pair.create(dfsNodes, false);
+        return new Pair<>(sortedNodes, true);
+      }
+      else {
+        sortedNodes.sort(dfstBuilder.comparator().reversed());
+        return new Pair<>(sortedNodes, false);
       }
     }
     else {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -177,13 +177,14 @@ class FileTemplatesLoader implements Disposable {
     FileTemplateLoadResult result = new FileTemplateLoadResult(new MultiMap<>());
     Set<URL> processedUrls = new HashSet<>();
     Set<ClassLoader> processedLoaders = new HashSet<>();
-    for (IdeaPluginDescriptorImpl plugin : PluginManagerCore.getLoadedPlugins(null)) {
+    for (IdeaPluginDescriptorImpl plugin : PluginManagerCore.getPluginSet().enabledPlugins) {
       ClassLoader loader = plugin.getPluginClassLoader();
       if (loader instanceof PluginAwareClassLoader && ((PluginAwareClassLoader)loader).getFiles().isEmpty() ||
           !processedLoaders.add(loader)) {
         // test or development mode, when IDEA_CORE's loader contains all the classpath
         continue;
       }
+
       try {
         Enumeration<URL> systemResources = loader.getResources(DEFAULT_TEMPLATES_ROOT);
         while (systemResources.hasMoreElements()) {

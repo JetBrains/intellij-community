@@ -5,7 +5,7 @@ import com.intellij.platform.util.plugins.DataLoader
 import com.intellij.platform.util.plugins.LocalFsDataLoader
 import java.nio.file.Files
 
-internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, private val isRunningFromSources: Boolean) : PathResolver {
+internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, val isRunningFromSources: Boolean) : PathResolver {
   override val isFlat: Boolean
     get() = true
 
@@ -15,7 +15,7 @@ internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, pr
                                      base: String?,
                                      relativePath: String): Boolean {
     val path = PluginXmlPathResolver.toLoadPath(relativePath, base)
-    readModuleDescriptor(inputStream = classLoader.getResourceAsStream(path) ?: return false,
+    readModuleDescriptor(input = classLoader.getResourceAsStream(path) ?: return false,
                          readContext = readContext,
                          pathResolver = this,
                          dataLoader = dataLoader,
@@ -51,7 +51,7 @@ internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, pr
         throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader)")
       }
     }
-    return readModuleDescriptor(inputStream = resource,
+    return readModuleDescriptor(input = resource,
                                 readContext = readContext,
                                 pathResolver = this,
                                 dataLoader = dataLoader,
@@ -66,7 +66,7 @@ internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, pr
                            readInto: RawPluginDescriptor?): RawPluginDescriptor? {
     val path = PluginXmlPathResolver.toLoadPath(relativePath, null)
     val resource = classLoader.getResourceAsStream(path)
-    return readModuleDescriptor(inputStream = resource ?: return null,
+    return readModuleDescriptor(input = resource ?: return null,
                                 readContext = readContext,
                                 pathResolver = this,
                                 dataLoader = dataLoader,

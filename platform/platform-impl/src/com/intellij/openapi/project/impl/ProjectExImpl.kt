@@ -172,7 +172,7 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
     // for light projects, preload only services that are essential
     // ("await" means "project component loading activity is completed only when all such services are completed")
     val servicePreloadingFuture = if (preloadServices) {
-      preloadServices(PluginManagerCore.getLoadedPlugins(null), container = this, activityPrefix = "project ", onlyIfAwait = isLight)
+      preloadServices(PluginManagerCore.getPluginSet().getEnabledModules(), container = this, activityPrefix = "project ", onlyIfAwait = isLight)
     }
     else {
       null

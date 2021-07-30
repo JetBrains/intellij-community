@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
@@ -9,7 +9,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.preloadServices
 import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.PersistentStateComponent
@@ -21,7 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectExImpl
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
-import com.intellij.serviceContainer.executeRegisterTask
+import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.util.messages.MessageBus
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -34,7 +33,6 @@ abstract class ClientSessionImpl(
   final override val clientId: ClientId,
   protected val sharedComponentManager: ClientAwareComponentManager
 ) : ComponentManagerImpl(null, false), ClientSession {
-
   override val isLocal = clientId.isLocal
 
   override val isLightServiceSupported = false
@@ -45,18 +43,13 @@ abstract class ClientSessionImpl(
   }
 
   fun registerServices() {
-    registerComponents(
-      PluginManagerCore.getLoadedPlugins(null),
-      ApplicationManager.getApplication(),
-      null,
-      null
-    )
+    registerComponents()
   }
 
   fun preloadServices() {
     assert(containerState.get() == ContainerState.PRE_INIT)
     preloadServices(
-      PluginManagerCore.getLoadedPlugins(null),
+      PluginManagerCore.getPluginSet().getEnabledModules(),
       container = this,
       activityPrefix = "client ",
       onlyIfAwait = false
@@ -79,14 +72,14 @@ abstract class ClientSessionImpl(
   /**
    * only per-client services are supported (no components, extensions, listeners)
    */
-  override fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>,
+  override fun registerComponents(modules: Sequence<IdeaPluginDescriptorImpl>,
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   listenerCallbacks: List<Runnable>?) {
-    for (mainPlugin in plugins) {
-      executeRegisterTask(mainPlugin) { pluginDescriptor ->
-        val containerDescriptor = getContainerDescriptor(pluginDescriptor)
-        registerServices(containerDescriptor.services, pluginDescriptor)
+    for (rootModule in modules) {
+      registerServices(getContainerDescriptor(rootModule).services, rootModule)
+      executeRegisterTaskForOldContent(rootModule) { module ->
+        registerServices(getContainerDescriptor(module).services, module)
       }
     }
   }
@@ -108,7 +101,7 @@ abstract class ClientSessionImpl(
       val sessionsManager = sharedComponentManager.getService(ClientSessionsManager::class.java)
       val localSession = sessionsManager?.getSession(ClientId.localId) as? ClientSessionImpl
 
-      if (localSession?.doGetService(serviceClass, createIfNeeded, fallbackToShared = false) != null) {
+      if (localSession?.doGetService(serviceClass, createIfNeeded = true, fallbackToShared = false) != null) {
         LOG.error("$serviceClass is registered only for client=\"local\", " +
                   "please provide a guest-specific implementation, or change to client=\"all\"")
         return null
@@ -200,7 +193,6 @@ open class ClientProjectSessionImpl(
   clientId: ClientId,
   final override val project: ProjectExImpl,
 ) : ClientSessionImpl(clientId, project), ClientProjectSession {
-
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor {
     return pluginDescriptor.projectContainerDescriptor
   }

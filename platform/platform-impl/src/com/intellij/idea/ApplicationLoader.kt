@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.*
@@ -72,17 +73,20 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) 
     }
 
     loadAndInitPluginFuture
-      .thenAccept { plugins ->
+      .thenAccept { pluginSet ->
         runActivity("app component registration") {
-          app.registerComponents(plugins, app, null, null)
+          app.registerComponents(modules = pluginSet.getEnabledModules(),
+                                 app = app,
+                                 precomputedExtensionModel = null,
+                                 listenerCallbacks = null)
         }
 
         if (args.isEmpty()) {
-          startApp(app, IdeStarter(), initAppActivity, plugins, args)
+          startApp(app, IdeStarter(), initAppActivity, pluginSet, args)
         }
         else {
           // `ApplicationStarter` is an extension, so to find a starter, extensions must be registered first
-          findCustomAppStarterAndStart(plugins, args, app, initAppActivity)
+          findCustomAppStarterAndStart(pluginSet, args, app, initAppActivity)
         }
 
         if (!Main.isHeadless()) {
@@ -114,12 +118,12 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) 
 private fun startApp(app: ApplicationImpl,
                      starter: ApplicationStarter,
                      initAppActivity: Activity,
-                     plugins: List<IdeaPluginDescriptorImpl>,
+                     pluginSet: PluginSet,
                      args: List<String>) {
     // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed,
     // but it is OK, because registry is not and should not be used.
     initConfigurationStore(app)
-    val preloadSyncServiceFuture = preloadServices(plugins, app, activityPrefix = "")
+    val preloadSyncServiceFuture = preloadServices(pluginSet.getEnabledModules(), app, activityPrefix = "")
 
     val placeOnEventQueueActivity = initAppActivity.startChild(Activities.PLACE_ON_EVENT_QUEUE)
     val loadComponentInEdtFuture = CompletableFuture.runAsync({
@@ -201,7 +205,7 @@ private fun startApp(app: ApplicationImpl,
     }
 }
 
-private fun findCustomAppStarterAndStart(plugins: List<IdeaPluginDescriptorImpl>,
+private fun findCustomAppStarterAndStart(pluginSet: PluginSet,
                                          args: List<String>,
                                          app: ApplicationImpl,
                                          initAppActivity: Activity) {
@@ -226,7 +230,7 @@ private fun findCustomAppStarterAndStart(plugins: List<IdeaPluginDescriptorImpl>
   }
 
   starter.premain(args)
-  startApp(app, starter, initAppActivity, plugins, args)
+  startApp(app, starter, initAppActivity, pluginSet, args)
 }
 
 @VisibleForTesting
@@ -241,12 +245,11 @@ internal fun createAppLocatorFile() {
   }
 }
 
-@JvmOverloads
-fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>,
+fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
                     container: ComponentManagerImpl,
                     activityPrefix: String,
                     onlyIfAwait: Boolean = false): CompletableFuture<Void?> {
-  val result = container.preloadServices(plugins, activityPrefix, onlyIfAwait)
+  val result = container.preloadServices(modules, activityPrefix, onlyIfAwait)
 
   fun logError(future: CompletableFuture<Void?>): CompletableFuture<Void?> {
     return future

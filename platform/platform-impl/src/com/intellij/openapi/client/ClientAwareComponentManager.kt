@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.throwAlreadyDisposedError
@@ -56,15 +56,15 @@ abstract class ClientAwareComponentManager @JvmOverloads constructor(
     return session?.doGetService(serviceClass, createIfNeeded, false)
   }
 
-  override fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>,
+  override fun registerComponents(modules: Sequence<IdeaPluginDescriptorImpl>,
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   listenerCallbacks: List<Runnable>?) {
-    super.registerComponents(plugins, app, precomputedExtensionModel, listenerCallbacks)
+    super.registerComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
 
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
     for (session in sessionsManager.getSessions(true)) {
-      (session as? ClientSessionImpl)?.registerComponents(plugins, app, precomputedExtensionModel, listenerCallbacks)
+      (session as? ClientSessionImpl)?.registerComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
     }
   }
 
@@ -77,17 +77,17 @@ abstract class ClientAwareComponentManager @JvmOverloads constructor(
     }
   }
 
-  override fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>,
+  override fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
                                activityPrefix: String,
                                onlyIfAwait: Boolean): Pair<CompletableFuture<Void?>, CompletableFuture<Void?>> {
-    val (asyncPreloadFuture, syncPreloadFuture) = super.preloadServices(plugins, activityPrefix, onlyIfAwait)
+    val (asyncPreloadFuture, syncPreloadFuture) = super.preloadServices(modules, activityPrefix, onlyIfAwait)
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
 
     val asyncPreloadFutures = mutableListOf<CompletableFuture<Void?>>()
     val syncPreloadFutures = mutableListOf<CompletableFuture<Void?>>()
     for (session in sessionsManager.getSessions(true)) {
       session as? ClientSessionImpl ?: continue
-      val (sessionAsyncPreloadFuture, sessionSyncPreloadFuture) = session.preloadServices(plugins, activityPrefix, onlyIfAwait)
+      val (sessionAsyncPreloadFuture, sessionSyncPreloadFuture) = session.preloadServices(modules, activityPrefix, onlyIfAwait)
       asyncPreloadFutures.add(sessionAsyncPreloadFuture)
       syncPreloadFutures.add(sessionSyncPreloadFuture)
     }
