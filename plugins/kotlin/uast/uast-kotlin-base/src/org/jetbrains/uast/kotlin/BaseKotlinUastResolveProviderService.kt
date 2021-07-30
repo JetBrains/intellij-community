@@ -11,13 +11,12 @@ import org.jetbrains.kotlin.descriptors.ParameterDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.UNamedExpression
-import org.jetbrains.uast.UastCallKind
+import org.jetbrains.uast.*
 
 interface BaseKotlinUastResolveProviderService {
     fun isJvmElement(psiElement: PsiElement): Boolean
+
+    val languagePlugin: UastLanguagePlugin
 
     // ----------
     // Conversion
@@ -25,11 +24,17 @@ interface BaseKotlinUastResolveProviderService {
 
     val baseKotlinConverter: BaseKotlinConverter
 
-    fun convertParent(uElement: UElement): UElement?
+    fun convertParent(uElement: UElement): UElement? {
+        return convertParentImpl(this, uElement)
+    }
 
-    fun convertParent(uElement: UElement, parent: PsiElement?): UElement?
+    fun convertParent(uElement: UElement, parent: PsiElement?): UElement? {
+        return convertParentImpl(this, uElement, parent)
+    }
 
     fun convertValueArguments(ktCallElement: KtCallElement, parent: UElement): List<UNamedExpression>?
+
+    fun findAttributeValueExpression(uAnnotation: KotlinUAnnotation, arg: ValueArgument): UExpression?
 
     fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): KtExpression?
 

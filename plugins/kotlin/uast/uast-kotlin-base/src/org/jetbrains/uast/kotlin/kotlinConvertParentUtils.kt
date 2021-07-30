@@ -15,15 +15,16 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiVariable
 
-fun convertParentImpl(uElement: UElement): UElement? {
+fun convertParentImpl(
+    service: BaseKotlinUastResolveProviderService,
+    uElement: UElement
+): UElement? {
     @Suppress("DEPRECATION")
     val psi = uElement.psi //TODO: `psi` is deprecated but it seems that it couldn't be simply replaced for this case
     var parent = psi?.parent ?: uElement.sourcePsi?.parent ?: psi?.containingFile
@@ -32,7 +33,7 @@ fun convertParentImpl(uElement: UElement): UElement? {
         when (parent) {
             is KtClassBody -> {
                 val grandParent = parent.parent
-                convertParentImpl(uElement, grandParent)?.let { return it }
+                convertParentImpl(service, uElement, grandParent)?.let { return it }
                 parent = grandParent
             }
             is KtFile -> {
@@ -52,9 +53,8 @@ fun convertParentImpl(uElement: UElement): UElement? {
     }
 
     if (psi is KtAnnotationEntry) {
-        val parentUnwrapped = KotlinConverter.unwrapElements(parent) ?: return null
-        val target = psi.useSiteTarget?.getAnnotationUseSiteTarget()
-        when (target) {
+        val parentUnwrapped = service.baseKotlinConverter.unwrapElements(parent) ?: return null
+        when (psi.useSiteTarget?.getAnnotationUseSiteTarget()) {
             AnnotationUseSiteTarget.PROPERTY_GETTER ->
                 parent = (parentUnwrapped as? KtProperty)?.getter
                          ?: (parentUnwrapped as? KtParameter)?.toLightGetter()
@@ -79,7 +79,7 @@ fun convertParentImpl(uElement: UElement): UElement? {
         parent = parent.parent
     }
 
-    if (KotlinConverter.forceUInjectionHost) {
+    if (service.baseKotlinConverter.forceUInjectionHost()) {
         if (parent is KtBlockStringTemplateEntry) {
             parent = parent.parent
         }
@@ -112,7 +112,7 @@ fun convertParentImpl(uElement: UElement): UElement? {
         parent = parent.parent
     }
 
-    val result = convertParentImpl(uElement, parent)
+    val result = convertParentImpl(service, uElement, parent)
     if (result == uElement) {
         throw KotlinExceptionWithAttachments("Loop in parent structure when converting a $psi of type ${psi?.javaClass} with parent $parent of type ${parent?.javaClass}")
             .withAttachment("text", parent?.text)
@@ -122,15 +122,20 @@ fun convertParentImpl(uElement: UElement): UElement? {
     return result
 }
 
-fun convertParentImpl(element: UElement, parent: PsiElement?): UElement? {
-    val parentUnwrapped = KotlinConverter.unwrapElements(parent) ?: return null
+fun convertParentImpl(
+    service: BaseKotlinUastResolveProviderService,
+    element: UElement,
+    parent: PsiElement?
+): UElement? {
+    val parentUnwrapped = service.baseKotlinConverter.unwrapElements(parent) ?: return null
     if (parent is KtValueArgument && parentUnwrapped is KtAnnotationEntry) {
-        return (KotlinUastLanguagePlugin().convertElementWithParent(parentUnwrapped, null) as? KotlinUAnnotation)
-            ?.findAttributeValueExpression(parent)
+        return (service.languagePlugin.convertElementWithParent(parentUnwrapped, null) as? KotlinUAnnotation)?.let {
+            service.findAttributeValueExpression(it, parent)
+        }
     }
 
     if (parent is KtParameter) {
-        val annotationClass = findAnnotationClassFromConstructorParameter(parent)
+        val annotationClass = findAnnotationClassFromConstructorParameter(service.languagePlugin, parent)
         if (annotationClass != null) {
             return annotationClass.methods.find { it.name == parent.name }
         }
@@ -139,14 +144,14 @@ fun convertParentImpl(element: UElement, parent: PsiElement?): UElement? {
     if (parent is KtClassInitializer) {
         val containingClass = parent.containingClassOrObject
         if (containingClass != null) {
-            val containingUClass = KotlinUastLanguagePlugin().convertElementWithParent(containingClass, null) as? KotlinUClass
+            val containingUClass = service.languagePlugin.convertElementWithParent(containingClass, null) as? KotlinUClass
             containingUClass?.methods?.filterIsInstance<KotlinConstructorUMethod>()?.firstOrNull { it.isPrimary }?.let {
                 return it.uastBody
             }
         }
     }
 
-    val result = KotlinUastLanguagePlugin().convertElementWithParent(parentUnwrapped, null)
+    val result = service.languagePlugin.convertElementWithParent(parentUnwrapped, null)
 
     if (result is KotlinUBlockExpression && element is UClass) {
         return KotlinUDeclarationsExpression(result).apply {
@@ -207,22 +212,16 @@ fun convertParentImpl(element: UElement, parent: PsiElement?): UElement? {
 }
 
 private fun isInConditionBranch(element: UElement, result: USwitchClauseExpressionWithBody) =
-        element.psi?.parentsWithSelf?.takeWhile { it !== result.psi }?.any { it is KtWhenCondition } ?: false
+    element.psi?.parentsWithSelf?.takeWhile { it !== result.psi }?.any { it is KtWhenCondition } ?: false
 
-private fun findAnnotationClassFromConstructorParameter(parameter: KtParameter): UClass? {
+private fun findAnnotationClassFromConstructorParameter(
+    languagePlugin: UastLanguagePlugin,
+    parameter: KtParameter
+): UClass? {
     val primaryConstructor = parameter.getStrictParentOfType<KtPrimaryConstructor>() ?: return null
     val containingClass = primaryConstructor.getContainingClassOrObject()
     if (containingClass.isAnnotation()) {
-        return KotlinUastLanguagePlugin().convertElementWithParent(containingClass, null) as? UClass
+        return languagePlugin.convertElementWithParent(containingClass, null) as? UClass
     }
     return null
-}
-
-private fun KotlinUAnnotation.findAttributeValueExpression(arg: ValueArgument): UExpression? {
-    val resolvedCall = sourcePsi.getResolvedCall(sourcePsi.analyze())
-    val mapping = resolvedCall?.getArgumentMapping(arg)
-    return (mapping as? ArgumentMatch)?.let { match ->
-        val namedExpression = attributeValues.find { it.name == match.valueParameter.name.asString() }
-        namedExpression?.expression as? KotlinUVarargExpression ?: namedExpression
-    }
 }
