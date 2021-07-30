@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.system.CpuArch
 import groovy.io.FileType
 import groovy.transform.CompileStatic
@@ -223,6 +224,14 @@ final class BuildTasksImpl extends BuildTasks {
       }
     }
 
+    //todo remove this when KTIJ-11539 is fixed; currently if we add kotlin.idea module to the classpath as a transitive dependency of some other module,
+    //     it'll cause conflicts with Kotlin plugin loaded from JAR
+    String pathToIgnore = new File(context.projectOutputDirectory, "production/kotlin.idea").absolutePath
+    if (ideClasspath.remove(pathToIgnore)) {
+      context.messages.debug(" remove $pathToIgnore from classpath to avoid conflicts")
+    }
+
+
     List<String> jvmArgs = new ArrayList<>(BuildUtils.propertiesToJvmArgs(new HashMap<String, Object>([
       "idea.home.path"   : context.paths.projectHome,
       "idea.system.path" : "${FileUtilRt.toSystemIndependentName(tempDir.toString())}/system",
@@ -236,16 +245,18 @@ final class BuildTasksImpl extends BuildTasks {
     jvmArgs.addAll(vmOptions)
 
     List<Path> additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
+    Set<String> additionalPluginIds = new HashSet<>()
     for (Path pluginPath : additionalPluginPaths) {
       for (File jarFile : BuildUtils.getPluginJars(pluginPath.toString())) {
         if (ideClasspath.add(jarFile.absolutePath)) {
           context.messages.debug("$jarFile from plugin $pluginPath")
+          ContainerUtil.addIfNotNull(additionalPluginIds, BuildUtils.readPluginId(jarFile))
         }
       }
     }
     ideClasspath = classpathCustomizer.customize(ideClasspath)
 
-    disableCompatibleIgnoredPlugins(context, tempDir.resolve("config"))
+    disableCompatibleIgnoredPlugins(context, tempDir.resolve("config"), additionalPluginIds)
 
     BuildHelper.runJava(
       context,
@@ -256,11 +267,17 @@ final class BuildTasksImpl extends BuildTasks {
       timeoutMillis)
   }
 
-  private static void disableCompatibleIgnoredPlugins(@NotNull BuildContext context, @NotNull Path configDir) {
+  private static void disableCompatibleIgnoredPlugins(@NotNull BuildContext context,
+                                                      @NotNull Path configDir,
+                                                      @NotNull Set<String> explicitlyEnabledPlugins) {
     Set<String> toDisable = new HashSet<>()
     for (String moduleName : context.productProperties.productLayout.compatiblePluginsToIgnore) {
       Path pluginXml = context.findFileInModuleSources(moduleName, "META-INF/plugin.xml")
-      toDisable.add(JDOMUtil.load(pluginXml).getChildTextTrim("id"))
+      def pluginId = JDOMUtil.load(pluginXml).getChildTextTrim("id")
+      if (!explicitlyEnabledPlugins.contains(pluginId)) {
+        toDisable.add(pluginId)
+        context.messages.debug("runApplicationStarter: '$pluginId' will be disabled, because it's mentioned in 'compatiblePluginsToIgnore'")
+      }
     }
     if (!toDisable.isEmpty()) {
       Files.createDirectories(configDir)

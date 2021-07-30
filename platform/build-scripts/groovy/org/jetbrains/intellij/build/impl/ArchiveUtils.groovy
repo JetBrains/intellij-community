@@ -14,13 +14,14 @@ import java.util.zip.ZipFile
 class ArchiveUtils {
   static boolean archiveContainsEntry(String archivePath, String entryPath) {
     File archiveFile = new File(archivePath)
-    if (archiveFile.name.endsWith(".zip")) {
+    String fileName = archiveFile.name
+    if (isZipFile(fileName)) {
       return new ZipFile(archiveFile).withCloseable {
         it.getEntry(entryPath) != null
       }
     }
 
-    if (archiveFile.name.endsWith(".tar.gz")) {
+    if (fileName.endsWith(".tar.gz")) {
       return archiveFile.withInputStream {
         TarInputStream inputStream = new TarInputStream(new GZIPInputStream(it))
         TarEntry entry
@@ -37,17 +38,20 @@ class ArchiveUtils {
   }
 
   static @Nullable String loadEntry(Path archiveFile, String entryPath) {
-    if (archiveFile.fileName.toString().endsWith(".zip")) {
+    String fileName = archiveFile.fileName.toString()
+    if (isZipFile(fileName)) {
       ZipFile zipFile = new ZipFile(archiveFile.toFile())
       try {
-        InputStream inputStream = zipFile.getInputStream(zipFile.getEntry(entryPath))
+        def zipEntry = zipFile.getEntry(entryPath)
+        if (zipEntry == null) return null
+        InputStream inputStream = zipFile.getInputStream(zipEntry)
         return inputStream == null ? null : new String(inputStream.readAllBytes(), StandardCharsets.UTF_8)
       }
       finally {
         zipFile.close()
       }
     }
-    else if (archiveFile.fileName.toString().endsWith(".tar.gz")) {
+    else if (fileName.endsWith(".tar.gz")) {
       TarInputStream inputStream = new TarInputStream(new GZIPInputStream(Files.newInputStream(archiveFile)))
       try {
         TarEntry entry
@@ -63,5 +67,9 @@ class ArchiveUtils {
       }
     }
     return null
+  }
+
+  private static boolean isZipFile(String fileName) {
+    fileName.endsWith(".zip") || fileName.endsWith(".jar")
   }
 }

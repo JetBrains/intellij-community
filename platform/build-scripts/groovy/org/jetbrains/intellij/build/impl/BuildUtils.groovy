@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import groovy.transform.CompileDynamic
@@ -10,7 +11,9 @@ import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.Main
 import org.apache.tools.ant.Project
 import org.apache.tools.ant.util.SplitClassLoader
+import org.jdom.JDOMException
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -184,6 +187,19 @@ final class BuildUtils {
     File libFile = new File(pluginPath, "lib")
     return libFile.list { _, name -> FileUtil.extensionEquals(name, "jar") }.collect { jarName ->
       new File(libFile, jarName)
+    }
+  }
+
+  @Nullable
+  static String readPluginId(File pluginJar) {
+    if (!pluginJar.isFile() || !FileUtil.extensionEquals(pluginJar.name, "jar")) return null
+    String pluginXmlText = ArchiveUtils.loadEntry(pluginJar.toPath(), "META-INF/plugin.xml")
+    if (pluginXmlText == null) return null
+    try {
+      return JDOMUtil.load(pluginXmlText).getChildTextTrim("id")
+    }
+    catch (JDOMException ignored) {
+      return null
     }
   }
 }
