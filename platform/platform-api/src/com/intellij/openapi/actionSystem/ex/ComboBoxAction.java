@@ -81,14 +81,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return popup;
   }
 
-  /** @deprecated use {@link ComboBoxAction#createCustomComponent(Presentation, String)} */
-  @Deprecated
-  @NotNull
-  @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation) {
-    return createCustomComponent(presentation, ActionPlaces.UNKNOWN);
-  }
-
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {

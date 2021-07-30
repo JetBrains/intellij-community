@@ -651,7 +651,7 @@ internal class SingleContentLayout(
       error("An operation is not supported")
     }
 
-    override fun createCustomComponent(presentation: Presentation): JComponent {
+    override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
       return NonOpaquePanel()
     }
   }
