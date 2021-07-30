@@ -173,46 +173,67 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();
-      final PsiElement[] statementsInRange = findStatementsAtOffset(editor, file, offset);
-
-      //try line selection
-      if (statementsInRange.length == 1 && selectLineAtCaret(offset, statementsInRange)) {
-        selectionModel.selectLineAtCaret();
-        final PsiExpression expressionInRange =
-          findExpressionInRange(project, file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
-        if (expressionInRange == null || getErrorMessage(expressionInRange) != null) {
-          selectionModel.removeSelection();
-        }
+      Pair<TextRange, List<PsiExpression>> rangeAndExpressions = getExpressionsAndSelectionRange(project, editor, file, offset);
+      TextRange suggestedSelection = rangeAndExpressions.getFirst();
+      if (suggestedSelection != null) {
+        selectionModel.setSelection(suggestedSelection.getStartOffset(), suggestedSelection.getEndOffset());
       }
-
-      if (!selectionModel.hasSelection()) {
-        final List<PsiExpression> expressions = ContainerUtil
-          .filter(collectExpressions(file, editor, offset), expression ->
-            RefactoringUtil.getParentStatement(expression, false) != null ||
-            PsiTreeUtil.getParentOfType(expression, PsiField.class, true, PsiStatement.class) != null);
-        if (expressions.isEmpty()) {
-          selectionModel.selectLineAtCaret();
-        } else if (!isChooserNeeded(expressions)) {
-          final TextRange textRange = expressions.get(0).getTextRange();
-          selectionModel.setSelection(textRange.getStartOffset(), textRange.getEndOffset());
-        }
-        else {
-          IntroduceTargetChooser.showChooser(editor, expressions,
-                                             new Pass<>() {
-                                               @Override
-                                               public void pass(final PsiExpression selectedValue) {
-                                                 invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(),
-                                                        selectedValue.getTextRange().getEndOffset());
-                                               }
-                                             },
-            new PsiExpressionTrimRenderer.RenderFunction(), RefactoringBundle.message("introduce.target.chooser.expressions.title"), preferredSelection(statementsInRange, expressions), ScopeHighlighter.NATURAL_RANGER);
-          return;
-        }
+      else {
+        final PsiElement[] statementsInRange = findStatementsAtOffset(editor, file, offset);
+        List<PsiExpression> expressions = rangeAndExpressions.getSecond();
+        IntroduceTargetChooser.showChooser(editor, expressions,
+                                           new Pass<>() {
+                                             @Override
+                                             public void pass(final PsiExpression selectedValue) {
+                                               invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(),
+                                                      selectedValue.getTextRange().getEndOffset());
+                                             }
+                                           },
+                                           new PsiExpressionTrimRenderer.RenderFunction(),
+                                           RefactoringBundle.message("introduce.target.chooser.expressions.title"),
+                                           preferredSelection(statementsInRange, expressions), ScopeHighlighter.NATURAL_RANGER);
+        return;
       }
     }
     if (invoke(project, editor, file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()) &&
         LookupManager.getActiveLookup(editor) == null) {
       selectionModel.removeSelection();
+    }
+  }
+
+  @NotNull
+  public static Pair<TextRange, List<PsiExpression>> getExpressionsAndSelectionRange(@NotNull final Project project,
+                                                                                     final Editor editor,
+                                                                                     final PsiFile file,
+                                                                                     int offset) {
+    final PsiElement[] statementsInRange = findStatementsAtOffset(editor, file, offset);
+
+    Document document = editor.getDocument();
+    int line = document.getLineNumber(offset);
+    TextRange lineRange =
+      TextRange.create(document.getLineStartOffset(line), Math.min(document.getLineEndOffset(line) + 1, document.getTextLength()));
+
+    //try line selection
+    if (statementsInRange.length == 1 && selectLineAtCaret(offset, statementsInRange)) {
+      final PsiExpression expressionInRange =
+        findExpressionInRange(project, file, lineRange.getStartOffset(), lineRange.getEndOffset());
+      if (expressionInRange != null && getErrorMessage(expressionInRange) == null) {
+        return Pair.create(lineRange, Collections.singletonList(expressionInRange));
+      }
+    }
+
+    final List<PsiExpression> expressions = ContainerUtil
+      .filter(collectExpressions(file, editor, offset), expression ->
+        RefactoringUtil.getParentStatement(expression, false) != null ||
+        PsiTreeUtil.getParentOfType(expression, PsiField.class, true, PsiStatement.class) != null);
+    if (expressions.isEmpty()) {
+      return Pair.create(lineRange, Collections.emptyList());
+    }
+    else if (!isChooserNeeded(expressions)) {
+      return Pair.create(expressions.get(0).getTextRange(), expressions);
+    }
+    else {
+      return Pair.create(null, expressions);
     }
   }
 
@@ -592,6 +613,24 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return null;
   }
 
+  @NotNull
+  public List<PsiElement> getPossibleAnchors(final Project project, final PsiExpression expr) {
+    final PsiElement anchorStatement = getAnchor(expr);
+    PsiElement tempContainer = checkAnchorStatement(project, null, anchorStatement);
+
+    final ExpressionOccurrenceManager occurrenceManager = createOccurrenceManager(expr, tempContainer);
+    final PsiExpression[] occurrences = occurrenceManager.getOccurrences();
+
+    OccurrencesInfo occurrencesInfo = new OccurrencesInfo(occurrences);
+
+    final LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> occurrencesMap = occurrencesInfo.buildOccurrencesMap(expr);
+    return occurrencesMap.values().stream()
+      .map(o -> getAnchor(o.toArray(PsiExpression.EMPTY_ARRAY)))
+      .filter(Objects::nonNull)
+      .distinct()
+      .collect(Collectors.toList());
+  }
+
   @Override
   protected boolean invokeImpl(final Project project, final PsiExpression expr, final Editor editor) {
     if (expr != null) {
@@ -859,7 +898,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   }
 
   @Nullable
-  private static PsiElement getAnchor(PsiElement place) {
+  public static PsiElement getAnchor(PsiElement place) {
     place = getPhysicalElement(place);
     PsiElement anchorStatement = RefactoringUtil.getParentStatement(place, false);
     if (anchorStatement == null) {
