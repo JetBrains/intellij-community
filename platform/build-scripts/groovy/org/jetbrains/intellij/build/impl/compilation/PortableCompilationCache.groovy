@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.compilation
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
@@ -76,6 +77,7 @@ final class PortableCompilationCache {
   }
 
   private final CompilationContext context
+  private final Git git
   /**
    * IntelliJ repository git remote url
    */
@@ -122,7 +124,7 @@ final class PortableCompilationCache {
   @Lazy
   private PortableCompilationCacheDownloader downloader = {
     def availableForHeadCommit = bool(AVAILABLE_FOR_HEAD_PROPERTY, false)
-    new PortableCompilationCacheDownloader(context, remoteCache.url, remoteGitUrl,
+    new PortableCompilationCacheDownloader(context, git, remoteCache.url, remoteGitUrl,
                                            availableForHeadCommit, jpsCaches.skipDownload)
   }()
 
@@ -139,6 +141,7 @@ final class PortableCompilationCache {
 
   PortableCompilationCache(CompilationContext context) {
     this.context = context
+    this.git = new Git(context.paths.projectHome.trim())
   }
 
   /**
@@ -225,6 +228,12 @@ final class PortableCompilationCache {
   }
 
   private def compileProject() {
+    // fail-fast in case of KTIJ-17296
+    if (SystemInfo.isWindows && git.lineBreaksConfig() != "input") {
+      context.messages.error("${getClass().simpleName} cannot be used with CRLF line breaks, " +
+                             "please execute `git config --global core.autocrlf input` before checkout " +
+                             "and upvote https://youtrack.jetbrains.com/issue/KTIJ-17296")
+    }
     // ensure that JBR and Kotlin compiler are downloaded before compilation
     CompilationContextImpl.setupCompilationDependencies(context.gradle, context.options)
     def jps = new JpsCompilationRunner(context)
