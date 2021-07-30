@@ -11,6 +11,7 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
 import com.intellij.openapi.project.Project;
@@ -24,7 +25,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
+import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
@@ -52,6 +55,8 @@ import java.util.stream.Collectors;
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 
 public class SSBasedInspection extends LocalInspectionTool implements DynamicGroupTool {
+  private static final Logger LOG = Logger.getInstance(SSBasedInspection.class);
+
   public static final Comparator<? super Configuration> CONFIGURATION_COMPARATOR =
     Comparator.comparing(Configuration::getName, NaturalComparator.INSTANCE).thenComparingInt(Configuration::getOrder);
 
@@ -350,7 +355,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
         result.put(configuration, matcher);
       }
       else {
-        final Matcher newMatcher = SSBasedInspectionCompiledPatternsCache.getInstance(project).buildCompiledConfiguration(configuration);
+        final Matcher newMatcher = buildCompiledConfiguration(configuration, project);
         if (newMatcher != null) {
           newMatcher.getMatchContext().setSink(new InspectionResultSink());
         }
@@ -358,6 +363,17 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       }
     }
     return result;
+  }
+
+  Matcher buildCompiledConfiguration(Configuration configuration, @NotNull Project project) {
+    try {
+      final MatchOptions matchOptions = configuration.getMatchOptions();
+      final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions, false, true);
+      return (compiledPattern == null) ? null : new Matcher(project, matchOptions, compiledPattern);
+    } catch (StructuralSearchException e) {
+      LOG.warn("Malformed structural search inspection pattern \"" + configuration.getName() + '"', e);
+      return null;
+    }
   }
 
   void checkInCompiledPatterns(@NotNull Map<Configuration, Matcher> compiledPatterns) {
