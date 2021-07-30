@@ -2,9 +2,11 @@
 
 package org.jetbrains.uast.kotlin
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiField
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.*
@@ -188,7 +190,15 @@ internal object FirKotlinConverter : BaseKotlinConverter {
             *convertToPropertyAlternatives(LightClassUtil.getLightClassPropertyMethods(element), givenParent)
         )
 
-    // TODO: forceUInjectionHost (for test)?
+    var forceUInjectionHost = Registry.`is`("kotlin.uast.force.uinjectionhost", false)
+        @TestOnly
+        set(value) {
+            field = value
+        }
+
+    override fun forceUInjectionHost(): Boolean {
+        return forceUInjectionHost
+    }
 
     override fun convertExpression(
         expression: KtExpression,
@@ -221,7 +231,7 @@ internal object FirKotlinConverter : BaseKotlinConverter {
 
                 is KtStringTemplateExpression -> {
                     when {
-                        requiredTypes.contains(UInjectionHost::class.java) -> {
+                        forceUInjectionHost || requiredTypes.contains(UInjectionHost::class.java) -> {
                             expr<UInjectionHost> { KotlinStringTemplateUPolyadicExpression(expression, givenParent) }
                         }
                         expression.entries.isEmpty() -> {
