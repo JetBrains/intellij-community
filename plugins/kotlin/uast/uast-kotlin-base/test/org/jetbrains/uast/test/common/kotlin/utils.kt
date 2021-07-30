@@ -50,10 +50,26 @@ inline fun <reified T : UElement> UElement.findElementByTextFromPsi(refText: Str
 inline fun <reified T : UElement> PsiElement.findUElementByTextFromPsi(refText: String, strict: Boolean = false): T {
     val elementAtStart = this.findElementAt(this.text.indexOf(refText))
         ?: throw AssertionError("requested text '$refText' was not found in $this")
-    val uElementContainingText = elementAtStart.parentsWithSelf.let {
-        if (strict) it.dropWhile { !it.text.contains(refText) } else it
-    }.mapNotNull { it.toUElementOfType<T>() }.firstOrNull()
-        ?: throw AssertionError("requested text '$refText' not found as '${T::class.java.canonicalName}' in $this")
+
+    val targetElements = elementAtStart.parentsWithSelf
+    var uElementContainingText: T? = null
+
+    for (targetElement in targetElements) {
+        if (strict && !targetElement.text.contains(refText)) {
+            continue
+        }
+
+        val foundElement = targetElement.toUElementOfType<T>()
+        if (foundElement != null) {
+            uElementContainingText = foundElement
+            break
+        }
+    }
+
+    if (uElementContainingText == null) {
+        throw AssertionError("requested text '$refText' not found as '${T::class.java.canonicalName}' in $this")
+    }
+
     if (strict && uElementContainingText.psi != null && uElementContainingText.psi?.text != refText) {
         throw AssertionError("requested text '$refText' found as '${uElementContainingText.psi?.text}' in $uElementContainingText")
     }
