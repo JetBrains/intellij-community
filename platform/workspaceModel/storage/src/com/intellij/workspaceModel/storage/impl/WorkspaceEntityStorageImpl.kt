@@ -450,7 +450,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         trackStackTrace = true
       }
     }
-    if (trackStackTrace) {
+    if (trackStackTrace || LOG.isTraceEnabled) {
       stackTrace = ExceptionUtil.currentStackTrace()
     }
     threadId = currentThread.id
