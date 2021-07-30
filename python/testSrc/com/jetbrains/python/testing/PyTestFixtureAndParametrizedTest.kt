@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing
 
-import com.jetbrains.python.PyNames
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection
 import com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedInspection
@@ -10,18 +10,25 @@ import com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedInspect
  * Test py.test fixtures and paramterized completions and inspections
  */
 class PyTestFixtureAndParametrizedTest : PyTestCase() {
-  override fun getTestDataPath() = super.getTestDataPath() + "/testCompletion"
+  companion object {
+    const val testSubfolder = "/testCompletion"
+    fun testInspectionStatic(fixture: CodeInsightTestFixture) {
+      fixture.configureByFile("test_for_inspection_test.py")
+      fixture.enableInspections(PyUnusedLocalInspection::class.java, PyTestParametrizedInspection::class.java)
+      fixture.checkHighlighting(true, false, true)
+    }
+  }
+
+  override fun getTestDataPath() = super.getTestDataPath() + testSubfolder
   override fun setUp() {
     super.setUp()
-    TestRunnerService.getInstance(myFixture.module).projectConfiguration =
-      PyTestFactory(PythonTestConfigurationType.getInstance()).id
+    TestRunnerService.getInstance(myFixture.module).selectedFactory =
+      PythonTestConfigurationType.getInstance().pyTestFactory
   }
 
   fun testInspection() {
     myFixture.copyDirectoryToProject(".", ".")
-    myFixture.configureByFile("test_for_inspection_test.py")
-    myFixture.enableInspections(PyUnusedLocalInspection::class.java, PyTestParametrizedInspection::class.java)
-    myFixture.checkHighlighting(true, false, true)
+    testInspectionStatic(myFixture)
   }
 
   fun testTypeCompletion() {
