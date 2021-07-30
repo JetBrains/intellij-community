@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemPr
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.ExtensionTestUtil
@@ -96,11 +97,34 @@ abstract class GradleRerunFailedTestsTestCase : GradleImportingTestCase() {
   }
 
   fun getJUnitTestsExecutionTree(): String {
-    return getTestsExecutionTree()
-      .replace("()", "") // removes trailing () for test methods in junit 5
-      .split("\n").joinToString("\n") { // removes package for tests classes in junit 4
-        if (it.contains("-")) it.substringBefore("-") + "-" + it.substringAfter("-").split(".").last() else it
+    val flattenTree = getTestsExecutionTree()
+      // removes trailing () for test methods in junit 5
+      .replace("()", "")
+      .split("\n")
+      // removes package for tests classes in junit 4
+      .map { if (it.trim().startsWith("-")) it.substringBefore("-") + "-" + it.substringAfter("-").split(".").last() else it }
+      .toMutableList()
+    partitionLeaves(flattenTree)
+      .map { flattenTree.subList(it.first, it.last + 1) }
+      .forEach { it.sortWith(NaturalComparator.INSTANCE) }
+    return flattenTree.joinToString("\n")
+  }
+
+  private fun partitionLeaves(flattenTree: List<String>) = sequence {
+    var left = -1
+    for ((i, node) in flattenTree.withIndex()) {
+      val isLeaf = !node.trim().startsWith("-")
+      if (isLeaf && left == -1) {
+        left = i
       }
+      else if (!isLeaf && left != -1) {
+        yield(left until i)
+        left = -1
+      }
+    }
+    if (left != -1) {
+      yield(left until flattenTree.size)
+    }
   }
 
   fun execute(gradleArguments: String) {

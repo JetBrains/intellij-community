@@ -130,5 +130,39 @@ class GradleRerunFailedTestsTest : GradleRerunFailedTestsTestCase() {
           test4
           test5
       """.trimIndent())
+
+    createProjectSubFile("src/test/java/org/example/SubTestCase1.java", """
+      package org.example;
+      import $jUnitTestAnnotationClass;
+      public class SubTestCase1 extends TestCase {
+         @Test public void test8() { throw new RuntimeException(); }
+         @Test public void test9() {}
+      }
+    """.trimIndent())
+    execute(":test --tests org.example.SubTestCase1")
+    assertThat(getJUnitTestsExecutionTree())
+      .isEqualTo("""
+         -[root]
+          -SubTestCase1
+           test1
+           test2
+           test3
+           test4
+           test5
+           test6
+           test7
+           test8
+           test9
+       """.trimIndent())
+    assertTrue(performRerunFailedTestsAction())
+    assertThat(getJUnitTestsExecutionTree())
+      .isEqualTo("""
+         -[root]
+          -SubTestCase1
+           test2
+           test4
+           test5
+           test8
+       """.trimIndent())
   }
 }
