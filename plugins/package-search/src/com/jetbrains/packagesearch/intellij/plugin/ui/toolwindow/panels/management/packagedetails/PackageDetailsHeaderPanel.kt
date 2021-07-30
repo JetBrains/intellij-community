@@ -22,8 +22,8 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageM
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.AbstractLayoutManager2
@@ -162,18 +162,19 @@ internal class PackageDetailsHeaderPanel(
         val packageModel = viewModel.selectedPackageModel.packageModel
 
         val name = packageModel.remoteInfo?.name
-        if (name != null && name != packageModel.identifier) {
-            @Suppress("HardCodedStringLiteral") // Name comes from the API
+        val rawIdentifier = packageModel.identifier.rawValue
+        if (name != null && name != rawIdentifier) {
+            @Suppress("HardCodedStringLiteral") // The name comes from the API
             nameLabel.setBody(
                 listOf(
                     HtmlChunk.span("font-size: ${16.scaledFontSize()};")
                         .addRaw("<b>" + StringUtils.normalizeSpace(packageModel.remoteInfo.name) + "</b>")
                 )
             )
-            identifierLabel.setBodyText(packageModel.identifier)
+            identifierLabel.setBodyText(rawIdentifier)
             identifierLabel.isVisible = true
         } else {
-            nameLabel.setBodyText(packageModel.identifier)
+            nameLabel.setBodyText(rawIdentifier)
             identifierLabel.text = null
             identifierLabel.isVisible = false
         }

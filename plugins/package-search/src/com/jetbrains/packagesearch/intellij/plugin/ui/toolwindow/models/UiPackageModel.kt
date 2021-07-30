@@ -96,12 +96,14 @@ internal fun PackageModel.Installed.toUiPackageModel(
 internal fun PackageModel.SearchResult.toUiPackageModel(
     onlyStable: Boolean,
     targetModules: TargetModules,
-    project: Project
+    project: Project,
+    searchResultUiState: SearchResultUiState?
 ) = toUiPackageModel(
     onlyStable = onlyStable,
     declaredScopes = targetModules.declaredScopes(project),
     defaultScope = targetModules.defaultScope(project),
-    mixedBuildSystems = targetModules.isMixedBuildSystems
+    mixedBuildSystems = targetModules.isMixedBuildSystems,
+    searchResultUiState = searchResultUiState
 )
 
 private fun TargetModules.declaredScopes(project: Project): List<PackageScope> =
@@ -121,13 +123,14 @@ internal fun PackageModel.SearchResult.toUiPackageModel(
     onlyStable: Boolean,
     declaredScopes: List<PackageScope>,
     defaultScope: PackageScope,
-    mixedBuildSystems: Boolean
+    mixedBuildSystems: Boolean,
+    searchResultUiState: SearchResultUiState?
 ): UiPackageModel.SearchResult =
     UiPackageModel.SearchResult(
         packageModel = this,
         declaredScopes = declaredScopes,
         defaultScope = defaultScope,
-        selectedVersion = uiState?.selectedVersion ?: getLatestAvailableVersion(onlyStable) ?: PackageVersion.Missing,
-        selectedScope = uiState?.selectedScope ?: defaultScope,
+        selectedVersion = searchResultUiState?.selectedVersion ?: getLatestAvailableVersion(onlyStable) ?: PackageVersion.Missing,
+        selectedScope = searchResultUiState?.selectedScope ?: defaultScope,
         mixedBuildSystemTargets = mixedBuildSystems
     )

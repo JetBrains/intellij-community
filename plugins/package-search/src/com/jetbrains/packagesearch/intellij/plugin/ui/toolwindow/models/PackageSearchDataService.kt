@@ -29,7 +29,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.ReadActions
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
-import com.jetbrains.packagesearch.intellij.plugin.util.combine
+import com.jetbrains.packagesearch.intellij.plugin.util.combineTyped
 import com.jetbrains.packagesearch.intellij.plugin.util.getPackageSearchModulesChangesFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.launchLoop
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
@@ -105,7 +105,7 @@ internal class PackageSearchDataService(
 
     private val replayFromErrorChannel = Channel<Unit>()
 
-    override val dataModelFlow: StateFlow<RootDataModel> = combine(
+    override val dataModelFlow: StateFlow<RootDataModel> = combineTyped(
         searchQueryState,
         searchResultsState,
         targetModulesState,
@@ -236,7 +236,7 @@ internal class PackageSearchDataService(
             installedPackages = installedUiPackageModels,
             onlyStable = filterOptions.onlyStable,
             targetModules = targetModules,
-            searchResultsUiStateOverrides = searchResultsUiStateOverrides, // TODO remove this, we shouldn't need it anymore
+            searchResultsUiStateOverrides = searchResultsUiStateOverrides,
             traceInfo = traceInfo
         )
         val allKnownRepositories = allKnownRepositoryModels(moduleModels, knownRepositories)
@@ -379,15 +379,13 @@ internal class PackageSearchDataService(
 
         return searchResults.packages
             .filterNot { installedDependencies.any { installed -> installed.matchesCoordinates(it) } }
-            .mapNotNull {
-                val uiState = searchResultsUiStateOverrides[it.identifier()]
-                PackageModel.fromSearchResult(it, uiState)
+            .mapNotNull { PackageModel.fromSearchResult(it) }
+            .map {
+                val uiState = searchResultsUiStateOverrides[it.identifier]
+                it.toUiPackageModel(onlyStable, targetModules, project, uiState)
             }
-            .map { it.toUiPackageModel(onlyStable, targetModules, project) }
             .toList()
     }
-
-    private fun ApiStandardPackage.identifier() = PackageIdentifier("$groupId:$artifactId")
 
     private fun allKnownRepositoryModels(
         allModules: List<ModuleModel>,
@@ -571,8 +569,7 @@ internal class PackageSearchDataService(
             "Setting state for search result '${searchResult.identifier}': version=${newVersion}, scope=${newScope}"
         }
         val uiStates = searchResultsUiStateOverridesState.value.toMutableMap()
-        val identifier = PackageIdentifier(searchResult.identifier)
-        uiStates[identifier] = SearchResultUiState(newVersion, newScope)
+        uiStates[searchResult.identifier] = SearchResultUiState(newVersion, newScope)
         searchResultsUiStateOverridesState.emit(uiStates)
     }
 
