@@ -471,5 +471,13 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
       result = 31 * result + (text != null ? text.hashCode() : 0);
       return result;
     }
+
+    @Override
+    public String toString() {
+      return "HighlightInfo{" +
+             "element=" + element +
+             ", text='" + text + '\'' +
+             '}';
+    }
   }
 }
