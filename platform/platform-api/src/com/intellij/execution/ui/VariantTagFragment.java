@@ -165,7 +165,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
 
     private JBPopup showPopup() {
       DataContext context = DataManager.getInstance().getDataContext(myDropDown);
-      DefaultActionGroup group = new DefaultActionGroup(ContainerUtil.map(myFragment.getVariants(), v -> new DumbAwareAction(v.toString()) { //NON-NLS
+      DefaultActionGroup group = new DefaultActionGroup(ContainerUtil.map(myFragment.getVariants(), v -> new DumbAwareAction(myFragment.getVariantName(v)) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           myFragment.setSelectedVariant(v);
