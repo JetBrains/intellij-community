@@ -34,13 +34,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
-import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -417,7 +417,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     When current method was executed for original sdk,
     roots changes were not applied since there were no changes in paths to transfer (they were shared with editable copy).
      */
-    if (PyConfigurableInterpreterList.getInstance(project).getModel().getProjectSdks().containsKey(sdk) &&
+    if (ArrayUtil.contains(sdk, ProjectJdkTable.getInstance().getAllJdks()) &&
         !pathsToTransfer.equals(PyTransferredSdkRootsKt.getPathsToTransfer(sdk))) {
       if (project != null) {
         PyTransferredSdkRootsKt.removeTransferredRootsFromModulesWithSdk(project, sdk);
