@@ -28,9 +28,11 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.CreateMissingSwitchBranchesFix;
 import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -87,10 +89,12 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
           .toCollection(LinkedHashSet::new);
         if (constants.isEmpty()) return;
         boolean hasDefault = false;
+        boolean hasNull = false;
         ProblemHighlightType highlighting = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
         for (PsiSwitchLabelStatementBase child : PsiTreeUtil
           .getChildrenOfTypeAsList(switchBlock.getBody(), PsiSwitchLabelStatementBase.class)) {
-          if (child.isDefaultCase()) {
+          hasNull |= hasMatchingNull(child);
+          if (SwitchUtils.isDefaultLabel(child)) {
             hasDefault = true;
             if (ignoreSwitchStatementsWithDefault) {
               if (!isOnTheFly) return;
@@ -111,8 +115,10 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
             constants.remove(constant.getName());
           }
         }
-        if (!hasDefault && switchBlock instanceof PsiSwitchExpression) {
-          // non-exhaustive switch expression: it's a compilation error 
+        if (!hasDefault && (switchBlock instanceof PsiSwitchExpression || hasNull)) {
+          // non-exhaustive switch expression: it's a compilation error
+          // switch statement using any of the new features detailed in JEP 406, such as
+          // matching null, must be exhaustive, otherwise it's a compilation error as well
           // and the compilation fix should be suggested instead of normal inspection
           return;
         }
@@ -149,5 +155,13 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
         }
       }
     };
+  }
+
+  private static boolean hasMatchingNull(PsiSwitchLabelStatementBase label) {
+    PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
+    if (labelElementList == null) return false;
+    return ContainerUtil.exists(labelElementList.getElements(), element ->
+      element instanceof PsiExpression && ExpressionUtils.isNullLiteral((PsiExpression)element)
+    );
   }
 }
