@@ -14,7 +14,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +58,7 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
             promise.setResult(afterPreparation.compute());
           }
           catch (ProcessCanceledException e) {
-            promise.setError(StringUtil.notNullize(e.getLocalizedMessage()));
+            promise.setError(ExecutionBundle.message("canceled.starting.run.configuration"));
           }
           catch (ExecutionException t) {
             logger.warn(logFailureMessage, t);
