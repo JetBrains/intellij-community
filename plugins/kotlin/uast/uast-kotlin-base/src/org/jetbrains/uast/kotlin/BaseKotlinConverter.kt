@@ -6,11 +6,11 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiParameterList
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElementBase
 import org.jetbrains.kotlin.asJava.elements.KtLightField
-import org.jetbrains.kotlin.asJava.elements.KtLightParameterList
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
@@ -30,7 +30,7 @@ interface BaseKotlinConverter {
         is KtDeclarationModifierList -> unwrapElements(element.parent)
         is KtContainerNode -> unwrapElements(element.parent)
         is KtSimpleNameStringTemplateEntry -> unwrapElements(element.parent)
-        is KtLightParameterList -> unwrapElements(element.parent)
+        is PsiParameterList -> unwrapElements(element.parent)
         is KtTypeArgumentList -> unwrapElements(element.parent)
         is KtTypeProjection -> unwrapElements(element.parent)
         is KtTypeElement -> unwrapElements(element.parent)
@@ -125,6 +125,8 @@ interface BaseKotlinConverter {
         if (call.receiverTypeReference != receiver) return null
         return call.toUElementOfType<UMethod>()?.uastParameters?.firstOrNull()
     }
+
+    fun forceUInjectionHost(): Boolean
 
     fun convertExpression(
         expression: KtExpression,
