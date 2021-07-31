@@ -128,8 +128,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
       }
     }, this);
     IdeEventQueue.getInstance().addDispatcher(event -> {
-      int eventID = event.getID();
-      if (eventID == KeyEvent.KEY_PRESSED || eventID == KeyEvent.KEY_TYPED) {
+      if (event.getID() == KeyEvent.KEY_PRESSED) {
         cancelCurrentProcessing();
       }
       return false;
