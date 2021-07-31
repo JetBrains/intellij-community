@@ -30,10 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -115,6 +112,16 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     setUI(new BasicPanelUI() {
       @Override protected void installDefaults(JPanel p) {}
     });
+  }
+
+  @ApiStatus.Internal
+  public @Nullable ColorKey getBackgroundColorKey() {
+    return myBackgroundColor == null ? myBackgroundColorKey : null;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable Color getOverriddenBackgroundColor() {
+    return myBackgroundColor;
   }
 
   @Override
