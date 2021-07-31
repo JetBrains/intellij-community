@@ -553,7 +553,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
     }
 
     override fun findConflicts(info: ChangeInfo, refUsages: Ref<Array<UsageInfo>>): MultiMap<PsiElement, String> {
-        return KotlinChangeSignatureConflictSearcher().findConflicts(info, refUsages)
+        return KotlinChangeSignatureConflictSearcher(info, refUsages).findConflicts()
     }
 
     private fun isJavaMethodUsage(usageInfo: UsageInfo): Boolean {
