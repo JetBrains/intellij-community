@@ -89,6 +89,18 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     this(fileEditorSupplier(fileEditor));
   }
 
+  public EditorNotificationPanel(@Nullable FileEditor fileEditor,
+                                 @NotNull Color backgroundColor) {
+    this(fileEditorSupplier(fileEditor));
+    myBackgroundColor = backgroundColor;
+  }
+
+  public EditorNotificationPanel(@Nullable FileEditor fileEditor,
+                                 @NotNull ColorKey backgroundColorKey) {
+    this(fileEditorSupplier(fileEditor));
+    myBackgroundColorKey = backgroundColorKey;
+  }
+
   public EditorNotificationPanel(@NotNull Supplier<? extends EditorColorsScheme> schemeSupplier) {
     super(new BorderLayout());
 
@@ -126,8 +138,13 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   @Override
   public Color getBackground() {
-    return ObjectUtils.notNull(myBackgroundColor,
-             ObjectUtils.notNull(mySchemeSupplier.get().getColor(myBackgroundColorKey), UIUtil.getToolTipBackground()));
+    return ObjectUtils.notNull(getOverriddenBackgroundColor(),
+             ObjectUtils.notNull(mySchemeSupplier.get().getColor(getBackgroundColorKey()), getFallbackBackgroundColor()));
+  }
+
+  @ApiStatus.Internal
+  public @NotNull Color getFallbackBackgroundColor() {
+    return UIUtil.getToolTipBackground();
   }
 
   public void setProject(Project project) {
