@@ -102,7 +102,7 @@ internal class ApplicationStoreTest {
     doRemoveDeprecatedStorageOnWrite(ActualStorageLast())
   }
 
-  private suspend fun doRemoveDeprecatedStorageOnWrite(component: Foo) {
+  private suspend fun doRemoveDeprecatedStorageOnWrite(component: FooComponent) {
     val oldFile = writeConfig("old.xml", "<application>${createComponentData("old")}</application>")
 
     // test BOM
@@ -420,13 +420,7 @@ internal class ApplicationStoreTest {
   }
 
   @State(name = "A", storages = [Storage(value = "peros.xml", roamingType = RoamingType.PER_OS)])
-  private class PerOsComponent : Foo(), PersistentStateComponent<PerOsComponent> {
-    override fun getState() = this
-
-    override fun loadState(state: PerOsComponent) {
-      XmlSerializerUtil.copyBean(state, this)
-    }
-  }
+  private class PerOsComponent : FooComponent()
 
   private fun writeConfig(fileName: String, @Language("XML") data: String) = testAppConfig.writeChild(fileName, data)
 
@@ -475,28 +469,32 @@ internal class ApplicationStoreTest {
     }
   }
 
-  abstract class Foo {
+  abstract class FooComponent() : PersistentStateComponent<Foo> {
+    private val myState = Foo()
+
+    var foo
+      get() = myState.foo
+      set(value) {
+        myState.foo = value
+      }
+
+    override fun getState() = myState
+
+    override fun loadState(state: Foo) {
+      XmlSerializerUtil.copyBean(state, myState)
+    }
+  }
+
+  class Foo {
     @Attribute
     var foo = "defaultValue"
   }
 
   @State(name = "A", storages = [(Storage("new.xml")), (Storage(value = "old.xml", deprecated = true))])
-  class SeveralStoragesConfigured : Foo(), PersistentStateComponent<SeveralStoragesConfigured> {
-    override fun getState() = this
-
-    override fun loadState(state: SeveralStoragesConfigured) {
-      XmlSerializerUtil.copyBean(state, this)
-    }
-  }
+  class SeveralStoragesConfigured : FooComponent()
 
   @State(name = "A", storages = [(Storage(value = "old.xml", deprecated = true)), (Storage("new.xml"))])
-  class ActualStorageLast : Foo(), PersistentStateComponent<ActualStorageLast> {
-    override fun getState() = this
-
-    override fun loadState(state: ActualStorageLast) {
-      XmlSerializerUtil.copyBean(state, this)
-    }
-  }
+  class ActualStorageLast : FooComponent()
 }
 
 internal data class TestState(@Attribute var foo: String = "", @Attribute var bar: String = "")
