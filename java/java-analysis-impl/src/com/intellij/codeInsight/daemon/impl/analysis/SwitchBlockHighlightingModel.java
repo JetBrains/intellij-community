@@ -255,10 +255,25 @@ public class SwitchBlockHighlightingModel {
         String description = value == myDefaultValue ? JavaErrorBundle.message("duplicate.default.switch.label") : JavaErrorBundle
           .message("duplicate.switch.label", value);
         for (PsiElement element : entry.getValue()) {
-          results.add(createError(element, description));
+          HighlightInfo info = createError(element, description);
+          PsiSwitchLabelStatementBase labelStatement = PsiTreeUtil.getParentOfType(element, PsiSwitchLabelStatementBase.class);
+          if (labelStatement != null && labelStatement.isDefaultCase()) {
+            registerDeleteDefaultFix(myFile, info);
+          } else {
+            QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteSwitchLabelFix((PsiCaseLabelElement)element));
+          }
+          results.add(info);
         }
       }
     }
+  }
+
+  private static void registerDeleteDefaultFix(@NotNull PsiFile file, @Nullable HighlightInfo info) {
+    if (info == null) return;
+    ProblemDescriptor descriptor = ProblemDescriptorUtil.toProblemDescriptor(file, info);
+    if (descriptor == null) return;
+    LocalQuickFix fix = getFixFactory().createDeleteDefaultFix();
+    QuickFixAction.registerQuickFixAction(info, new LocalQuickFixAsIntentionAdapter(fix, descriptor));
   }
 
   boolean needToCheckCompleteness(@NotNull List<PsiCaseLabelElement> elements) {
