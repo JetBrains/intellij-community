@@ -708,11 +708,8 @@ public class SwitchBlockHighlightingModel {
         QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteSwitchLabelFix((PsiCaseLabelElement)defaultElement));
         return;
       }
+      SwitchBlockHighlightingModel.registerDeleteDefaultFix(myFile, info);
       ProblemDescriptor descriptor = ProblemDescriptorUtil.toProblemDescriptor(myFile, info);
-      if (descriptor != null) {
-        final LocalQuickFix fix = getFixFactory().createDeleteDefaultFix();
-        QuickFixAction.registerQuickFixAction(info, new LocalQuickFixAsIntentionAdapter(fix, descriptor));
-      }
     }
 
     private void checkSealedClassCompleteness(@NotNull PsiClass selectorClass,
