@@ -184,6 +184,47 @@ internal class ApplicationStoreTest {
     }
   }
 
+  @Test
+  fun `import deprecated settings`() {
+
+    @State(name = "Comp", storages = [
+      Storage("old.xml", roamingType = RoamingType.PER_OS, deprecated = true),
+      Storage("new.xml", roamingType = RoamingType.PER_OS)])
+    class Comp : FooComponent()
+
+    val storageManager = componentStore.storageManager
+    val configDir = storageManager.expandMacro(ROOT_CONFIG)
+    fun fileSpec(spec: String) = FileSpec(configDir.resolve(spec).toString())
+
+    val component = Comp()
+    ApplicationManager.getApplication().registerServiceInstance(Comp::class.java, component)
+    val os = getPerOsSettingsStorageFolderName()
+    try {
+      val allItems = getExportableComponentsMap(isComputePresentableNames = false,
+                                                storageManager = storageManager,
+                                                withDeprecated = true)
+      assertThat(allItems).containsKeys(
+        fileSpec("old.xml"),
+        fileSpec("$os/old.xml"),
+        fileSpec("new.xml"),
+        fileSpec("$os/new.xml")
+      )
+
+      val nonDeprecatedItems = getExportableComponentsMap(isComputePresentableNames = false,
+                                                          storageManager = storageManager,
+                                                          withDeprecated = false)
+      assertThat(nonDeprecatedItems).containsKeys(fileSpec("$os/new.xml"))
+      assertThat(nonDeprecatedItems).doesNotContainKeys(
+        fileSpec("old.xml"),
+        fileSpec("$os/old.xml"),
+        fileSpec("new.xml")
+      )
+    }
+    finally {
+      (ApplicationManager.getApplication() as ComponentManagerImpl).unregisterComponent(Comp::class.java)
+    }
+  }
+
   private fun createComponentData(foo: String) = """<component name="A" foo="$foo" />"""
 
   @Test
