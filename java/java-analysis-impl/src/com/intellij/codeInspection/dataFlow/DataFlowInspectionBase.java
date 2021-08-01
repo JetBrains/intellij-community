@@ -34,6 +34,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.bugs.EqualsWithItselfInspection;
 import com.siyeh.ig.fixes.EqualsToEqualityFix;
 import com.siyeh.ig.numeric.ComparisonToNaNInspection;
@@ -331,6 +332,9 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   private void reportUnreachableSwitchBranches(Map<PsiExpression, ThreeState> labelReachability, ProblemsHolder holder) {
+    if (labelReachability.isEmpty()) return;
+    PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(labelReachability.keySet().iterator().next(), PsiSwitchBlock.class);
+    MultiMap<Object, PsiElement> elementsToCheckDuplicates = getElementsToCheckDuplicates(switchBlock);
     Set<PsiSwitchBlock> coveredSwitches = new HashSet<>();
 
     for (Map.Entry<PsiExpression, ThreeState> entry : labelReachability.entrySet()) {
@@ -354,11 +358,44 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       if (entry.getValue() != ThreeState.NO) continue;
       PsiExpression label = entry.getKey();
       PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(PsiImplUtil.getSwitchLabel(label));
-      if (!coveredSwitches.contains(labelStatement.getEnclosingSwitchBlock())) {
+      boolean isDuplicateLabel = elementsToCheckDuplicates.get(evaluateConstant(label)).size() > 1;
+      // duplicate case label is a compilation error so no need to highlight by the inspection
+      if (!coveredSwitches.contains(labelStatement.getEnclosingSwitchBlock()) && !isDuplicateLabel) {
         holder.registerProblem(label, JavaAnalysisBundle.message("dataflow.message.unreachable.switch.label"),
                                new DeleteSwitchLabelFix(label));
       }
     }
+  }
+
+  @NotNull
+  private static MultiMap<Object, PsiElement> getElementsToCheckDuplicates(@Nullable PsiSwitchBlock switchBlock) {
+    MultiMap<Object, PsiElement> result = new MultiMap<>();
+    if (switchBlock == null) return result;
+    PsiCodeBlock body = switchBlock.getBody();
+    if (body == null) return result;
+    PsiExpression selector = switchBlock.getExpression();
+    if (selector == null) return result;
+    PsiType selectorType = selector.getType();
+    if (selectorType == null) return result;
+    for (PsiStatement statement : body.getStatements()) {
+      PsiSwitchLabelStatementBase labelStatement = tryCast(statement, PsiSwitchLabelStatementBase.class);
+      if (labelStatement == null) continue;
+      PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
+      if (labelElementList == null) continue;
+      for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
+        PsiExpression expression = tryCast(labelElement, PsiExpression.class);
+        if (expression == null) continue;
+        Object object = evaluateConstant(labelElement);
+        if (object == null && !ExpressionUtils.isNullLiteral(expression)) continue;
+        result.putValue(evaluateConstant(labelElement), labelElement);
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  private static Object evaluateConstant(@NotNull PsiCaseLabelElement constant) {
+    return JavaPsiFacade.getInstance(constant.getProject()).getConstantEvaluationHelper().computeConstantExpression(constant);
   }
 
   private static boolean canRemoveUnreachableBranches(PsiSwitchLabelStatementBase labelStatement, PsiSwitchBlock statement) {
