@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.ComponentPopupBuilderImpl
@@ -21,6 +22,7 @@ import java.awt.Toolkit
 import java.awt.event.*
 import java.util.function.Supplier
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 import javax.swing.event.AncestorEvent
 import javax.swing.event.AncestorListener
 
@@ -44,16 +46,10 @@ class RunToolbarExtraSlotsAction : AnAction(), CustomComponentAction, DumbAware 
     }
   }
 
-  override fun createCustomComponent(presentation: Presentation, place: String, dataContext: DataContext): JComponent {
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return object : ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       private var popup: JBPopup? = null
       private var pane: RunToolbarExtraSlotPane? = null
-
-      init {
-        dataContext.getData(CommonDataKeys.PROJECT)?.let {
-          pane = RunToolbarExtraSlotPane(it) { cancel() }
-        }
-      }
 
       private val t: Int = JBUI.scale(4)
       fun updateIconImmediately(manager: RunToolbarSlotManager, mainWidget: RunToolbarMainWidgetComponent) {
@@ -70,6 +66,10 @@ class RunToolbarExtraSlotsAction : AnAction(), CustomComponentAction, DumbAware 
 
       override fun addNotify() {
         super.addNotify()
+
+        (SwingUtilities.getWindowAncestor(this) as? IdeFrame)?.project?.let {
+          pane = RunToolbarExtraSlotPane(it) { cancel() }
+        }
 
         mousePosition?.let {
           val bounds = this.bounds

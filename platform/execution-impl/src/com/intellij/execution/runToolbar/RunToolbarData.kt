@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
+import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.executors.ExecutorGroup
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -43,6 +44,9 @@ internal fun AnActionEvent.addWaitingForAProcess(executorId: String) {
 
 internal fun AnActionEvent.setConfiguration(value: RunnerAndConfigurationSettings?) {
   runToolbarData()?.configuration = value
+  this.project?.let {
+    RunManager.getInstance(it).selectedConfiguration = value
+  }
 }
 
 internal fun AnActionEvent.configuration(): RunnerAndConfigurationSettings? {
