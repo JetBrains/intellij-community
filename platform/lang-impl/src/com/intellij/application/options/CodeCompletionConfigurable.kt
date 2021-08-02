@@ -158,7 +158,7 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
 
       row {
         row {
-          checkBox(IdeUICustomization.getInstance().selectAutopopupByCharsText,
+          checkBox(ApplicationBundle.message("completion.option.insert.selected.suggestion"),
                    getter = settings::isSelectAutopopupSuggestionsByChars,
                    setter = settings::setSelectAutopopupSuggestionsByChars)
             .enableIf(cbAutocompletion.selected)

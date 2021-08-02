@@ -61,10 +61,6 @@ public class IdeUICustomization {
     return projectMessage("select.in.item.project.view");
   }
 
-  public @Nls String getSelectAutopopupByCharsText() {
-    return IdeBundle.message("ui.customization.select.auto.popup.by.chars.text");
-  }
-
   /**
    * Allows to replace the text of the given action (only for the actions/groups that support this mechanism)
    */
