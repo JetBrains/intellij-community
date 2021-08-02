@@ -2,15 +2,18 @@
 package training.ui.welcomeScreen
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.StartPagePromoter
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import training.FeaturesTrainerIcons
 import training.dsl.LessonUtil
+import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.OpenLessonActivities
@@ -25,6 +28,7 @@ import java.awt.event.ActionEvent
 import javax.swing.*
 import javax.swing.border.MatteBorder
 
+@ApiStatus.Internal
 open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : StartPagePromoter {
   open fun promoImage(): Icon = FeaturesTrainerIcons.Img.PluginIcon
 
@@ -54,14 +58,7 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : Star
     jButton.isOpaque = false
     jButton.action = object : AbstractAction(LearnBundle.message("welcome.promo.start.tour")) {
       override fun actionPerformed(e: ActionEvent?) {
-        val lesson = CourseManager.instance.lessonsForModules.find { it.id == lessonId }
-        if (lesson == null) {
-          logger<OnboardingLessonPromoter>().error("No lesson with id $lessonId")
-          return
-        }
-        val primaryLanguage = lesson.module.primaryLanguage ?: error("No primary language for promoting lesson ${lesson.name}")
-        resetPrimaryLanguage(primaryLanguage)
-        OpenLessonActivities.openOnboardingFromWelcomeScreen(lesson)
+        startOnboardingLessonWithSdk()
       }
     }
     vPanel.add(rigid(0, 18))
@@ -82,6 +79,19 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : Star
     rPanel.add(rigid(0, 20))
     rPanel.add(hPanel)
     return rPanel
+  }
+
+  protected fun startOnboardingLessonWithSdk() {
+    val lesson = CourseManager.instance.lessonsForModules.find { it.id == lessonId }
+    if (lesson == null) {
+      logger<OnboardingLessonPromoter>().error("No lesson with id $lessonId")
+      return
+    }
+    val primaryLanguage = lesson.module.primaryLanguage ?: error("No primary language for promoting lesson ${lesson.name}")
+    resetPrimaryLanguage(primaryLanguage)
+    LangManager.getInstance().getLangSupport()?.startFromWelcomeFrame { selectedSdk: Sdk? ->
+      OpenLessonActivities.openOnboardingFromWelcomeScreen(lesson, selectedSdk)
+    }
   }
 
   private fun buttonPixelHunting(button: JButton): JPanel {

@@ -48,7 +48,7 @@ interface LangSupport {
    * @throws NoSdkException in the case no valid SDK is available, yet it's required for the given project
    */
   @Throws(NoSdkException::class)
-  fun getSdkForProject(project: Project): Sdk?
+  fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk?
 
   fun applyProjectSdk(sdk: Sdk, project: Project)
 
@@ -74,4 +74,8 @@ interface LangSupport {
 
   @RequiresBackgroundThread
   fun cleanupBeforeLessons(project: Project) = Unit
+
+  fun startFromWelcomeFrame(startCallback: (Sdk?) -> Unit) {
+    startCallback(null)
+  }
 }

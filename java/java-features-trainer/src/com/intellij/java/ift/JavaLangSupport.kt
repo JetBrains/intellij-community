@@ -89,7 +89,7 @@ class JavaLangSupport : AbstractLangSupport() {
       .executeLookup()
   }
 
-  override fun getSdkForProject(project: Project): Sdk? {
+  override fun getSdkForProject(project: Project, selectedSdk: Sdk?): Sdk? {
     return null
   }
 
