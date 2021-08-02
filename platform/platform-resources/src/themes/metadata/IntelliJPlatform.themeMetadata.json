@@ -1237,6 +1237,11 @@
       "since": "2021.2"
     },
     {
+      "key": "DragAndDrop.rowBackground",
+      "description": "Drop position highlighting (rectangle) for drag-n-drop in trees and lists",
+      "since": "2021.3"
+    },
+    {
       "key": "Label.successForeground",
       "description": "Foreground for successful state/text",
       "since": "2021.2"

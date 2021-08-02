@@ -172,6 +172,7 @@
 
     "DragAndDrop": {
       "borderColor": "#2675BF",
+      "rowBackground": "#2675BF26",
       "areaBackground": "#3d7dcc33",
       "areaBorderColor": "#8ab2de",
       "areaForeground": "#787878"

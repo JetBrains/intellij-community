@@ -660,6 +660,7 @@ public class JBUI {
 
     public interface DragAndDrop {
       Color BORDER_COLOR = JBColor.namedColor("DragAndDrop.borderColor", 0x2675BF, 0x2F65CA);
+      Color ROW_BACKGROUND = JBColor.namedColor("DragAndDrop.rowBackground", 0x2675BF26, 0x2F65CA33);
 
       interface Area {
         Color FOREGROUND = JBColor.namedColor("DragAndDrop.areaForeground", 0x787878, 0xBABABA);

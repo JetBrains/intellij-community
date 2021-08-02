@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -11,7 +11,6 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LoadingNode;
 import com.intellij.ui.hover.TreeHoverListener;
-import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.ui.render.RenderingHelper;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
@@ -51,6 +50,7 @@ import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.openapi.util.registry.Registry.intValue;
 import static com.intellij.openapi.util.registry.Registry.is;
 import static com.intellij.ui.paint.RectanglePainter.DRAW;
+import static com.intellij.ui.paint.RectanglePainter.FILL;
 import static com.intellij.util.EditSourceOnDoubleClickHandler.isExpandPreferable;
 import static com.intellij.util.ReflectionUtil.getMethod;
 import static com.intellij.util.containers.ContainerUtil.createWeakSet;
@@ -270,10 +270,10 @@ public final class DefaultTreeUI extends BasicTreeUI {
             JTree.DropLocation dropLocation = tree.getDropLocation();
             if (dropLocation != null && g instanceof Graphics2D && path.equals(dropLocation.getPath())) {
               // paint a dragged tree path in accordance to Highlighters.RectangleHighlighter
-              g.setColor(JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND);
-              RectanglePainter.FILL.paint((Graphics2D)g, helper.getX(), bounds.y, helper.getWidth(), bounds.height, 0);
+              g.setColor(JBUI.CurrentTheme.DragAndDrop.ROW_BACKGROUND);
+              FILL.paint((Graphics2D)g, helper.getX(), bounds.y, helper.getWidth(), bounds.height, 0);
               g.setColor(JBUI.CurrentTheme.DragAndDrop.BORDER_COLOR);
-              RectanglePainter.DRAW.paint((Graphics2D)g, helper.getX(), bounds.y, helper.getWidth(), bounds.height, 0);
+              DRAW.paint((Graphics2D)g, helper.getX(), bounds.y, helper.getWidth(), bounds.height, 0);
             }
           }
           if ((bounds.y + bounds.height) >= maxPaintY) break;

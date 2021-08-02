@@ -224,7 +224,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
 
     @Override
     protected void paintComponent(Graphics g) {
-      g.setColor(JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND);
+      g.setColor(JBUI.CurrentTheme.DragAndDrop.ROW_BACKGROUND);
       g.fillRect(0, 0, getWidth(), getHeight());
       super.paintComponent(g);
     }
