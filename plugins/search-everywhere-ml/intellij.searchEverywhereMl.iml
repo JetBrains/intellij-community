@@ -2,10 +2,10 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$/../search-everywhere-ml">
-      <sourceFolder url="file://$MODULE_DIR$/../search-everywhere-ml/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/../search-everywhere-ml/resources" type="java-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/../search-everywhere-ml/test" isTestSource="true" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
