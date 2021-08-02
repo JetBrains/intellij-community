@@ -70,7 +70,7 @@ sealed class GithubApiRequestExecutor {
       return createRequestBuilder(request)
         .tuner { connection ->
           request.additionalHeaders.forEach(connection::addRequestProperty)
-          connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "${request.tokenHeaderType} $token")
+          connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Bearer $token")
         }
         .useProxy(useProxy)
         .execute(request, indicator)
@@ -230,9 +230,5 @@ sealed class GithubApiRequestExecutor {
 
   interface AuthDataChangeListener : EventListener {
     fun authDataChanged()
-  }
-
-  enum class TokenHeaderType {
-    TOKEN, BEARER
   }
 }
