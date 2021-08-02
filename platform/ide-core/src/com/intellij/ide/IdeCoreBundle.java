@@ -11,7 +11,7 @@ import java.util.function.Supplier;
 public final class IdeCoreBundle extends DynamicBundle {
   public static final String BUNDLE = "messages.IdeCoreBundle";
 
-  private static final IdeCoreBundle INSTANCE = new IdeCoreBundle();
+  public static final IdeCoreBundle INSTANCE = new IdeCoreBundle();
 
   public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);

@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -39,7 +39,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private final Executor myEventProcessingQueue =
     AppExecutorUtil.createBoundedApplicationPoolExecutor("Async Refresh Event Processing", AppExecutorUtil.getAppExecutorService(), 1, this);
 
-  private final ProgressIndicator myRefreshIndicator = RefreshProgress.create(IdeBundle.message("file.synchronize.progress"));
+  private final ProgressIndicator myRefreshIndicator = RefreshProgress.create(IdeCoreBundle.message("file.synchronize.progress"));
   private int myBusyThreads;
   private final Long2ObjectMap<RefreshSessionImpl> mySessions = new Long2ObjectOpenHashMap<>();
   private final FrequentEventDetector myEventCounter = new FrequentEventDetector(100, 100, FrequentEventDetector.Level.WARN);
@@ -82,7 +82,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private void executeSession(@NotNull RefreshSessionImpl session, @NotNull ModalityState modality) {
     startRefreshActivity();
     try {
-      HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Syncing, IdeBundle.message("progress.title.doing.file.refresh.0", session), ()-> executeRefreshSession(session));
+      HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Syncing, IdeCoreBundle.message("progress.title.doing.file.refresh.0", session), ()-> executeRefreshSession(session));
     }
     finally {
       finishRefreshActivity();

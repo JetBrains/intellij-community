@@ -3,10 +3,10 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -72,17 +72,17 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
     else if (myExecutable == null) {
       if (SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux && CpuArch.isIntel64()) {
-        notifyOnFailure(ApplicationBundle.message("watcher.exe.not.found"), null);
+        notifyOnFailure(IdeCoreBundle.message("watcher.exe.not.found"), null);
       }
       else if (SystemInfo.isLinux) {
-        notifyOnFailure(ApplicationBundle.message("watcher.exe.compile"), NotificationListener.URL_OPENING_LISTENER);
+        notifyOnFailure(IdeCoreBundle.message("watcher.exe.compile"), NotificationListener.URL_OPENING_LISTENER);
       }
       else {
-        notifyOnFailure(ApplicationBundle.message("watcher.exe.not.exists"), null);
+        notifyOnFailure(IdeCoreBundle.message("watcher.exe.not.exists"), null);
       }
     }
     else if (!myExecutable.canExecute()) {
-      String message = ApplicationBundle.message("watcher.exe.not.exe", myExecutable);
+      String message = IdeCoreBundle.message("watcher.exe.not.exe", myExecutable);
       notifyOnFailure(message, (notification, event) -> IdeUiService.getInstance().revealFile(myExecutable));
     }
     else {
@@ -92,7 +92,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       }
       catch (IOException e) {
         LOG.warn(e.getMessage());
-        notifyOnFailure(ApplicationBundle.message("watcher.failed.to.start"), null);
+        notifyOnFailure(IdeCoreBundle.message("watcher.failed.to.start"), null);
       }
     }
   }
@@ -176,7 +176,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     if (myStartAttemptCount.incrementAndGet() > MAX_PROCESS_LAUNCH_ATTEMPT_COUNT) {
-      notifyOnFailure(ApplicationBundle.message("watcher.bailed.out.10x"), null);
+      notifyOnFailure(IdeCoreBundle.message("watcher.bailed.out.10x"), null);
       return;
     }
 
@@ -367,7 +367,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
         }
 
         if (watcherOp == WatcherOp.GIVEUP) {
-          notifyOnFailure(ApplicationBundle.message("watcher.gave.up"), null);
+          notifyOnFailure(IdeCoreBundle.message("watcher.gave.up"), null);
           myIsShuttingDown = true;
         }
         else if (watcherOp == WatcherOp.RESET) {
@@ -378,7 +378,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
         }
       }
       else if (myLastOp == WatcherOp.MESSAGE) {
-        String localized = Objects.requireNonNullElse(ApplicationBundle.INSTANCE.messageOrNull(line), line); //NON-NLS
+        String localized = Objects.requireNonNullElse(IdeCoreBundle.INSTANCE.messageOrNull(line), line); //NON-NLS
         LOG.warn(localized);
         notifyOnFailure(localized, NotificationListener.URL_OPENING_LISTENER);
         myLastOp = null;

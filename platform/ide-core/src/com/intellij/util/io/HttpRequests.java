@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.Patches;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
+import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,9 +16,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.Url;
-import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
-import com.intellij.util.net.ssl.CertificateManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -548,7 +547,7 @@ public final class HttpRequests {
         connection = new URL(url).openConnection();
       }
       else {
-        connection = HttpConfigurable.getInstance().openConnection(url);
+        connection = IdeUiService.getInstance().openHttpConnection(url);
       }
 
       if (connection instanceof HttpsURLConnection) {
@@ -635,7 +634,7 @@ public final class HttpRequests {
       return connection;
     }
 
-    throw new IOException(IdeBundle.message("error.connection.failed.redirects"));
+    throw new IOException(IdeCoreBundle.message("error.connection.failed.redirects"));
   }
 
   private static void throwHttpStatusError(@NotNull HttpURLConnection connection,
@@ -664,7 +663,7 @@ public final class HttpRequests {
     }
 
     try {
-      SSLSocketFactory factory = CertificateManager.getInstance().getSslContext().getSocketFactory();
+      SSLSocketFactory factory = IdeUiService.getInstance().getSslSocketFactory();
       if (factory == null) {
         LOG.info("SSLSocketFactory is not defined by the IDE Certificate Manager; Using default SSL configuration to connect to " + url);
       }

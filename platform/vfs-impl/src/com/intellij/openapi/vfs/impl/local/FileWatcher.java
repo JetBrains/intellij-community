@@ -2,8 +2,8 @@
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.application.options.RegistryManager;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.notification.*;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -168,7 +168,7 @@ public final class FileWatcher {
     LOG.warn(cause);
 
     NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup("File Watcher Messages");
-    String title = ApplicationBundle.message("watcher.slow.sync");
+    String title = IdeCoreBundle.message("watcher.slow.sync");
     ApplicationManager.getApplication().invokeLater(
       () -> {
         Notification notification = group.createNotification(title, cause, NotificationType.WARNING);

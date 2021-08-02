@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.http;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -86,7 +86,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
       }
       catch (IOException e) {
         LOG.info(e);
-        errorOccurred(IdeBundle.message("cannot.create.local.file", e.getMessage()), false);
+        errorOccurred(IdeCoreBundle.message("cannot.create.local.file", e.getMessage()), false);
         return;
       }
       myCancelled.set(false);

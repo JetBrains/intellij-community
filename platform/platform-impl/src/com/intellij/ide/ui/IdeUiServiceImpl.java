@@ -2,6 +2,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
@@ -23,15 +24,20 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.SystemNotifications;
+import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.net.ssl.SSLSocketFactory;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.List;
 
 public class IdeUiServiceImpl extends IdeUiService{
@@ -110,5 +116,20 @@ public class IdeUiServiceImpl extends IdeUiService{
     else {
       Messages.showErrorDialog(project, UIUtil.toHtml(description), title);
     }
+  }
+
+  @Override
+  public URLConnection openHttpConnection(String url) throws IOException {
+    return HttpConfigurable.getInstance().openConnection(url);
+  }
+
+  @Override
+  public SSLSocketFactory getSslSocketFactory() {
+    return CertificateManager.getInstance().getSslContext().getSocketFactory();
+  }
+
+  @Override
+  public boolean isUseSafeWrite() {
+    return GeneralSettings.getInstance().isUseSafeWrite();
   }
 }

@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -49,11 +49,11 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
   private void downloadContent(@NotNull Url url, @NotNull File file, @NotNull DownloadingCallback callback, @Nullable Throwable startTrace) {
     LOG.debug("Downloading started: " + url);
     final String presentableUrl = StringUtil.trimMiddle(url.trimParameters().toDecodedForm(), 40);
-    callback.setProgressText(IdeBundle.message("download.progress.connecting", presentableUrl), true);
+    callback.setProgressText(IdeCoreBundle.message("download.progress.connecting", presentableUrl), true);
     try {
       connect(url, HttpRequests.request(url.toExternalForm()), request -> {
             int size = request.getConnection().getContentLength();
-        callback.setProgressText(IdeBundle.message("download.progress.downloading", presentableUrl), size == -1);
+        callback.setProgressText(IdeCoreBundle.message("download.progress.downloading", presentableUrl), size == -1);
             request.saveToFile(file, new AbstractProgressIndicatorExBase() {
               @Override
               public void setFraction(double fraction) {
@@ -83,7 +83,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
     }
     catch (IOException e) {
       LOG.info(e);
-      callback.errorOccurred(IdeBundle.message("cannot.load.remote.file", url, e.getMessage()), false);
+      callback.errorOccurred(IdeCoreBundle.message("cannot.load.remote.file", url, e.getMessage()), false);
     }
   }
 

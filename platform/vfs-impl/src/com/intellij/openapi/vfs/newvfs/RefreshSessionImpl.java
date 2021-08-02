@@ -3,7 +3,7 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
 import com.intellij.diagnostic.PerformanceWatcher;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -196,8 +196,8 @@ final class RefreshSessionImpl extends RefreshSession {
       if ((myFinishRunnable != null || !events.isEmpty()) && !app.isDisposed()) {
         if (LOG.isDebugEnabled()) LOG.debug("events are about to fire: " + events);
         WriteAction.run(() -> {
-          app.runWriteActionWithNonCancellableProgressInDispatchThread(IdeBundle.message("progress.title.file.system.synchronization"), null, null, indicator -> {
-            indicator.setText(IdeBundle.message("progress.text.processing.detected.file.changes", events.size()));
+          app.runWriteActionWithNonCancellableProgressInDispatchThread(IdeCoreBundle.message("progress.title.file.system.synchronization"), null, null, indicator -> {
+            indicator.setText(IdeCoreBundle.message("progress.text.processing.detected.file.changes", events.size()));
             int progressThresholdMillis = 5_000;
             ((ProgressIndicatorBase) indicator).setDelayInMillis(progressThresholdMillis);
             long start = System.currentTimeMillis();

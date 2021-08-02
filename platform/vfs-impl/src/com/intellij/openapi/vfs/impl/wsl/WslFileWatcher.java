@@ -4,9 +4,9 @@ package com.intellij.openapi.vfs.impl.wsl;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -143,7 +143,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
     MyProcessHandler handler = vm.handler;
     if (handler == null) {
       if (vm.startAttemptCount.incrementAndGet() > MAX_PROCESS_LAUNCH_ATTEMPT_COUNT) {
-        notifyOnFailure(vm.name, ApplicationBundle.message("watcher.bailed.out.10x", vm.name), null);
+        notifyOnFailure(vm.name, IdeCoreBundle.message("watcher.bailed.out.10x", vm.name), null);
         return;
       }
 
@@ -156,7 +156,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
       catch (IOException e) {
         vm.logger.error(e);
         vm.startAttemptCount.set(MAX_PROCESS_LAUNCH_ATTEMPT_COUNT);
-        notifyOnFailure(vm.name, ApplicationBundle.message("watcher.failed.to.start", vm.name), null);
+        notifyOnFailure(vm.name, IdeCoreBundle.message("watcher.failed.to.start", vm.name), null);
         return;
       }
     }
@@ -301,7 +301,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
         }
 
         if (watcherOp == WatcherOp.GIVEUP) {
-          notifyOnFailure(myVm.name, ApplicationBundle.message("watcher.gave.up"), null);
+          notifyOnFailure(myVm.name, IdeCoreBundle.message("watcher.gave.up"), null);
         }
         else if (watcherOp == WatcherOp.RESET) {
           myNotificationSink.notifyReset(Strings.trimEnd(myVm.prefix, '\\'));
@@ -311,7 +311,7 @@ public class WslFileWatcher extends PluggableFileWatcher {
         }
       }
       else if (myLastOp == WatcherOp.MESSAGE) {
-        String localized = Objects.requireNonNullElse(ApplicationBundle.INSTANCE.messageOrNull(line), line); //NON-NLS
+        String localized = Objects.requireNonNullElse(IdeCoreBundle.INSTANCE.messageOrNull(line), line); //NON-NLS
         myVm.logger.warn(localized);
         notifyOnFailure(myVm.name, localized, NotificationListener.URL_OPENING_LISTENER);
         myLastOp = null;

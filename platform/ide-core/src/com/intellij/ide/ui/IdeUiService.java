@@ -12,11 +12,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import javax.net.ssl.SSLSocketFactory;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.List;
 
 @ApiStatus.Experimental
@@ -70,6 +73,18 @@ public class IdeUiService {
                               Icon icon,
                               HyperlinkListener listener) {
 
+  }
+
+  public URLConnection openHttpConnection(String url) throws IOException {
+    return null;
+  }
+
+  public SSLSocketFactory getSslSocketFactory() {
+    return null;
+  }
+
+  public boolean isUseSafeWrite() {
+    return false;
   }
 
   public static IdeUiService getInstance() {

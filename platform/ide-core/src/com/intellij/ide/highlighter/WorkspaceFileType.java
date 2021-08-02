@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.highlighter;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,13 +28,13 @@ public final class WorkspaceFileType implements InternalFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return IdeBundle.message("filetype.idea.workspace.description");
+    return IdeCoreBundle.message("filetype.idea.workspace.description");
   }
 
   @Nls
   @Override
   public @NotNull String getDisplayName() {
-    return IdeBundle.message("filetype.idea.workspace.display.name");
+    return IdeCoreBundle.message("filetype.idea.workspace.display.name");
   }
 
   @Override
