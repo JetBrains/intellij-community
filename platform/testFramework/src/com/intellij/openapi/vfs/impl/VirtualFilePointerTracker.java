@@ -7,15 +7,11 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashingStrategy;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Tracks leaks of file pointers from {@link VirtualFilePointerManagerImpl}
@@ -35,7 +31,7 @@ import java.util.Set;
  */
 @TestOnly
 public final class VirtualFilePointerTracker {
-  private final Set<VirtualFilePointer> storedPointers = new ReferenceOpenHashSet<>();
+  private final Set<VirtualFilePointer> storedPointers = Collections.newSetFromMap(new IdentityHashMap<>());
   private Throwable trace;
   private boolean isTracking; // true when storePointers() was called but before assertPointersDisposed(). false otherwise
 

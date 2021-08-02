@@ -18,7 +18,6 @@ import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.publishHeapDump
 import com.intellij.util.containers.UnsafeWeakList
 import com.intellij.util.ref.GCUtil
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import java.nio.file.Path
@@ -198,7 +197,7 @@ open class TestProjectManager : ProjectManagerExImpl() {
 }
 
 private fun reportLeakedProjects(leakedProjects: Iterable<Project>) {
-  val hashCodes = IntOpenHashSet()
+  val hashCodes = HashSet<Int>()
   for (project in leakedProjects) {
     hashCodes.add(System.identityHashCode(project))
   }

@@ -33,15 +33,11 @@ import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.ui.CoreIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.PeekableIterator;
-import com.intellij.util.containers.PeekableIteratorWrapper;
+import com.intellij.util.containers.*;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
-import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.jdom.Element;
@@ -115,10 +111,10 @@ public abstract class UsefulTestCase extends TestCase {
 
   private static final String ORIGINAL_TEMP_DIR = FileUtilRt.getTempDirectory();
 
-  private static final Object2LongMap<String> TOTAL_SETUP_COST_MILLIS = new Object2LongOpenHashMap<>();
-  private static final Object2LongMap<String> TOTAL_SETUP_COST_COUNT = new Object2LongOpenHashMap<>();
-  private static final Object2LongMap<String> TOTAL_TEARDOWN_COST_MILLIS = new Object2LongOpenHashMap<>();
-  private static final Object2LongMap<String> TOTAL_TEARDOWN_COST_COUNT = new Object2LongOpenHashMap<>();
+  private static final ObjectIntMap<String> TOTAL_SETUP_COST_MILLIS = new ObjectIntHashMap<>();
+  private static final ObjectIntMap<String> TOTAL_SETUP_COUNT = new ObjectIntHashMap<>();
+  private static final ObjectIntMap<String> TOTAL_TEARDOWN_COST_MILLIS = new ObjectIntHashMap<>();
+  private static final ObjectIntMap<String> TOTAL_TEARDOWN_COUNT = new ObjectIntHashMap<>();
 
   protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
 
@@ -487,44 +483,50 @@ public abstract class UsefulTestCase extends TestCase {
     long setupStart = System.nanoTime();
     setUp();
     long setupCost = (System.nanoTime() - setupStart) / 1000000;
-    logPerClassCost(setupCost, TOTAL_SETUP_COST_MILLIS, TOTAL_SETUP_COST_COUNT);
+    logPerClassCost((int)setupCost, TOTAL_SETUP_COST_MILLIS, TOTAL_SETUP_COUNT);
   }
 
   protected void invokeTearDown() throws Exception {
     long teardownStart = System.nanoTime();
     tearDown();
     long teardownCost = (System.nanoTime() - teardownStart) / 1000000;
-    logPerClassCost(teardownCost, TOTAL_TEARDOWN_COST_MILLIS, TOTAL_TEARDOWN_COST_COUNT);
+    logPerClassCost((int)teardownCost, TOTAL_TEARDOWN_COST_MILLIS, TOTAL_TEARDOWN_COUNT);
   }
 
   /**
    * Logs the setup cost grouped by test fixture class (superclass of the current test class).
    *
    * @param cost setup cost in milliseconds
-   * @param countMap
    */
-  private void logPerClassCost(long cost,
-                               @NotNull Object2LongMap<? super String> costMap,
-                               Object2LongMap<String> countMap) {
-    costMap.mergeLong(getClass().getSuperclass().getName(), cost, Math::addExact);
-    countMap.mergeLong(getClass().getSuperclass().getName(), 1, Math::addExact);
+  private void logPerClassCost(int cost,
+                               @NotNull ObjectIntMap<String> costMap,
+                               @NotNull ObjectIntMap<String> countMap) {
+    String name = getClass().getSuperclass().getName();
+    int storedCost = costMap.get(name);
+    costMap.put(name, (storedCost == -1 ? 0 : storedCost)+cost);
+    int storedCount = countMap.get(name);
+    countMap.put(name, storedCount == -1 ? 1 : storedCount+1);
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   static void logSetupTeardownCosts() {
     System.out.println("Setup costs");
     long totalSetup = 0;
-    for (Object2LongMap.Entry<String> entry : TOTAL_SETUP_COST_MILLIS.object2LongEntrySet()) {
-      long count = TOTAL_SETUP_COST_COUNT.getLong(entry.getKey());
-      System.out.printf("  %s: %d ms for %d executions%n", entry.getKey(), entry.getLongValue(), count);
-      totalSetup += entry.getLongValue();
+    for (ObjectIntMap.Entry<String> entry : TOTAL_SETUP_COST_MILLIS.entries()) {
+      String name = entry.getKey();
+      int cost = entry.getValue();
+      long count = TOTAL_SETUP_COUNT.get(name);
+      System.out.printf("  %s: %d ms for %d executions%n", name, cost, count);
+      totalSetup += cost;
     }
     System.out.println("Teardown costs");
     long totalTeardown = 0;
-    for (Object2LongMap.Entry<String> entry : TOTAL_TEARDOWN_COST_MILLIS.object2LongEntrySet()) {
-      long count = TOTAL_TEARDOWN_COST_COUNT.getLong(entry.getKey());
-      System.out.printf("  %s: %d ms for %d executions%n", entry.getKey(), entry.getLongValue(), count);
-      totalTeardown += entry.getLongValue();
+    for (ObjectIntMap.Entry<String> entry : TOTAL_TEARDOWN_COST_MILLIS.entries()) {
+      String name = entry.getKey();
+      int cost = entry.getValue();
+      long count = TOTAL_TEARDOWN_COUNT.get(name);
+      System.out.printf("  %s: %d ms for %d executions%n", name, cost, count);
+      totalTeardown += cost;
     }
     System.out.printf("Total overhead: setup %d ms, teardown %d ms%n", totalSetup, totalTeardown);
     System.out.printf("##teamcity[buildStatisticValue key='ideaTests.totalSetupMs' value='%d']%n", totalSetup);
