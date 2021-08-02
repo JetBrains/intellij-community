@@ -1,0 +1,12 @@
+{
+    "usages": [
+        "Main.java",
+        "JavaWrite.java",
+        "JavaRead.java",
+        "Kotlin.kt"
+    ],
+    "shouldBeUsage": [
+        "KotlinWrite.kt",
+        "KotlinRead.kt"
+    ]
+}
