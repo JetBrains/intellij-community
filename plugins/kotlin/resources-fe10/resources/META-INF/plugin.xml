@@ -18,7 +18,7 @@ The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
   <change-notes><![CDATA[
 	  <h3>1.5.30-RC</h3>
       <ul>
-      <li>Kotlin/JVM: repeatable annotations with runtime retention for 1.8 JVM target and instantiation of annotation classes.</li>
+      <li>Kotlin/JVM: instantiation of annotation classes.</li>
 	    <li>Kotlin/Native: deprecating linkage with DLLs without import libraries for MinGW targets.</li>
 	    <li>Kotlin/JS: IR backend in Beta.</li>
 	    <li>Gradle: Java toolchain support and changes in Kotlin daemon configuration for JVM.</li>
