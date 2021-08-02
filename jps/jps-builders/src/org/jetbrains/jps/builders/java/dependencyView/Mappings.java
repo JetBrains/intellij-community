@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
@@ -133,14 +134,15 @@ public final class Mappings {
       final BuilderCollectionFactory<String> fileCollectionFactory = new BuilderCollectionFactory<String>() {
         @Override
         public Collection<String> create() {
-          return new THashSet<>(FileUtil.PATH_HASHING_STRATEGY); // todo: do we really need set and not a list here?
+          return CollectionFactory.createFilePathSet(); // todo: do we really need set and not a list here?
         }
       };
       if (myIsDelta) {
         myClassToSubclasses = new IntIntTransientMultiMaplet();
         myClassToClassDependency = new IntIntTransientMultiMaplet();
         myShortClassNameIndex = null;
-        myRelativeSourceFilePathToClasses = new ObjectObjectTransientMultiMaplet<>(FileUtil.PATH_HASHING_STRATEGY, () -> new THashSet<>(5, DEFAULT_SET_LOAD_FACTOR));
+        myRelativeSourceFilePathToClasses = new ObjectObjectTransientMultiMaplet<>(FileCollectionFactory.FILE_PATH_HASH_STRATEGY,
+                                                                                   () -> new HashSet<>(5, DEFAULT_SET_LOAD_FACTOR));
         myClassToRelativeSourceFilePath = new IntObjectTransientMultiMaplet<>(fileCollectionFactory);
       }
       else {
@@ -162,7 +164,7 @@ public final class Mappings {
         );
         myRelativeSourceFilePathToClasses = new ObjectObjectPersistentMultiMaplet<String, ClassFileRepr>(
           DependencyContext.getTableFile(myRootDir, SOURCE_TO_CLASS), PathStringDescriptor.INSTANCE, new ClassFileReprExternalizer(myContext),
-          () -> new THashSet<>(5, DEFAULT_SET_LOAD_FACTOR)
+          () -> new HashSet<>(5, DEFAULT_SET_LOAD_FACTOR)
         ) {
           @NotNull
           @Override
@@ -2342,9 +2344,7 @@ public final class Mappings {
           processDisappearedClasses();
 
           final List<FileClasses> newClasses = new ArrayList<>();
-          myDelta.myRelativeSourceFilePathToClasses.forEachEntry(new TObjectObjectProcedure<String, Collection<ClassFileRepr>>() {
-            @Override
-            public boolean execute(String relativeFilePath, Collection<ClassFileRepr> content) {
+          myDelta.myRelativeSourceFilePathToClasses.forEachEntry((relativeFilePath, content) -> {
               File file = toFull(relativeFilePath);
               if (myFilesToCompile == null || myFilesToCompile.contains(file)) {
                 // Consider only files actually compiled in this round.
@@ -2352,8 +2352,7 @@ public final class Mappings {
                 newClasses.add(new FileClasses(file, content));
               }
               return true;
-            }
-          });
+            });
 
           for (final FileClasses compiledFile : newClasses) {
             final File fileName = compiledFile.myFileName;
@@ -2747,12 +2746,9 @@ public final class Mappings {
           // In case some of these sources was not compiled, but the class was changed, we need to update
           // sourceToClasses mapping for such sources to include the updated ClassRepr version of the changed class
           Set<File> unchangedSources = FileCollectionFactory.createCanonicalFileSet();
-          delta.myRelativeSourceFilePathToClasses.forEachEntry(new TObjectObjectProcedure<String, Collection<ClassFileRepr>>() {
-            @Override
-            public boolean execute(String source, Collection<ClassFileRepr> b) {
-              unchangedSources.add(toFull(source));
-              return true;
-            }
+          delta.myRelativeSourceFilePathToClasses.forEachEntry((source, b) -> {
+            unchangedSources.add(toFull(source));
+            return true;
           });
           unchangedSources.removeAll(delta.getChangedFiles());
           if (!unchangedSources.isEmpty()) {
@@ -2787,9 +2783,8 @@ public final class Mappings {
           myClassToSubclasses.putAll(delta.myClassToSubclasses);
           myClassToRelativeSourceFilePath.replaceAll(delta.myClassToRelativeSourceFilePath);
           myRelativeSourceFilePathToClasses.replaceAll(delta.myRelativeSourceFilePathToClasses);
-          delta.myRelativeSourceFilePathToClasses.forEachEntry(new TObjectObjectProcedure<String, Collection<ClassFileRepr>>() {
-            @Override
-            public boolean execute(String src, Collection<ClassFileRepr> classes) {
+          delta.myRelativeSourceFilePathToClasses.forEachEntry(
+            (src, classes) -> {
               for (ClassFileRepr repr : classes) {
                 if (repr instanceof ClassRepr) {
                   final ClassRepr clsRepr = (ClassRepr)repr;
@@ -2799,8 +2794,7 @@ public final class Mappings {
                 }
               }
               return true;
-            }
-          });
+            });
         }
 
         // updating classToClass dependencies

@@ -33,6 +33,17 @@ public final class FileCollectionFactory {
       return FileUtilRt.pathsEqual(a == null ? null : a.getPath(), b == null ? null : b.getPath());
     }
   };
+  public static final HashingStrategy<String> FILE_PATH_HASH_STRATEGY = new HashingStrategy<String>() {
+    @Override
+    public int hashCode(@Nullable String o) {
+      return FileUtilRt.pathHashCode(o);
+    }
+
+    @Override
+    public boolean equals(@Nullable String p1, @Nullable String p2) {
+      return FileUtilRt.pathsEqual(p1, p2);
+    }
+  };
 
   /**
    * Create linked map with canonicalized key hash strategy.

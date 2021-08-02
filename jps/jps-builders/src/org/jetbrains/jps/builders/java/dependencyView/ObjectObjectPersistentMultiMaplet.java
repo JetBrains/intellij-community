@@ -1,12 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.AppendablePersistentMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
-import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
@@ -159,23 +159,17 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
 
   @Override
   public void putAll(ObjectObjectMultiMaplet<K, V> m) {
-    m.forEachEntry(new TObjectObjectProcedure<K, Collection<V>>() {
-      @Override
-      public boolean execute(K key, Collection<V> value) {
-        put(key, value);
-        return true;
-      }
+    m.forEachEntry((key, value) -> {
+      put(key, value);
+      return true;
     });
   }
 
   @Override
   public void replaceAll(ObjectObjectMultiMaplet<K, V> m) {
-    m.forEachEntry(new TObjectObjectProcedure<K, Collection<V>>() {
-      @Override
-      public boolean execute(K key, Collection<V> value) {
-        replace(key, value);
-        return true;
-      }
+    m.forEachEntry((key, value) -> {
+      replace(key, value);
+      return true;
     });
   }
 
@@ -203,11 +197,11 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
   }
 
   @Override
-  public void forEachEntry(final TObjectObjectProcedure<K, Collection<V>> procedure) {
+  void forEachEntry(@NotNull PairProcessor<? super K, ? super Collection<V>> procedure) {
     try {
       myMap.processKeysWithExistingMapping(key -> {
         try {
-          return procedure.execute(key, myMap.get(key));
+          return procedure.process(key, myMap.get(key));
         }
         catch (IOException e) {
           throw new BuildDataCorruptedException(e);

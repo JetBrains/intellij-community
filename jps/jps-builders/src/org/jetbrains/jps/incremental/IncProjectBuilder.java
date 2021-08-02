@@ -7,10 +7,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -1174,8 +1174,8 @@ public final class IncProjectBuilder {
     }
 
     final ProjectDescriptor pd = context.getProjectDescriptor();
-    final Set<String> affectedOutputs = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
-    final Set<String> affectedSources = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    final Set<String> affectedOutputs = CollectionFactory.createFilePathSet();
+    final Set<String> affectedSources = CollectionFactory.createFilePathSet();
 
     final List<SourceToOutputMapping> mappings = new ArrayList<>();
     for (T target : targets) {

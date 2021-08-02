@@ -18,9 +18,9 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.indexing.IdFilter;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -209,9 +209,9 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
     }
 
     PsiManager myManager = PsiManager.getInstance(myProject);
-    Set<PsiMember> set = new THashSet<>(members.size(), new TObjectHashingStrategy<>() {
+    Set<PsiMember> set = CollectionFactory.createCustomHashingStrategySet(new HashingStrategy<>() {
       @Override
-      public int computeHashCode(PsiMember member) {
+      public int hashCode(PsiMember member) {
         int code = 0;
         final PsiClass clazz = member.getContainingClass();
         if (clazz != null) {

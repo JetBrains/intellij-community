@@ -155,6 +155,9 @@ public final class CollectionFactory {
   public static @NotNull Set<String> createCaseInsensitiveStringSet(@NotNull Collection<String> items) {
     return new ObjectOpenCustomHashSet<>(items, FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
   }
+  public static @NotNull Set<String> createCaseInsensitiveStringSet(int initialSize) {
+    return new ObjectOpenCustomHashSet<>(initialSize, FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
+  }
 
   public static <V> @NotNull Map<String, V> createCaseInsensitiveStringMap() {
     return new Object2ObjectOpenCustomHashMap<>(FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());

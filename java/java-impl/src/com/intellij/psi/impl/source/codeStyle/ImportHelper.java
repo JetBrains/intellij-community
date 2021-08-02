@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.ImportFilter;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.jsp.JspSpiUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +27,6 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassRe
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaJspElementType;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.jsp.JspSpiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -38,16 +38,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.NotNullList;
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntProcedure;
+import com.intellij.util.containers.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -153,42 +151,33 @@ public final class ImportHelper{
   public static void collectOnDemandImports(@NotNull List<? extends Pair<String, Boolean>> resultList,
                                             @NotNull JavaCodeStyleSettings settings,
                                             @NotNull Map<String, Boolean> outClassesOrPackagesToImportOnDemand) {
-    TObjectIntHashMap<String> packageToCountMap = new TObjectIntHashMap<>();
-    TObjectIntHashMap<String> classToCountMap = new TObjectIntHashMap<>();
+    ObjectIntHashMap<String> packageToCountMap = new ObjectIntHashMap<>();
+    ObjectIntHashMap<String> classToCountMap = new ObjectIntHashMap<>();
     for (Pair<String, Boolean> pair : resultList) {
       String name = pair.getFirst();
       Boolean isStatic = pair.getSecond();
       String packageOrClassName = getPackageOrClassName(name);
       if (packageOrClassName.isEmpty()) continue;
-      if (isStatic) {
-        int count = classToCountMap.get(packageOrClassName);
-        classToCountMap.put(packageOrClassName, count + 1);
-      }
-      else {
-        int count = packageToCountMap.get(packageOrClassName);
-        packageToCountMap.put(packageOrClassName, count + 1);
+      ObjectIntHashMap<String> map = isStatic ? classToCountMap : packageToCountMap;
+      if (!map.increment(packageOrClassName)) {
+        map.put(packageOrClassName, 1);
       }
     }
 
-
-    final class MyVisitorProcedure implements TObjectIntProcedure<String> {
-      private final boolean myIsVisitingPackages;
-
-      private MyVisitorProcedure(boolean isVisitingPackages) {
-        myIsVisitingPackages = isVisitingPackages;
-      }
-
-      @Override
-      public boolean execute(final String packageOrClassName, final int count) {
-        if (isToUseImportOnDemand(packageOrClassName, count, !myIsVisitingPackages, settings)){
-          boolean isStatic = !myIsVisitingPackages;
-          outClassesOrPackagesToImportOnDemand.put(packageOrClassName, isStatic);
-        }
-        return true;
+    for (ObjectIntMap.Entry<String> entry : classToCountMap.entries()) {
+      String packageOrClassName = entry.getKey();
+      int count = entry.getValue();
+      if (isToUseImportOnDemand(packageOrClassName, count, true, settings)){
+        outClassesOrPackagesToImportOnDemand.put(packageOrClassName, true);
       }
     }
-    classToCountMap.forEachEntry(new MyVisitorProcedure(false));
-    packageToCountMap.forEachEntry(new MyVisitorProcedure(true));
+    for (ObjectIntMap.Entry<String> entry : packageToCountMap.entries()) {
+      String packageOrClassName = entry.getKey();
+      int count = entry.getValue();
+      if (isToUseImportOnDemand(packageOrClassName, count, false, settings)){
+        outClassesOrPackagesToImportOnDemand.put(packageOrClassName, false);
+      }
+    }
   }
 
   public static List<Pair<String, Boolean>> sortItemsAccordingToSettings(List<? extends Pair<String, Boolean>> names, final JavaCodeStyleSettings settings) {
