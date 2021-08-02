@@ -19,6 +19,7 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.java.JavaLanguageRuntimeType
 import com.intellij.execution.util.JavaParametersUtil
 import com.intellij.execution.util.ProgramParametersUtil
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
@@ -474,7 +475,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
                 return true
             }
 
-            return KotlinMainFunctionLocatingService.hasMain(mainFunCandidates)
+            return service<KotlinMainFunctionLocatingService>().hasMain(mainFunCandidates)
         }
 
     }
@@ -483,29 +484,71 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
 
 /**
  * A service for detecting entry points (like "main" function) in classes and objects.
+ *
+ * Abstracts away the usage of the different Kotlin frontends (detecting "main" requires resolve).
  */
-object KotlinMainFunctionLocatingService {
-    private fun getMainFunCandidates(psiClass: PsiClass): Collection<KtNamedFunction> {
-        return psiClass.allMethods.map { method: PsiMethod ->
-            if (method !is KtLightMethod) return@map null
-            if (method.getName() != "main") return@map null
-            val declaration =
-                method.kotlinOrigin
-            if (declaration is KtNamedFunction) declaration else null
-        }.filterNotNull()
-    }
+interface KotlinMainFunctionLocatingService {
+    fun isMain(function: KtNamedFunction): Boolean
 
-    fun findMainInClass(psiClass: PsiClass): KtNamedFunction? {
-        return getMainFunCandidates(psiClass).find { isMain(it) }
-    }
+    fun hasMain(declarations: List<KtDeclaration>): Boolean
 
-    fun isMain(function: KtNamedFunction): Boolean {
+    /**
+     * Few convenience functions to avoid retrieving service by hand.
+     */
+    companion object {
+        private fun getMainFunCandidates(psiClass: PsiClass): Collection<KtNamedFunction> {
+            return psiClass.allMethods.map { method: PsiMethod ->
+                if (method !is KtLightMethod) return@map null
+                if (method.getName() != "main") return@map null
+                val declaration =
+                    method.kotlinOrigin
+                if (declaration is KtNamedFunction) declaration else null
+            }.filterNotNull()
+        }
+
+        fun findMainInClass(psiClass: PsiClass): KtNamedFunction? {
+            val mainLocatingService = service<KotlinMainFunctionLocatingService>()
+
+            return getMainFunCandidates(psiClass).find { mainLocatingService.isMain(it) }
+        }
+
+        fun getEntryPointContainer(locationElement: PsiElement): KtDeclarationContainer? {
+            val mainLocatingService = service<KotlinMainFunctionLocatingService>()
+
+            val psiFile = locationElement.containingFile
+            if (!(psiFile is KtFile && ProjectRootsUtil.isInProjectOrLibSource(psiFile))) return null
+
+            var currentElement = locationElement.declarationContainer(false)
+            while (currentElement != null) {
+                var entryPointContainer = currentElement
+                if (entryPointContainer is KtClass) {
+                    entryPointContainer = entryPointContainer.companionObjects.singleOrNull()
+                }
+                if (entryPointContainer != null && mainLocatingService.hasMain(entryPointContainer.declarations)) return entryPointContainer
+                currentElement = (currentElement as PsiElement).declarationContainer(true)
+            }
+
+            return null
+        }
+
+        private fun PsiElement.declarationContainer(strict: Boolean): KtDeclarationContainer? {
+            val element = if (strict)
+                PsiTreeUtil.getParentOfType(this, KtClassOrObject::class.java, KtFile::class.java)
+            else
+                PsiTreeUtil.getNonStrictParentOfType(this, KtClassOrObject::class.java, KtFile::class.java)
+            return element
+        }
+    }
+}
+
+internal class KotlinFE10MainFunctionLocatingService : KotlinMainFunctionLocatingService {
+    override fun isMain(function: KtNamedFunction): Boolean {
         val bindingContext = function.analyze(BodyResolveMode.FULL)
         val mainFunctionDetector = MainFunctionDetector(bindingContext, function.languageVersionSettings)
         return mainFunctionDetector.isMain(function)
     }
 
-    fun hasMain(declarations: List<KtDeclaration>): Boolean {
+    override fun hasMain(declarations: List<KtDeclaration>): Boolean {
         if (declarations.isEmpty()) return false
 
         val languageVersionSettings = declarations.first().languageVersionSettings
@@ -513,30 +556,5 @@ object KotlinMainFunctionLocatingService {
             MainFunctionDetector(languageVersionSettings) { it.resolveToDescriptorIfAny(BodyResolveMode.FULL) }
 
         return mainFunctionDetector.hasMain(declarations)
-    }
-
-    fun getEntryPointContainer(locationElement: PsiElement): KtDeclarationContainer? {
-        val psiFile = locationElement.containingFile
-        if (!(psiFile is KtFile && ProjectRootsUtil.isInProjectOrLibSource(psiFile))) return null
-
-        var currentElement = locationElement.declarationContainer(false)
-        while (currentElement != null) {
-            var entryPointContainer = currentElement
-            if (entryPointContainer is KtClass) {
-                entryPointContainer = entryPointContainer.companionObjects.singleOrNull()
-            }
-            if (entryPointContainer != null && hasMain(entryPointContainer.declarations)) return entryPointContainer
-            currentElement = (currentElement as PsiElement).declarationContainer(true)
-        }
-
-        return null
-    }
-
-    private fun PsiElement.declarationContainer(strict: Boolean): KtDeclarationContainer? {
-        val element = if (strict)
-            PsiTreeUtil.getParentOfType(this, KtClassOrObject::class.java, KtFile::class.java)
-        else
-            PsiTreeUtil.getNonStrictParentOfType(this, KtClassOrObject::class.java, KtFile::class.java)
-        return element
     }
 }
