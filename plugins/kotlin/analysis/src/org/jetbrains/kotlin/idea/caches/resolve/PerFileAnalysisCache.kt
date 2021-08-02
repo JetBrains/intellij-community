@@ -517,6 +517,7 @@ private object KotlinResolveDataProvider {
             val targetPlatform = moduleInfo.platform
 
             try {
+                trace.resetCallback()
                 callback?.let {
                     trace.setCallback(it)
                 }
