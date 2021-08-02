@@ -28,6 +28,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.CreateMissingSwitchBranchesFix;
@@ -100,12 +101,18 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
               if (!isOnTheFly) return;
               highlighting = ProblemHighlightType.INFORMATION;
             }
-            continue;
+            if (child.isDefaultCase()) {
+              continue;
+            }
           }
           List<PsiEnumConstant> enumConstants = SwitchUtils.findEnumConstants(child);
           if (enumConstants.isEmpty()) {
-            // Syntax error or unresolved constant: do not report anything on incomplete code
-            return;
+            PsiCaseLabelElementList labelElementList = child.getCaseLabelElementList();
+            if (labelElementList == null ||
+                !ContainerUtil.and(labelElementList.getElements(), labelElement -> isDefaultOrNull(labelElement))) {
+              // Syntax error or unresolved constant: do not report anything on incomplete code
+              return;
+            }
           }
           for (PsiEnumConstant constant : enumConstants) {
             if (constant.getContainingClass() != aClass) {
@@ -157,11 +164,16 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
     };
   }
 
-  private static boolean hasMatchingNull(PsiSwitchLabelStatementBase label) {
+  private static boolean isDefaultOrNull(@Nullable PsiCaseLabelElement labelElement) {
+    return labelElement instanceof PsiDefaultCaseLabelElement ||
+           ExpressionUtils.isNullLiteral(ObjectUtils.tryCast(labelElement, PsiExpression.class));
+  }
+
+  private static boolean hasMatchingNull(@NotNull PsiSwitchLabelStatementBase label) {
     PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
     if (labelElementList == null) return false;
-    return ContainerUtil.exists(labelElementList.getElements(), element ->
-      element instanceof PsiExpression && ExpressionUtils.isNullLiteral((PsiExpression)element)
+    return ContainerUtil.exists(labelElementList.getElements(),
+                                element -> ExpressionUtils.isNullLiteral(ObjectUtils.tryCast(element, PsiExpression.class))
     );
   }
 }

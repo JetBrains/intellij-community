@@ -452,7 +452,7 @@ public final class SwitchUtils {
     List<PsiEnumConstant> constants = new ArrayList<>();
     for (PsiCaseLabelElement labelElement : list.getElements()) {
       if (labelElement instanceof PsiDefaultCaseLabelElement ||
-          (labelElement instanceof PsiExpression && ExpressionUtils.isNullLiteral((PsiExpression)labelElement))) {
+          ExpressionUtils.isNullLiteral(ObjectUtils.tryCast(labelElement, PsiExpression.class))) {
         continue;
       }
       if (labelElement instanceof PsiReferenceExpression) {
