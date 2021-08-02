@@ -52,4 +52,9 @@ public class KotlinVariablePrintingTestGenerated extends AbstractKotlinVariableP
     public void testOptimisedVariablesWithWhen() throws Exception {
         runTest("testData/variables/optimisedVariablesWithWhen.kt");
     }
+
+    @TestMetadata("reentrantInlineFunctions.kt")
+    public void testReentrantInlineFunctions() throws Exception {
+        runTest("testData/variables/reentrantInlineFunctions.kt");
+    }
 }
