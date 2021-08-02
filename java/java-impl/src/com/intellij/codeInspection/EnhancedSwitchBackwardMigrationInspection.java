@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.SwitchUtils;
 import gnu.trove.TIntArrayList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -192,7 +193,7 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
         caseCounts.add(caseCount);
         joiner.add(generate);
         mainCommentTracker.markUnchanged(rule);
-        addDefaultBranch &= !rule.isDefaultCase();
+        addDefaultBranch &= !SwitchUtils.isDefaultLabel(rule);
       }
       if (addDefaultBranch) {
         joiner.add("default:throw new java.lang.IllegalArgumentException();");
@@ -231,7 +232,7 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
       PsiCaseLabelElementList labelElementList = rule.getCaseLabelElementList();
       String caseExpressionsText;
       if (labelElementList == null || labelElementList.getElementCount() == 0) {
-        if (rule.isDefaultCase()) {
+        if (SwitchUtils.isDefaultLabel(rule)) {
           caseExpressionsText = "default:";
         } else {
           caseExpressionsText = "case:";
