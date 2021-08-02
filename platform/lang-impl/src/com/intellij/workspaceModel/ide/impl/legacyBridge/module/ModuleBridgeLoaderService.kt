@@ -53,7 +53,7 @@ internal class ModuleBridgeLoaderService(private val project: Project) {
     moduleManager.loadModules(entities)
     childActivity?.setDescription("modules count: ${moduleManager.modules.size}")
     childActivity?.end()
-    val librariesActivity = StartUpMeasurer.startActivity("project libraries loading", ActivityCategory.DEFAULT)
+    val librariesActivity = StartUpMeasurer.startActivity("libraries instantiation", ActivityCategory.DEFAULT)
     (LibraryTablesRegistrar.getInstance().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries()
     librariesActivity.end()
     activity?.end()

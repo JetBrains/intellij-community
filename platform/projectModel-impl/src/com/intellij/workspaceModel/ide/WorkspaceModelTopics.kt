@@ -69,7 +69,7 @@ class WorkspaceModelTopics : Disposable {
   fun syncPublisher(messageBus: MessageBus): WorkspaceModelChangeListener = messageBus.syncPublisher(CHANGED)
 
   fun notifyModulesAreLoaded() {
-    val activity = StartUpMeasurer.startActivity("events sending after modules are loaded", ActivityCategory.DEFAULT)
+    val activity = StartUpMeasurer.startActivity("postponed events sending", ActivityCategory.DEFAULT)
     sendToQueue = false
     if (allEvents.isNotEmpty() && allEvents.any { it.events.isNotEmpty() }) {
       val activityInQueue = activity.startChild("events sending (in queue)")
