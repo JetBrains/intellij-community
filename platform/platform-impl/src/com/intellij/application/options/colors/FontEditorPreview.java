@@ -216,7 +216,7 @@ public class FontEditorPreview implements PreviewPanel{
 
   @Override
   public void disposeUIResources() {
-    if (myTextModel.isDefault()) {
+    if (myTextModel.isDefault() || myTextModel.getRawText().isEmpty()) {
       PropertiesComponent.getInstance().unsetValue(PREVIEW_TEXT_KEY);
     }
     else {
