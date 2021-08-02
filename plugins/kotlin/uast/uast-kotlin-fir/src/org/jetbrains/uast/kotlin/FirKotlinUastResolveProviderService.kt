@@ -245,13 +245,13 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    override fun getType(ktExpression: KtExpression, parent: UElement): PsiType? {
+    override fun getType(ktExpression: KtExpression, source: UElement): PsiType? {
         analyseForUast(ktExpression) {
             return ktExpression.getKtType().asPsiType(ktExpression, TypeMappingMode.DEFAULT_UAST)
         }
     }
 
-    override fun getType(ktDeclaration: KtDeclaration, parent: UElement): PsiType? {
+    override fun getType(ktDeclaration: KtDeclaration, source: UElement): PsiType? {
         return getType(ktDeclaration)
     }
 
@@ -265,7 +265,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    override fun getFunctionType(ktFunction: KtFunction, parent: UElement): PsiType? {
+    override fun getFunctionType(ktFunction: KtFunction, source: UElement): PsiType? {
         analyseForUast(ktFunction) {
             return ktFunction.getFunctionalType().asPsiType(ktFunction, TypeMappingMode.DEFAULT_UAST)
         }
