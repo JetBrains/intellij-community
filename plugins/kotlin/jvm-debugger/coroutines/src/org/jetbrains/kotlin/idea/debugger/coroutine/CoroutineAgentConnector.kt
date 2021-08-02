@@ -2,12 +2,15 @@
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
 import com.intellij.execution.configurations.JavaParameters
+import com.intellij.execution.configurations.ModuleBasedConfiguration
+import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.PathsList
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 
 enum class CoroutineDebuggerMode {
@@ -27,8 +30,11 @@ internal object CoroutineAgentConnector {
     private val versionToCompareTo = DefaultArtifactVersion("1.3.7-255")
     private val kotlinxCoroutinesCoreJarRegex = Regex(""".+\W$kotlinxCoroutinesCoreName(-jvm)?-(\d[\w.\-]+)?\.jar""")
 
-    fun attachCoroutineAgent(project: Project, params: JavaParameters): Boolean {
-        val searchResult = findKotlinxCoroutinesCoreJar(project)
+    fun attachCoroutineAgent(project: Project, params: JavaParameters, configuration: RunConfigurationBase<*>?): Boolean {
+         if (!params.classPath.containsKotlinxCoroutinesCore()) {
+            return false
+        }
+        val searchResult = findKotlinxCoroutinesCoreJar(project, configuration)
         if (searchResult.debuggerMode == CoroutineDebuggerMode.VERSION_1_3_8_AND_UP &&
             searchResult.jarPath != null) {
             return initializeCoroutineAgent(params, searchResult.jarPath)
@@ -36,9 +42,12 @@ internal object CoroutineAgentConnector {
         return false
     }
 
-    private fun findKotlinxCoroutinesCoreJar(project: Project): KotlinxCoroutinesSearchResult {
+    private fun PathsList.containsKotlinxCoroutinesCore() =
+        pathList.any { it.contains(kotlinxCoroutinesCoreName) }
+
+    private fun findKotlinxCoroutinesCoreJar(project: Project, configuration: RunConfigurationBase<*>?): KotlinxCoroutinesSearchResult {
         val matchResult = project
-            .getJarVirtualFiles(kotlinxCoroutinesPackageName)
+            .getJarVirtualFiles(project, configuration, kotlinxCoroutinesPackageName)
             .matchToPackageRegexInProject(project, kotlinxCoroutinesCoreJarRegex)
 
         if (matchResult == null || matchResult.groupValues.size < 3) {
@@ -63,11 +72,15 @@ internal object CoroutineAgentConnector {
         return null
     }
 
-    private fun Project.getJarVirtualFiles(packageName: String): List<VirtualFile> {
+    private fun Project.getJarVirtualFiles(project: Project, configuration: RunConfigurationBase<*>?, packageName: String): List<VirtualFile> {
         val kotlinxCoroutinesPackage = JavaPsiFacade.getInstance(this)
             .findPackage(packageName)
             ?: return emptyList()
-        return kotlinxCoroutinesPackage.directories.mapNotNull { it.virtualFile }
+        var scope = GlobalSearchScope.allScope(project)
+        if (configuration is ModuleBasedConfiguration<*, *>) {
+            configuration.configurationModule.module?.let { scope = it.getModuleRuntimeScope(true) }
+        }
+        return kotlinxCoroutinesPackage.getDirectories(scope).mapNotNull { it.virtualFile }
     }
 
     private fun String.getParentJarPath(): String? {
