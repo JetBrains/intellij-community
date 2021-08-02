@@ -399,6 +399,10 @@
       <add-to-group group-id="DebugReloadGroup" anchor="last"/>
     </action>
 
+    <action id="RunToolbarHotSwapAction" class="com.intellij.debugger.actions.RunToolbarHotSwapAction" icon="com.intellij.icons.AllIcons.Actions.BuildAutoReloadChanges">
+      <add-to-group group-id="RunToolbarAdditionalProcessActions"/>
+    </action>
+
     <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" icon="AllIcons.Actions.PopFrame">
       <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="ForceRunToCursor"/>
       <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="first"/>
