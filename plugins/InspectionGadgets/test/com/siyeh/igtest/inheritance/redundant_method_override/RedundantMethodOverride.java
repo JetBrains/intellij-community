@@ -26,6 +26,14 @@ public class RedundantMethodOverride extends S {
       System.out.println(s);
     }
   }
+
+  @Override
+  void <warning descr="Method 'x()' is identical to its super method">x</warning>() {
+    try {
+    } catch (RuntimeException f) {
+      System.out.println(f);
+    }
+  }
 }
 class S {
 
@@ -48,6 +56,13 @@ class S {
   void x(List<String> list) {
     for (String t : list) {
       System.out.println(t);
+    }
+  }
+
+  void x() {
+    try {
+    } catch (RuntimeException e) {
+      System.out.println(e);
     }
   }
 }
