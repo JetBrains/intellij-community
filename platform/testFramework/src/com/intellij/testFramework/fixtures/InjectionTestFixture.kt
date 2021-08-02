@@ -16,9 +16,8 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
+import org.junit.Assert
 import java.util.*
-import kotlin.collections.HashSet
-import kotlin.test.fail
 
 class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
 
@@ -70,7 +69,7 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
     while (expected.isNotEmpty()) {
       val (text, injectedLanguage) = expected.pop()
       val found = (foundInjections.find { (psi, file) -> psi.text == text && file.language.id == injectedLanguage }
-                   ?: fail(
+                   ?: Assert.fail(
                      "no injection '$text' -> '$injectedLanguage' were found, remains: ${foundInjections.joinToString { (psi, file) -> "'${psi.text}' -> '${file.language}'" }}   "))
       foundInjections.remove(found)
     }
