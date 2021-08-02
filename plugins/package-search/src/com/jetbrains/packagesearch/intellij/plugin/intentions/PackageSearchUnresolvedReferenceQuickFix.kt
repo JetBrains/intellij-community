@@ -23,7 +23,10 @@ class PackageSearchUnresolvedReferenceQuickFix(private val ref: PsiReference) : 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
         PackageSearchToolWindowFactory.activateToolWindow(project) {
             project.packageSearchDataService.setSearchQuery(ref.canonicalText)
-            PackageSearchEventsLogger.logRunQuickFix(FUSGroupIds.QuickFixTypes.UnresolvedReference, file?.fileType?.name)
+            PackageSearchEventsLogger.logRunQuickFix(
+                FUSGroupIds.QuickFixTypes.UnresolvedReference,
+                FUSGroupIds.QuickFixFileTypes.from(file?.fileType)
+            )
         }
     }
 

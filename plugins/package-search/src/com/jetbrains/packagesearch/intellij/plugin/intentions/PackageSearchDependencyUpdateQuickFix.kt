@@ -52,6 +52,6 @@ internal class PackageSearchDependencyUpdateQuickFix(
         )
 
         project.packageSearchDataService.executeOperations(operations)
-        PackageSearchEventsLogger.logRunQuickFix(FUSGroupIds.QuickFixTypes.DependencyUpdate, file.fileType.name)
+        PackageSearchEventsLogger.logRunQuickFix(FUSGroupIds.QuickFixTypes.DependencyUpdate, FUSGroupIds.QuickFixFileTypes.from(file.fileType))
     }
 }

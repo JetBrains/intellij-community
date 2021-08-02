@@ -1,14 +1,22 @@
 package com.jetbrains.packagesearch.intellij.plugin.fus
 
-object FUSGroupIds {
+import com.intellij.openapi.fileTypes.FileType
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
+
+internal object FUSGroupIds {
 
     const val GROUP_ID = "packagesearch"
 
     // FIELDS
-    const val BUILD_SYSTEM = "build_system"
+    const val MODULE_OPERATION_PROVIDER_CLASS = "module_operation_provider_class"
     const val REPOSITORY_ID = "repository_id"
     const val REPOSITORY_URL = "repository_url"
+    const val REPOSITORY_USES_CUSTOM_URL = "repository_uses_custom_url"
     const val PACKAGE_IS_INSTALLED = "package_is_installed"
+    const val TARGET_MODULES = "target_modules"
+    const val TARGET_MODULES_COUNT = "target_modules_count"
+    const val TARGET_MODULES_MIXED_BUILD_SYSTEMS = "target_modules_mixed_build_systems"
+
     const val PREFERENCES_GRADLE_SCOPES_COUNT = "preferences_gradle_scopes_count"
     const val PREFERENCES_UPDATE_SCOPES_ON_USAGE = "preferences_update_scopes_on_usage"
     const val PREFERENCES_DEFAULT_GRADLE_SCOPE_CHANGED = "preferences_default_gradle_scope"
@@ -20,13 +28,91 @@ object FUSGroupIds {
     const val SEARCH_QUERY_LENGTH = "search_query"
 
     // ENUMS
-    enum class QuickFixTypes {
 
-        DependencyUpdate, UnresolvedReference
+    enum class QuickFixTypes { DependencyUpdate, UnresolvedReference }
+
+    enum class QuickFixFileTypes {
+        Missing, Other, Groovy, Kotlin, Xml, Scala;
+
+        companion object {
+
+            fun from(fileType: FileType?): QuickFixFileTypes {
+                if (fileType == null) return Missing
+
+                return when (fileType.name.lowercase()) {
+                    "groovy" -> Groovy
+                    "kotlin" -> Kotlin
+                    "xml" -> Xml
+                    "scala" -> Scala
+                    else -> Other
+                }
+            }
+        }
+    }
+
+    enum class TargetModulesType {
+        None, One, All;
+
+        companion object {
+            fun from(targetModules: TargetModules) =
+                when(targetModules) {
+                    is TargetModules.All -> All
+                    TargetModules.None -> None
+                    is TargetModules.One -> One
+                }
+        }
     }
 
     enum class DetailsLinkTypes { PackageUsages, GitHub, Documentation, License, ProjectWebsite, Readme }
+
     enum class ToggleTypes { PackageDetails, OnlyStable, OnlyKotlinMp }
+
+    enum class IndexedRepositories(val ids: Set<String>, val urls: Set<String>) {
+        OTHER(ids = emptySet(), urls = emptySet()),
+        NONE(ids = emptySet(), urls = emptySet()),
+        MAVEN_CENTRAL(
+            ids = setOf("maven_central"),
+            urls = setOf(
+                "https://repo.maven.apache.org/maven2/",
+                "https://maven-central.storage-download.googleapis.com/maven2",
+                "https://repo1.maven.org/maven2/"
+            )
+        ),
+        GOOGLE_MAVEN(
+            ids = setOf("gmaven"),
+            urls = setOf("https://maven.google.com/")
+        ),
+        JETBRAINS_REPOS(
+            ids = setOf("dokka_dev", "compose_dev", "ktor_eap", "space_sdk"),
+            urls = setOf(
+                "https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/",
+                "https://maven.pkg.jetbrains.space/public/p/compose/dev/",
+                "https://maven.pkg.jetbrains.space/public/p/ktor/eap/",
+                "https://maven.pkg.jetbrains.space/public/p/space/maven/"
+            )
+        );
+
+        companion object {
+
+            fun forId(repositoryId: String?): IndexedRepositories {
+                if (repositoryId.isNullOrBlank()) return NONE
+                return values().find { it.ids.contains(repositoryId) } ?: OTHER
+            }
+
+            fun validateUrl(repositoryUrl: String?): String? {
+                if (repositoryUrl.isNullOrBlank()) return null
+                return if (indexedRepositoryUrls.contains(repositoryUrl)) repositoryUrl else null
+            }
+
+            fun forUrl(repositoryUrl: String?): IndexedRepositories {
+                if (repositoryUrl.isNullOrBlank()) return NONE
+                return values().find { it.urls.contains(repositoryUrl) } ?: OTHER
+            }
+        }
+    }
+
+    val indexedRepositoryUrls = IndexedRepositories.values()
+        .flatMap { it.urls }
 
     // EVENTS
     const val PACKAGE_INSTALLED = "package_installed"
@@ -37,7 +123,7 @@ object FUSGroupIds {
     const val PREFERENCES_CHANGED = "preferences_changed"
     const val PREFERENCES_RESET = "preferences_reset"
     const val PACKAGE_SELECTED = "package_selected"
-    const val MODULE_SELECTED = "module_selected"
+    const val TARGET_MODULES_SELECTED = "target_modules_selected"
     const val RUN_QUICK_FIX = "run_quick_fix"
     const val DETAILS_LINK_CLICK = "details_link_click"
     const val TOGGLE = "toggle"
