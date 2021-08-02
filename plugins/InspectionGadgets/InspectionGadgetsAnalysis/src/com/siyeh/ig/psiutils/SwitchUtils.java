@@ -478,7 +478,8 @@ public final class SwitchUtils {
     return constants;
   }
 
-  public static boolean isDefaultLabel(PsiSwitchLabelStatementBase label) {
+  public static boolean isDefaultLabel(@Nullable PsiSwitchLabelStatementBase label) {
+    if (label == null) return false;
     if (label.isDefaultCase()) return true;
     PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
     if (labelElementList == null) return false;
