@@ -111,9 +111,9 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
             }
     }
 
-    override fun importProject() {
+    override fun importProject(skipIndexing: Boolean?) {
         AndroidStudioTestUtils.specifyAndroidSdk(File(projectPath))
-        super.importProject()
+        super.importProject(skipIndexing)
     }
 
     protected fun importProjectFromTestData(): List<VirtualFile> {
