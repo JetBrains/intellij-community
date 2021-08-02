@@ -11,9 +11,7 @@ import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.serviceContainer.NonInjectable

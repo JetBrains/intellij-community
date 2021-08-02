@@ -95,6 +95,9 @@ public class IdeUiService {
   public void showErrorDialog(String message, String title) {
   }
 
+  public void showMessageDialog(Component component, String message, String title, Icon icon) {
+  }
+
   public VirtualFile[] chooseFiles(FileChooserDescriptor descriptor, Project project, VirtualFile toSelect) {
     return new VirtualFile[0];
   }

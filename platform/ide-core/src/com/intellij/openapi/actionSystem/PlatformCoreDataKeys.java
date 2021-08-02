@@ -3,7 +3,10 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+
+import java.awt.*;
 
 public class PlatformCoreDataKeys extends CommonDataKeys {
   public static final DataKey<VirtualFile> PROJECT_FILE_DIRECTORY = DataKey.create("context.ProjectFileDirectory");
@@ -11,4 +14,33 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
   public static final DataKey<Module> MODULE = DataKey.create("module");
 
   public static final DataKey<FileEditor> FILE_EDITOR = DataKey.create("fileEditor");
+
+  /**
+   * Returns the text of currently selected file/file revision
+   */
+  public static final DataKey<String> FILE_TEXT = DataKey.create("fileText");
+
+  /**
+   * Returns {@link Boolean#TRUE} if action is executed in modal context and
+   * {@link Boolean#FALSE} if action is executed not in modal context. If context
+   * is unknown returns {@code null}.
+   */
+  public static final DataKey<Boolean> IS_MODAL_CONTEXT = DataKey.create("isModalContext");
+
+  /**
+   * Returns help id.
+   *
+   * @see HelpManager#invokeHelp(String)
+   */
+  public static final DataKey<String> HELP_ID = DataKey.create("helpId");
+
+  /**
+   * Returns project if project node is selected (in project view)
+   */
+  public static final DataKey<Project> PROJECT_CONTEXT = DataKey.create("context.Project");
+
+  /**
+   * Returns {@link Component} currently in focus, DataContext should be retrieved for.
+   */
+  public static final DataKey<Component> CONTEXT_COMPONENT = DataKey.create("contextComponent");
 }

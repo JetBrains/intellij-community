@@ -150,4 +150,9 @@ public class IdeUiServiceImpl extends IdeUiService{
                                    Project project, VirtualFile toSelect) {
     return FileChooser.chooseFiles(descriptor, project, toSelect);
   }
+
+  @Override
+  public void showMessageDialog(Component component, String message, String title, Icon icon) {
+    Messages.showMessageDialog(component, message, title, icon);
+  }
 }

@@ -7,14 +7,15 @@ import com.intellij.credentialStore.kdbx.KdbxPassword
 import com.intellij.credentialStore.kdbx.KdbxPassword.Companion.createAndClear
 import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.credentialStore.kdbx.loadKdbx
+import com.intellij.ide.ui.IdeUiService
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
 import java.awt.Component
@@ -69,9 +70,9 @@ open class KeePassFileManager(private val file: Path,
     }
     catch (e: Exception) {
       LOG.warn(e)
-      Messages.showMessageDialog(event?.getData(PlatformDataKeys.CONTEXT_COMPONENT)!!,
-                                 CredentialStoreBundle.message("kee.pass.dialog.message"),
-                                 CredentialStoreBundle.message("kee.pass.dialog.title.cannot.import"), Messages.getErrorIcon())
+      IdeUiService.getInstance().showMessageDialog(event?.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)!!,
+                                          CredentialStoreBundle.message("kee.pass.dialog.message"),
+                                          CredentialStoreBundle.message("kee.pass.dialog.title.cannot.import"), UIUtil.getErrorIcon());
     }
   }
 
@@ -89,7 +90,7 @@ open class KeePassFileManager(private val file: Path,
   }
 
   private fun doImportOrUseExisting(file: Path, event: AnActionEvent?): Boolean {
-    val contextComponent = event?.getData(PlatformDataKeys.CONTEXT_COMPONENT)
+    val contextComponent = event?.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
 
     // check master key file in parent dir of imported file
     val possibleMasterKeyFile = file.parent.resolve(MASTER_KEY_FILE_NAME)
@@ -125,7 +126,7 @@ open class KeePassFileManager(private val file: Path,
   }
 
   fun askAndSetMasterKey(event: AnActionEvent?, @Nls(capitalization = Sentence) topNote: String? = null): Boolean {
-    val contextComponent = event?.getData(PlatformDataKeys.CONTEXT_COMPONENT)
+    val contextComponent = event?.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
 
     // to open old database, key can be required, so, to avoid showing 2 dialogs, check it before
     val db = try {
