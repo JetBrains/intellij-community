@@ -159,9 +159,9 @@ sealed class GithubApiRequestExecutor {
     protected fun createRequestBuilder(request: GithubApiRequest<*>): RequestBuilder {
       return when (request) {
         is GithubApiRequest.Get -> HttpRequests.request(request.url)
+        is GithubApiRequest.Patch -> HttpRequests.patch(request.url, request.bodyMimeType)
         is GithubApiRequest.Post -> HttpRequests.post(request.url, request.bodyMimeType)
         is GithubApiRequest.Put -> HttpRequests.put(request.url, request.bodyMimeType)
-        is GithubApiRequest.Patch -> HttpRequests.patch(request.url, request.bodyMimeType)
         is GithubApiRequest.Head -> HttpRequests.head(request.url)
         is GithubApiRequest.Delete -> {
           if (request.body == null) HttpRequests.delete(request.url) else HttpRequests.delete(request.url, request.bodyMimeType)
