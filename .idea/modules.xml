@@ -917,6 +917,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/copyright/kotlin.copyright.iml" filepath="$PROJECT_DIR$/plugins/kotlin/copyright/kotlin.copyright.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/copyright/tests/kotlin.copyright.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/copyright/tests/kotlin.copyright.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/core/kotlin.core.iml" filepath="$PROJECT_DIR$/plugins/kotlin/core/kotlin.core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/core/tests/kotlin.core.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/core/tests/kotlin.core.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/coverage/kotlin.coverage.iml" filepath="$PROJECT_DIR$/plugins/kotlin/coverage/kotlin.coverage.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/coverage/tests/kotlin.coverage.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/coverage/tests/kotlin.coverage.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/fir/kotlin.fir.iml" filepath="$PROJECT_DIR$/plugins/kotlin/fir/kotlin.fir.iml" />
