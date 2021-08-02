@@ -1,11 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui.welcomeScreen
 
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.InteractiveCourseData
 import com.intellij.openapi.wm.InteractiveCourseFactory
@@ -14,6 +10,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColors
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.scale.JBUIScale
 import training.FeaturesTrainerIcons
+import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.OpenLessonActivities
@@ -97,16 +94,15 @@ private class IFTInteractiveCourseData : InteractiveCourseData {
   }
 
   private fun openLearningFromWelcomeScreen(module: IftModule?) {
-    val action = ActionManager.getInstance().getAction("ShowLearnPanel")
-
-    val onboardingLesson = findOnboardingLesson(module)
-    if (onboardingLesson != null) {
-      OpenLessonActivities.openOnboardingFromWelcomeScreen(onboardingLesson)
-    }
-    else {
-      CourseManager.instance.unfoldModuleOnInit = module ?: CourseManager.instance.modules.firstOrNull()
-      val anActionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataContext.EMPTY_CONTEXT)
-      ActionUtil.performActionDumbAwareWithCallbacks(action, anActionEvent)
+    LangManager.getInstance().getLangSupport()?.startFromWelcomeFrame { selectedSdk: Sdk? ->
+      val onboardingLesson = findOnboardingLesson(module)
+      if (onboardingLesson != null) {
+        OpenLessonActivities.openOnboardingFromWelcomeScreen(onboardingLesson, selectedSdk)
+      }
+      else {
+        CourseManager.instance.unfoldModuleOnInit = module ?: CourseManager.instance.modules.firstOrNull()
+        OpenLessonActivities.openLearnProjectFromWelcomeScreen(selectedSdk)
+      }
     }
   }
 

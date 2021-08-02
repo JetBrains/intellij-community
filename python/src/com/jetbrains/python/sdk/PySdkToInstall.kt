@@ -93,7 +93,7 @@ private fun getPy38ToInstallOnWindows(): PySdkToInstallOnWindows {
   )
 }
 
-internal abstract class PySdkToInstall internal constructor(name: String, version: String)
+abstract class PySdkToInstall internal constructor(name: String, version: String)
   : ProjectJdkImpl(name, PythonSdkType.getInstance(), null, version) {
 
   @CalledInAny
