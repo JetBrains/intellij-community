@@ -1,11 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectImport;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
+import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,15 +38,14 @@ public abstract class ProjectOpenProcessor {
    * If known that a user tries to open some project, ask if the user wants to open it as a plain file or as a project.
    * @return Messages.YES -> Open as a project, Messages.NO -> Open as a plain file, Messages.CANCEL -> Don't open.
    */
-  @Messages.YesNoCancelResult
   public int askConfirmationForOpeningProject(@NotNull VirtualFile file, @Nullable Project project) {
-    return Messages.showYesNoCancelDialog(project,
-                                          IdeBundle.message("message.open.file.is.project", file.getName()),
-                                          IdeBundle.message("title.open.project"),
-                                          IdeBundle.message("message.open.file.is.project.open.as.project"),
-                                          IdeBundle.message("message.open.file.is.project.open.as.file"),
-                                          IdeBundle.message("button.cancel"),
-                                          Messages.getQuestionIcon());
+    return IdeUiService.getInstance().showYesNoCancelDialog(project,
+                                                            IdeCoreBundle.message("message.open.file.is.project", file.getName()),
+                                                            IdeCoreBundle.message("title.open.project"),
+                                                            IdeCoreBundle.message("message.open.file.is.project.open.as.project"),
+                                                            IdeCoreBundle.message("message.open.file.is.project.open.as.file"),
+                                                            IdeCoreBundle.message("button.cancel"),
+                                                            UIUtil.getQuestionIcon());
   }
 
   /**

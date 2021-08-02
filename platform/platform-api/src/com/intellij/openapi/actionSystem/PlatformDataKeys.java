@@ -74,13 +74,6 @@ public class PlatformDataKeys extends PlatformCoreDataKeys {
   public static final DataKey<Point> CONTEXT_MENU_POINT = DataKey.create("contextMenuPoint");
 
   /**
-   * Use this key to split a data provider into two parts: the quick part to be queried on EDT,
-   * and the slow part to be queried on a background thread or under a progress.
-   * That slow part shall be returned when this data key is requested.
-   */
-  public static final DataKey<Iterable<DataProvider>> SLOW_DATA_PROVIDERS = DataKey.create("slowDataProviders");
-
-  /**
    * It's allowed to assign multiple actions to the same keyboard shortcut. Actions system filters them on the current
    * context basis during processing (e.g., we can have two actions assigned to the same shortcut, but one of them is
    * configured to be inapplicable in modal dialog context).

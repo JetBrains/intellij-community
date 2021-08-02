@@ -31,6 +31,7 @@ import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.SSLSocketFactory;
 import javax.swing.*;
@@ -154,5 +155,15 @@ public class IdeUiServiceImpl extends IdeUiService{
   @Override
   public void showMessageDialog(Component component, String message, String title, Icon icon) {
     Messages.showMessageDialog(component, message, title, icon);
+  }
+
+  @Override
+  public int showYesNoCancelDialog(@Nullable Project project,
+                                   String message,
+                                   @NotNull String title,
+                                   @NotNull String yes,
+                                   @NotNull String no,
+                                   @NotNull String cancel, @Nullable Icon icon) {
+    return Messages.showYesNoCancelDialog(project, message,title, yes, no, cancel, icon);
   }
 }

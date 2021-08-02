@@ -126,7 +126,7 @@ public class DataManagerImpl extends DataManager {
   }
 
   private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull DataProvider dataProvider) {
-    Iterable<DataProvider> asyncProviders = PlatformDataKeys.SLOW_DATA_PROVIDERS.getData(dataProvider);
+    Iterable<DataProvider> asyncProviders = PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.getData(dataProvider);
     if (asyncProviders == null) return null;
     for (DataProvider provider : asyncProviders) {
       Object data = provider.getData(dataId);

@@ -43,4 +43,11 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
    * Returns {@link Component} currently in focus, DataContext should be retrieved for.
    */
   public static final DataKey<Component> CONTEXT_COMPONENT = DataKey.create("contextComponent");
+
+  /**
+   * Use this key to split a data provider into two parts: the quick part to be queried on EDT,
+   * and the slow part to be queried on a background thread or under a progress.
+   * That slow part shall be returned when this data key is requested.
+   */
+  public static final DataKey<Iterable<DataProvider>> SLOW_DATA_PROVIDERS = DataKey.create("slowDataProviders");
 }

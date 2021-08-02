@@ -9,9 +9,11 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.SSLSocketFactory;
 import javax.swing.*;
@@ -100,6 +102,17 @@ public class IdeUiService {
 
   public VirtualFile[] chooseFiles(FileChooserDescriptor descriptor, Project project, VirtualFile toSelect) {
     return new VirtualFile[0];
+  }
+
+
+  public int showYesNoCancelDialog(@Nullable Project project,
+                                          @NlsContexts.DialogMessage String message,
+                                          @NotNull @NlsContexts.DialogTitle String title,
+                                          @NotNull @NlsContexts.Button String yes,
+                                          @NotNull @NlsContexts.Button String no,
+                                          @NotNull @NlsContexts.Button String cancel,
+                                          @Nullable Icon icon) {
+    return 0;
   }
 
   public static IdeUiService getInstance() {
