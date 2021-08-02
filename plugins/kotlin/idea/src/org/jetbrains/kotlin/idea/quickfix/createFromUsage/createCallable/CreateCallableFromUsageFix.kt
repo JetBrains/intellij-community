@@ -22,55 +22,72 @@ import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.isAbstract
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
-
-open class CreateCallableFromUsageFix<E : KtElement>(
-    originalExpression: E,
-    callableInfos: List<CallableInfo>
-) : CreateCallableFromUsageFixBase<E>(originalExpression, callableInfos, false)
+import java.lang.ref.WeakReference
 
 class CreateExtensionCallableFromUsageFix<E : KtElement>(
     originalExpression: E,
-    callableInfos: List<CallableInfo>
-) : CreateCallableFromUsageFixBase<E>(originalExpression, callableInfos, true), LowPriorityAction
+    private val callableInfosFactory: () -> List<CallableInfo>?
+) : CreateCallableFromUsageFixBase<E>(originalExpression, true), LowPriorityAction {
+
+    init {
+        init()
+    }
+
+    override val callableInfos: List<CallableInfo>
+        get() = callableInfosFactory() ?: emptyList()
+}
+
+class CreateCallableFromUsageFix<E : KtElement>(
+    originalExpression: E,
+    private val callableInfosFactory: () -> List<CallableInfo>?
+) : CreateCallableFromUsageFixBase<E>(originalExpression, false) {
+
+    init {
+      init()
+    }
+
+    override val callableInfos: List<CallableInfo>
+        get() = callableInfosFactory() ?: emptyList()
+
+}
+
+abstract class AbstractCreateCallableFromUsageFixWithTextAndFamilyName<E : KtElement>(
+    providedText: String,
+    private val familyName: String,
+    originalExpression: E
+): CreateCallableFromUsageFixBase<E>(originalExpression, false) {
+
+    override val calculatedText: String = providedText
+
+    override fun getFamilyName(): String = familyName
+}
 
 abstract class CreateCallableFromUsageFixBase<E : KtElement>(
     originalExpression: E,
-    protected val callableInfos: List<CallableInfo>,
     val isExtension: Boolean
 ) : KotlinCrossLanguageQuickFixAction<E>(originalExpression) {
-    init {
-        assert(callableInfos.isNotEmpty()) { "No CallableInfos: ${originalExpression.getElementTextWithContext()}" }
-        if (callableInfos.size > 1) {
-            val receiverSet = callableInfos.mapTo(HashSet()) { it.receiverTypeInfo }
-            if (receiverSet.size > 1) throw AssertionError("All functions must have common receiver: $receiverSet")
 
-            val possibleContainerSet = callableInfos.mapTo(HashSet()) { it.possibleContainers }
-            if (possibleContainerSet.size > 1) throw AssertionError("All functions must have common containers: $possibleContainerSet")
+    private var callableInfoReference: WeakReference<List<CallableInfo>>? = null
+
+    protected open val callableInfos: List<CallableInfo>
+        get() = listOfNotNull(callableInfo)
+
+    protected open val callableInfo: CallableInfo?
+        get() = throw UnsupportedOperationException()
+
+    protected fun callableInfos(): List<CallableInfo> =
+        callableInfoReference?.get() ?: callableInfos.also {
+            callableInfoReference = WeakReference(it)
         }
-    }
 
-    private fun getDeclaration(descriptor: ClassifierDescriptor, project: Project): PsiElement? {
-        if (descriptor is FunctionClassDescriptor) {
-            val psiFactory = KtPsiFactory(project)
-            val syntheticClass = psiFactory.createClass(IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.render(descriptor))
-            return psiFactory.createAnalyzableFile("${descriptor.name.asString()}.kt", "", element!!).add(syntheticClass)
-        }
-        return DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptor)
-    }
+    protected fun notEmptyCallableInfos() = callableInfos().takeIf { it.isNotEmpty() }
 
-    private fun getDeclarationIfApplicable(project: Project, candidate: TypeCandidate): PsiElement? {
-        val descriptor = candidate.theType.constructor.declarationDescriptor ?: return null
-        val declaration = getDeclaration(descriptor, project) ?: return null
-        if (declaration !is KtClassOrObject && declaration !is KtTypeParameter && declaration !is PsiClass) return null
-        return if (isExtension || declaration.canRefactor()) declaration else null
-    }
+    private var initialized: Boolean = false
 
-    override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
-
-    override fun getText(): String {
+    protected open val calculatedText: String by lazy(fun(): String {
         val element = element ?: return ""
+        val callableInfos = notEmptyCallableInfos() ?: return ""
         val receiverTypeInfo = callableInfos.first().receiverTypeInfo
         val renderedCallables = callableInfos.map {
             buildString {
@@ -115,7 +132,7 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
             }
         }
 
-        return StringBuilder().apply {
+        return buildString {
             append(KotlinBundle.message("text.create"))
             append(' ')
 
@@ -130,12 +147,13 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
             }
 
             renderedCallables.joinTo(this)
-        }.toString()
-    }
+        }
+    })
 
-    override fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile): Boolean {
+    protected open val calculatedAvailableImpl: Boolean by lazy(fun(): Boolean {
         val element = element ?: return false
 
+        val callableInfos = notEmptyCallableInfos() ?: return false
         val receiverInfo = callableInfos.first().receiverTypeInfo
 
         if (receiverInfo == TypeInfo.Empty) {
@@ -150,7 +168,7 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
         val propertyInfo = callableInfos.firstOrNull { it is PropertyInfo } as PropertyInfo?
         val isFunction = callableInfos.any { it.kind == CallableKind.FUNCTION }
         return receiverTypeCandidates.any {
-            val declaration = getDeclarationIfApplicable(project, it)
+            val declaration = getDeclarationIfApplicable(element.project, it)
             val insertToJavaInterface = declaration is PsiClass && declaration.isInterface
             when {
                 !isExtension && propertyInfo != null && insertToJavaInterface && (!receiverInfo.staticContextRequired || propertyInfo.writable) ->
@@ -163,10 +181,71 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
                     declaration != null
             }
         }
+    })
+
+    /**
+     * Has to be invoked manually from final class ctor (as all final class properties have to be initialized)
+     */
+    protected fun init() {
+        check(!initialized) { "${javaClass.simpleName} is already initialized" }
+        this.element ?: return
+        val callableInfos = callableInfos()
+        if (callableInfos.size > 1) {
+            val receiverSet = callableInfos.mapTo(HashSet()) { it.receiverTypeInfo }
+            if (receiverSet.size > 1) throw AssertionError("All functions must have common receiver: $receiverSet")
+
+            val possibleContainerSet = callableInfos.mapTo(HashSet()) { it.possibleContainers }
+            if (possibleContainerSet.size > 1) throw AssertionError("All functions must have common containers: $possibleContainerSet")
+        }
+        initializeLazyProperties()
+    }
+
+    @Suppress("UNUSED_VARIABLE")
+    private fun initializeLazyProperties() {
+        // enforce lazy properties be calculated as QuickFix is created on a bg thread
+        val text = calculatedText
+        val availableImpl = calculatedAvailableImpl
+        initialized = true
+    }
+
+    private fun getDeclaration(descriptor: ClassifierDescriptor, project: Project): PsiElement? {
+        if (descriptor is FunctionClassDescriptor) {
+            val psiFactory = KtPsiFactory(project)
+            val syntheticClass = psiFactory.createClass(IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.render(descriptor))
+            return psiFactory.createAnalyzableFile("${descriptor.name.asString()}.kt", "", element!!).add(syntheticClass)
+        }
+        return DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptor)
+    }
+
+    private fun getDeclarationIfApplicable(project: Project, candidate: TypeCandidate): PsiElement? {
+        val descriptor = candidate.theType.constructor.declarationDescriptor ?: return null
+        val declaration = getDeclaration(descriptor, project) ?: return null
+        if (declaration !is KtClassOrObject && declaration !is KtTypeParameter && declaration !is PsiClass) return null
+        return if (isExtension || declaration.canRefactor()) declaration else null
+    }
+
+    private fun checkIsInitialized() {
+        check(initialized) { "${javaClass.simpleName} is not initialized" }
+    }
+
+    override fun getText(): String {
+        checkIsInitialized()
+        element ?: return ""
+        return calculatedText
+    }
+
+    override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
+
+    override fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile): Boolean {
+        checkIsInitialized()
+        element ?: return false
+        return calculatedAvailableImpl
     }
 
     override fun invokeImpl(project: Project, editor: Editor?, file: PsiFile) {
+        checkIsInitialized()
         val element = element ?: return
+        val callableInfos = callableInfos()
         val callableInfo = callableInfos.first()
 
         val fileForBuilder = element.containingKtFile

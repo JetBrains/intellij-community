@@ -1,0 +1,52 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.kotlin.idea.quickfix.crossLanguage
+
+import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.actions.CreateMethodRequest
+import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.FunctionInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.ParameterInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.AbstractCreateCallableFromUsageFixWithTextAndFamilyName
+import org.jetbrains.kotlin.idea.quickfix.crossLanguage.KotlinElementActionsFactory.Companion.toKotlinTypeInfo
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtModifierList
+
+class AddMethodCreateCallableFromUsageFix(
+    private val request: CreateMethodRequest,
+    private val modifierList: KtModifierList,
+    providedText: String,
+    familyName: String,
+    private val targetContainer: KtElement
+) : AbstractCreateCallableFromUsageFixWithTextAndFamilyName<KtElement>(
+    providedText = providedText,
+    familyName = familyName,
+    originalExpression = targetContainer
+) {
+    init {
+        init()
+    }
+
+    override val callableInfo: FunctionInfo?
+        get() = run {
+            val resolutionFacade = KotlinCacheService.getInstance(targetContainer.project)
+                .getResolutionFacadeByFile(targetContainer.containingFile, JvmPlatforms.unspecifiedJvmPlatform) ?: return null
+            val returnTypeInfo = request.returnType.toKotlinTypeInfo(resolutionFacade)
+            val parameters = request.expectedParameters
+            val parameterInfos = parameters.map { parameter ->
+                ParameterInfo(parameter.expectedTypes.toKotlinTypeInfo(resolutionFacade), parameter.semanticNames.toList())
+            }
+            val methodName = request.methodName
+            FunctionInfo(
+                methodName,
+                TypeInfo.Empty,
+                returnTypeInfo,
+                listOf(targetContainer),
+                parameterInfos,
+                isForCompanion = JvmModifier.STATIC in request.modifiers,
+                modifierList = modifierList,
+                preferEmptyBody = true
+            )
+        }
+}

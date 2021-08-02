@@ -21,34 +21,28 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.descriptors.resolveClassByFqName
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.appendModifier
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFix
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.load.java.JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.resolve.AnnotationChecker
 import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
-import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 
@@ -60,20 +54,36 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             JvmModifier.PROTECTED to KtTokens.PUBLIC_KEYWORD,
             JvmModifier.ABSTRACT to KtTokens.ABSTRACT_KEYWORD
         )
+
+        internal fun ExpectedTypes.toKotlinTypeInfo(resolutionFacade: ResolutionFacade): TypeInfo {
+            val candidateTypes = flatMapTo(LinkedHashSet()) {
+                val ktType = (it.theType as? PsiType)?.resolveToKotlinType(resolutionFacade) ?: return@flatMapTo emptyList()
+                when (it.theKind) {
+                    ExpectedType.Kind.EXACT, ExpectedType.Kind.SUBTYPE -> listOf(ktType)
+                    ExpectedType.Kind.SUPERTYPE -> listOf(ktType) + ktType.supertypes()
+                }
+            }
+            if (candidateTypes.isEmpty()) {
+                val nullableAnyType = resolutionFacade.moduleDescriptor.builtIns.nullableAnyType
+                return TypeInfo(nullableAnyType, Variance.INVARIANT)
+            }
+            return TypeInfo.ByExplicitCandidateTypes(candidateTypes.toList())
+        }
+
     }
 
     private class FakeExpressionFromParameter(private val psiParam: PsiParameter) : PsiReferenceExpressionImpl() {
-        override fun getText(): String = psiParam.name!!
+        override fun getText(): String = psiParam.name
         override fun getProject(): Project = psiParam.project
         override fun getParent(): PsiElement = psiParam.parent
-        override fun getType(): PsiType? = psiParam.type
+        override fun getType(): PsiType = psiParam.type
         override fun isValid(): Boolean = true
         override fun getContainingFile(): PsiFile = psiParam.containingFile
-        override fun getReferenceName(): String? = psiParam.name
-        override fun resolve(): PsiElement? = psiParam
+        override fun getReferenceName(): String = psiParam.name
+        override fun resolve(): PsiElement = psiParam
     }
 
-    private class ModifierBuilder(
+    internal class ModifierBuilder(
         private val targetContainer: KtElement,
         private val allowJvmStatic: Boolean = true
     ) {
@@ -118,25 +128,6 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         }
     }
 
-    class CreatePropertyFix(
-        contextElement: KtElement,
-        propertyInfo: PropertyInfo,
-        private val classOrFileName: String?
-    ) : CreateCallableFromUsageFix<KtElement>(contextElement, listOf(propertyInfo)) {
-        override fun getFamilyName() = KotlinBundle.message("add.property")
-        override fun getText(): String {
-            val info = callableInfos.first() as PropertyInfo
-            return buildString {
-                append(KotlinBundle.message("text.add"))
-                if (info.isLateinitPreferred || info.modifierList?.hasModifier(KtTokens.LATEINIT_KEYWORD) == true) {
-                    append("lateinit ")
-                }
-                append(if (info.writable) "var" else "val")
-                append(KotlinBundle.message("property.0.to.1", info.name, classOrFileName.toString()))
-            }
-        }
-    }
-
     private fun JvmClass.toKtClassOrFile(): KtElement? = when (val psi = sourceElement) {
         is KtClassOrObject -> psi
         is KtLightClassForSourceDeclaration -> psi.kotlinOrigin
@@ -160,22 +151,6 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             .parameters
             .map(::FakeExpressionFromParameter)
             .toTypedArray()
-    }
-
-
-    private fun ExpectedTypes.toKotlinTypeInfo(resolutionFacade: ResolutionFacade): TypeInfo {
-        val candidateTypes = flatMapTo(LinkedHashSet<KotlinType>()) {
-            val ktType = (it.theType as? PsiType)?.resolveToKotlinType(resolutionFacade) ?: return@flatMapTo emptyList()
-            when (it.theKind) {
-                ExpectedType.Kind.EXACT, ExpectedType.Kind.SUBTYPE -> listOf(ktType)
-                ExpectedType.Kind.SUPERTYPE -> listOf(ktType) + ktType.supertypes()
-            }
-        }
-        if (candidateTypes.isEmpty()) {
-            val nullableAnyType = resolutionFacade.moduleDescriptor.builtIns.nullableAnyType
-            return TypeInfo(nullableAnyType, Variance.INVARIANT)
-        }
-        return TypeInfo.ByExplicitCandidateTypes(candidateTypes.toList())
     }
 
     override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
@@ -203,36 +178,25 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
     override fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
         val targetKtClass = targetClass.toKtClassOrFile() as? KtClass ?: return emptyList()
-
         val modifierBuilder = ModifierBuilder(targetKtClass).apply { addJvmModifiers(request.modifiers) }
         if (!modifierBuilder.isValid) return emptyList()
-        val resolutionFacade = targetKtClass.getResolutionFacade()
-        val nullableAnyType = resolutionFacade.moduleDescriptor.builtIns.nullableAnyType
-        val helper = JvmPsiConversionHelper.getInstance(targetKtClass.project)
+
         val parameters = request.expectedParameters
-        val parameterInfos = parameters.mapIndexed { index, param ->
-            val ktType = param.expectedTypes.firstOrNull()?.theType?.let { helper.convertType(it).resolveToKotlinType(resolutionFacade) }
-                ?: nullableAnyType
-            val name = param.semanticNames.firstOrNull() ?: "arg${index + 1}"
-            ParameterInfo(TypeInfo(ktType, Variance.IN_VARIANCE), listOf(name))
-        }
+
         val needPrimary = !targetKtClass.hasExplicitPrimaryConstructor()
-        val constructorInfo = ConstructorInfo(
-            parameterInfos,
-            targetKtClass,
-            isPrimary = needPrimary,
-            modifierList = modifierBuilder.modifierList,
-            withBody = true
-        )
+
         val targetClassName = targetClass.name
-        val addConstructorAction = object : CreateCallableFromUsageFix<KtElement>(targetKtClass, listOf(constructorInfo)) {
-            override fun getFamilyName() = KotlinBundle.message("add.method")
-            override fun getText() = KotlinBundle.message(
+        val addConstructorAction = AddConstructorCreateCallableFromUsageFix(
+            request = request,
+            modifierList = modifierBuilder.modifierList,
+            familyName = KotlinBundle.message("add.method"),
+            providedText = KotlinBundle.message(
                 "add.0.constructor.to.1",
                 if (needPrimary) KotlinBundle.message("text.primary") else KotlinBundle.message("text.secondary"),
                 targetClassName.toString()
-            )
-        }
+            ),
+            targetKtClass = targetKtClass
+        )
 
         val changePrimaryConstructorAction = run {
             val primaryConstructor = targetKtClass.primaryConstructor ?: return@run null
@@ -263,60 +227,53 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         val modifierBuilder = ModifierBuilder(targetContainer).apply { addJvmModifiers(modifiers) }
         if (!modifierBuilder.isValid) return emptyList()
 
-        val resolutionFacade = targetContainer.getResolutionFacade()
-        val nullableAnyType = resolutionFacade.moduleDescriptor.builtIns.nullableAnyType
-
-        val ktType = (propertyType as? PsiType)?.resolveToKotlinType(resolutionFacade) ?: nullableAnyType
-        val propertyInfo = PropertyInfo(
-            propertyName,
-            TypeInfo.Empty,
-            TypeInfo(ktType, Variance.INVARIANT),
-            setterRequired,
-            listOf(targetContainer),
+        val action = AddPropertyActionCreateCallableFromUsageFix(
+            targetContainer = targetContainer,
             modifierList = modifierBuilder.modifierList,
-            withInitializer = true
+            propertyType = propertyType,
+            propertyName = propertyName,
+            setterRequired = setterRequired,
+            isLateinitPreferred = false,
+            classOrFileName = classOrFileName
         )
-        val propertyInfos = if (setterRequired) {
-            listOf(propertyInfo, propertyInfo.copyProperty(isLateinitPreferred = true))
+
+        val actions = if (setterRequired) {
+            listOf(
+                action, AddPropertyActionCreateCallableFromUsageFix(
+                    targetContainer = targetContainer,
+                    modifierList = modifierBuilder.modifierList,
+                    propertyType = propertyType,
+                    propertyName = propertyName,
+                    setterRequired = true,
+                    classOrFileName = classOrFileName
+                )
+            )
         } else {
-            listOf(propertyInfo)
+            listOf(action)
         }
-        return propertyInfos.map { CreatePropertyFix(targetContainer, it, classOrFileName) }
+        return actions
     }
 
     override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
         val targetContainer = targetClass.toKtClassOrFile() ?: return emptyList()
 
-        val resolutionFacade = targetContainer.getResolutionFacade()
-        val typeInfo = request.fieldType.toKotlinTypeInfo(resolutionFacade)
         val writable = JvmModifier.FINAL !in request.modifiers
 
-        fun propertyInfo(lateinit: Boolean) = PropertyInfo(
-            request.fieldName,
-            TypeInfo.Empty,
-            typeInfo,
-            writable,
-            listOf(targetContainer),
-            isLateinitPreferred = false, // Dont set it to `lateinit` because it works via templates that brings issues in batch field adding
-            isForCompanion = JvmModifier.STATIC in request.modifiers,
-            modifierList = ModifierBuilder(targetContainer, allowJvmStatic = false).apply {
-                addJvmModifiers(request.modifiers)
-                if (modifierList.children.none { it.node.elementType in KtTokens.VISIBILITY_MODIFIERS })
-                    addJvmModifier(JvmModifier.PUBLIC)
-                if (lateinit)
-                    modifierList.appendModifier(KtTokens.LATEINIT_KEYWORD)
-                if (!request.modifiers.contains(JvmModifier.PRIVATE) && !lateinit)
-                    addAnnotation(JVM_FIELD_ANNOTATION_FQ_NAME)
-            }.modifierList,
-            withInitializer = !lateinit
+        val action = AddFieldActionCreateCallableFromUsageFix(
+            targetContainer = targetContainer, classOrFileName = targetClass.name, request = request, lateinit = false
         )
 
-        val propertyInfos = if (writable) {
-            listOf(propertyInfo(false), propertyInfo(true))
+        val actions = if (writable) {
+            listOf(
+                action,
+                AddFieldActionCreateCallableFromUsageFix(
+                    targetContainer = targetContainer, classOrFileName = targetClass.name, request = request, lateinit = true
+                )
+            )
         } else {
-            listOf(propertyInfo(false))
+            listOf(action)
         }
-        return propertyInfos.map { CreatePropertyFix(targetContainer, it, targetClass.name) }
+        return actions
     }
 
     override fun createAddMethodActions(targetClass: JvmClass, request: CreateMethodRequest): List<IntentionAction> {
@@ -325,29 +282,15 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         val modifierBuilder = ModifierBuilder(targetContainer).apply { addJvmModifiers(request.modifiers) }
         if (!modifierBuilder.isValid) return emptyList()
 
-        val resolutionFacade = KotlinCacheService.getInstance(targetContainer.project)
-            .getResolutionFacadeByFile(targetContainer.containingFile, JvmPlatforms.unspecifiedJvmPlatform) ?: return emptyList()
-        val returnTypeInfo = request.returnType.toKotlinTypeInfo(resolutionFacade)
-        val parameters = request.expectedParameters
-        val parameterInfos = parameters.map { parameter ->
-            ParameterInfo(parameter.expectedTypes.toKotlinTypeInfo(resolutionFacade), parameter.semanticNames.toList())
-        }
         val methodName = request.methodName
-        val functionInfo = FunctionInfo(
-            methodName,
-            TypeInfo.Empty,
-            returnTypeInfo,
-            listOf(targetContainer),
-            parameterInfos,
-            isForCompanion = JvmModifier.STATIC in request.modifiers,
-            modifierList = modifierBuilder.modifierList,
-            preferEmptyBody = true
-        )
         val targetClassName = targetClass.name
-        val action = object : CreateCallableFromUsageFix<KtElement>(targetContainer, listOf(functionInfo)) {
-            override fun getFamilyName() = KotlinBundle.message("add.method")
-            override fun getText() = KotlinBundle.message("add.method.0.to.1", methodName, targetClassName.toString())
-        }
+        val action = AddMethodCreateCallableFromUsageFix(
+            request = request,
+            modifierList = modifierBuilder.modifierList,
+            familyName = KotlinBundle.message("add.method"),
+            providedText = KotlinBundle.message("add.method.0.to.1", methodName, targetClassName.toString()),
+            targetContainer = targetContainer
+        )
 
         val nameAndKind = PropertyUtilBase.getPropertyNameAndKind(methodName) ?: return listOf(action)
 

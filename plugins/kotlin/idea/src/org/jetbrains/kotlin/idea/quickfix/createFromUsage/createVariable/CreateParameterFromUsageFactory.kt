@@ -3,7 +3,10 @@
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactoryWithDelegate
+import org.jetbrains.kotlin.idea.quickfix.QuickFixWithDelegateFactory
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.psi.KtElement
 
@@ -16,5 +19,16 @@ data class CreateParameterData<out E : KtElement>(
 
 abstract class CreateParameterFromUsageFactory<E : KtElement> :
     KotlinSingleIntentionActionFactoryWithDelegate<E, CreateParameterData<E>>() {
-    override fun createFix(originalElement: E, data: CreateParameterData<E>) = CreateParameterFromUsageFix(data)
+
+    override fun createFixes(
+        originalElementPointer: SmartPsiElementPointer<E>,
+        diagnostic: Diagnostic,
+        quickFixDataFactory: () -> CreateParameterData<E>?
+    ): List<QuickFixWithDelegateFactory> = QuickFixWithDelegateFactory(actionPriority) {
+        originalElementPointer.element?.let {
+            CreateParameterFromUsageFix(it, quickFixDataFactory)
+        }
+    }.let(::listOf)
+
+    override fun createFix(originalElement: E, data: CreateParameterData<E>) = throw UnsupportedOperationException("should not be invoked")
 }

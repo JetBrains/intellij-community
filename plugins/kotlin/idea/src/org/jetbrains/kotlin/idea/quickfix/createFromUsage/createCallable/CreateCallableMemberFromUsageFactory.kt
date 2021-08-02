@@ -9,22 +9,19 @@ import org.jetbrains.kotlin.idea.quickfix.IntentionActionPriority
 import org.jetbrains.kotlin.idea.quickfix.KotlinIntentionActionFactoryWithDelegate
 import org.jetbrains.kotlin.idea.quickfix.QuickFixWithDelegateFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.CallableInfo
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.PropertyInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterFromUsageFix
 import org.jetbrains.kotlin.psi.KtElement
 
 abstract class CreateCallableMemberFromUsageFactory<E : KtElement>(
     private val extensionsSupported: Boolean = true
 ) : KotlinIntentionActionFactoryWithDelegate<E, List<CallableInfo>>() {
+
     private fun newCallableQuickFix(
         originalElementPointer: SmartPsiElementPointer<E>,
         priority: IntentionActionPriority,
-        quickFixDataFactory: () -> List<CallableInfo>?,
-        quickFixFactory: (E, List<CallableInfo>) -> IntentionAction?
+        quickFixFactory: (E) -> IntentionAction?
     ): QuickFixWithDelegateFactory = QuickFixWithDelegateFactory(priority) {
-        val data = quickFixDataFactory().orEmpty()
-        val originalElement = originalElementPointer.element
-        if (data.isNotEmpty() && originalElement != null) quickFixFactory(originalElement, data) else null
+        originalElementPointer.element?.let { element -> quickFixFactory(element)}
     }
 
     protected open fun createCallableInfo(element: E, diagnostic: Diagnostic): CallableInfo? = null
@@ -39,23 +36,25 @@ abstract class CreateCallableMemberFromUsageFactory<E : KtElement>(
     ): List<QuickFixWithDelegateFactory> {
         val fixes = ArrayList<QuickFixWithDelegateFactory>(3)
 
-        newCallableQuickFix(originalElementPointer, IntentionActionPriority.NORMAL, quickFixDataFactory) { element, data ->
-            CreateCallableFromUsageFix(element, data)
+        newCallableQuickFix(originalElementPointer, IntentionActionPriority.NORMAL) { element ->
+            CreateCallableFromUsageFix(element, quickFixDataFactory)
         }.let { fixes.add(it) }
 
-        newCallableQuickFix(originalElementPointer, IntentionActionPriority.NORMAL, quickFixDataFactory) f@{ element, data ->
-            (data.singleOrNull() as? PropertyInfo)?.let {
-                CreateParameterFromUsageFix.createFixForPrimaryConstructorPropertyParameter(element, it)
-            }
+        newCallableQuickFix(originalElementPointer, IntentionActionPriority.NORMAL) { element->
+            CreateParameterFromUsageFix.createFixForPrimaryConstructorPropertyParameter(element, quickFixDataFactory)
         }.let { fixes.add(it) }
 
         if (extensionsSupported) {
-            newCallableQuickFix(originalElementPointer, IntentionActionPriority.LOW, quickFixDataFactory) { element, data ->
-                if (data.any { it.isAbstract }) return@newCallableQuickFix null
-                CreateExtensionCallableFromUsageFix(element, data)
+            newCallableQuickFix(originalElementPointer, IntentionActionPriority.LOW) { element ->
+                CreateExtensionCallableFromUsageFix(element) {
+                    quickFixDataFactory()?.takeUnless { callableInfos ->
+                        callableInfos.any { it.isAbstract }
+                    }
+                }
             }.let { fixes.add(it) }
         }
 
         return fixes
     }
+
 }
