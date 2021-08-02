@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
-import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.ui.IdeUiService;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
@@ -40,10 +40,10 @@ public interface NotificationListener {
     protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
       URL url = event.getURL();
       if (url != null) {
-        BrowserUtil.browse(url);
+        IdeUiService.getInstance().browse(url);
       }
       else {
-        BrowserUtil.browse(event.getDescription());
+        IdeUiService.getInstance().browse(event.getDescription());
       }
 
       if (myExpireNotification) {

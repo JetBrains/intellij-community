@@ -17,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus;
 import java.awt.*;
 import java.util.Comparator;
 
-public class PlatformDataKeys extends CommonDataKeys {
+public class PlatformDataKeys extends PlatformCoreDataKeys {
 
   public static final DataKey<FileEditor> FILE_EDITOR = DataKey.create("fileEditor");
 
@@ -86,8 +86,6 @@ public class PlatformDataKeys extends CommonDataKeys {
    */
   public static final DataKey<ExporterToTextFile> EXPORTER_TO_TEXT_FILE = DataKey.create("exporterToTextFile");
 
-  public static final DataKey<VirtualFile> PROJECT_FILE_DIRECTORY = DataKey.create("context.ProjectFileDirectory");
-
   public static final DataKey<Disposable> UI_DISPOSABLE = DataKey.create("ui.disposable");
 
   public static final DataKey<ModalityState> MODALITY_STATE = DataKey.create("ModalityState");
@@ -129,6 +127,4 @@ public class PlatformDataKeys extends CommonDataKeys {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final DataKey<Comparator<? super AnAction>> ACTIONS_SORTER = DataKey.create("actionsSorter");
-
-  public static final DataKey<Module> MODULE = DataKey.create("module");
 }

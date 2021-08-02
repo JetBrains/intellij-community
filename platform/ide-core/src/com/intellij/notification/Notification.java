@@ -2,9 +2,9 @@
 package com.intellij.notification;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
+import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -191,9 +191,7 @@ public class Notification {
   public static void fire(final @NotNull Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
     DataContext contextWrapper = dataId -> KEY.is(dataId) ? notification : context != null ? context.getData(dataId) : null;
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.NOTIFICATION, contextWrapper);
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
-    }
+    IdeUiService.getInstance().performActionDumbAwareWithCallbacks(action, event);
   }
 
   public static void setDataProvider(@NotNull Notification notification, @NotNull JComponent component) {
@@ -202,7 +200,7 @@ public class Notification {
 
   public @NotNull @LinkLabel String getDropDownText() {
     if (myDropDownText == null) {
-      myDropDownText = IdeBundle.message("link.label.actions");
+      myDropDownText = IdeCoreBundle.message("link.label.actions");
     }
     return myDropDownText;
   }

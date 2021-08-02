@@ -1,12 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Contract;
@@ -226,10 +224,6 @@ public interface Configurable extends UnnamedConfigurable {
 
   default boolean isModified(@NotNull JToggleButton toggleButton, boolean value) {
     return toggleButton.isSelected() != value;
-  }
-
-  default <T> boolean isModified(@NotNull ComboBox<T> comboBox, T value) {
-    return !Comparing.equal(comboBox.getSelectedItem(), value);
   }
 
   interface TopComponentController {

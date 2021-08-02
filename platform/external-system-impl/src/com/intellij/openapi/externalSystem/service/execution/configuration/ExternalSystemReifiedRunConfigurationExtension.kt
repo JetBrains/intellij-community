@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.execution.configuration
 
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
+import com.intellij.openapi.options.SettingsEditor
 
 abstract class ExternalSystemReifiedRunConfigurationExtension<C : ExternalSystemRunConfiguration>(
   private val runConfigurationClass: Class<C>
@@ -15,9 +16,9 @@ abstract class ExternalSystemReifiedRunConfigurationExtension<C : ExternalSystem
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <P : ExternalSystemRunConfiguration> createFragments(configuration: P): List<SettingsEditorFragment<P, *>> {
+  override fun <P : ExternalSystemRunConfiguration> createFragments(configuration: P): List<SettingsEditor<P>> {
     return SettingsFragmentsContainer.fragments<C> {
       configureFragments(configuration as C)
-    } as List<SettingsEditorFragment<P, *>>
+    } as List<SettingsEditor<P>>
   }
 }

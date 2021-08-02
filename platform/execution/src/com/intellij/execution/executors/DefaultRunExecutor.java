@@ -22,7 +22,6 @@ import com.intellij.execution.ExecutorRegistry;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,7 +70,7 @@ public class DefaultRunExecutor extends Executor {
   @Override
   @NotNull
   public String getActionName() {
-    return UIBundle.message("tool.window.name.run");
+    return ExecutionBundle.message("tool.window.name.run");
   }
 
   @Override

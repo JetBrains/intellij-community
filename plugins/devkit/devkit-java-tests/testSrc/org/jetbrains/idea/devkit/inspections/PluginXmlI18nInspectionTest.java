@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -28,6 +29,7 @@ public class PluginXmlI18nInspectionTest extends JavaCodeInsightFixtureTestCase 
     moduleBuilder.addLibrary("analysis-api", PathUtil.getJarPathForClass(LocalInspectionEP.class));
     moduleBuilder.addLibrary("platform-resources", Paths.get(PathUtil.getJarPathForClass(LocalInspectionEP.class))
       .resolveSibling("intellij.platform.resources").toString());
+    moduleBuilder.addLibrary("ide-core", PathUtil.getJarPathForClass(Configurable.class));
   }
 
   @Override

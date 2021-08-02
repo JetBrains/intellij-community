@@ -6,6 +6,7 @@ import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -211,8 +212,6 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   private static Application getApp() {
     return ApplicationManager.getApplication();
   }
-
-  public enum UnlockOption {UNLOCK, UNLOCK_DIR, UNLOCK_ALL}
 
   private static class OurVirtualFileListener implements VirtualFileListener {
     @Override

@@ -2,7 +2,7 @@
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -22,7 +22,7 @@ public final class DefaultExecutionTarget extends ExecutionTarget {
   @NotNull
   @Override
   public String getDisplayName() {
-    return IdeBundle.message("node.default");
+    return IdeCoreBundle.message("node.default");
   }
 
   @Override

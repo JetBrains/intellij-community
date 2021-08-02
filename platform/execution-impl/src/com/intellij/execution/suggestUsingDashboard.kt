@@ -43,7 +43,8 @@ private class SuggestDashboardNotification(
 ) {
   init {
     icon = AllIcons.RunConfigurations.TestState.Run
-    addAction(NotificationAction.create(CommonBundle.message("button.without.mnemonic.yes")) { _ ->
+    addAction(
+      NotificationAction.create(CommonBundle.message("button.without.mnemonic.yes")) { _ ->
       ApplicationManager.getApplication().invokeLater {
         runWriteAction {
           val runDashboardManager = RunDashboardManager.getInstance(project)

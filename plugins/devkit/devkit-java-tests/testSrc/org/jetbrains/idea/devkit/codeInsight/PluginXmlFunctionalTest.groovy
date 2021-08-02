@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
@@ -104,6 +105,8 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("editor-ui-api", editorUIApi)
     String coreImpl = PathUtil.getJarPathForClass(ServiceDescriptor.class)
     moduleBuilder.addLibrary("coreImpl", coreImpl)
+    String ideCore = PathUtil.getJarPathForClass(Configurable.class)
+    moduleBuilder.addLibrary("ide-core", ideCore)
   }
 
   // Gradle-like setup, but JBList not in Library

@@ -9,6 +9,7 @@ import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.IdeUiService;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
@@ -19,11 +20,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ExceptionUtil;
@@ -140,14 +139,7 @@ public final class ExecutionUtil {
         return;
       }
 
-      ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-      if (toolWindowManager.canShowNotification(toolWindowId)) {
-        //noinspection SSBasedInspection
-        toolWindowManager.notifyByBalloon(toolWindowId, MessageType.ERROR, fullMessage, null, _listener);
-      }
-      else {
-        Messages.showErrorDialog(project, UIUtil.toHtml(_description), title);
-      }
+      IdeUiService.getInstance().notifyByBalloon(project, toolWindowId, MessageType.ERROR, title, fullMessage, _description, null, _listener);
 
       Notification notification = ourNotificationGroup.createNotification(title, _description, NotificationType.ERROR);
       if (_listener != null) {

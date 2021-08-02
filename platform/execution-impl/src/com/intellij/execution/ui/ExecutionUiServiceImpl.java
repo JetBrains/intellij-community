@@ -5,8 +5,12 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.options.SettingsEditor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Predicate;
 
 public class ExecutionUiServiceImpl extends ExecutionUiService {
   @Override
@@ -14,6 +18,15 @@ public class ExecutionUiServiceImpl extends ExecutionUiService {
   public RunContentDescriptor showRunContent(@NotNull ExecutionResult executionResult,
                                              @NotNull ExecutionEnvironment environment) {
     return new RunContentBuilder(executionResult, environment).showRunContent(environment.getContentToReuse());
+  }
+
+  @Override
+  public @Nullable <S> SettingsEditor<S> createSettingsEditorFragmentWrapper(String id,
+                                                                            @Nls String name,
+                                                                            @Nls String group,
+                                                                            @NotNull SettingsEditor<S> inner,
+                                                                            Predicate<? super S> initialSelection) {
+    return SettingsEditorFragment.createWrapper(id, name, group, inner, initialSelection);
   }
 
   @Override

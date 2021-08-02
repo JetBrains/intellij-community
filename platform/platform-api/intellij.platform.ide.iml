@@ -29,5 +29,6 @@
     <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.remote.core" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" exported="" />
   </component>
 </module>

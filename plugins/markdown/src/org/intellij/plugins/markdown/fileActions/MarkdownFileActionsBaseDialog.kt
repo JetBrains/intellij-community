@@ -2,18 +2,12 @@
 package org.intellij.plugins.markdown.fileActions
 
 import com.intellij.ide.util.DirectoryUtil
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
-import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.TextComponentAccessor
-import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
@@ -23,7 +17,6 @@ import com.intellij.ui.RecentsManager
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.layout.*
 import com.intellij.util.PathUtilRt
-import com.intellij.util.ui.UIUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils.validateTargetDir
 import org.jetbrains.annotations.ApiStatus
@@ -115,7 +108,7 @@ abstract class MarkdownFileActionsBaseDialog(
         MarkdownBundle.message("markdown.import.export.dialog.target.directory.description"),
         project,
         FileChooserDescriptorFactory.createSingleFolderDescriptor(),
-        TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT
+        TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT
       )
     }
   }

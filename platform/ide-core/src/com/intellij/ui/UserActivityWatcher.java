@@ -2,7 +2,6 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
@@ -25,6 +24,8 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
   public static final Key<Boolean> DO_NOT_WATCH = Key.create("DO_NOT_WATCH");
   private boolean myIsModified = false;
   private final EventDispatcher<UserActivityListener> myListeners = EventDispatcher.create(UserActivityListener.class);
+
+  private final static String TABLE_CELL_EDITOR_PROPERTY = "tableCellEditor"; // ComboBox.TABLE_CELL_EDITOR_PROPERTY
 
   private final DocumentListener myDocumentListener = new DocumentAdapter() {
     @Override
@@ -205,7 +206,7 @@ public class UserActivityWatcher extends ComponentTreeWatcher {
       if (model != null) {
         model.addTableModelListener(myTableModelListener);
       }
-      table.addPropertyChangeListener(ComboBox.TABLE_CELL_EDITOR_PROPERTY, myCellEditorChangeListener);
+      table.addPropertyChangeListener(TABLE_CELL_EDITOR_PROPERTY, myCellEditorChangeListener);
     }
 
     if (parentComponent instanceof JSlider) {

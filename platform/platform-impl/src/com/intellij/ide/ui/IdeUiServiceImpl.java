@@ -1,26 +1,37 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.EdtDataContext;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessDialog;
-import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
+import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.SystemNotifications;
 import com.intellij.util.ui.SwingHelper;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.File;
+import java.net.URL;
 import java.util.List;
 
 public class IdeUiServiceImpl extends IdeUiService{
@@ -30,8 +41,8 @@ public class IdeUiServiceImpl extends IdeUiService{
   }
 
   @Override
-  public NonProjectFileWritingAccessProvider.UnlockOption askForUnlock(@NotNull Project project,
-                                                                       List<VirtualFile> files) {
+  public UnlockOption askForUnlock(@NotNull Project project,
+                                   List<VirtualFile> files) {
     NonProjectFileWritingAccessDialog dialog = new NonProjectFileWritingAccessDialog(project, files);
     if (!dialog.showAndGet()) return null;
     return dialog.getUnlockOption();
@@ -65,5 +76,39 @@ public class IdeUiServiceImpl extends IdeUiService{
   @Override
   public Component getComponentFromRecentMouseEvent() {
     return SwingHelper.getComponentFromRecentMouseEvent();
+  }
+
+  @Override
+  public void browse(URL url) {
+    BrowserUtil.browse(url);
+  }
+
+  @Override
+  public void browse(String url) {
+    BrowserUtil.browse(url);
+  }
+
+  @Override
+  public void performActionDumbAwareWithCallbacks(AnAction action,
+                                                  AnActionEvent event) {
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+    }
+  }
+
+  @Override
+  public void notifyByBalloon(Project project,
+                              String toolWindowId,
+                              MessageType messageType,
+                              String title, String fullMessage, String description,
+                              Icon icon, HyperlinkListener listener) {
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+    if (toolWindowManager.canShowNotification(toolWindowId)) {
+      //noinspection SSBasedInspection
+      toolWindowManager.notifyByBalloon(toolWindowId, MessageType.ERROR, fullMessage, icon, listener);
+    }
+    else {
+      Messages.showErrorDialog(project, UIUtil.toHtml(description), title);
+    }
   }
 }

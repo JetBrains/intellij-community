@@ -21,9 +21,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.*;
-import static com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE;
-import static com.intellij.openapi.actionSystem.PlatformDataKeys.PROJECT_FILE_DIRECTORY;
-import static com.intellij.openapi.actionSystem.PlatformDataKeys.MODULE;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.MODULE;
+import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.PROJECT_FILE_DIRECTORY;
 
 public final class ExecutionEnvironment extends UserDataHolderBase implements Disposable {
   private static final AtomicLong myIdHolder = new AtomicLong(1L);

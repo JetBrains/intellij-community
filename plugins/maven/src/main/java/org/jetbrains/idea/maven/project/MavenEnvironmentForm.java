@@ -7,10 +7,7 @@ import com.intellij.execution.target.TargetEnvironmentsManager;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.TextComponentAccessor;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
@@ -237,7 +234,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
     mavenHomeComponent.getComponent().addBrowseFolderListener(MavenProjectBundle.message("maven.select.maven.home.directory"),
                                                               "",
                                                               null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR,
-                                                              TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
+                                                              TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
     mavenHomeField.addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {

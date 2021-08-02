@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ui.UIBundle;
+import com.intellij.ide.IdeCoreBundle;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -37,11 +37,11 @@ public final class ToolWindowAnchor {
   }
 
   public @NotNull @Nls String getDisplayName() {
-    return UIBundle.message(bundleKey);
+    return IdeCoreBundle.message(bundleKey);
   }
 
   public @NotNull @Nls String getCapitalizedDisplayName() {
-    return UIBundle.message(capitalizedBundleKey);
+    return IdeCoreBundle.message(capitalizedBundleKey);
   }
 
   public boolean isHorizontal() {

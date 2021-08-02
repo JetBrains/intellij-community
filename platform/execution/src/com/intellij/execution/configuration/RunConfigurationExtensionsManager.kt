@@ -8,10 +8,11 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.process.ProcessHandler
-import com.intellij.execution.ui.SettingsEditorFragment
+import com.intellij.execution.ui.ExecutionUiService
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.ExtendableSettingsEditor
 import com.intellij.openapi.options.ExtensionSettingsEditor
+import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.options.SettingsEditorGroup
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Key
@@ -109,8 +110,8 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
     }
   }
 
-  fun <V : U> createFragments(configuration: V): List<SettingsEditorFragment<V, *>> {
-    val list = ArrayList<SettingsEditorFragment<V, *>>()
+  fun <V : U> createFragments(configuration: V): List<SettingsEditor<V>> {
+    val list = ArrayList<SettingsEditor<V>>()
     processApplicableExtensions(configuration) { t ->
       val fragments = t.createFragments(configuration)
       if (fragments != null) {
@@ -119,9 +120,11 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
       else {
         val editor = t.createEditor(configuration)
         if (editor != null) {
-          val wrapper = SettingsEditorFragment.createWrapper(t.serializationId, t.editorTitle, null, editor)
+          val wrapper = ExecutionUiService.getInstance().createSettingsEditorFragmentWrapper(t.serializationId, t.editorTitle, null, editor)
           { t.isEnabledFor(configuration, null) }
-          list.add(wrapper)
+          if (wrapper != null) {
+            list.add(wrapper)
+          }
         }
       }
     }

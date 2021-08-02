@@ -8,7 +8,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.ui.SettingsEditorFragment;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
 import org.jdom.Element;
@@ -64,7 +63,7 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
     return null;
   }
 
-  protected <P extends T> List<SettingsEditorFragment<P, ?>> createFragments(@NotNull P configuration) {
+  protected <P extends T> List<SettingsEditor<P>> createFragments(@NotNull P configuration) {
     return null;
   }
 

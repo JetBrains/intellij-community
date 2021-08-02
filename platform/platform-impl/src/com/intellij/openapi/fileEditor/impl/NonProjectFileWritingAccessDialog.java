@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
@@ -87,10 +88,10 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
     return myPanel;
   }
 
-  public @NotNull NonProjectFileWritingAccessProvider.UnlockOption getUnlockOption() {
-    if (myUnlockAllButton.isSelected()) return NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK_ALL;
-    if (myUnlockDirButton.isSelected()) return NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK_DIR;
-    return NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK;
+  public @NotNull UnlockOption getUnlockOption() {
+    if (myUnlockAllButton.isSelected()) return UnlockOption.UNLOCK_ALL;
+    if (myUnlockDirButton.isSelected()) return UnlockOption.UNLOCK_DIR;
+    return UnlockOption.UNLOCK;
   }
 
   @Override
