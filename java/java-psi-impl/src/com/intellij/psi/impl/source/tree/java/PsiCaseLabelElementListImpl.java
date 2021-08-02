@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,8 +92,11 @@ public class PsiCaseLabelElementListImpl extends CompositePsiElement implements 
                                      @NotNull PsiElement place) {
     // Do not resolve elements from the list of elements of the case rule
     if (lastParent != null) return true;
-    for (PsiCaseLabelElement label : getElements()) {
-      if (place == label) return true;
+
+    final PsiCaseLabelElement[] elements = getElements();
+    if (ContainerUtil.exists(elements, e -> e == place)) return true;
+
+    for (PsiCaseLabelElement label : elements) {
       boolean shouldKeepGoing = label.processDeclarations(processor, state, null, place);
       if (!shouldKeepGoing) return false;
     }
