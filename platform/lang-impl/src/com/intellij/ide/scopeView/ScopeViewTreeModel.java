@@ -1273,7 +1273,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
         if (is(composite.getIcon(i), expected)) return true;
       }
     }
-    if (icon instanceof DeferredIcon && icon instanceof IconLoader.LazyIcon) {
+    if (icon instanceof DeferredIcon || icon instanceof IconLoader.LazyIcon) {
       return false; // do not calculate complex icons at this point
     }
     if (icon instanceof RetrievableIcon) {
