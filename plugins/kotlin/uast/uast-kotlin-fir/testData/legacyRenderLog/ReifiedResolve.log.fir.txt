@@ -28,3 +28,23 @@ UFile (package = )
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                                 UIdentifier (Identifier (filterIsInstance))
                                 USimpleNameReferenceExpression (identifier = filterIsInstance, resolvesTo = null)
+        UMethod (name = foo)
+            UParameter (name = init)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+                ULambdaExpression
+                    UBlockExpression
+            UBlockExpression
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                    UIdentifier (Identifier (TODO))
+                    USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null)
+                    ULiteralExpression (value = "message")
+        UMethod (name = bar)
+            UParameter (name = init)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+                ULambdaExpression
+                    UBlockExpression
+            UBlockExpression
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                    UIdentifier (Identifier (TODO))
+                    USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null)
+                    ULiteralExpression (value = "message")

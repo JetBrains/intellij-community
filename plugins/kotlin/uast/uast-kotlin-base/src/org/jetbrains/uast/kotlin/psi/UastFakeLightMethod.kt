@@ -2,24 +2,22 @@
 
 package org.jetbrains.uast.kotlin.psi
 
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.*
 import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterListBuilder
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.UastErrorType
-import org.jetbrains.uast.kotlin.analyze
-import org.jetbrains.uast.kotlin.getType
-import org.jetbrains.uast.kotlin.toPsiType
+import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
+import org.jetbrains.uast.kotlin.lz
 
-internal class UastFakeLightMethod(original: KtFunction, containingClass: PsiClass) : UastFakeLightMethodBase<KtFunction>(original, containingClass) {
+class UastFakeLightMethod(
+    original: KtFunction,
+    containingClass: PsiClass,
+) : UastFakeLightMethodBase<KtFunction>(original, containingClass) {
 
-    private val _buildTypeParameterList by lazy {
+    private val _typeParameterList by lz {
         KotlinLightTypeParameterListBuilder(this).also { paramList ->
             for ((i, p) in original.typeParameters.withIndex()) {
                 paramList.addParameter(
@@ -28,12 +26,13 @@ internal class UastFakeLightMethod(original: KtFunction, containingClass: PsiCla
                         this,
                         i
                     ) {
-                        private val myExtendsList by lazy {
+                        private val myExtendsList by lz {
                             super.getExtendsList().apply {
-                                p.extendsBound?.getType()
-                                    ?.toPsiType(this@UastFakeLightMethod, original, false)
-                                    ?.safeAs<PsiClassType>()
-                                    ?.let { addReference(it) }
+                                p.extendsBound?.let { extendsBound ->
+                                    baseResolveProviderService.resolveToType(extendsBound, this@UastFakeLightMethod)
+                                        ?.safeAs<PsiClassType>()
+                                        ?.let { addReference(it) }
+                                }
                             }
                         }
 
@@ -44,9 +43,9 @@ internal class UastFakeLightMethod(original: KtFunction, containingClass: PsiCla
         }
     }
 
-    override fun getTypeParameterList(): PsiTypeParameterList? = _buildTypeParameterList
+    override fun getTypeParameterList(): PsiTypeParameterList = _typeParameterList
 
-    private val paramsList: PsiParameterList by lazy {
+    private val _parameterList: PsiParameterList by lz {
         object : LightParameterListBuilder(original.manager, original.language) {
             override fun getParent(): PsiElement = this@UastFakeLightMethod
             override fun getContainingFile(): PsiFile = parent.containingFile
@@ -58,10 +57,10 @@ internal class UastFakeLightMethod(original: KtFunction, containingClass: PsiCla
                     this.addParameter(
                         UastKotlinPsiParameterBase(
                             "\$this\$${original.name}",
-                            receiver.getType()
-                                ?.toPsiType(this@UastFakeLightMethod, original, false)
+                            baseResolveProviderService.resolveToType(receiver, this@UastFakeLightMethod)
                                 ?: UastErrorType,
-                            parameterList, receiver
+                            parameterList,
+                            receiver
                         )
                     )
                 }
@@ -70,10 +69,14 @@ internal class UastFakeLightMethod(original: KtFunction, containingClass: PsiCla
                     this.addParameter(
                         UastKotlinPsiParameter(
                             p.name ?: "p$i",
-                            p.typeReference?.getType()
-                                ?.toPsiType(this@UastFakeLightMethod, original, false)
-                                ?: UastErrorType,
-                            parameterList, original.language, p.isVarArg, p.defaultValue, p
+                            p.typeReference?.let { typeReference ->
+                                baseResolveProviderService.resolveToType(typeReference, this@UastFakeLightMethod)
+                            } ?: UastErrorType,
+                            parameterList,
+                            original.language,
+                            p.isVarArg,
+                            p.defaultValue,
+                            p
                         )
                     )
                 }
@@ -81,15 +84,23 @@ internal class UastFakeLightMethod(original: KtFunction, containingClass: PsiCla
         }
     }
 
-    override fun getParameterList(): PsiParameterList = paramsList
+    override fun getParameterList(): PsiParameterList = _parameterList
 }
 
-internal class UastFakeLightPrimaryConstructor(original: KtClassOrObject, lightClass: PsiClass) : UastFakeLightMethodBase<KtClassOrObject>(original, lightClass){
+class UastFakeLightPrimaryConstructor(
+    original: KtClassOrObject,
+    lightClass: PsiClass,
+) : UastFakeLightMethodBase<KtClassOrObject>(original, lightClass) {
     override fun isConstructor(): Boolean = true
 }
 
-internal abstract class UastFakeLightMethodBase<T: KtElement>(internal val original: T, containingClass: PsiClass) : LightMethodBuilder(
-    original.manager, original.language, original.name ?: "<no name provided>",
+abstract class UastFakeLightMethodBase<T: KtDeclaration>(
+    val original: T,
+    containingClass: PsiClass,
+) : LightMethodBuilder(
+    original.manager,
+    original.language,
+    original.name ?: "<no name provided>",
     LightParameterListBuilder(original.manager, original.language),
     LightModifierList(original.manager)
 ) {
@@ -101,11 +112,13 @@ internal abstract class UastFakeLightMethodBase<T: KtElement>(internal val origi
         }
     }
 
+    protected val baseResolveProviderService: BaseKotlinUastResolveProviderService by lz {
+        ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
+            ?: error("${BaseKotlinUastResolveProviderService::class.java.name} is not available for ${this::class.simpleName}")
+    }
 
     override fun getReturnType(): PsiType? {
-        val context = original.analyze()
-        val descriptor = context.get(BindingContext.DECLARATION_TO_DESCRIPTOR, original).safeAs<CallableDescriptor>() ?: return null
-        return descriptor.returnType?.toPsiType(this, original, false)
+        return baseResolveProviderService.getType(original, this)
     }
 
     override fun getParent(): PsiElement? = containingClass

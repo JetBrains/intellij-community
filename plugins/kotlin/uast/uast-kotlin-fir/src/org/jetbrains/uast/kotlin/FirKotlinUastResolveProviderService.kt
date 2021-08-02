@@ -2,13 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiType
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.ParameterDescriptor
-import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
+import com.intellij.psi.*
 import org.jetbrains.kotlin.idea.frontend.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.idea.frontend.api.analyseForUast
 import org.jetbrains.kotlin.idea.frontend.api.calls.KtAnnotationCall
@@ -86,11 +80,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    override fun getImplicitParameters(
-        ktLambdaExpression: KtLambdaExpression,
-        parent: UElement,
-        parametersSelector: CallableDescriptor.() -> List<ParameterDescriptor>
-    ): List<KotlinUParameter> {
+    override fun getImplicitParameters(ktLambdaExpression: KtLambdaExpression, parent: UElement): List<KotlinUParameter> {
         analyseForUast(ktLambdaExpression) {
             return ktLambdaExpression.functionLiteral.getAnonymousFunctionSymbol().valueParameters.map { p ->
                 KotlinUParameter(
@@ -219,6 +209,14 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun resolveToType(ktTypeReference: KtTypeReference, source: UElement): PsiType? {
+        return resolveToType(ktTypeReference)
+    }
+
+    override fun resolveToType(ktTypeReference: KtTypeReference, lightDeclaration: PsiModifierListOwner?): PsiType? {
+        return resolveToType(ktTypeReference)
+    }
+
+    private fun resolveToType(ktTypeReference: KtTypeReference): PsiType? {
         analyseForUast(ktTypeReference) {
             val ktType = ktTypeReference.getKtType()
             if (ktType is KtClassErrorType) return null
@@ -254,6 +252,14 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun getType(ktDeclaration: KtDeclaration, parent: UElement): PsiType? {
+        return getType(ktDeclaration)
+    }
+
+    override fun getType(ktDeclaration: KtDeclaration, lightDeclaration: PsiModifierListOwner?): PsiType? {
+        return getType(ktDeclaration)
+    }
+
+    private fun getType(ktDeclaration: KtDeclaration): PsiType? {
         analyseForUast(ktDeclaration) {
             return ktDeclaration.getReturnKtType().asPsiType(ktDeclaration, TypeMappingMode.DEFAULT_UAST)
         }

@@ -12,6 +12,7 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.kotlin.FirKotlinConverter.convertDeclarationOrElement
+import org.jetbrains.uast.kotlin.psi.UastFakeLightPrimaryConstructor
 
 class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
     override val priority: Int = 10
@@ -58,6 +59,8 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
                 FirKotlinConverter.convertNonLocalProperty(element, null, requiredTypes) as Sequence<T>
             element is KtParameter ->
                 FirKotlinConverter.convertParameter(element, null, requiredTypes) as Sequence<T>
+            element is UastFakeLightPrimaryConstructor ->
+                FirKotlinConverter.convertFakeLightConstructorAlternatives(element, null, requiredTypes) as Sequence<T>
             else ->
                 sequenceOf(convertElementWithParent(element, requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)) as? T).filterNotNull()
         }
