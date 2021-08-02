@@ -25,6 +25,13 @@ internal class GrazieRuleSettingsAction(private val ruleName: String, private va
   override fun startInWriteAction() = false
 
   override fun applyFix(project: Project, file: PsiFile?, editor: Editor?) {
+    val navigatable = rule.editSettings()
+    if (navigatable != null && navigatable.canNavigate()) {
+      navigatable.navigate(true)
+      GrazieFUSCounter.quickFixInvoked(rule, project, "rule.settings:customNavigation")
+      return
+    }
+
     val state1 = GrazieConfig.get()
 
     val configurable = GrazieConfigurable()
