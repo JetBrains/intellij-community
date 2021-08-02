@@ -1,0 +1,115 @@
+<idea-plugin allow-bundled-update="true">
+  <depends>com.intellij.platform.images</depends>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.datavis.inlays.inlayDescriptorProvider"
+                    interface="org.intellij.datavis.r.inlays.InlayDescriptorProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.datavis.r.inlays.components.graphicsManagerProvider"
+                    interface="org.intellij.datavis.r.inlays.components.GraphicsManagerProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.datavis.inlays.components.inlayOutputProvider"
+                    interface="org.intellij.datavis.r.inlays.components.InlayOutputProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.datavis.inlays.components.multiOutputProvider"
+                    interface="org.intellij.datavis.r.inlays.components.MultiOutputProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.datavis.r.inlays.visualisation.uiCustomizer"
+                    interface="org.intellij.datavis.r.ui.UiCustomizer"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.editor.notebookEditorAppearanceProvider"
+                    interface="org.jetbrains.plugins.notebooks.editor.NotebookEditorAppearanceProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellLinesProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.plugins.notebooks.editor.NotebookCellLinesProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellSelectionModelProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.plugins.notebooks.editor.NotebookCellSelectionModelProvider"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellInlayController"
+                    interface="org.jetbrains.plugins.notebooks.editor.NotebookCellInlayController$Factory"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellGutterController"
+                    interface="org.jetbrains.plugins.notebooks.editor.NotebookCellGutterController"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.datavis.inlays.components.inlayStateCustomizer"
+                    interface="org.intellij.datavis.r.inlays.components.InlayStateCustomizer"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <actions>
+    <group id="org.intellij.datavis.r.inlays.components.InlayOutputToolbarActions">
+      <action id="org.intellij.datavis.r.inlays.components.ClearOutputAction"
+              class="org.intellij.datavis.r.inlays.components.ClearOutputAction"
+              icon="AllIcons.Actions.GC"/>
+      <action id="org.intellij.datavis.r.inlays.components.SaveOutputAction"
+              class="org.intellij.datavis.r.inlays.components.SaveOutputAction"
+              icon="AllIcons.Actions.MenuSaveall"/>
+      <action id="org.intellij.datavis.r.inlays.components.CopyImageToClipboardAction"
+              class="org.intellij.datavis.r.inlays.components.CopyImageToClipboardAction"
+              icon="AllIcons.Actions.Copy"/>
+    </group>
+
+    <group id="NotebookOutputCollapseActions" popup="true">
+      <action id="NotebookOutputCollapseSingleInCellAction"
+              class="org.jetbrains.plugins.notebooks.editor.outputs.impl.NotebookOutputCollapseSingleInCellAction"/>
+      <action id="NotebookOutputCollapseAllInCellAction"
+              class="org.jetbrains.plugins.notebooks.editor.outputs.impl.NotebookOutputCollapseAllInCellAction"/>
+      <action id="NotebookOutputCollapseAllAction"
+              class="org.jetbrains.plugins.notebooks.editor.outputs.impl.NotebookOutputCollapseAllAction"/>
+    </group>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="pycharm.ds.notebook.editor.ui.binary.search.threshold"
+                 description="Threshold for size sorted lists in UI components when binary search should be preferred instead of linear."
+                 defaultValue="100"
+                 restartRequired="false"/>
+
+    <notificationGroup displayType="BALLOON" id="Notebook Table" bundle="messages.VisualizationBundle" key="inlay.output.table.notification.group.name"/>
+    <notificationGroup id="InlayTable" displayType="BALLOON"/>
+    <editorFactoryListener id="org.intellij.datavis.r.inlays.InlaysManager" implementation="org.intellij.datavis.r.inlays.InlaysManager"/>
+
+    <editorFactoryMouseListener
+      implementation="org.jetbrains.plugins.notebooks.editor.outputs.impl.OutputCollapsingGutterMouseListener"
+      id="OutputCollapsingGutterMouseListener"
+      order="first"/>
+    <editorFactoryMouseMotionListener
+      implementation="org.jetbrains.plugins.notebooks.editor.outputs.impl.OutputCollapsingGutterMouseListener"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.notebooks">
+    <notebookCellGutterController
+      order="first"
+      implementation="org.jetbrains.plugins.notebooks.editor.CellBackgroundGutterController"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.intellij.datavis.r.inlays.visualisation">
+    <uiCustomizer implementation="org.intellij.datavis.r.ui.DefaultUiCustomizer"/>
+  </extensions>
+
+  <!-- New output inlays -->
+  <extensionPoints>
+    <extensionPoint
+      qualifiedName="org.jetbrains.plugins.notebooks.editor.outputs.notebookOutputComponentFactory"
+      interface="org.jetbrains.plugins.notebooks.editor.outputs.NotebookOutputComponentFactory"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="org.jetbrains.plugins.notebooks.editor.outputs.notebookOutputDataKeyExtractor"
+      interface="org.jetbrains.plugins.notebooks.editor.outputs.NotebookOutputDataKeyExtractor"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="org.jetbrains.plugins.notebooks.editor.outputs.notebookOutputComponentWrapper"
+      interface="org.jetbrains.plugins.notebooks.editor.outputs.NotebookOutputComponentWrapper"
+      dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="org.jetbrains.plugins.notebooks">
+    <notebookCellInlayController
+      implementation="org.jetbrains.plugins.notebooks.editor.outputs.NotebookOutputInlayController$Factory"/>
+  </extensions>
+
+  <resource-bundle>messages.VisualizationBundle</resource-bundle>
+</idea-plugin>
