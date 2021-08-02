@@ -1,7 +1,0 @@
-Style -> UClass (name = Style)
-value -> UParameter (name = value)
-String -> USimpleNameReferenceExpression (identifier = String)
-SYSTEM -> UastEmptyExpression
-USER -> UastEmptyExpression
-INTERNAL -> UastEmptyExpression
-UNKNOWN -> UastEmptyExpression
