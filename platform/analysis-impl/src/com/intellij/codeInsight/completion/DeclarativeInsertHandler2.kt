@@ -61,7 +61,7 @@ open class CompositeDeclarativeInsertHandler(val handlers: Map<String, Lazy<Decl
 open class DeclarativeInsertHandler2 protected constructor(
   val textOperations: List<RelativeTextEdit>,
   val offsetToPutCaret: Int,
-  val addCompletionChar: Boolean,
+  val addCompletionChar: Boolean?,
   val postInsertHandler: InsertHandler<LookupElement>?,
   val popupOptions: PopupOptions
 ) : InsertHandler<LookupElement> {
@@ -78,7 +78,7 @@ open class DeclarativeInsertHandler2 protected constructor(
   protected fun conditionalHandleInsert(context: InsertionContext, item: LookupElement, applyTextOperations: Boolean) {
     val baseOffset = context.editor.caretModel.offset
 
-    context.setAddCompletionChar(addCompletionChar)
+    addCompletionChar?.let(context::setAddCompletionChar)
 
     if (applyTextOperations) {
       textOperations.sortedByDescending { (from, _, _) -> from }
@@ -137,7 +137,7 @@ open class DeclarativeInsertHandler2 protected constructor(
   class Builder {
     private val textOperations = mutableListOf<RelativeTextEdit>()
     var offsetToPutCaret: Int = 0
-    private var addCompletionChar: Boolean = false
+    private var addCompletionChar: Boolean? = null
     private var postInsertHandler: InsertHandler<LookupElement>? = null
     private var popupOptions: PopupOptions = PopupOptions.DoNotShow
 
@@ -161,7 +161,7 @@ open class DeclarativeInsertHandler2 protected constructor(
       return this
     }
 
-    fun withAddCompletionCharFlag(newAddCompletionChar: Boolean): Builder {
+    fun withAddCompletionCharFlag(newAddCompletionChar: Boolean?): Builder {
       addCompletionChar = newAddCompletionChar
       return this
     }
@@ -182,7 +182,7 @@ class SingleInsertionDeclarativeInsertHandler(private val stringToInsert: String
                                               popupOptions: PopupOptions)
   : DeclarativeInsertHandler2(listOf(RelativeTextEdit(0, 0, stringToInsert)),
                               stringToInsert.length,
-                              false,
+                              null,
                               null,
                               popupOptions) {
 
