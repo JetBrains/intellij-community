@@ -2,13 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiType
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.ParameterDescriptor
-import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
+import com.intellij.psi.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.*
@@ -74,6 +68,8 @@ interface BaseKotlinUastResolveProviderService {
 
     fun resolveToType(ktTypeReference: KtTypeReference, source: UElement): PsiType?
 
+    fun resolveToType(ktTypeReference: KtTypeReference, lightDeclaration: PsiModifierListOwner?): PsiType?
+
     // ----------
     // Types
     // ----------
@@ -87,6 +83,8 @@ interface BaseKotlinUastResolveProviderService {
     fun getType(ktExpression: KtExpression, parent: UElement): PsiType?
 
     fun getType(ktDeclaration: KtDeclaration, parent: UElement): PsiType?
+
+    fun getType(ktDeclaration: KtDeclaration, lightDeclaration: PsiModifierListOwner?): PsiType?
 
     fun getFunctionType(ktFunction: KtFunction, parent: UElement): PsiType?
 

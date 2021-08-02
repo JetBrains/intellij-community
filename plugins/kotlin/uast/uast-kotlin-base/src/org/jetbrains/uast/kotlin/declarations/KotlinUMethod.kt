@@ -7,7 +7,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.PsiParameter
-import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.elements.isGetter
@@ -120,20 +119,6 @@ open class KotlinUMethod(
                 else ->
                     KotlinUMethod(psi, givenParent)
             }
-        }
-
-        fun create(
-            sourcePsi: KtDeclaration?,
-            givenParent: UElement?
-        ): UMethod? {
-            val javaPsi = when (sourcePsi) {
-                is KtPropertyAccessor ->
-                    LightClassUtil.getLightClassAccessorMethod(sourcePsi)
-                is KtFunction ->
-                    LightClassUtil.getLightClassMethod(sourcePsi)
-                else -> null
-            } as? KtLightMethod ?: return null
-            return create(javaPsi, givenParent)
         }
     }
 }

@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.psi.UastFakeLightMethod
 
-class KotlinUMethodWithFakeLightDelegate internal constructor(
+class KotlinUMethodWithFakeLightDelegate(
     val original: KtFunction,
     fakePsi: UastFakeLightMethod,
     givenParent: UElement?

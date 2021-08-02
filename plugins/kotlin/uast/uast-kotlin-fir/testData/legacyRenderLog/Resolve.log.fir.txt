@@ -140,3 +140,5 @@ UFile (package = )
         UMethod (name = A)
         UMethod (name = foo)
             UBlockExpression
+        UMethod (name = inlineFoo)
+            UBlockExpression
