@@ -87,6 +87,12 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   PsiFile getFile();
 
+  /**
+   * Returns current virtual file backing the loaded PSI file
+   * @return current virtual file backing the loaded PSI file
+   */
+  VirtualFile getOriginalVirtualFile();
+
   void setTestDataPath(@NotNull String dataPath);
 
   @NotNull
