@@ -98,5 +98,6 @@
     <orderEntry type="module" module-name="kotlin.i18n.tests" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.tests" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.tests" />
+    <orderEntry type="module" module-name="kotlin.native.tests" />
   </component>
 </module>

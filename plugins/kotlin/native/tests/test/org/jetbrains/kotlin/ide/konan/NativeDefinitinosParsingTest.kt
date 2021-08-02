@@ -12,7 +12,7 @@ class NativeDefinitionsParsingTest : ParsingTestCase("", "def", NativeDefinition
 
     fun testBadDefinitions() = doTest(true)
 
-    override fun getTestDataPath(): String = KotlinRoot.DIR.resolve("native/testData/colorHighlighting").slashedPath
+    override fun getTestDataPath(): String = KotlinRoot.DIR.resolve("native/tests/testData/colorHighlighting").slashedPath
 
     override fun skipSpaces(): Boolean = false
 
