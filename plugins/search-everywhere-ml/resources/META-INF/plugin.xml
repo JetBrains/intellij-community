@@ -1,0 +1,27 @@
+<idea-plugin>
+  <id>com.intellij.searcheverywhere.ml</id>
+  <name>Machine Learning in Search Everywhere</name>
+  <vendor>JetBrains</vendor>
+
+  <depends optional="true" config-file="vcs-feature-provider.xml">Git4Idea</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <searchEverywhereMlService implementation="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService" />
+    <statistic.eventLog.eventLoggerProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.logger.SearchEverywhereEventLoggerProvider"
+      order="first" />
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint name="searchEverywhereElementFeaturesProvider"
+                    interface="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij.searcheverywhere.ml">
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFileFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereActionFeaturesProvider"/>
+  </extensions>
+</idea-plugin>

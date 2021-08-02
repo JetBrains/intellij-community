@@ -1,0 +1,63 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ide.actions.searcheverywhere.ml
+
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
+import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModel
+import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModelProvider
+import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.openapi.project.Project
+
+internal class SearchEverywhereMlSearchState(
+  val sessionStartTime: Long, val searchStartTime: Long,
+  val searchIndex: Int, val searchStartReason: SearchRestartReason, val tabId: String,
+  val keysTyped: Int, val backspacesTyped: Int, val queryLength: Int,
+  project: Project?
+) {
+  private val cachedElementsInfo: MutableMap<Int, SearchEverywhereMLItemInfo> = hashMapOf()
+  private val cachedMLWeight: MutableMap<Int, Double> = hashMapOf()
+
+  private val model: SearchEverywhereActionsRankingModel = SearchEverywhereActionsRankingModel(SearchEverywhereActionsRankingModelProvider())
+
+  init {
+    SearchEverywhereElementFeaturesProvider.getFeatureProviders().forEach { it.init(project) }
+  }
+
+  @Synchronized
+  fun getElementFeatures(elementId: Int,
+                         element: Any,
+                         contributor: SearchEverywhereContributor<*>,
+                         queryLength: Int,
+                         priority: Int): SearchEverywhereMLItemInfo {
+    return cachedElementsInfo.computeIfAbsent(elementId) {
+      val features = mutableMapOf<String, Any>()
+      SearchEverywhereElementFeaturesProvider.getFeatureProviders().forEach { provider ->
+        features.putAll(provider.getElementFeatures(element, sessionStartTime, queryLength, priority))
+      }
+
+      return@computeIfAbsent SearchEverywhereMLItemInfo(elementId, contributor.searchProviderId, features)
+    }
+  }
+
+  @Synchronized
+  fun getMLWeightIfDefined(elementId: Int): Double? {
+    return cachedMLWeight[elementId]
+  }
+
+  @Synchronized
+  fun getMLWeight(elementId: Int,
+                  element: GotoActionModel.MatchedValue,
+                  contributor: SearchEverywhereContributor<*>,
+                  context: SearchEverywhereMLContextInfo,
+                  priority: Int): Double {
+    return cachedMLWeight.computeIfAbsent(elementId) {
+      val features = hashMapOf<String, Any>()
+      features.putAll(context.features)
+      features.putAll(getElementFeatures(elementId, element, contributor, queryLength, priority).features)
+      model.predict(features)
+    }
+  }
+}
+
+internal data class SearchEverywhereMLItemInfo(val id: Int, val contributorId: String, val features: Map<String, Any>)
