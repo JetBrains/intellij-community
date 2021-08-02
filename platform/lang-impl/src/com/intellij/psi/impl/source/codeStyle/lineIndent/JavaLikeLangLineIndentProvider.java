@@ -405,13 +405,15 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
         SemanticEditorPosition candidate = curr.copy();
         curr.moveBefore();
         curr.moveBeforeOptionalMix(Whitespace, LineComment, BlockComment);
-        if (!curr.isAt(RightParenthesis)) {
-          return candidate.getStartOffset();
-        }
-        else {
+        if (curr.isAt(RightParenthesis)) {
           curr.moveBeforeParentheses(LeftParenthesis, RightParenthesis);
-          continue;
+          SemanticEditorPosition controlStructureCheck = curr.copy();
+          controlStructureCheck.moveBeforeOptionalMix(Whitespace, LineComment, BlockComment);
+          if (isStartOfStatementWithOptionalBlock(controlStructureCheck)) {
+            continue;
+          }
         }
+        return candidate.getStartOffset();
       }
       else if (curr.isAt(BlockClosingBrace)) {
         curr.moveBeforeParentheses(BlockOpeningBrace, BlockClosingBrace);
