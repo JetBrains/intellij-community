@@ -47,8 +47,6 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.UiInterceptors;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.EntryStream;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jetCheck.Generator;
@@ -230,7 +228,7 @@ public class InvokeIntention extends ActionOnFile {
     if (elementsToWrap.isEmpty()) return intentions;
 
     Project project = getProject();
-    Map<String, IntentionAction> names = StreamEx.of(intentions).toMap(IntentionAction::getText, Function.identity(), (a,b) -> a);
+    Map<String, IntentionAction> names = intentions.stream().collect(Collectors.toMap(IntentionAction::getText, Function.identity(), (a, b) -> a));
     PsiElement elementToWrap = env.generateValue(Generator.sampledFrom(elementsToWrap).noShrink(), null);
     String text = elementToWrap.getText();
     String prefix = myPolicy.getWrapPrefix();
@@ -257,7 +255,7 @@ public class InvokeIntention extends ActionOnFile {
       }
     }
     intentions = getAvailableIntentions(editor, file);
-    Map<String, IntentionAction> namesWithParentheses = StreamEx.of(intentions).toMap(IntentionAction::getText, Function.identity(), (a,b) -> a);
+    Map<String, IntentionAction> namesWithParentheses = intentions.stream().collect(Collectors.toMap(IntentionAction::getText, Function.identity(), (a, b) -> a));
     Map<String, IntentionAction> added = new HashMap<>(namesWithParentheses);
     added.keySet().removeAll(names.keySet());
     Map<String, IntentionAction> removed = new HashMap<>(names);
@@ -284,8 +282,7 @@ public class InvokeIntention extends ActionOnFile {
         editor.getCaretModel().moveToOffset(offset);
       });
       intentions = getAvailableIntentions(editor, file);
-      Map<String, IntentionAction> namesBackAgain =
-        StreamEx.of(intentions).toMap(IntentionAction::getText, Function.identity(), (a, b) -> a);
+      Map<String, IntentionAction> namesBackAgain = intentions.stream().collect(Collectors.toMap(IntentionAction::getText, Function.identity(), (a, b) -> a));
       if (!namesBackAgain.keySet().equals(names.keySet())) {
         if (namesBackAgain.keySet().equals(namesWithParentheses.keySet())) {
           messages.add(0, "Unstable result: intentions changed after parenthesizing, but remain the same when parentheses removed");
@@ -302,9 +299,10 @@ public class InvokeIntention extends ActionOnFile {
   }
 
   private static String describeIntentions(Map<String, IntentionAction> intentionMap) {
-    return EntryStream.of(intentionMap)
-                   .mapKeyValue(MadTestingUtil::getIntentionDescription)
-                   .map("\t"::concat).joining("\n");
+    return intentionMap.entrySet().stream()
+      .map(entry -> MadTestingUtil.getIntentionDescription(entry.getKey(), entry.getValue()))
+      .map("\t"::concat)
+      .collect(Collectors.joining("\n"));
   }
 
   private void restoreAfterPotentialPsiTextInconsistency() {
