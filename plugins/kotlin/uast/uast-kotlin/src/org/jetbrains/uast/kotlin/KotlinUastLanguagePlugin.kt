@@ -185,8 +185,8 @@ internal inline fun <reified ActualT : UElement> Array<out Class<out UElement>>.
 internal fun Array<out Class<out UElement>>.isAssignableFrom(cls: Class<*>) = any { it.isAssignableFrom(cls) }
 
 
-
-internal object KotlinConverter {
+@TestOnly
+object KotlinConverter {
     internal tailrec fun unwrapElements(element: PsiElement?): PsiElement? = when (element) {
         is KtValueArgumentList -> unwrapElements(element.parent)
         is KtValueArgument -> unwrapElements(element.parent)

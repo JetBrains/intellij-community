@@ -162,7 +162,7 @@ abstract class AbstractKotlinUastTest : AbstractUastTest() {
     }
 }
 
-val TEST_KOTLIN_MODEL_DIR = KotlinRoot.DIR.resolve("uast/uast-kotlin/testData")
+val TEST_KOTLIN_MODEL_DIR = KotlinRoot.DIR.resolve("uast/uast-kotlin/tests/testData")
 
 private fun loadScriptingPlugin(configuration: CompilerConfiguration) {
     val artifacts = KotlinArtifacts.instance
