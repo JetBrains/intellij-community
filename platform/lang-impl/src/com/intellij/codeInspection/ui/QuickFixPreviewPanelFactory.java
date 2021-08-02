@@ -69,7 +69,7 @@ public final class QuickFixPreviewPanelFactory {
                               boolean multipleDescriptors,
                               @NotNull InspectionResultsView view) {
       boolean hasFixes = fixes.length != 0;
-      setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
+      setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
       boolean hasComponents = false;
 
       InspectionTree tree = myView.getTree();
@@ -111,7 +111,6 @@ public final class QuickFixPreviewPanelFactory {
         int bottom = hasFixes ? 0 : 8;
         setBorder(JBUI.Borders.empty(top, left, bottom, 0));
       }
-
 
       return !hasComponents;
     }
