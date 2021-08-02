@@ -274,6 +274,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   }
 
   public static void updateAddedFiles(List<PsiFile> added) {
+    if (added.isEmpty()) return;
     Project project = added.get(0).getProject();
     if (Registry.is("run.refactorings.under.progress")) {
       ApplicationManagerEx.getApplicationEx().runWriteActionWithNonCancellableProgressInDispatchThread(

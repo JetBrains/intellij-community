@@ -8,6 +8,8 @@ import com.intellij.ide.util.EditorHelper;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
@@ -18,6 +20,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -28,15 +31,18 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.SkipOverwriteChoice;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class CopyClassesHandler extends CopyHandlerDelegateBase {
   private static final Logger LOG = Logger.getInstance(CopyClassesHandler.class);
@@ -341,6 +347,54 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     return ref.get();
   }
 
+  private static List<PsiFile> checkExistingFiles(@NotNull Collection<PsiFile> files, @NotNull PsiDirectory directory,
+                                                  @Nullable Map<PsiFile, String> relativePaths, @Nullable String className){
+    SkipOverwriteChoice choice = SkipOverwriteChoice.OVERWRITE;
+    List<PsiFile> filesToProcess = new ArrayList<>();
+    for (PsiFile file : files) {
+      final String relativePath = relativePaths != null ? relativePaths.get(file) : null;
+      final PsiDirectory targetDirectory = relativePath != null ? buildRelativeDir(directory, relativePath).getTargetDirectory() : directory;
+      final String fileName = getNewFileName(file, className);
+      final boolean isExistingFile = targetDirectory != null && targetDirectory.findFile(fileName) != null;
+      if (isExistingFile) {
+        if (choice != SkipOverwriteChoice.SKIP_ALL && choice != SkipOverwriteChoice.OVERWRITE_ALL) {
+          String message = ExecutionBundle.message("copy.classes.command.name");
+          choice = SkipOverwriteChoice.askUser(targetDirectory, fileName, message, files.size() > 1);
+        }
+      }
+      if (!isExistingFile || choice == SkipOverwriteChoice.OVERWRITE || choice == SkipOverwriteChoice.OVERWRITE_ALL) {
+        filesToProcess.add(file);
+      }
+    }
+    return filesToProcess;
+  }
+
+  private static <E extends IncorrectOperationException> void runWriteAction(@NotNull Project project,
+                                                                             @NlsContexts.ProgressTitle String title,
+                                                                             @NotNull ThrowableRunnable<E> action) throws E {
+    if (Registry.is("run.refactorings.under.progress")){
+      ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+      AtomicReference<Throwable> thrown = new AtomicReference<>();
+      application.runWriteActionWithNonCancellableProgressInDispatchThread(title, project, null, progress -> {
+        try {
+          action.run();
+        }
+        catch (Throwable e) {
+          thrown.set(e);
+        }
+      });
+      Throwable throwable = thrown.get();
+      if (throwable instanceof IncorrectOperationException) {
+        throw (IncorrectOperationException) throwable;
+      } else if (throwable != null) {
+        throw new IncorrectOperationException(throwable);
+      }
+    }
+    else {
+      WriteAction.run(action);
+    }
+  }
+
   @NotNull
   public static Collection<PsiFile> doCopyClasses(final Map<PsiFile, PsiClass[]> fileToClasses,
                                                   @Nullable HashMap<PsiFile, String> fileToRelativePath, final String copyClassName,
@@ -348,48 +402,49 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
                                                   final Project project) throws IncorrectOperationException {
     final Map<PsiClass, PsiClass> oldToNewMap = new HashMap<>();
     final List<PsiFile> createdFiles = new ArrayList<>(fileToClasses.size());
-    int[] choice = fileToClasses.size() > 1 ? new int[]{-1} : null;
-    for (final Map.Entry<PsiFile, PsiClass[]> entry : fileToClasses.entrySet()) {
-      final PsiFile psiFile = entry.getKey();
-      final PsiClass[] sources = entry.getValue();
+    final List<PsiFile> filesToProcess = checkExistingFiles(fileToClasses.keySet(), targetDirectory, fileToRelativePath, copyClassName);
 
-      final String relativePath = fileToRelativePath != null ? fileToRelativePath.get(psiFile) : null;
-      final PsiDirectoryImpl directory = (PsiDirectoryImpl) getOrCreateRelativeDirectory(targetDirectory, relativePath);
-      final PsiFile createdFile = executeWithUpdatingAddedFilesDisabled(directory, () -> copy(directory, psiFile, copyClassName, choice));
-      if (createdFile == null) continue;
-      createdFiles.add(createdFile);
+    runWriteAction(project, RefactoringBundle.message("command.name.copy"), () -> {
+      for (final PsiFile psiFile : filesToProcess) {
+        final PsiClass[] sources = fileToClasses.get(psiFile);
+        final String relativePath = fileToRelativePath != null ? fileToRelativePath.get(psiFile) : null;
+        final PsiDirectoryImpl directory = (PsiDirectoryImpl)getOrCreateRelativeDirectory(targetDirectory, relativePath);
+        final PsiFile createdFile = executeWithUpdatingAddedFilesDisabled(directory, () -> copy(directory, psiFile, copyClassName));
+        if (createdFile == null) continue;
+        createdFiles.add(createdFile);
 
-      if (createdFile instanceof PsiClassOwner && sources != null) {
-        Map<PsiClass, PsiClass> sourceToDestination = new LinkedHashMap<>();
-        for (final PsiClass destination : ((PsiClassOwner)createdFile).getClasses()) {
-          if (!isSynthetic(destination)) {
-            PsiClass source = findByName(sources, destination.getName());
-            if (source == null) {
-              WriteAction.run(() -> destination.delete());
+        if (createdFile instanceof PsiClassOwner && sources != null) {
+          Map<PsiClass, PsiClass> sourceToDestination = new LinkedHashMap<>();
+          for (final PsiClass destination : ((PsiClassOwner)createdFile).getClasses()) {
+            if (!isSynthetic(destination)) {
+              PsiClass source = findByName(sources, destination.getName());
+              if (source == null) {
+                WriteAction.run(() -> destination.delete());
+              }
+              else {
+                sourceToDestination.put(source, destination);
+              }
+            }
+          }
+
+          for (final Map.Entry<PsiClass, PsiClass> classEntry : sourceToDestination.entrySet()) {
+            if (copyClassName != null && sourceToDestination.size() == 1) {
+              final PsiClass copy = copy(classEntry.getKey(), copyClassName);
+              PsiClass newClass = WriteAction.compute(() -> (PsiClass) classEntry.getValue().replace(copy));
+              oldToNewMap.put(classEntry.getKey(), newClass);
             }
             else {
-              sourceToDestination.put(source, destination);
+              oldToNewMap.put(classEntry.getKey(), classEntry.getValue());
             }
-          }
-        }
-
-        for (final Map.Entry<PsiClass, PsiClass> classEntry : sourceToDestination.entrySet()) {
-          if (copyClassName != null && sourceToDestination.size() == 1) {
-            final PsiClass copy = copy(classEntry.getKey(), copyClassName);
-            PsiClass newClass = WriteAction.compute(() -> (PsiClass) classEntry.getValue().replace(copy));
-            oldToNewMap.put(classEntry.getKey(), newClass);
-          }
-          else {
-            oldToNewMap.put(classEntry.getKey(), classEntry.getValue());
           }
         }
       }
-    }
+    });
 
     DumbService.getInstance(project).completeJustSubmittedTasks();
     CopyFilesOrDirectoriesHandler.updateAddedFiles(createdFiles);
 
-    WriteAction.run(() -> {
+    runWriteAction(project, RefactoringBundle.message("copy.update.references"), () -> {
       final Set<PsiElement> rebindExpressions = new HashSet<>();
       for (PsiElement element : oldToNewMap.values()) {
         if (element == null) {
@@ -422,11 +477,13 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     return aClass instanceof SyntheticElement || !aClass.isPhysical();
   }
 
-  private static PsiFile copy(@NotNull PsiDirectory directory, @NotNull PsiFile file, String name, int[] choice) {
+  private static PsiFile copy(@NotNull PsiDirectory directory, @NotNull PsiFile file, String name) {
     final String fileName = getNewFileName(file, name);
-    final String errorMessage = ExecutionBundle.message("copy.classes.command.name");
-    if (CopyFilesOrDirectoriesHandler.checkFileExist(directory, choice, file, fileName, errorMessage)) return null;
-    return WriteAction.compute(() -> directory.copyFileFrom(fileName, file));
+    final PsiFile existingFile = directory.findFile(fileName);
+    return WriteAction.compute(() -> {
+      if (existingFile != null) existingFile.delete();
+      return directory.copyFileFrom(fileName, file);
+    });
   }
 
   private static String getNewFileName(PsiFile file, String name) {
