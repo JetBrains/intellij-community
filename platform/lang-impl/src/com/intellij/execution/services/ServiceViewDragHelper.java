@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
@@ -286,11 +286,13 @@ final class ServiceViewDragHelper {
       Position position = eventContext.getPosition();
       if (eventContext.descriptor.canDrop(event, position)) {
         event.setDropPossible(true);
+        Rectangle bounds = eventContext.cellBounds;
+        bounds.y -= -1;
+        bounds.height = 2;
         if (position != ABOVE) {
-          eventContext.cellBounds.y += eventContext.cellBounds.height - 2;
+          bounds.y += bounds.height;
         }
-        RelativeRectangle rectangle = new RelativeRectangle(myTree, eventContext.cellBounds);
-        rectangle.getDimension().height = 2;
+        RelativeRectangle rectangle = new RelativeRectangle(myTree, bounds);
         event.setHighlighting(rectangle, DnDEvent.DropTargetHighlightingType.FILLED_RECTANGLE);
         return false;
       }
