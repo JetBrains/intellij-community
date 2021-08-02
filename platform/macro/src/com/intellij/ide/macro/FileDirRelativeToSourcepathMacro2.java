@@ -16,7 +16,7 @@
 
 package com.intellij.ide.macro;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +32,7 @@ public final class FileDirRelativeToSourcepathMacro2 extends FileDirRelativeToSo
   @NotNull
   @Override
   public String getDescription() {
-    return IdeBundle.message("macro.file.dir.relative.to.sourcepath.root.fwd.slash");
+    return IdeCoreBundle.message("macro.file.dir.relative.to.sourcepath.root.fwd.slash");
   }
 
   @Override

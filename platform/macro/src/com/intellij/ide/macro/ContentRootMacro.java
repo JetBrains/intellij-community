@@ -16,7 +16,7 @@
 
 package com.intellij.ide.macro;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
@@ -35,7 +35,7 @@ public class ContentRootMacro extends Macro {
   @NotNull
   @Override
   public String getDescription() {
-    return IdeBundle.message("macro.content.root");
+    return IdeCoreBundle.message("macro.content.root");
   }
 
   @Override

@@ -16,12 +16,12 @@
 
 package com.intellij.ide.macro;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.editor.Editor;
 
 public final class ColumnNumberMacro extends EditorMacro {
   public ColumnNumberMacro() {
-    super("ColumnNumber", IdeBundle.message("macro.column.number"));
+    super("ColumnNumber", IdeCoreBundle.message("macro.column.number"));
   }
 
   @Override

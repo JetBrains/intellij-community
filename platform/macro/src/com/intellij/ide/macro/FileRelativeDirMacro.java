@@ -2,9 +2,9 @@
 
 package com.intellij.ide.macro;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,12 +20,12 @@ public class FileRelativeDirMacro extends Macro {
   @NotNull
   @Override
   public String getDescription() {
-    return IdeBundle.message("macro.file.directory.relative");
+    return IdeCoreBundle.message("macro.file.directory.relative");
   }
 
   @Override
   public String expand(@NotNull DataContext dataContext) {
-    final VirtualFile baseDir = PlatformDataKeys.PROJECT_FILE_DIRECTORY.getData(dataContext);
+    final VirtualFile baseDir = PlatformCoreDataKeys.PROJECT_FILE_DIRECTORY.getData(dataContext);
     if (baseDir == null) {
       return null;
     }

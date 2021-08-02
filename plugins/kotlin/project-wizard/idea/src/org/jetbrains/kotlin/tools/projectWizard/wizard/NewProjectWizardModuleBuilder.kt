@@ -295,7 +295,7 @@ private fun isNavigatingBack() = Thread.currentThread().stackTrace.any { element
 private fun WizardContext.getNextButton() = try {
     AbstractWizard::class.java.getDeclaredMethod("getNextButton")
         .also { it.isAccessible = true }
-        .invoke(wizard) as? JButton
+        .invoke(getUserData(AbstractWizard.KEY)) as? JButton
 } catch (_: Throwable) {
     null
 }

@@ -16,12 +16,12 @@
 
 package com.intellij.ide.macro;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.editor.Editor;
 
 public final class LineNumberMacro extends EditorMacro {
   public LineNumberMacro() {
-    super("LineNumber", IdeBundle.message("macro.line.number"));
+    super("LineNumber", IdeCoreBundle.message("macro.line.number"));
   }
 
   @Override

@@ -10,6 +10,7 @@ import com.intellij.ide.starters.shared.ui.SelectedLibrariesPanel
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.AbstractWizard
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
@@ -423,7 +424,7 @@ open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) :
   }
 
   protected fun getModalityState(): ModalityState {
-    return ModalityState.stateForComponent(wizardContext.wizard.contentComponent)
+    return ModalityState.stateForComponent(wizardContext.getUserData(AbstractWizard.KEY)!!.contentComponent)
   }
 
   protected fun getDisposed(): Condition<Any> = Condition<Any> { Disposer.isDisposed(parentDisposable) }

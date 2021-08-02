@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.macro;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.ide.CopyPasteManager;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ public class ClipboardContentMacro extends Macro {
   @NotNull
   @Override
   public String getDescription() {
-    return IdeBundle.message("macro.clipboard.content");
+    return IdeCoreBundle.message("macro.clipboard.content");
   }
 
   @Nullable

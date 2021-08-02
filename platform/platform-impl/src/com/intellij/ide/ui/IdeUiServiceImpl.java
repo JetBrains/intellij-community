@@ -13,6 +13,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.EdtDataContext;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessDialog;
@@ -131,5 +133,21 @@ public class IdeUiServiceImpl extends IdeUiService{
   @Override
   public boolean isUseSafeWrite() {
     return GeneralSettings.getInstance().isUseSafeWrite();
+  }
+
+  @Override
+  public String showQuestionDialog(String message, String title) {
+    return Messages.showInputDialog(message, title, Messages.getQuestionIcon());
+  }
+
+  @Override
+  public void showErrorDialog(String message, String title) {
+    Messages.showErrorDialog(message, title);
+  }
+
+  @Override
+  public VirtualFile[] chooseFiles(FileChooserDescriptor descriptor,
+                                   Project project, VirtualFile toSelect) {
+    return FileChooser.chooseFiles(descriptor, project, toSelect);
   }
 }

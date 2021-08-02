@@ -16,7 +16,7 @@
 
 package com.intellij.ide.macro;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
@@ -34,7 +34,7 @@ public final class ModuleFileDirMacro extends Macro {
   @NotNull
   @Override
   public String getDescription() {
-    return IdeBundle.message("macro.module.file.directory");
+    return IdeCoreBundle.message("macro.module.file.directory");
   }
 
   @Override

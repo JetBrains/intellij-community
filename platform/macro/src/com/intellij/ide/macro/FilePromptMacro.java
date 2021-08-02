@@ -2,9 +2,9 @@
 package com.intellij.ide.macro;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
@@ -30,7 +30,7 @@ public class FilePromptMacro extends PromptingMacro implements SecondQueueExpand
   protected String promptUser(DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
-    final VirtualFile[] result = FileChooser.chooseFiles(descriptor, project, null);
+    final VirtualFile[] result = IdeUiService.getInstance().chooseFiles(descriptor, project, null);
     return result.length == 1? FileUtil.toSystemDependentName(result[0].getPath()) : null;
   }
 

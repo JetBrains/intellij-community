@@ -16,7 +16,7 @@
 
 package com.intellij.ide.macro;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,7 +33,7 @@ public final class FileNameWithoutExtension extends FileNameMacro {
   @NotNull
   @Override
   public String getDescription() {
-    return IdeBundle.message("macro.file.name.without.extension");
+    return IdeCoreBundle.message("macro.file.name.without.extension");
   }
 
   @Override

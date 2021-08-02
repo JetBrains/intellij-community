@@ -17,6 +17,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -29,6 +30,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -335,6 +337,12 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
   protected String getProgressText() {
     final String root = getContentRootPath();
     return JavaUiBundle.message("progress.searching.for.sources", root != null? root.replace('/', File.separatorChar) : "") ;
+  }
+
+  public static FieldPanel createFieldPanel(final JTextField field, final @NlsContexts.Label String labelText, final BrowseFilesListener browseButtonActionListener) {
+    final FieldPanel fieldPanel = new FieldPanel(field, labelText, null, browseButtonActionListener, null);
+    fieldPanel.getFieldLabel().setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
+    return fieldPanel;
   }
 
   private class BrowsePathListener extends BrowseFilesListener {

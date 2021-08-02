@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.macro;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,7 +32,7 @@ public class FileParentDirMacro extends Macro {
   @NotNull
   @Override
   public String getDescription() {
-    return IdeBundle.message("macro.file.parent.directory");
+    return IdeCoreBundle.message("macro.file.parent.directory");
   }
 
   @Override

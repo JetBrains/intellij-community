@@ -16,7 +16,7 @@
 
 package com.intellij.ide.macro;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
@@ -33,7 +33,7 @@ public final class AffectedModuleNamesMacro extends Macro {
   @NotNull
   @Override
   public String getDescription() {
-    return IdeBundle.message("macro.affected.module.names");
+    return IdeCoreBundle.message("macro.affected.module.names");
   }
 
   @Override

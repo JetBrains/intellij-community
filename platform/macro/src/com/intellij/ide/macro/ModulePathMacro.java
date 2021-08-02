@@ -2,9 +2,10 @@
 
 package com.intellij.ide.macro;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEnumerator;
 import org.jetbrains.annotations.NotNull;
@@ -19,12 +20,12 @@ public final class ModulePathMacro extends Macro {
   @NotNull
   @Override
   public String getDescription() {
-    return IdeBundle.message("macro.module.source.path");
+    return IdeCoreBundle.message("macro.module.source.path");
   }
 
   @Override
   public String expand(@NotNull DataContext dataContext) {
-    final Module module = LangDataKeys.MODULE.getData(dataContext);
+    final Module module = PlatformCoreDataKeys.MODULE.getData(dataContext);
     if (module == null) {
       return null;
     }

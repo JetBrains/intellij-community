@@ -19,8 +19,6 @@ import java.util.Comparator;
 
 public class PlatformDataKeys extends PlatformCoreDataKeys {
 
-  public static final DataKey<FileEditor> FILE_EDITOR = DataKey.create("fileEditor");
-
   /**
    * Returns the text of currently selected file/file revision
    */

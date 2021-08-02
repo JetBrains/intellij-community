@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -85,6 +86,17 @@ public class IdeUiService {
 
   public boolean isUseSafeWrite() {
     return false;
+  }
+
+  public String showQuestionDialog(String message, String title) {
+    return null;
+  }
+
+  public void showErrorDialog(String message, String title) {
+  }
+
+  public VirtualFile[] chooseFiles(FileChooserDescriptor descriptor, Project project, VirtualFile toSelect) {
+    return new VirtualFile[0];
   }
 
   public static IdeUiService getInstance() {

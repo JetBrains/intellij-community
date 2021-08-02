@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.execution.Platform;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -38,7 +38,7 @@ public final class ProcessTerminatedListener extends ProcessAdapter {
   }
 
   public static void attach(final ProcessHandler processHandler, final Project project) {
-    String message = IdeBundle.message("finished.with.exit.code.text.message", EXIT_CODE_ENTRY);
+    String message = IdeCoreBundle.message("finished.with.exit.code.text.message", EXIT_CODE_ENTRY);
     attach(processHandler, project, "\n" + message + "\n");
   }
 

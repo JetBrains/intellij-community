@@ -4,7 +4,7 @@ package com.intellij.ide.macro;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
@@ -111,8 +111,8 @@ public final class MacrosDialog extends DialogWrapper {
   private void init(@NotNull Predicate<? super Macro> filter, @Nullable Map<String, String> userMacros) {
     super.init();
 
-    setTitle(IdeBundle.message("title.macros"));
-    setOKButtonText(IdeBundle.message("button.insert"));
+    setTitle(IdeCoreBundle.message("title.macros"));
+    setOKButtonText(IdeCoreBundle.message("button.insert"));
 
     List<Macro> macros = ContainerUtil.filter(MacroManager.getInstance().getMacros(),
                                               macro -> MacroFilter.GLOBAL.accept(macro) && filter.test(macro));
@@ -189,7 +189,7 @@ public final class MacrosDialog extends DialogWrapper {
     constr.gridy = 0;
     constr.anchor = GridBagConstraints.WEST;
     constr.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(SeparatorFactory.createSeparator(IdeBundle.message("label.macros"), null), constr);
+    panel.add(SeparatorFactory.createSeparator(IdeCoreBundle.message("label.macros"), null), constr);
 
     // macros list
     constr = new GridBagConstraints();
@@ -208,7 +208,7 @@ public final class MacrosDialog extends DialogWrapper {
     constr.gridy = 2;
     constr.anchor = GridBagConstraints.WEST;
     constr.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(SeparatorFactory.createSeparator(IdeBundle.message("label.macro.preview"), null), constr);
+    panel.add(SeparatorFactory.createSeparator(IdeCoreBundle.message("label.macro.preview"), null), constr);
 
     // preview
     constr = new GridBagConstraints();

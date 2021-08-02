@@ -29,7 +29,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 
-public class LangDataKeys extends PlatformDataKeys {
+public class LangDataKeys extends PlatformCoreDataKeys {
 
   /**
    * Returns current/selected module.

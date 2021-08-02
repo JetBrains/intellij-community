@@ -11,6 +11,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -39,6 +40,8 @@ import java.util.Map;
 
 public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(AbstractWizard.class);
+
+  public final static Key<AbstractWizard<?>> KEY = Key.create("AbstractWizard");
 
   protected int myCurrentStep;
   protected final ArrayList<T> mySteps;

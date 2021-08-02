@@ -3,6 +3,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.core.CoreBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
@@ -113,8 +114,8 @@ public final class NamePathComponent extends JPanel {
     NamePathComponent component = new NamePathComponent(
       IdeBundle.message("label.project.name"),
       IdeBundle.message("label.project.files.location"),
-      JavaUiBundle.message("title.select.project.file.directory", IdeBundle.message("project.new.wizard.project.identification")),
-      JavaUiBundle.message("description.select.project.file.directory", StringUtil.capitalize(IdeBundle.message("project.new.wizard.project.identification"))),
+      JavaUiBundle.message("title.select.project.file.directory", IdeCoreBundle.message("project.new.wizard.project.identification")),
+      JavaUiBundle.message("description.select.project.file.directory", StringUtil.capitalize(IdeCoreBundle.message("project.new.wizard.project.identification"))),
       true, false
     );
     String baseDir = context.getProjectFileDirectory();

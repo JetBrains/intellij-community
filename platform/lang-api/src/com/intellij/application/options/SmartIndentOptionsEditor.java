@@ -19,7 +19,7 @@ import java.util.function.Function;
 import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_CONTINUATION_INDENT_SIZE;
 
 
-public class SmartIndentOptionsEditor extends IndentOptionsEditor {
+public class SmartIndentOptionsEditor extends IndentOptionsEditor implements SmartIndentOptionsEditorBase {
   private JCheckBox myCbSmartTabs;
 
   private final ContinuationOption myContinuationOption;

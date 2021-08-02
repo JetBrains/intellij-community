@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser;
 
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -13,7 +14,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.UIBundle;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +35,7 @@ public class FileChooserDescriptor implements Cloneable {
   private final boolean myChooseJarContents;
   private final boolean myChooseMultiple;
 
-  private @NlsContexts.DialogTitle String myTitle = UIBundle.message("file.chooser.default.title");
+  private @NlsContexts.DialogTitle String myTitle = IdeCoreBundle.message("file.chooser.default.title");
   private @NlsContexts.Label String myDescription;
 
   private boolean myHideIgnored = true;

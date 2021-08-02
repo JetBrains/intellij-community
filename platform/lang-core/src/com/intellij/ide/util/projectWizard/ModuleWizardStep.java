@@ -1,17 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.FieldPanel;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.awt.*;
 
 public abstract class ModuleWizardStep extends StepAdapter {
 
@@ -57,12 +52,6 @@ public abstract class ModuleWizardStep extends StepAdapter {
   }
 
   public void disposeUIResources() {
-  }
-
-  public static FieldPanel createFieldPanel(final JTextField field, final @NlsContexts.Label String labelText, final BrowseFilesListener browseButtonActionListener) {
-    final FieldPanel fieldPanel = new FieldPanel(field, labelText, null, browseButtonActionListener, null);
-    fieldPanel.getFieldLabel().setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
-    return fieldPanel;
   }
 
   @Override
