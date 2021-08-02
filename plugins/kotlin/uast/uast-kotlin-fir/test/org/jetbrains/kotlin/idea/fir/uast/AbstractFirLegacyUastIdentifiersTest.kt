@@ -19,6 +19,7 @@ abstract class AbstractFirLegacyUastIdentifiersTest : AbstractFirUastIdentifiers
         "uast-kotlin/testData/ParameterPropertyWithAnnotation.kt",
         "uast-kotlin/testData/PropertyWithAnnotation.kt",
         "uast-kotlin/testData/SimpleAnnotated.kt",
+        "uast-kotlin/testData/ReifiedParameters.kt",
         "uast-kotlin/testData/ReceiverFun.kt",
         // TODO: remaining property accessor conversion in KotlinUSimpleReferenceExpression
         "uast-kotlin/testData/PropertyInitializer.kt",

@@ -2,10 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import org.jetbrains.kotlin.builtins.createFunctionType
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -236,6 +233,10 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return ktTypeReference.toPsiType(source)
     }
 
+    override fun resolveToType(ktTypeReference: KtTypeReference, lightDeclaration: PsiModifierListOwner?): PsiType? {
+        return ktTypeReference.getType()?.toPsiType(lightDeclaration, ktTypeReference, false)
+    }
+
     override fun getReceiverType(ktCallElement: KtCallElement, source: UElement): PsiType? {
         val resolvedCall = ktCallElement.getResolvedCall(ktCallElement.analyze()) ?: return null
         val receiver = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver ?: return null
@@ -270,6 +271,12 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             ?.returnType
             ?.takeIf { !it.isError }
             ?.toPsiType(parent, ktDeclaration, boxed = false)
+    }
+
+    override fun getType(ktDeclaration: KtDeclaration, lightDeclaration: PsiModifierListOwner?): PsiType? {
+        return (ktDeclaration.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, ktDeclaration] as? CallableDescriptor)
+            ?.returnType
+            ?.toPsiType(lightDeclaration, ktDeclaration, boxed = false)
     }
 
     override fun getFunctionType(ktFunction: KtFunction, parent: UElement): PsiType? {

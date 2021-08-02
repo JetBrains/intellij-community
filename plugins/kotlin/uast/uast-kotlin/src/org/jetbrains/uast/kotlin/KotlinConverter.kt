@@ -276,22 +276,6 @@ object KotlinConverter : BaseKotlinConverter {
         }
     }
 
-    internal fun convertFakeLightConstructorAlternatives(
-        original: UastFakeLightPrimaryConstructor,
-        givenParent: UElement?,
-        expectedTypes: Array<out Class<out UElement>>
-    ): Sequence<UElement> {
-        return expectedTypes.accommodate(
-            alternative { convertDeclaration(original.original, givenParent, expectedTypes) as? UClass },
-            alternative { KotlinConstructorUMethod(original.original, original, original.original, givenParent) }
-        )
-    }
-
-    private fun getLightClassForFakeMethod(original: KtFunction): KtLightClass? {
-        if (original.isLocal) return null
-        return getContainingLightClass(original)
-    }
-
     fun convertParameter(
         element: KtParameter,
         givenParent: UElement?,

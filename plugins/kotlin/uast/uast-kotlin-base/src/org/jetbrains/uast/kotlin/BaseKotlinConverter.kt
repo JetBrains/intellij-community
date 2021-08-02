@@ -9,6 +9,7 @@ import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiParameterList
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.asJava.LightClassUtil
+import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightElementBase
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.uast.*
+import org.jetbrains.uast.kotlin.psi.UastFakeLightPrimaryConstructor
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiVariable
 
@@ -85,6 +87,22 @@ interface BaseKotlinConverter {
                     .firstOrNull()
             }
         )
+    }
+
+    fun convertFakeLightConstructorAlternatives(
+        original: UastFakeLightPrimaryConstructor,
+        givenParent: UElement?,
+        expectedTypes: Array<out Class<out UElement>>
+    ): Sequence<UElement> {
+        return expectedTypes.accommodate(
+            alternative { convertDeclaration(original.original, givenParent, expectedTypes) as? UClass },
+            alternative { KotlinConstructorUMethod(original.original, original, original.original, givenParent) }
+        )
+    }
+
+    fun getLightClassForFakeMethod(original: KtFunction): KtLightClass? {
+        if (original.isLocal) return null
+        return getContainingLightClass(original)
     }
 
     fun convertToPropertyAlternatives(
