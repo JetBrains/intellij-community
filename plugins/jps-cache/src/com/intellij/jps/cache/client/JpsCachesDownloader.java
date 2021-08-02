@@ -62,15 +62,23 @@ class JpsCachesDownloader {
             try {
               downloaded = downloadFile(description, existing, requestHeaders, indicator);
             } catch (IOException e) {
-              if (e  instanceof HttpRequests.HttpStatusException && ((HttpRequests.HttpStatusException)e).getStatusCode() == 404) {
-                LOG.info("File not found to download " + description.getDownloadUrl());
-                indicator.finished();
-                return null;
+              int httpStatusCode = -1;
+              if (e  instanceof HttpRequests.HttpStatusException) {
+                httpStatusCode = ((HttpRequests.HttpStatusException)e).getStatusCode();
+                if (httpStatusCode == 404) {
+                  LOG.info("File not found to download " + description.getDownloadUrl());
+                  indicator.finished();
+                  return null;
+                }
               }
 
               // If max attempt count exceeded, rethrow exception further
               if (attempt != MAX_RETRY_COUNT) {
-                LOG.info("Failed to download " + description.getDownloadUrl() + ". Attempt " + attempt + " to download file again");
+                if (httpStatusCode != -1) {
+                  LOG.info("Failed to download " + description.getDownloadUrl() + " HTTP code: " + httpStatusCode + ". Attempt " + attempt + " to download file again");
+                } else {
+                  LOG.info("Failed to download " + description.getDownloadUrl() + ". Attempt " + attempt + " to download file again");
+                }
               } else {
                 throw new IOException(IdeBundle.message("error.file.download.failed", description.getDownloadUrl(), e.getMessage()), e);
               }
