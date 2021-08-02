@@ -59,7 +59,7 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
   private static boolean mayFallThroughNonTerminalDefaultCase(PsiCodeBlock body) {
     List<PsiSwitchLabelStatementBase> labels = PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class);
     return StreamEx.of(labels).pairMap((prev, next) -> {
-        if (prev.isDefaultCase()) {
+        if (SwitchUtils.isDefaultLabel(prev)) {
           Set<PsiSwitchLabelStatementBase> targets = getFallThroughTargets(body);
           return targets.contains(prev) || targets.contains(next);
         }
@@ -211,7 +211,7 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
     final PsiElement[] children = body.getChildren();
     List<PsiSwitchLabelStatementBase> labels = PsiTreeUtil.getChildrenOfTypeAsList(body, PsiSwitchLabelStatementBase.class);
     boolean defaultAlwaysExecuted = !labels.isEmpty() &&
-                                    Objects.requireNonNull(ContainerUtil.getLastItem(labels)).isDefaultCase() &&
+                                    SwitchUtils.isDefaultLabel(ContainerUtil.getLastItem(labels)) &&
                                     fallThroughTargets.containsAll(labels.subList(1, labels.size()));
     for (int i = 1; i < children.length - 1; i++) {
       final PsiElement statement = children[i];
@@ -229,7 +229,7 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
           allBranches.add(currentBranch);
           openBranches.add(currentBranch);
         }
-        if (label.isDefaultCase() && defaultAlwaysExecuted) {
+        if (SwitchUtils.isDefaultLabel(label) && defaultAlwaysExecuted) {
           openBranches.retainAll(Collections.singleton(currentBranch));
         }
         currentBranch.addCaseValues(label, defaultAlwaysExecuted);
