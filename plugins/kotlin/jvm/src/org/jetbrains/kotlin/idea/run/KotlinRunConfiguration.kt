@@ -37,31 +37,24 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.*
+import com.intellij.psi.search.ExecutionSearchScopes
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.listeners.RefactoringElementAdapter
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.KotlinJvmBundle.message
-import org.jetbrains.kotlin.idea.MainFunctionDetector
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer.Companion.getStartClassFqName
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.util.jvmName
 import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRunConfigurationModule, factory: ConfigurationFactory?) :
@@ -480,81 +473,4 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
 
     }
 
-}
-
-/**
- * A service for detecting entry points (like "main" function) in classes and objects.
- *
- * Abstracts away the usage of the different Kotlin frontends (detecting "main" requires resolve).
- */
-interface KotlinMainFunctionLocatingService {
-    fun isMain(function: KtNamedFunction): Boolean
-
-    fun hasMain(declarations: List<KtDeclaration>): Boolean
-
-    /**
-     * Few convenience functions to avoid retrieving service by hand.
-     */
-    companion object {
-        private fun getMainFunCandidates(psiClass: PsiClass): Collection<KtNamedFunction> {
-            return psiClass.allMethods.map { method: PsiMethod ->
-                if (method !is KtLightMethod) return@map null
-                if (method.getName() != "main") return@map null
-                val declaration =
-                    method.kotlinOrigin
-                if (declaration is KtNamedFunction) declaration else null
-            }.filterNotNull()
-        }
-
-        fun findMainInClass(psiClass: PsiClass): KtNamedFunction? {
-            val mainLocatingService = service<KotlinMainFunctionLocatingService>()
-
-            return getMainFunCandidates(psiClass).find { mainLocatingService.isMain(it) }
-        }
-
-        fun getEntryPointContainer(locationElement: PsiElement): KtDeclarationContainer? {
-            val mainLocatingService = service<KotlinMainFunctionLocatingService>()
-
-            val psiFile = locationElement.containingFile
-            if (!(psiFile is KtFile && ProjectRootsUtil.isInProjectOrLibSource(psiFile))) return null
-
-            var currentElement = locationElement.declarationContainer(false)
-            while (currentElement != null) {
-                var entryPointContainer = currentElement
-                if (entryPointContainer is KtClass) {
-                    entryPointContainer = entryPointContainer.companionObjects.singleOrNull()
-                }
-                if (entryPointContainer != null && mainLocatingService.hasMain(entryPointContainer.declarations)) return entryPointContainer
-                currentElement = (currentElement as PsiElement).declarationContainer(true)
-            }
-
-            return null
-        }
-
-        private fun PsiElement.declarationContainer(strict: Boolean): KtDeclarationContainer? {
-            val element = if (strict)
-                PsiTreeUtil.getParentOfType(this, KtClassOrObject::class.java, KtFile::class.java)
-            else
-                PsiTreeUtil.getNonStrictParentOfType(this, KtClassOrObject::class.java, KtFile::class.java)
-            return element
-        }
-    }
-}
-
-internal class KotlinFE10MainFunctionLocatingService : KotlinMainFunctionLocatingService {
-    override fun isMain(function: KtNamedFunction): Boolean {
-        val bindingContext = function.analyze(BodyResolveMode.FULL)
-        val mainFunctionDetector = MainFunctionDetector(bindingContext, function.languageVersionSettings)
-        return mainFunctionDetector.isMain(function)
-    }
-
-    override fun hasMain(declarations: List<KtDeclaration>): Boolean {
-        if (declarations.isEmpty()) return false
-
-        val languageVersionSettings = declarations.first().languageVersionSettings
-        val mainFunctionDetector =
-            MainFunctionDetector(languageVersionSettings) { it.resolveToDescriptorIfAny(BodyResolveMode.FULL) }
-
-        return mainFunctionDetector.hasMain(declarations)
-    }
 }
