@@ -6,8 +6,8 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBTabbedPane
-import com.intellij.util.ui.gridLayout.*
-import com.intellij.util.ui.gridLayout.builders.RowsGridBuilder
+import com.intellij.ui.gridLayout.*
+import com.intellij.ui.gridLayout.builders.RowsGridBuilder
 import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
