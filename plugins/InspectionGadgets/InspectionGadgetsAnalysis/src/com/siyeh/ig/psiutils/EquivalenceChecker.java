@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -342,14 +342,8 @@ public class EquivalenceChecker {
       return EXACT_MISMATCH;
     }
     final PsiParameter parameter1 = statement1.getIterationParameter();
-    final PsiParameter parameter2 = statement1.getIterationParameter();
-    final String name1 = parameter1.getName();
-    final String name2 = parameter2.getName();
-    if (!name1.equals(name2)) {
-      return EXACT_MISMATCH;
-    }
-    final PsiType type1 = parameter1.getType();
-    if (!type1.equals(parameter2.getType())) {
+    final PsiParameter parameter2 = statement2.getIterationParameter();
+    if (!variableSignatureMatch(parameter1, parameter2)) {
       return EXACT_MISMATCH;
     }
     final PsiStatement body1 = statement1.getBody();

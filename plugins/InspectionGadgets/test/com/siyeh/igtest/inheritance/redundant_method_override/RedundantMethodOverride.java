@@ -19,6 +19,13 @@ public class RedundantMethodOverride extends S {
   void n(int i) {
     super.n(10);
   }
+
+  @Override
+  void <warning descr="Method 'x()' is identical to its super method">x</warning>(List<String> list) {
+    for (String s : list) {
+      System.out.println(s);
+    }
+  }
 }
 class S {
 
@@ -36,6 +43,12 @@ class S {
 
   void n(int i) {
     System.out.println(i);
+  }
+
+  void x(List<String> list) {
+    for (String t : list) {
+      System.out.println(t);
+    }
   }
 }
 class A {
