@@ -96,5 +96,6 @@
     <orderEntry type="module" module-name="kotlin.copyright.tests" />
     <orderEntry type="module" module-name="kotlin.core.tests" />
     <orderEntry type="module" module-name="kotlin.i18n.tests" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.tests" />
   </component>
 </module>
