@@ -80,13 +80,13 @@ interface BaseKotlinUastResolveProviderService {
 
     fun getCommonSupertype(left: KtExpression, right: KtExpression, uExpression: UExpression): PsiType?
 
-    fun getType(ktExpression: KtExpression, parent: UElement): PsiType?
+    fun getType(ktExpression: KtExpression, source: UElement): PsiType?
 
-    fun getType(ktDeclaration: KtDeclaration, parent: UElement): PsiType?
+    fun getType(ktDeclaration: KtDeclaration, source: UElement): PsiType?
 
     fun getType(ktDeclaration: KtDeclaration, lightDeclaration: PsiModifierListOwner?): PsiType?
 
-    fun getFunctionType(ktFunction: KtFunction, parent: UElement): PsiType?
+    fun getFunctionType(ktFunction: KtFunction, source: UElement): PsiType?
 
     fun getFunctionalInterfaceType(uLambdaExpression: KotlinULambdaExpression): PsiType?
 
