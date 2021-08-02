@@ -40,7 +40,6 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import junit.framework.AssertionFailedError;
@@ -593,8 +592,8 @@ public abstract class UsefulTestCase extends TestCase {
 
     StringBuilder builder = new StringBuilder();
     for (Object o : collection) {
-      if (o instanceof THashSet) {
-        builder.append(new TreeSet<>((THashSet<?>)o));
+      if (o instanceof Set) {
+        builder.append(new TreeSet<>((Set<?>)o));
       }
       else {
         builder.append(o);

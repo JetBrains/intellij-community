@@ -28,10 +28,10 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.xml.util.XmlStringUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -504,15 +504,15 @@ public class ExpectedHighlightingData {
   public void checkResult(@Nullable PsiFile psiFile, Collection<? extends HighlightInfo> infos, String text, @Nullable String filePath) {
     StringBuilder failMessage = new StringBuilder();
 
-    Set<HighlightInfo> expectedFound = new THashSet<>(new TObjectHashingStrategy<>() {
+    Set<HighlightInfo> expectedFound = CollectionFactory.createCustomHashingStrategySet(new HashingStrategy<>() {
       @Override
-      public int computeHashCode(HighlightInfo object) {
+      public int hashCode(HighlightInfo object) {
         return object.hashCode();
       }
 
       @Override
       public boolean equals(HighlightInfo o1, HighlightInfo o2) {
-        return haveSamePresentation(o1, o2, true);
+        return o1==null||o2==null?o1==o2:haveSamePresentation(o1, o2, true);
       }
     });
     if (!myIgnoreExtraHighlighting) {
@@ -568,15 +568,15 @@ public class ExpectedHighlightingData {
 
   @NotNull
   private static Set<HighlightInfo> indexInfos(Collection<? extends HighlightInfo> infos) {
-    Set<HighlightInfo> index = new THashSet<>(new TObjectHashingStrategy<>() {
+    Set<HighlightInfo> index = CollectionFactory.createCustomHashingStrategySet(new HashingStrategy<>() {
       @Override
-      public int computeHashCode(HighlightInfo object) {
-        return Objects.hash(object.startOffset, object.endOffset); //good enough
+      public int hashCode(HighlightInfo object) {
+        return object == null ? 0 : Objects.hash(object.startOffset, object.endOffset); //good enough
       }
 
       @Override
       public boolean equals(HighlightInfo o1, HighlightInfo o2) {
-        return matchesPattern(o1, o2, false);
+        return o1==null || o2 == null ? o1 == o2 : matchesPattern(o1, o2, false);
       }
     });
     index.addAll(infos);
