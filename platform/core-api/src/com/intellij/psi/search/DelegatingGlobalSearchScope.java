@@ -114,4 +114,8 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
   public GlobalSearchScope getDelegate() {
     return myBaseScope;
   }
+  
+  public GlobalSearchScope unwrap() {
+    return myBaseScope instanceof DelegatingGlobalSearchScope ? ((DelegatingGlobalSearchScope)myBaseScope).unwrap() : myBaseScope;
+  }
 }

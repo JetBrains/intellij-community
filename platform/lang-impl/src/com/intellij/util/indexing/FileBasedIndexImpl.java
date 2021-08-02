@@ -777,7 +777,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       return true; //indexed eagerly in foreground while building unindexed file list
     }
     if (filter == GlobalSearchScope.EMPTY_SCOPE || 
-        filter instanceof DelegatingGlobalSearchScope && ((DelegatingGlobalSearchScope)filter).getDelegate() == GlobalSearchScope.EMPTY_SCOPE) {
+        filter instanceof DelegatingGlobalSearchScope && ((DelegatingGlobalSearchScope)filter).unwrap() == GlobalSearchScope.EMPTY_SCOPE) {
       return false;
     }
     if (project == null) {
