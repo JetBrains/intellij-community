@@ -3,7 +3,7 @@ class Main {
 
   void f(Object obj) {
     switch (obj) {
-      case i<caret>, Integer i:
+      case Integer i, i<caret>:
         System.out.println(i);
       }
     }
