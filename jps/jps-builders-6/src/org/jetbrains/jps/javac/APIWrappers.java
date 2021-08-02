@@ -2,6 +2,7 @@
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,6 +133,7 @@ public class APIWrappers {
 
     public void init(ProcessingEnvironment processingEnv) {
       myProcessingEnv = processingEnv;
+      final Ref<ClassLoader> oldCtxLoader = setupContextClassLoader();
       try {
         getWrapperDelegate().init(wrap(ProcessingEnvironment.class, new ProcessingEnvironmentWrapper(processingEnv, myFileManager)));
       }
@@ -139,15 +141,49 @@ public class APIWrappers {
         sendDiagnosticWarning(processingEnv, e);
         throw e;
       }
+      finally {
+        restoreContextClassLoader(oldCtxLoader);
+      }
     }
 
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+      final Ref<ClassLoader> oldCtxLoader = setupContextClassLoader();
       try {
         return getWrapperDelegate().process(annotations, roundEnv);
       }
       catch (IllegalArgumentException e) {
         sendDiagnosticWarning(myProcessingEnv, e);
         throw e;
+      }
+      finally {
+        restoreContextClassLoader(oldCtxLoader);
+      }
+    }
+
+    /*
+      Some processors may use libraries/frameworks requiring sophisticated setup via thread context class loader.
+      This ensures that the context loader is the same as the one used to load processor itself:
+      it might help to avoid possible conflicts with JPS core classes
+     */
+    @Nullable
+    private Ref<ClassLoader> setupContextClassLoader() {
+      final Processor delegate = getWrapperDelegate();
+      if (delegate != null) {
+        final Thread currentThread = Thread.currentThread();
+        final ClassLoader processorLoader = delegate.getClass().getClassLoader();
+        final ClassLoader currentCtxLoader = currentThread.getContextClassLoader();
+        if (processorLoader != currentCtxLoader) {
+          currentThread.setContextClassLoader(processorLoader);
+          return Ref.create(currentCtxLoader);
+        }
+      }
+      return null;
+    }
+
+    @SuppressWarnings("MethodMayBeStatic")
+    private void restoreContextClassLoader(@Nullable Ref<ClassLoader> loaderRef) {
+      if (loaderRef != null) {
+        Thread.currentThread().setContextClassLoader(loaderRef.get());
       }
     }
 
