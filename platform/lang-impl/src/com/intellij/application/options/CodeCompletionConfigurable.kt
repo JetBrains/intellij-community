@@ -26,13 +26,13 @@ import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 
-class CodeCompletionOptions : BoundCompositeConfigurable<UnnamedConfigurable>(
+class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurable>(
   ApplicationBundle.message("title.code.completion"), "reference.settingsdialog.IDE.editor.code.completion"),
                               EditorOptionsProvider, WithEpDependencies {
 
   companion object {
     const val ID = "editor.preferences.completion"
-    private val LOG = Logger.getInstance(CodeCompletionOptions::class.java)
+    private val LOG = Logger.getInstance(CodeCompletionConfigurable::class.java)
   }
 
   private lateinit var cbMatchCase: JBCheckBox
@@ -84,7 +84,7 @@ class CodeCompletionOptions : BoundCompositeConfigurable<UnnamedConfigurable>(
   }
 
   override fun apply() {
-    super<BoundCompositeConfigurable>.apply()
+    super.apply()
 
     val codeInsightSettings = CodeInsightSettings.getInstance()
     codeInsightSettings.completionCaseSensitive = caseSensitive
@@ -206,7 +206,7 @@ class CodeCompletionOptions : BoundCompositeConfigurable<UnnamedConfigurable>(
   }
 
   private fun RowBuilder.addOptions() {
-    configurables.filter { !(it is CodeCompletionOptionsCustomSection) }
+    configurables.filter { it !is CodeCompletionOptionsCustomSection }
       .forEach { appendDslConfigurableRow(it) }
   }
 
