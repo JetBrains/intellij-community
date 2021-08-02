@@ -57,6 +57,14 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspection.test.failed.line.display.name"
                      implementationClass="com.intellij.codeInspection.TestFailedLineInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="JUnit5AssertionsConverter"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.junit5.assertions.converter.display.name"
+                     implementationClass="com.intellij.codeInspection.JUnit5AssertionsConverterInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="JUnit5Converter"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.junit5.converter.display.name"
+                     implementationClass="com.intellij.codeInspection.JUnit5ConverterInspection"/>
     <notificationGroup id="UAST" displayType="BALLOON"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">

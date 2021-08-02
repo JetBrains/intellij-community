@@ -2783,14 +2783,6 @@
                      bundle="messages.InspectionGadgetsBundle" key="lambda.parameter.hides.member.variable.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.visibility.LambdaParameterHidingMemberVariableInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="JUnit5AssertionsConverter" bundle="messages.InspectionGadgetsBundle"
-                     key="junit5.assertions.converter.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.JUnit5AssertionsConverterInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="JUnit5Converter" bundle="messages.InspectionGadgetsBundle"
-                     key="junit5.converter.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.junit.JUnit5ConverterInspection"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="RedundantExplicitVariableType" enabledByDefault="true" level="INFORMATION"
                      bundle="messages.InspectionGadgetsBundle" key="redundant.explicit.var.type.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids10"
