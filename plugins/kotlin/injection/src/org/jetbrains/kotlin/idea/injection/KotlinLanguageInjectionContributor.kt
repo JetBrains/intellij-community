@@ -463,7 +463,7 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
 }
 
 internal fun isSupportedElement(context: KtElement): Boolean {
-    if (context.parent.isConcatenationExpression()) return false // we will handle the top concatenation only
+    if (context.parent?.isConcatenationExpression() != false) return false // we will handle the top concatenation only, will not handle KtFile-s
     if (context is KtStringTemplateExpression && context.isValidHost) return true
     if (context.isConcatenationExpression()) return true
     return false
