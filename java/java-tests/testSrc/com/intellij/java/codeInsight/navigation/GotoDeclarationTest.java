@@ -128,6 +128,11 @@ public class GotoDeclarationTest extends LightJavaCodeInsightTestCase {
     doTestPatternMatchingGuard();
   }
 
+  public void testPatternMatchingWithParensAroundReference() {
+    doTestPatternMatchingGuard();
+  }
+
+
   public void testReferenceFieldInPatternMatchingInSwitchStatement() {
     doTestPatternMatchingGuard();
   }
