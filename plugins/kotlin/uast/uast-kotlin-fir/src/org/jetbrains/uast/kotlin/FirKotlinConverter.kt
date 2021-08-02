@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.*
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.asJava.toPsiParameters
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -22,9 +21,7 @@ import org.jetbrains.uast.kotlin.expressions.FirKotlinUArrayAccessExpression
 import org.jetbrains.uast.kotlin.expressions.FirKotlinUBinaryExpression
 import org.jetbrains.uast.kotlin.expressions.FirKotlinUSimpleReferenceExpression
 import org.jetbrains.uast.kotlin.internal.firKotlinUastPlugin
-import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
-import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
-import org.jetbrains.uast.kotlin.psi.UastKotlinPsiVariable
+import org.jetbrains.uast.kotlin.psi.*
 
 internal object FirKotlinConverter : BaseKotlinConverter {
 
@@ -112,12 +109,27 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                     }
                 }
                 is KtPropertyAccessor -> {
-                    el<UMethod> { KotlinUMethod.create(original, givenParent) }
+                    el<UMethod> {
+                        val lightMethod = LightClassUtil.getLightClassAccessorMethod(original) ?: return null
+                        convertDeclaration(lightMethod, givenParent, requiredTypes)
+                    }
                 }
 
                 is KtLightMethod -> {
                     // .Companion is needed because of KT-13934
                     el<UMethod>(build(KotlinUMethod.Companion::create))
+                }
+                is UastFakeLightMethod -> {
+                    el<UMethod> {
+                        val ktFunction = original.original
+                        if (ktFunction.isLocal)
+                            convertDeclaration(ktFunction, givenParent, requiredTypes)
+                        else
+                            KotlinUMethodWithFakeLightDelegate(ktFunction, original, givenParent)
+                    }
+                }
+                is UastFakeLightPrimaryConstructor -> {
+                    convertFakeLightConstructorAlternatives(original, givenParent, requiredTypes).firstOrNull()
                 }
                 is KtFunction -> {
                     if (original.isLocal) {
@@ -138,7 +150,15 @@ internal object FirKotlinConverter : BaseKotlinConverter {
                             }
                         }
                     } else {
-                        el<UMethod> { KotlinUMethod.create(original, givenParent) }
+                        el<UMethod> {
+                            val lightMethod = LightClassUtil.getLightClassMethod(original)
+                            if (lightMethod != null)
+                                convertDeclaration(lightMethod, givenParent, requiredTypes)
+                            else {
+                                val ktLightClass = getLightClassForFakeMethod(original) ?: return null
+                                KotlinUMethodWithFakeLightDelegate(original, ktLightClass, givenParent)
+                            }
+                        }
                     }
                 }
 
@@ -180,7 +200,15 @@ internal object FirKotlinConverter : BaseKotlinConverter {
     ): Sequence<UElement> =
         requiredTypes.accommodate(
             alternative uParam@{
-                val lightParameter = element.toPsiParameters().find { it.name == element.name } ?: return@uParam null
+                val lightMethod = when (val ownerFunction = element.ownerFunction) {
+                    is KtFunction -> LightClassUtil.getLightClassMethod(ownerFunction)
+                        ?: getLightClassForFakeMethod(ownerFunction)
+                            ?.takeIf { !it.isAnnotationType }
+                            ?.let { UastFakeLightMethod(ownerFunction, it) }
+                    is KtPropertyAccessor -> LightClassUtil.getLightClassAccessorMethod(ownerFunction)
+                    else -> null
+                } ?: return@uParam null
+                val lightParameter = lightMethod.parameterList.parameters.find { it.name == element.name } ?: return@uParam null
                 KotlinUParameter(lightParameter, element, givenParent)
             },
             alternative catch@{

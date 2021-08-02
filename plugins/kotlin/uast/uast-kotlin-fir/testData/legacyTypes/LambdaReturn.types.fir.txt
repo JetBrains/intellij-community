@@ -118,3 +118,11 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
                                         USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] : PsiType:List<? extends Integer>
                                         ULiteralExpression (value = 1) [1] : PsiType:int
+        UMethod (name = bar) [static fun bar(@org.jetbrains.annotations.NotNull lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer>) : kotlin.Unit {...}]
+            UParameter (name = lmbd) [@org.jetbrains.annotations.NotNull var lmbd: kotlin.jvm.functions.Function1<? super java.lang.Integer,? extends java.lang.Integer>]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UBlockExpression [{...}] : PsiType:int
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [invoke(1)] : PsiType:int
+                    UIdentifier (Identifier (lmbd)) [UIdentifier (Identifier (lmbd))]
+                    USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:int
+                    ULiteralExpression (value = 1) [1] : PsiType:int

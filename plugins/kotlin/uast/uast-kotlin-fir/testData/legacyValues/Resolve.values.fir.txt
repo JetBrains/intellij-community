@@ -149,3 +149,5 @@ UFile (package = ) [public final class ResolveKt {...]
         UMethod (name = A) [public fun A() = UastEmptyExpression]
         UMethod (name = foo) [public final fun foo() : void {...}]
             UBlockExpression [{...}] = Undetermined
+        UMethod (name = inlineFoo) [fun inlineFoo() : kotlin.Unit {...}]
+            UBlockExpression [{...}] = Undetermined
