@@ -99,15 +99,13 @@ class DefaultFileOperations implements FileOperations {
   @Override
   public void clearCaches(@Nullable File file) {
     if (file != null) {
-      if (myDirectoryCache.remove(file) == null) {
-        // non-null value means the file is a directory and thus it cannot be an archive
-        final Archive arch = myArchiveCache.remove(file);
-        if (arch != null) {
-          try {
-            arch.close();
-          }
-          catch (IOException ignored) {
-          }
+      myDirectoryCache.clear();
+      final Archive arch = myArchiveCache.remove(file);
+      if (arch != null) {
+        try {
+          arch.close();
+        }
+        catch (IOException ignored) {
         }
       }
     }
@@ -168,8 +166,7 @@ class DefaultFileOperations implements FileOperations {
   private Iterable<File> listChildren(File file) {
     Iterable<File> cached = myDirectoryCache.get(file);
     if (cached == null) {
-      final File parentFile = file.getParentFile();
-      final Iterable<File> parentFiles = parentFile != null? myDirectoryCache.get(parentFile) : null;
+      final Iterable<File> parentFiles = lookupCachedParent(file);
       if (parentFiles == null || (parentFiles != NULL_ITERABLE && !Iterators.isEmptyCollection(parentFiles))) {
         try {
           cached = listFiles(file);
@@ -181,6 +178,20 @@ class DefaultFileOperations implements FileOperations {
       myDirectoryCache.put(file, cached == null? NULL_ITERABLE : cached);
     }
     return cached == NULL_ITERABLE? null : cached;
+  }
+
+  private Iterable<File> lookupCachedParent(File file) {
+    if (!myDirectoryCache.isEmpty()) {
+      File parent = file.getParentFile();
+      for (int i = 0; i < 10 && parent != null; i++) { // at most 10 levels upwards
+        final Iterable<File> cached = myDirectoryCache.get(parent);
+        if (cached != null) {
+          return cached;
+        }
+        parent = parent.getParentFile();
+      }
+    }
+    return null;
   }
 
   @Nullable
