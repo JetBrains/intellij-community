@@ -27,6 +27,7 @@ import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -149,8 +150,16 @@ public class RunDashboardServiceViewContributor
     }
 
     if (leftToolbarActions != null) {
+      if (leftToolbarActions.size() == 1 && leftToolbarActions.get(0) instanceof ActionGroup) {
+        leftToolbarActions = Arrays.asList(((ActionGroup)leftToolbarActions.get(0)).getChildren(null));
+      }
       for (AnAction action : leftToolbarActions) {
-        if (!(action instanceof StopAction) && !(action instanceof FakeRerunAction)) {
+        if (action instanceof MoreActionGroup) {
+          DefaultActionGroup moreGroup = new MoreActionGroup(false);
+          moreGroup.addAll(((MoreActionGroup)action).getChildren(null));
+          actionGroup.add(moreGroup);
+        }
+        else if (!(action instanceof StopAction) && !(action instanceof FakeRerunAction)) {
           actionGroup.add(action);
         }
       }
