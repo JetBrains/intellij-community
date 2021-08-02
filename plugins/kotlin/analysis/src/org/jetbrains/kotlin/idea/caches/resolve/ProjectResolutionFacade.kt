@@ -118,11 +118,15 @@ internal class ProjectResolutionFacade(
         allModuleInfos.addAll(syntheticFilesModules)
 
         val modulesToCreateResolversFor = allModuleInfos.filter(moduleFilter)
+        val modulesToCreateResolvers =
+            modulesToCreateResolversFor + listOfNotNull(
+                ScriptDependenciesInfo.ForProject.createIfRequired(project, modulesToCreateResolversFor)
+            )
 
         return IdeaResolverForProject(
             resolverDebugName,
             globalContext.withProject(project),
-            modulesToCreateResolversFor,
+            modulesToCreateResolvers,
             syntheticFilesByModule,
             delegateResolverForProject,
             if (invalidateOnOOCB) KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker else null,
