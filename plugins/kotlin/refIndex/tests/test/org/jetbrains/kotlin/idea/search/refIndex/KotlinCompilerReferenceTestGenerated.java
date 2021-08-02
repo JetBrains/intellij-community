@@ -31,6 +31,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
             runTest("testData/compilerIndex/classOrObject/class/");
         }
 
+        @TestMetadata("companion")
+        public void testCompanion() throws Exception {
+            runTest("testData/compilerIndex/classOrObject/companion/");
+        }
+
         @TestMetadata("innerClass")
         public void testInnerClass() throws Exception {
             runTest("testData/compilerIndex/classOrObject/innerClass/");
@@ -49,6 +54,11 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
         @TestMetadata("javaNestedClass")
         public void testJavaNestedClass() throws Exception {
             runTest("testData/compilerIndex/classOrObject/javaNestedClass/");
+        }
+
+        @TestMetadata("namedCompanion")
+        public void testNamedCompanion() throws Exception {
+            runTest("testData/compilerIndex/classOrObject/namedCompanion/");
         }
 
         @TestMetadata("nestedClass")

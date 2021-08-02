@@ -13,5 +13,3 @@ class Foo {
         const val CONST = 42
     }
 }
-
-// CRI_IGNORE
