@@ -88,20 +88,20 @@ public class JBColor extends Color {
     return new JBColor(propertyName, defaultColor);
   }
 
-  private static Color calculateColor(String name, Color defaultColor) {
+  private static @NotNull Color calculateColor(@NonNls @NotNull String name, @Nullable Color defaultColor) {
     Color color = UIManager.getColor(name);
     if (color != null) return color;
     // *.background and others are handled by defaultColor. findPatternMatch is relevant for themes only.
     if (!UIManager.getDefaults().containsKey("Theme.name")) {
-      return defaultColor == NAMED_COLOR_FALLBACK_MARKER ? calculateFallback(name) : defaultColor;
+      return defaultColor == NAMED_COLOR_FALLBACK_MARKER || defaultColor == null ? calculateFallback(name) : defaultColor;
     }
     Color patternMatch = findPatternMatch(name);
     if (patternMatch != null) return patternMatch;
 
-    return defaultColor == NAMED_COLOR_FALLBACK_MARKER ? calculateFallback(name) : defaultColor;
+    return defaultColor == NAMED_COLOR_FALLBACK_MARKER || defaultColor == null ? calculateFallback(name) : defaultColor;
   }
 
-  private static Color calculateFallback(@NonNls @NotNull final String propertyName) {
+  private static @NotNull Color calculateFallback(@NonNls @NotNull final String propertyName) {
     Color color = notNull(UIManager.getColor(propertyName),
                           () -> notNull(findPatternMatch(propertyName), Gray.TRANSPARENT));
     if (UIManager.get(propertyName) == null) {
@@ -228,6 +228,10 @@ public class JBColor extends Color {
     if (func != null) {
       return new JBColor(() -> func.produce().brighter());
     }
+    if (name != null) {
+      return calculateColor(name, defaultColor).brighter();
+    }
+
     return new JBColor(super.brighter(), getDarkVariant().brighter());
   }
 
@@ -237,6 +241,10 @@ public class JBColor extends Color {
     if (func != null) {
       return new JBColor(() -> func.produce().darker());
     }
+    if (name != null) {
+      return calculateColor(name, defaultColor).darker();
+    }
+
     return new JBColor(super.darker(), getDarkVariant().darker());
   }
 
