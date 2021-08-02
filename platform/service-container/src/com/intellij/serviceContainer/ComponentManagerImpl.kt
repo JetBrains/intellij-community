@@ -577,7 +577,16 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>): T? = serviceInstanceHotCache.get(serviceClass) as T?
+  override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>): T? {
+    var result = serviceInstanceHotCache.get(serviceClass) as T?
+    if (result == null) {
+      result = doGetService(serviceClass, createIfNeeded = false)
+      if (result != null) {
+        serviceInstanceHotCache.putIfAbsent(serviceClass, result)
+      }
+    }
+    return result
+  }
 
   protected open fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
     val key = serviceClass.name
