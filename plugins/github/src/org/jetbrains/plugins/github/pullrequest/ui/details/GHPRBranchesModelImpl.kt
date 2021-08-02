@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.collaboration.ui.SimpleEventListener
+import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
@@ -11,8 +13,6 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
-import com.intellij.collaboration.ui.SimpleEventListener
-import com.intellij.collaboration.ui.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubGitHelper
 
 internal class GHPRBranchesModelImpl(private val valueModel: SingleValueModel<GHPullRequest>,
@@ -23,18 +23,13 @@ internal class GHPRBranchesModelImpl(private val valueModel: SingleValueModel<GH
   private val changeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
   init {
-    registerVCSLogDataPackListener()
-  }
-
-  private val dataPackListener = DataPackChangeListener {
-    notifyChanged()
-    detailsDataProvider.reloadDetails()
-  }
-
-  private fun registerVCSLogDataPackListener() {
-    val project = localRepository.project
-    VcsProjectLog.runWhenLogIsReady(project) {
+    VcsProjectLog.runWhenLogIsReady(localRepository.project) {
       if (!Disposer.isDisposed(parentDisposable)) {
+        val dataPackListener = DataPackChangeListener {
+          notifyChanged()
+          detailsDataProvider.reloadDetails()
+        }
+
         it.dataManager.addDataPackChangeListener(dataPackListener)
         Disposer.register(parentDisposable, Disposable {
           it.dataManager.removeDataPackChangeListener(dataPackListener)
