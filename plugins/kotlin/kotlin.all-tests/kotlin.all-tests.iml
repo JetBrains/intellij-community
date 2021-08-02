@@ -101,5 +101,6 @@
     <orderEntry type="module" module-name="kotlin.native.tests" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-native.tests" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.tests" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.tests" />
   </component>
 </module>
