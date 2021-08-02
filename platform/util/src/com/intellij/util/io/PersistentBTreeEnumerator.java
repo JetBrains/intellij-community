@@ -145,6 +145,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   private void doExpensiveSanityCheck() {
     try {
+      LOG.info("Doing self diagnostic for " + myFile);
       List<Data> storedData = new ArrayList<>();
       iterateData(data -> {
         storedData.add(data);
@@ -158,7 +159,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
           if (tryEnumerate(data) != id) {
             throw new IOException(myFile + " is corrupted");
           }
-          if (myDataDescriptor.isEqual(valueOf(id), data)) {
+          if (!myDataDescriptor.isEqual(valueOf(id), data)) {
             throw new IOException(myFile + " is corrupted");
           }
         }
@@ -303,11 +304,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
           }
         });
       }
-      catch (IllegalStateException e) {
-        CorruptedException corruptedException = new CorruptedException(myFile);
-        corruptedException.initCause(e);
-        throw corruptedException;
-      }
       finally {
         unlockStorageRead();
       }
@@ -379,11 +375,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
         return keyIdToNonNegativeOffset(myResultBuf[0]);
       }
-      catch (IllegalStateException e) {
-        CorruptedException exception = new CorruptedException(myFile);
-        exception.initCause(e);
-        throw exception;
-      }
       finally {
         unlockStorageRead();
       }
@@ -427,11 +418,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
           myStorage.putLong(pos, value);
           myBTree.put(intKey, -pos);
         }
-      }
-      catch (IllegalStateException e) {
-        CorruptedException exception = new CorruptedException(myFile);
-        exception.initCause(e);
-        throw exception;
       }
       finally {
         unlockStorageWrite();
@@ -575,11 +561,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
           }
         }
         return newValueId;
-      }
-      catch (IllegalStateException e) {
-        CorruptedException exception = new CorruptedException(myFile);
-        exception.initCause(e);
-        throw exception;
       }
       finally {
         if (onlyCheckForExisting) {
