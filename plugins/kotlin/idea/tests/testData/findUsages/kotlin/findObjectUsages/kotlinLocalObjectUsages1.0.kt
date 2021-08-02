@@ -9,5 +9,3 @@ fun foo(): Any {
 object Bar {}
 
 val x = Bar
-
-// DISABLE-ERRORS

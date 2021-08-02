@@ -1,6 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtObjectDeclaration
 // OPTIONS: usages
-class A() {
+class A {
     init {
         foo()
         v
@@ -24,5 +24,3 @@ interface Foo
 
 fun Foo.ext() {
 }
-
-// DISABLE-ERRORS

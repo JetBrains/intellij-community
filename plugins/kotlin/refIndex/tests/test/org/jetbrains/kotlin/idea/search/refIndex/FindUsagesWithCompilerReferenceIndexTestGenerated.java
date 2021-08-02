@@ -402,19 +402,9 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
                 runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinClassDerivedLocalObjects.0.kt");
             }
 
-            @TestMetadata("kotlinClassDerivedLocalTraits.0.kt")
-            public void testKotlinClassDerivedLocalTraits() throws Exception {
-                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinClassDerivedLocalTraits.0.kt");
-            }
-
             @TestMetadata("kotlinClassDerivedObjects.0.kt")
             public void testKotlinClassDerivedObjects() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinClassDerivedObjects.0.kt");
-            }
-
-            @TestMetadata("kotlinClassDerivedTraits.0.kt")
-            public void testKotlinClassDerivedTraits() throws Exception {
-                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinClassDerivedTraits.0.kt");
             }
 
             @TestMetadata("kotlinClassFunctionUsages1.0.kt")
@@ -462,6 +452,46 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
                 runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinInnerClassAllUsages.0.kt");
             }
 
+            @TestMetadata("kotlinInterfaceDerivedAnonymousObjects.0.kt")
+            public void testKotlinInterfaceDerivedAnonymousObjects() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedAnonymousObjects.0.kt");
+            }
+
+            @TestMetadata("kotlinInterfaceDerivedClasses.0.kt")
+            public void testKotlinInterfaceDerivedClasses() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedClasses.0.kt");
+            }
+
+            @TestMetadata("kotlinInterfaceDerivedInnerClasses.0.kt")
+            public void testKotlinInterfaceDerivedInnerClasses() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedInnerClasses.0.kt");
+            }
+
+            @TestMetadata("kotlinInterfaceDerivedInnerObjects.0.kt")
+            public void testKotlinInterfaceDerivedInnerObjects() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedInnerObjects.0.kt");
+            }
+
+            @TestMetadata("kotlinInterfaceDerivedInterfaces.0.kt")
+            public void testKotlinInterfaceDerivedInterfaces() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedInterfaces.0.kt");
+            }
+
+            @TestMetadata("kotlinInterfaceDerivedLocalClasses.0.kt")
+            public void testKotlinInterfaceDerivedLocalClasses() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedLocalClasses.0.kt");
+            }
+
+            @TestMetadata("kotlinInterfaceDerivedLocalObjects.0.kt")
+            public void testKotlinInterfaceDerivedLocalObjects() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedLocalObjects.0.kt");
+            }
+
+            @TestMetadata("kotlinInterfaceDerivedObjects.0.kt")
+            public void testKotlinInterfaceDerivedObjects() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedObjects.0.kt");
+            }
+
             @TestMetadata("kotlinLocalClassDerivedAnonymousObjects.0.kt")
             public void testKotlinLocalClassDerivedAnonymousObjects() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinLocalClassDerivedAnonymousObjects.0.kt");
@@ -475,11 +505,6 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
             @TestMetadata("kotlinLocalClassDerivedLocalObjects.0.kt")
             public void testKotlinLocalClassDerivedLocalObjects() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinLocalClassDerivedLocalObjects.0.kt");
-            }
-
-            @TestMetadata("kotlinLocalClassDerivedLocalTraits.0.kt")
-            public void testKotlinLocalClassDerivedLocalTraits() throws Exception {
-                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinLocalClassDerivedLocalTraits.0.kt");
             }
 
             @TestMetadata("kotlinLocalClassUsages1.0.kt")
@@ -500,51 +525,6 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
             @TestMetadata("kotlinPrivateClassUsages.0.kt")
             public void testKotlinPrivateClassUsages() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinPrivateClassUsages.0.kt");
-            }
-
-            @TestMetadata("kotlinTraitDerivedAnonymousObjects.0.kt")
-            public void testKotlinTraitDerivedAnonymousObjects() throws Exception {
-                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinTraitDerivedAnonymousObjects.0.kt");
-            }
-
-            @TestMetadata("kotlinTraitDerivedClasses.0.kt")
-            public void testKotlinTraitDerivedClasses() throws Exception {
-                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinTraitDerivedClasses.0.kt");
-            }
-
-            @TestMetadata("kotlinTraitDerivedInnerClasses.0.kt")
-            public void testKotlinTraitDerivedInnerClasses() throws Exception {
-                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinTraitDerivedInnerClasses.0.kt");
-            }
-
-            @TestMetadata("kotlinTraitDerivedInnerObjects.0.kt")
-            public void testKotlinTraitDerivedInnerObjects() throws Exception {
-                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinTraitDerivedInnerObjects.0.kt");
-            }
-
-            @TestMetadata("kotlinTraitDerivedLocalClasses.0.kt")
-            public void testKotlinTraitDerivedLocalClasses() throws Exception {
-                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinTraitDerivedLocalClasses.0.kt");
-            }
-
-            @TestMetadata("kotlinTraitDerivedLocalObjects.0.kt")
-            public void testKotlinTraitDerivedLocalObjects() throws Exception {
-                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinTraitDerivedLocalObjects.0.kt");
-            }
-
-            @TestMetadata("kotlinTraitDerivedLocalTraits.0.kt")
-            public void testKotlinTraitDerivedLocalTraits() throws Exception {
-                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinTraitDerivedLocalTraits.0.kt");
-            }
-
-            @TestMetadata("kotlinTraitDerivedObjects.0.kt")
-            public void testKotlinTraitDerivedObjects() throws Exception {
-                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinTraitDerivedObjects.0.kt");
-            }
-
-            @TestMetadata("kotlinTraitDerivedTraits.0.kt")
-            public void testKotlinTraitDerivedTraits() throws Exception {
-                runTest("../../idea/tests/testData/findUsages/kotlin/findClassUsages/kotlinTraitDerivedTraits.0.kt");
             }
 
             @TestMetadata("localAndNonLocalClass.0.kt")
@@ -613,6 +593,16 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
             @TestMetadata("kotlinAliasedMethodUsages.0.kt")
             public void testKotlinAliasedMethodUsages() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinAliasedMethodUsages.0.kt");
+            }
+
+            @TestMetadata("kotlinInterfaceImplThroughDelegate.0.kt")
+            public void testKotlinInterfaceImplThroughDelegate() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinInterfaceImplThroughDelegate.0.kt");
+            }
+
+            @TestMetadata("kotlinInterfaceNoImplThroughDelegate.0.kt")
+            public void testKotlinInterfaceNoImplThroughDelegate() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinInterfaceNoImplThroughDelegate.0.kt");
             }
 
             @TestMetadata("kotlinInternalMethodUsages.0.kt")
@@ -690,16 +680,6 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
                 runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinTopLevelMethodUsagesWithRenamedFile.0.kt");
             }
 
-            @TestMetadata("kotlinTraitImplThroughDelegate.0.kt")
-            public void testKotlinTraitImplThroughDelegate() throws Exception {
-                runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinTraitImplThroughDelegate.0.kt");
-            }
-
-            @TestMetadata("kotlinTraitNoImplThroughDelegate.0.kt")
-            public void testKotlinTraitNoImplThroughDelegate() throws Exception {
-                runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinTraitNoImplThroughDelegate.0.kt");
-            }
-
             @TestMetadata("labeledReturns.0.kt")
             public void testLabeledReturns() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/labeledReturns.0.kt");
@@ -743,11 +723,6 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
             @TestMetadata("objectExpressionMemberInTopLevel.0.kt")
             public void testObjectExpressionMemberInTopLevel() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/objectExpressionMemberInTopLevel.0.kt");
-            }
-
-            @TestMetadata("synthesizedFunction.0.kt")
-            public void testSynthesizedFunction() throws Exception {
-                runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/synthesizedFunction.0.kt");
             }
 
             @TestMetadata("usagesOfBaseForFunction.0.kt")
@@ -1209,6 +1184,11 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
                     runTest("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages/enumFunctionUsages.0.kt");
                 }
 
+                @TestMetadata("kotlinInterfaceImplThroughDelegate.0.kt")
+                public void testKotlinInterfaceImplThroughDelegate() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages/kotlinInterfaceImplThroughDelegate.0.kt");
+                }
+
                 @TestMetadata("kotlinMethodUsages.0.kt")
                 public void testKotlinMethodUsages() throws Exception {
                     runTest("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages/kotlinMethodUsages.0.kt");
@@ -1227,11 +1207,6 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
                 @TestMetadata("kotlinTopLevelMethodUsages.0.kt")
                 public void testKotlinTopLevelMethodUsages() throws Exception {
                     runTest("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages/kotlinTopLevelMethodUsages.0.kt");
-                }
-
-                @TestMetadata("kotlinTraitImplThroughDelegate.0.kt")
-                public void testKotlinTraitImplThroughDelegate() throws Exception {
-                    runTest("../../idea/tests/testData/findUsages/kotlin/internal/findFunctionUsages/kotlinTraitImplThroughDelegate.0.kt");
                 }
 
                 @TestMetadata("usagesOfBaseForFunction.0.kt")
@@ -1516,11 +1491,6 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
             @TestMetadata("JKInterfaceDerivedLocalObjects.0.java")
             public void testJKInterfaceDerivedLocalObjects() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/java/findJavaClassUsages/JKInterfaceDerivedLocalObjects.0.java");
-            }
-
-            @TestMetadata("JKInterfaceDerivedLocalTraits.0.java")
-            public void testJKInterfaceDerivedLocalTraits() throws Exception {
-                runTest("../../idea/tests/testData/findUsages/java/findJavaClassUsages/JKInterfaceDerivedLocalTraits.0.java");
             }
 
             @TestMetadata("JKInterfaceDerivedObjects.0.java")

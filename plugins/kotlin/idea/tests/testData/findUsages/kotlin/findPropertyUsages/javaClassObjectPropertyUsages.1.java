@@ -1,6 +1,6 @@
 package client;
 
-import server.*;
+import server.A;
 
 class Client {
     void fooBar() {

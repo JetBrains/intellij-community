@@ -21,5 +21,3 @@ fun test(array: Array<A>) {
     val (a1, a2) = array
     a1 + 1
 }
-
-// DISABLE-ERRORS

@@ -13,5 +13,4 @@ fun foo() {
     val (x, y) = A.b()
 }
 
-// DISABLE-ERRORS
 // FIR_COMPARISON

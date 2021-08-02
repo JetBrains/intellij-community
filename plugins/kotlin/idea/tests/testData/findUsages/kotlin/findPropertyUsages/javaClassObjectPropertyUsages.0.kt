@@ -8,4 +8,4 @@ class A {
     }
 }
 
-// CRI_IGNORE
+// DISABLE-ERRORS

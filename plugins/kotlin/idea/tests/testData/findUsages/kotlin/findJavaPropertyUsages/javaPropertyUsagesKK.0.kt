@@ -27,5 +27,4 @@ fun test() {
     B().p = 1
 }
 
-// DISABLE-ERRORS
 // FIR_IGNORE
