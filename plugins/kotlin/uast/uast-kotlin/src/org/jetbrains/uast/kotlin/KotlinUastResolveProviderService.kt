@@ -261,16 +261,16 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             .toPsiType(uExpression, ktElement, boxed = false)
     }
 
-    override fun getType(ktExpression: KtExpression, parent: UElement): PsiType? {
+    override fun getType(ktExpression: KtExpression, source: UElement): PsiType? {
         val ktType = ktExpression.analyze()[BindingContext.EXPRESSION_TYPE_INFO, ktExpression]?.type ?: return null
-        return ktType.toPsiType(parent, ktExpression, boxed = false)
+        return ktType.toPsiType(source, ktExpression, boxed = false)
     }
 
-    override fun getType(ktDeclaration: KtDeclaration, parent: UElement): PsiType? {
+    override fun getType(ktDeclaration: KtDeclaration, source: UElement): PsiType? {
         return (ktDeclaration.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, ktDeclaration] as? CallableDescriptor)
             ?.returnType
             ?.takeIf { !it.isError }
-            ?.toPsiType(parent, ktDeclaration, boxed = false)
+            ?.toPsiType(source, ktDeclaration, boxed = false)
     }
 
     override fun getType(ktDeclaration: KtDeclaration, lightDeclaration: PsiModifierListOwner?): PsiType? {
@@ -279,7 +279,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             ?.toPsiType(lightDeclaration, ktDeclaration, boxed = false)
     }
 
-    override fun getFunctionType(ktFunction: KtFunction, parent: UElement): PsiType? {
+    override fun getFunctionType(ktFunction: KtFunction, source: UElement): PsiType? {
         val descriptor = ktFunction.analyze()[BindingContext.FUNCTION, ktFunction] ?: return null
         val returnType = descriptor.returnType ?: return null
 
@@ -290,7 +290,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             parameterTypes = descriptor.valueParameters.map { it.type },
             parameterNames = descriptor.valueParameters.map { it.name },
             returnType = returnType
-        ).toPsiType(parent, ktFunction, boxed = false)
+        ).toPsiType(source, ktFunction, boxed = false)
     }
 
     override fun getFunctionalInterfaceType(uLambdaExpression: KotlinULambdaExpression): PsiType? {
