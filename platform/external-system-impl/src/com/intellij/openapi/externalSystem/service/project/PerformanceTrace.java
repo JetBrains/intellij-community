@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
-import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -14,15 +13,6 @@ public final class PerformanceTrace implements Serializable {
   public static final Key<PerformanceTrace> TRACE_NODE_KEY = Key.create(PerformanceTrace.class, ExternalSystemConstants.UNORDERED + 1);
 
   private final Map<String, Long> performanceData = new ConcurrentSkipListMap<>();
-  private final long myId;
-
-  /**
-   * @param id Identifier to distinguish traces of different sync operations
-   */
-  @PropertyMapping("id")
-  public PerformanceTrace(long id) {
-    myId = id;
-  }
 
   public void logPerformance(@NotNull String key, long millis) {
     performanceData.put(key, millis);
@@ -35,9 +25,5 @@ public final class PerformanceTrace implements Serializable {
 
   public void addTrace(@NotNull Map<String, Long> trace) {
     performanceData.putAll(trace);
-  }
-
-  public long getId() {
-    return myId;
   }
 }

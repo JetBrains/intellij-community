@@ -16,7 +16,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.service.project.PerformanceTrace;
-import com.intellij.openapi.externalSystem.statistics.Phase;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -61,7 +60,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.externalSystem.statistics.ExternalSystemSyncActionsCollector.Companion;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getDefaultModuleTypeId;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getModuleId;
@@ -139,8 +137,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final CancellationTokenSource cancellationTokenSource = resolverContext.getCancellationTokenSource();
     myCancellationMap.putValue(resolverContext.getExternalSystemTaskId(), cancellationTokenSource);
 
-    final long activityId = resolverContext.getExternalSystemTaskId().getId();
-    Companion.logSyncStarted(null, activityId);
     try {
       if (settings != null) {
         myHelper.ensureInstalledWrapper(syncTaskId, projectPath, settings, listener, cancellationTokenSource.token());
@@ -189,8 +185,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                                      @NotNull final GradleProjectResolverExtension projectResolverChain,
                                                      boolean isBuildSrcProject)
     throws IllegalArgumentException, IllegalStateException {
-    final long activityId = resolverCtx.getExternalSystemTaskId().getId();
-    final PerformanceTrace performanceTrace = new PerformanceTrace(activityId);
+    final PerformanceTrace performanceTrace = new PerformanceTrace();
     final GradleProjectResolverExtension tracedResolverChain = new TracedProjectResolverExtension(projectResolverChain, performanceTrace);
 
     final BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(resolverCtx);
@@ -265,7 +260,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     final long startTime = System.currentTimeMillis();
     Activity activity = StartUpMeasurer.startActivity("project data obtaining", ActivityCategory.GRADLE_IMPORT);
-    Companion.logPhaseStarted(null, activityId, Phase.GRADLE_CALL);
     ProjectImportAction.AllModels allModels;
     CountDownLatch buildFinishWaiter = new CountDownLatch(1);
     try {
@@ -299,7 +293,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       activity.end();
       final long timeInMs = (System.currentTimeMillis() - startTime);
       performanceTrace.logPerformance("Gradle data obtained", timeInMs);
-      Companion.logPhaseFinished(null, activityId, Phase.GRADLE_CALL, timeInMs);
       LOG.debug(String.format("Gradle data obtained in %d ms", timeInMs));
     }
 
@@ -328,8 +321,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                             boolean useCustomSerialization) {
     final long startDataConversionTime = System.currentTimeMillis();
     Activity activity = StartUpMeasurer.startActivity("project data converting", ActivityCategory.GRADLE_IMPORT);
-    final long activityId = resolverCtx.getExternalSystemTaskId().getId();
-    Companion.logPhaseStarted(null, activityId, Phase.PROJECT_RESOLVERS);
     extractExternalProjectModels(allModels, resolverCtx, useCustomSerialization);
 
     String projectName = allModels.getMainBuild().getName();
@@ -478,7 +469,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final long timeConversionInMs = (System.currentTimeMillis() - startDataConversionTime);
     performanceTrace.logPerformance("Gradle project data processed", timeConversionInMs);
     LOG.debug(String.format("Project data resolved in %d ms", timeConversionInMs));
-    Companion.logPhaseFinished(null, activityId, Phase.PROJECT_RESOLVERS, timeConversionInMs);
     return projectDataNode;
   }
 
@@ -779,7 +769,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     @Override
     public DataNode<ProjectData> fun(ProjectConnection connection) {
-      final long activityId = myResolverContext.getExternalSystemTaskId().getId();
       try {
         myCancellationMap.putValue(myResolverContext.getExternalSystemTaskId(), myResolverContext.getCancellationTokenSource());
         myResolverContext.setConnection(connection);
@@ -794,8 +783,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         if (esException != null && esException != e) {
           LOG.info("\nCaused by: " + esException.getOriginalReason());
         }
-        Companion.logError(null, activityId, e);
-        Companion.logSyncFinished(null, activityId, false);
         throw myProjectResolverChain.getUserFriendlyError(
           myResolverContext.getBuildEnvironment(), e, myResolverContext.getProjectPath(), null);
       }

@@ -12,7 +12,6 @@ import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.*;
-import com.intellij.openapi.externalSystem.statistics.Phase;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -31,8 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
-
-import static com.intellij.openapi.externalSystem.statistics.ExternalSystemSyncActionsCollector.Companion;
 
 /**
  * Aggregates all {@link ProjectDataService#EP_NAME registered data services} and provides entry points for project data management.
@@ -95,15 +92,12 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
       trace = (PerformanceTrace)traceNodes.iterator().next().getData();
     }
     else {
-      trace = new PerformanceTrace(0);
+      trace = new PerformanceTrace();
       grouped.putValue(PerformanceTrace.TRACE_NODE_KEY, new DataNode<>(PerformanceTrace.TRACE_NODE_KEY, trace, null));
     }
 
     long allStartTime = System.currentTimeMillis();
     Activity activity = StartUpMeasurer.startActivity("project data processing", ActivityCategory.GRADLE_IMPORT);
-    long activityId = trace.getId();
-    Companion.logPhaseStarted(project, activityId, Phase.DATA_SERVICES);
-    boolean importSucceeded = false;
     try {
       // keep order of services execution
       final Set<Key<?>> allKeys = new TreeSet<>(grouped.keySet());
@@ -142,12 +136,11 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
       project.getMessageBus().syncPublisher(ProjectDataImportListener.TOPIC)
         .onImportFinished(projectData != null ? projectData.getLinkedExternalProjectPath() : null);
       activity.end();
-      importSucceeded = true;
+      trace.logPerformance("Data import total", System.currentTimeMillis() - allStartTime);
     }
     catch (Throwable t) {
       project.getMessageBus().syncPublisher(ProjectDataImportListener.TOPIC)
         .onImportFailed(projectData != null ? projectData.getLinkedExternalProjectPath() : null);
-      Companion.logError(null, activityId, t);
       try {
         runFinalTasks(project, synchronous, onFailureImportTasks);
         dispose(modelsProvider, project, synchronous);
@@ -156,12 +149,6 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
         //noinspection ConstantConditions
         ExceptionUtil.rethrowAllAsUnchecked(t);
       }
-    }
-    finally {
-      long timeMs = System.currentTimeMillis() - allStartTime;
-      trace.logPerformance("Data import total", timeMs);
-      Companion.logPhaseFinished(project, activityId, Phase.DATA_SERVICES, timeMs);
-      Companion.logSyncFinished(project, activityId, importSucceeded);
     }
     runFinalTasks(project, synchronous, onSuccessImportTasks);
     Application app = ApplicationManager.getApplication();
