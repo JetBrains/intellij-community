@@ -106,6 +106,9 @@
         <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer"/>
         <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer"/>
 
+        <applicationService serviceInterface="org.jetbrains.kotlin.idea.run.KotlinMainFunctionLocatingService"
+                            serviceImplementation="org.jetbrains.kotlin.idea.run.KotlinFE10MainFunctionLocatingService"/>
+
         <library.type implementation="org.jetbrains.kotlin.idea.framework.JSLibraryType"/>
         <library.javaSourceRootDetector implementation="org.jetbrains.kotlin.idea.configuration.KotlinSourceRootDetector"/>
 
