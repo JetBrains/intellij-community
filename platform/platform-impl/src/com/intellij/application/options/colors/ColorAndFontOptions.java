@@ -488,7 +488,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     @NotNull
     public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
-      FontEditorPreview previewPanel = new FontEditorPreview(()->options.getSelectedScheme(), false) {
+      FontEditorPreview previewPanel = new FontEditorPreview(()->options.getSelectedScheme(), true) {
         @Override
         protected EditorColorsScheme updateOptionsScheme(EditorColorsScheme selectedScheme) {
           return ConsoleViewUtil.updateConsoleColorScheme(selectedScheme);

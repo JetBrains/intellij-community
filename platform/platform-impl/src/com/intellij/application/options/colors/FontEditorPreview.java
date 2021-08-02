@@ -89,12 +89,14 @@ public class FontEditorPreview implements PreviewPanel{
     myTopPanel = new JPanel(new BorderLayout());
     myTopPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
 
-    JLabel previewLabel = new JLabel(ApplicationBundle.message("settings.editor.font.preview.hint"));
-    previewLabel.setFont(JBUI.Fonts.smallFont());
-    previewLabel.setForeground(UIUtil.getContextHelpForeground());
-    previewLabel.setBorder(JBUI.Borders.empty(10, 15, 10, 0));
-    previewLabel.setBackground(myEditor.getBackgroundColor());
-    myTopPanel.add(previewLabel, BorderLayout.SOUTH);
+    if (editable) {
+      JLabel previewLabel = new JLabel(ApplicationBundle.message("settings.editor.font.preview.hint"));
+      previewLabel.setFont(JBUI.Fonts.smallFont());
+      previewLabel.setForeground(UIUtil.getContextHelpForeground());
+      previewLabel.setBorder(JBUI.Borders.empty(10, 15, 10, 0));
+      previewLabel.setBackground(myEditor.getBackgroundColor());
+      myTopPanel.add(previewLabel, BorderLayout.SOUTH);
+    }
     myTopPanel.setBackground(myEditor.getBackgroundColor());
     myTopPanel.setBorder(getBorder());
 
