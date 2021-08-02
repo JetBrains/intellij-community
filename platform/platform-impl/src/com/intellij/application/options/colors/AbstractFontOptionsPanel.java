@@ -68,6 +68,10 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
   private final JTextField myLineSpacingField = new JBTextField(4);
 
   protected AbstractFontOptionsPanel() {
+    this(null);
+  }
+
+  protected AbstractFontOptionsPanel(@Nullable Boolean isMonospacedOnly) {
     myPrimaryCombo = createPrimaryFontCombo();
     mySecondaryCombo = createSecondaryFontCombo();
     myPrimaryLabel.setLabelFor(myPrimaryCombo);
@@ -111,7 +115,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     if (myPrimaryCombo.isMonospacedOnlySupported()) {
       myOnlyMonospacedCheckBox.setVisible(true);
       myOnlyMonospacedCheckBox.setBorder(null);
-      myOnlyMonospacedCheckBox.setSelected(EditorColorsManager.getInstance().isUseOnlyMonospacedFonts());
+      myOnlyMonospacedCheckBox.setSelected(isMonospacedOnly != null ? isMonospacedOnly : EditorColorsManager.getInstance().isUseOnlyMonospacedFonts());
       myOnlyMonospacedCheckBox.addActionListener(e -> {
         EditorColorsManager.getInstance().setUseOnlyMonospacedFonts(myOnlyMonospacedCheckBox.isSelected());
         myPrimaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
@@ -420,7 +424,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     myPrimaryCombo.setEnabled(!readOnly);
     myPrimaryLabel.setEnabled(!readOnly);
     mySecondaryCombo.setEnabled(!readOnly);
-    mySecondaryFontLabel.setEnabled(!readOnly);
+    if (mySecondaryFontLabel != null) mySecondaryFontLabel.setEnabled(!readOnly);
     myOnlyMonospacedCheckBox.setEnabled(!readOnly);
     myLineSpacingField.setEnabled(!readOnly);
     myLineSpacingLabel.setEnabled(!readOnly);
