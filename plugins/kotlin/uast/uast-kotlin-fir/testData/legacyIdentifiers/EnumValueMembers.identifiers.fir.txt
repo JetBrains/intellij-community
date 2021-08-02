@@ -1,7 +1,7 @@
 Style -> UClass (name = Style)
 value -> UParameter (name = value)
 String -> USimpleNameReferenceExpression (identifier = String)
-SHEET -> UClass (name = SHEET)
+SHEET -> UEnumConstant (name = SHEET)
 exitAnimation -> null
 String -> USimpleNameReferenceExpression (identifier = String)
 get -> [!] UnknownKotlinExpression (PROPERTY_ACCESSOR)
