@@ -28,3 +28,23 @@ UFile (package = ) [public final class ReifiedResolveKt {...]
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [filterIsInstance()] = external filterIsInstance()()
                                 UIdentifier (Identifier (filterIsInstance)) [UIdentifier (Identifier (filterIsInstance))]
                                 USimpleNameReferenceExpression (identifier = filterIsInstance, resolvesTo = null) [filterIsInstance] = external filterIsInstance()()
+        UMethod (name = foo) [static fun foo(@org.jetbrains.annotations.NotNull init: kotlin.jvm.functions.Function1<? super T,? extends kotlin.Unit>) : T {...}]
+            UParameter (name = init) [@org.jetbrains.annotations.NotNull var init: kotlin.jvm.functions.Function1<? super T,? extends kotlin.Unit> = { ...}]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+                ULambdaExpression [{ ...}] = Undetermined
+                    UBlockExpression [{...}] = Undetermined
+            UBlockExpression [{...}] = external TODO("message")("message")
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [TODO("message")] = external TODO("message")("message")
+                    UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
+                    USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] = external TODO("message")("message")
+                    ULiteralExpression (value = "message") ["message"] = "message"
+        UMethod (name = bar) [static fun bar(@org.jetbrains.annotations.NotNull init: kotlin.jvm.functions.Function1<? super T,? extends kotlin.Unit>) : T {...}]
+            UParameter (name = init) [@org.jetbrains.annotations.NotNull var init: kotlin.jvm.functions.Function1<? super T,? extends kotlin.Unit> = { ...}]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+                ULambdaExpression [{ ...}] = Undetermined
+                    UBlockExpression [{...}] = Undetermined
+            UBlockExpression [{...}] = external TODO("message")("message")
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [TODO("message")] = external TODO("message")("message")
+                    UIdentifier (Identifier (TODO)) [UIdentifier (Identifier (TODO))]
+                    USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null) [TODO] = external TODO("message")("message")
+                    ULiteralExpression (value = "message") ["message"] = "message"

@@ -8,8 +8,10 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMember
+import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UastErrorType
@@ -27,6 +29,9 @@ inline fun <reified T : UDeclaration, reified P : PsiElement> unwrap(element: P)
 }
 
 fun unwrapFakeFileForLightClass(file: PsiFile): PsiFile = (file as? FakeFileForLightClass)?.ktFile ?: file
+
+internal fun getContainingLightClass(original: KtDeclaration): KtLightClass? =
+    (original.containingClassOrObject?.toLightClass() ?: original.containingKtFile.findFacadeClass())
 
 fun getKotlinMemberOrigin(element: PsiElement?): KtDeclaration? {
     (element as? KtLightMember<*>)?.lightMemberOrigin?.auxiliaryOriginalElement?.let { return it }

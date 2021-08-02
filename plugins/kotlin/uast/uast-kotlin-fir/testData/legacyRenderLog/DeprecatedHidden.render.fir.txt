@@ -4,4 +4,7 @@ public final class Test {
     public fun Test() = UastEmptyExpression
     public final fun test1() : void {
     }
+    @kotlin.Deprecated(level = DeprecationLevel.HIDDEN, message = "nothing")
+    fun test2() : kotlin.Unit {
+    }
 }

@@ -1,6 +1,6 @@
 A -> UClass (name = A)
 foo -> UMethod (name = foo)
-inlineFoo -> UDeclarationsExpression
+inlineFoo -> UMethod (name = inlineFoo)
 bar -> UMethod (name = bar)
     A -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
     foo -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
