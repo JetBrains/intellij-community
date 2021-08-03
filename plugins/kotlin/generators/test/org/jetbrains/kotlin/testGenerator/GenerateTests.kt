@@ -83,7 +83,6 @@ import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesFirTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesWithDisableComponentSearchFirTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithLibraryFirTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractKotlinFindUsagesWithStdlibFirTest
-import org.jetbrains.kotlin.idea.fir.highlighter.AbstractFirHighlightingTest
 import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLInspectionTest
 import org.jetbrains.kotlin.idea.fir.inspections.AbstractHLLocalInspectionTest
 import org.jetbrains.kotlin.idea.fir.intentions.AbstractHLIntentionTest
@@ -1050,11 +1049,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("fir", testDataPath = "../idea/tests/testData") {
         testClass<AbstractFirReferenceResolveTest> {
             model("resolve/references", pattern = KT_WITHOUT_DOTS)
-        }
-
-        testClass<AbstractFirHighlightingTest> {
-            model("highlighter")
-            model("../../../fir/testData/highlighterFir", pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractFirHighlightingMetaInfoTest> {
