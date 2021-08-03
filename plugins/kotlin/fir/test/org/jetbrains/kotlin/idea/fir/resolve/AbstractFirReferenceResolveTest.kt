@@ -2,10 +2,12 @@
 
 package org.jetbrains.kotlin.idea.fir.resolve
 
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractFirReferenceResolveTest : AbstractReferenceResolveTest() {
@@ -15,7 +17,9 @@ abstract class AbstractFirReferenceResolveTest : AbstractReferenceResolveTest() 
         KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_FULL_JDK
 
     override fun tearDown() {
-        project.invalidateCaches(myFixture.file as? KtFile)
-        super.tearDown()
+        runAll(
+            ThrowableRunnable { project.invalidateCaches(myFixture.file as? KtFile) },
+            ThrowableRunnable { super.tearDown() }
+        )
     }
 }

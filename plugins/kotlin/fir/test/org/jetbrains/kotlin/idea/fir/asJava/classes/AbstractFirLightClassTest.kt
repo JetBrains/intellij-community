@@ -2,17 +2,19 @@
 
 package org.jetbrains.kotlin.idea.fir.asJava.classes
 
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
-import org.jetbrains.kotlin.idea.fir.findUsages.doTestWithFIRFlagsByPath
 import org.jetbrains.kotlin.idea.caches.resolve.LightClassTestCommon
 import org.jetbrains.kotlin.idea.caches.resolve.PsiElementChecker
 import org.jetbrains.kotlin.idea.caches.resolve.findClass
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.fir.findUsages.doTestWithFIRFlagsByPath
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractFirLightClassTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -24,8 +26,10 @@ abstract class AbstractFirLightClassTest : KotlinLightCodeInsightFixtureTestCase
     }
 
     override fun tearDown() {
-        project.invalidateCaches(file as? KtFile)
-        super.tearDown()
+        runAll(
+            ThrowableRunnable { project.invalidateCaches(file as? KtFile) },
+            ThrowableRunnable { super.tearDown() },
+        )
     }
 
     private fun doTestImpl() {
