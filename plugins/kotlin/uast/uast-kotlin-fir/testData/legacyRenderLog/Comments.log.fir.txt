@@ -9,7 +9,6 @@ UFile (package = )
         UField (name = size)
             UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             ULiteralExpression (value = 42)
-        UMethod (name = getSize)
         UMethod (name = getName)
             UBlockExpression
                 UReturnExpression
@@ -27,6 +26,7 @@ UFile (package = )
             UBlockExpression
                 UReturnExpression
                     ULiteralExpression (value = false)
+        UMethod (name = getSize)
         UMethod (name = Margherita)
             UParameter (name = size)
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull)

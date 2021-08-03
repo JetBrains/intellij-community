@@ -11,8 +11,8 @@ UFile (package = )
                     UBlockExpression
                         UReturnExpression
                             ULiteralExpression (value = "bar")
-        UMethod (name = getValue)
         UMethod (name = getExitAnimation)
+        UMethod (name = getValue)
         UMethod (name = Style)
             UParameter (name = value)
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull)

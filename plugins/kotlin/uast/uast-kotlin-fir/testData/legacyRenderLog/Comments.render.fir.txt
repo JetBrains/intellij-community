@@ -6,12 +6,12 @@ public abstract interface Pizza {
 
 public final class Margherita : Pizza {
     @org.jetbrains.annotations.NotNull private final var size: int = 42
-    public fun getSize() : int = UastEmptyExpression
     public fun getName() : java.lang.String {
         return java.lang.<anonymous class>("Margherita")
     }
     public fun contains(@org.jetbrains.annotations.NotNull ingredient: Pizza.Ingredient) : boolean {
         return false
     }
+    public fun getSize() : int = UastEmptyExpression
     public fun Margherita(@org.jetbrains.annotations.NotNull size: int) = UastEmptyExpression
 }
