@@ -129,6 +129,10 @@ class LanguageToolChecker : TextChecker() {
         return true // https://github.com/languagetool-org/languagetool/issues/5260
       }
 
+      if (match.rule.id == "THIS_NNS_VB" && text.subSequence(match.toPos, text.length).matches(Regex("\\s+reverts\\s.*"))) {
+        return true // https://github.com/languagetool-org/languagetool/issues/5455
+      }
+
       return false
     }
 
