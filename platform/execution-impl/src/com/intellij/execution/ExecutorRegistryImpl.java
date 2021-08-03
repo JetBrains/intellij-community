@@ -289,8 +289,10 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
           else {
             ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
             enabled = canRun(project, Collections.singletonList(new SettingsAndEffectiveTarget(configuration, target)));
-            hideDisabledExecutorButtons = configuration.hideDisabledExecutorButtons();
           }
+        }
+        if (!(configuration instanceof CompoundRunConfiguration)) {
+          hideDisabledExecutorButtons = configuration.hideDisabledExecutorButtons();
         }
         if (enabled) {
           presentation.setDescription(myExecutor.getDescription());
