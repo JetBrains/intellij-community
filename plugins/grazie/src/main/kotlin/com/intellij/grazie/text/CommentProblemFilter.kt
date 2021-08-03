@@ -4,6 +4,7 @@ import ai.grazie.nlp.tokenizer.sentence.SRXSentenceTokenizer
 import com.intellij.grazie.text.TextContent.TextDomain.COMMENTS
 import com.intellij.grazie.text.TextContent.TextDomain.DOCUMENTATION
 import com.intellij.grazie.utils.Text
+import com.intellij.grazie.utils.Text.looksLikeCode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.PsiTodoSearchHelper
@@ -30,7 +31,7 @@ internal class CommentProblemFilter : ProblemFilter() {
     }
 
     if (domain == COMMENTS) {
-      if (looksLikeCode(textAround(text, problem.highlightRange))) {
+      if (textAround(text, problem.highlightRange).looksLikeCode()) {
         return true
       }
       if (problem.fitsGroup(RuleGroup(RuleGroup.UNDECORATED_SENTENCE_SEPARATION))) {
@@ -45,19 +46,6 @@ internal class CommentProblemFilter : ProblemFilter() {
 
   private fun textAround(text: CharSequence, range: TextRange): CharSequence {
     return text.subSequence((range.startOffset - 20).coerceAtLeast(0), (range.endOffset + 20).coerceAtMost(text.length))
-  }
-
-  private fun looksLikeCode(text: CharSequence): Boolean {
-    var codeChars = 0
-    var textChars = 0
-    for (c in text) {
-      if ("(){}[]<>=+-*/%|&!;,.:\"'\\@$#^".contains(c)) {
-        codeChars++
-      } else if (c.isLetterOrDigit()) {
-        textChars++
-      }
-    }
-    return codeChars > 0 && textChars / codeChars < 4
   }
 
   private fun isInFirstSentence(problem: TextProblem) =

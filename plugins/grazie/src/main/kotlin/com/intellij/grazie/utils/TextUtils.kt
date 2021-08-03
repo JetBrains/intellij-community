@@ -41,4 +41,17 @@ object Text {
 
     return TextRange(start.coerceAtLeast(0), end.coerceAtMost(text.length))
   }
+
+  fun CharSequence.looksLikeCode(): Boolean {
+    var codeChars = 0
+    var textChars = 0
+    for (c in this) {
+      if ("(){}[]<>=+-*/%|&!;,.:\"'\\@$#^".contains(c)) {
+        codeChars++
+      } else if (c.isLetterOrDigit()) {
+        textChars++
+      }
+    }
+    return codeChars > 0 && textChars / codeChars < 4
+  }
 }
