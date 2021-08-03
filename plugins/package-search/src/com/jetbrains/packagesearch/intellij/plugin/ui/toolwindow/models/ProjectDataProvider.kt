@@ -7,8 +7,8 @@ import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchApiClient
 import com.jetbrains.packagesearch.intellij.plugin.api.http.ApiResult
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import com.jetbrains.packagesearch.intellij.plugin.util.logInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
-import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
@@ -19,7 +19,7 @@ internal class ProjectDataProvider(
     private val apiClient: PackageSearchApiClient
 ) {
 
-    private val packagesCache = LRUMap(500)
+    private val packageCache = LRUMap(500)
 
     suspend fun fetchKnownRepositories(): ApiResult<List<ApiRepository>> = apiClient.repositories()
         .mapSuccess { it.repositories }
@@ -46,7 +46,7 @@ internal class ProjectDataProvider(
         if (filteredApiInfo.isNotEmpty() && filteredApiInfo.size != installedDependencies.size) {
             val failedDependencies = filteredApiInfo.keys
 
-            logWarn(traceInfo, "ProjectDataProvider#fetchInfoFor()") {
+            logInfo(traceInfo, "ProjectDataProvider#fetchInfoFor()") {
                 "Failed obtaining data for ${failedDependencies.size} dependencies:\n" +
                     failedDependencies.joinToString("\n") { "\t* '${it.coordinatesString}'" }
             }
@@ -64,11 +64,11 @@ internal class ProjectDataProvider(
             "Fetching data for ${dependencies.count()} dependencies..."
         }
 
-        val dependenciesMap = mutableMapOf<InstalledDependency, ApiStandardPackage?>()
+        val remoteInfoByDependencyMap = mutableMapOf<InstalledDependency, ApiStandardPackage?>()
         val packagesToFetch = mutableListOf<InstalledDependency>()
         for (dependency in dependencies) {
-            val standardV2Package = packagesCache[dependency]
-            dependenciesMap[dependency] = standardV2Package as ApiStandardPackage?
+            val standardV2Package = packageCache[dependency]
+            remoteInfoByDependencyMap[dependency] = standardV2Package as ApiStandardPackage?
             if (standardV2Package == null) {
                 packagesToFetch += dependency
             }
@@ -78,7 +78,7 @@ internal class ProjectDataProvider(
             logTrace(traceInfo, "ProjectDataProvider#fetchInfoFromCacheOrApiFor()") {
                 "Found all ${dependencies.count() - packagesToFetch.count()} packages in cache"
             }
-            return dependenciesMap
+            return remoteInfoByDependencyMap
         }
 
         logTrace(traceInfo, "ProjectDataProvider#fetchInfoFromCacheOrApiFor()") {
@@ -97,10 +97,10 @@ internal class ProjectDataProvider(
 
         for (v2Package in fetchedPackages) {
             val dependency = InstalledDependency.from(v2Package)
-            packagesCache[dependency] = v2Package
-            dependenciesMap[dependency] = v2Package
+            packageCache[dependency] = v2Package
+            remoteInfoByDependencyMap[dependency] = v2Package
         }
 
-        return dependenciesMap
+        return remoteInfoByDependencyMap
     }
 }
