@@ -1,6 +1,5 @@
 UFile (package = )
     UClass (name = PropertyTest)
-        UMethod (name = PropertyTest)
         UMethod (name = getStringRepresentation)
             UBlockExpression
                 UReturnExpression
@@ -21,3 +20,4 @@ UFile (package = )
             UParameter (name = data)
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
+        UMethod (name = PropertyTest)

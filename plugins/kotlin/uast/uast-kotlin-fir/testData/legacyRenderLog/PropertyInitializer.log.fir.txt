@@ -1,6 +1,5 @@
 UFile (package = )
     UClass (name = TestPropertyInitializer)
-        UMethod (name = TestPropertyInitializer)
         UMethod (name = getWithSetter)
             UBlockExpression
                 UReturnExpression
@@ -12,3 +11,4 @@ UFile (package = )
                 UBinaryExpression (operator = =)
                     USimpleNameReferenceExpression (identifier = field)
                     USimpleNameReferenceExpression (identifier = p)
+        UMethod (name = TestPropertyInitializer)

@@ -1,6 +1,5 @@
 UFile (package = ) [public final class TestPropertyInitializer {...]
     UClass (name = TestPropertyInitializer) [public final class TestPropertyInitializer {...}]
-        UMethod (name = TestPropertyInitializer) [public fun TestPropertyInitializer() = UastEmptyExpression]
         UMethod (name = getWithSetter) [public final fun getWithSetter() : java.lang.String {...}]
             UBlockExpression [{...}]
                 UReturnExpression [return field]
@@ -12,3 +11,4 @@ UFile (package = ) [public final class TestPropertyInitializer {...]
                 UBinaryExpression (operator = =) [field = p] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = field) [field] : PsiType:String
                     USimpleNameReferenceExpression (identifier = p) [p] : PsiType:String
+        UMethod (name = TestPropertyInitializer) [public fun TestPropertyInitializer() = UastEmptyExpression]

@@ -1,5 +1,4 @@
 public final class PropertyTest {
-    public fun PropertyTest() = UastEmptyExpression
     public final fun getStringRepresentation() : java.lang.String {
         return this.toString()
     }
@@ -8,4 +7,5 @@ public final class PropertyTest {
     }
     public final fun setDataFromString(@org.jetbrains.annotations.NotNull data: java.lang.String) : void {
     }
+    public fun PropertyTest() = UastEmptyExpression
 }

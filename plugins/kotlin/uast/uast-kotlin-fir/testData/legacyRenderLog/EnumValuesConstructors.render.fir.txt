@@ -4,6 +4,6 @@ public final enum Style {
     @null USER("user")
     @null INTERNAL("internal")
     @null UNKNOWN(null)
-    private fun Style(@org.jetbrains.annotations.Nullable value: java.lang.String) = UastEmptyExpression
     public final fun getValue() : java.lang.String = UastEmptyExpression
+    private fun Style(@org.jetbrains.annotations.Nullable value: java.lang.String) = UastEmptyExpression
 }

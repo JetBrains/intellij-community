@@ -146,8 +146,8 @@ UFile (package = ) [public final class ResolveKt {...]
                                 UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
                                 USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] = external foo()()
     UClass (name = A) [public class A {...}]
-        UMethod (name = A) [public fun A() = UastEmptyExpression]
         UMethod (name = foo) [public final fun foo() : void {...}]
             UBlockExpression [{...}] = Undetermined
+        UMethod (name = A) [public fun A() = UastEmptyExpression]
         UMethod (name = inlineFoo) [fun inlineFoo() : kotlin.Unit {...}]
             UBlockExpression [{...}] = Undetermined

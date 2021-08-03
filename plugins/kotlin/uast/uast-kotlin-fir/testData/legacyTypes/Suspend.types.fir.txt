@@ -11,7 +11,6 @@ UFile (package = test.pkg) [package test.pkg...]
                             UIdentifier (Identifier (inner)) [UIdentifier (Identifier (inner))]
                             USimpleNameReferenceExpression (identifier = inner, resolvesTo = null) [inner] : PsiType:int
     UClass (name = Context) [public final class Context {...}]
-        UMethod (name = Context) [public fun Context() = UastEmptyExpression]
         UMethod (name = inner) [public final fun inner() : int {...}]
             UBlockExpression [{...}]
                 UReturnExpression [return suspendPrivate()]
@@ -24,3 +23,4 @@ UFile (package = test.pkg) [package test.pkg...]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [inner()] : PsiType:int
                         UIdentifier (Identifier (inner)) [UIdentifier (Identifier (inner))]
                         USimpleNameReferenceExpression (identifier = inner, resolvesTo = null) [inner] : PsiType:int
+        UMethod (name = Context) [public fun Context() = UastEmptyExpression]

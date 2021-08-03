@@ -21,8 +21,6 @@ KotlinUFile(
         )
         KotlinUField(
         )
-        KotlinConstructorUMethod(
-        )
         KotlinUMethod(
         )
         KotlinUMethod(
@@ -30,6 +28,8 @@ KotlinUFile(
             )
         )
         KotlinUMethod(
+        )
+        KotlinConstructorUMethod(
         )
     )
 )
