@@ -1,3 +1,4 @@
+// IGNORE_FIR
 open class A(x: Int) {
 }
 
