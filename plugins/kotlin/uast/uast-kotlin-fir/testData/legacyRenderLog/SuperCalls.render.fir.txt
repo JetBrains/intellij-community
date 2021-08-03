@@ -13,9 +13,9 @@ public final class SuperCallsKt {
 
 public class A {
     @org.jetbrains.annotations.NotNull private final var str: java.lang.String
-    public final fun getStr() : java.lang.String = UastEmptyExpression
     public fun foo(@org.jetbrains.annotations.NotNull a: long) : void {
     }
+    public final fun getStr() : java.lang.String = UastEmptyExpression
     public fun A(@org.jetbrains.annotations.NotNull str: java.lang.String) = UastEmptyExpression
     public fun A(@org.jetbrains.annotations.NotNull i: int) {
         <anonymous class>(i.toString())
