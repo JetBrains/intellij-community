@@ -3,6 +3,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.core.CoreBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
@@ -119,8 +120,8 @@ public final class ProjectNameStep extends ModuleWizardStep {
     final File projectFile = new File(path);
     if (projectFile.exists()) {
       final String title = myWizardContext.isCreatingNewProject()
-                           ? IdeBundle.message("title.new.project")
-                           : IdeBundle.message("title.add.module");
+                           ? IdeCoreBundle.message("title.new.project")
+                           : IdeCoreBundle.message("title.add.module");
       final String message = myWizardContext.isCreatingNewProject() && myWizardContext.getProjectStorageFormat() == DIRECTORY_BASED
                              ? JavaUiBundle.message("prompt.overwrite.project.folder",
                                                  Project.DIRECTORY_STORE_FOLDER, projectFile.getParentFile().getAbsolutePath())

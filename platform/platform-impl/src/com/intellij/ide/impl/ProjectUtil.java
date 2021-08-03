@@ -6,6 +6,7 @@ import com.intellij.configurationStore.StoreUtil;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.ide.highlighter.ProjectFileType;
@@ -481,7 +482,7 @@ public final class ProjectUtil extends ProjectUtilCore {
                        IdeBundle.message("prompt.open.project.with.name.in.new.frame", projectName);
       if (isNewProject) {
         boolean openInExistingFrame =
-          MessageDialogBuilder.yesNo(IdeBundle.message("title.new.project"), message)
+          MessageDialogBuilder.yesNo(IdeCoreBundle.message("title.new.project"), message)
             .yesText(IdeBundle.message("button.existing.frame"))
             .noText(IdeBundle.message("button.new.frame"))
             .doNotAsk(new ProjectNewWindowDoNotAskOption())

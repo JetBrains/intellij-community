@@ -3,7 +3,7 @@ package com.intellij.openapi.vfs.local;
 
 import com.intellij.core.CoreBundle;
 import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.DefaultLogger;
@@ -766,7 +766,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
         fail("duplicate file name should have been rejected");
       }
       catch (IOException e) {
-        assertEquals(IdeBundle.message("vfs.target.already.exists.error", file1.getPath()), e.getMessage());
+        assertEquals(IdeCoreBundle.message("vfs.target.already.exists.error", file1.getPath()), e.getMessage());
       }
     });
   }

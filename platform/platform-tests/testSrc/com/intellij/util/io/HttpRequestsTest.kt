@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
-import com.intellij.ide.IdeBundle
+import com.intellij.ide.IdeCoreBundle
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.util.TimeoutUtil
@@ -46,7 +46,7 @@ class HttpRequestsTest {
       fail()
     }
     catch (e: IOException) {
-      assertThat(e.message).isEqualTo(IdeBundle.message("error.connection.failed.redirects"))
+      assertThat(e.message).isEqualTo(IdeCoreBundle.message("error.connection.failed.redirects"))
     }
   }
 
