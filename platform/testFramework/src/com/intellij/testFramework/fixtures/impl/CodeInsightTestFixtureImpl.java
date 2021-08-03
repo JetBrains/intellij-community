@@ -1668,12 +1668,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public VirtualFile getOriginalVirtualFile() {
-    if (myFile instanceof VirtualFileWindow) {
-      return ((VirtualFileWindow) myFile).getDelegate();
-    } else {
-      return myFile;
-    }
+  public VirtualFile getVirtualFile() {
+    return myFile;
   }
 
   @Override
