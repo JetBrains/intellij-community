@@ -233,7 +233,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
         return true;
       });
     Project project = ProjectManagerEx.getInstanceEx().openProject(location, options);
-    if (project != null && generator != null) {
+    if (project != null && generator != null && !(generator instanceof TemplateProjectDirectoryGenerator)) {
       generator.generateProject(project, baseDir, settings, ModuleManager.getInstance(project).getModules()[0]);
     }
     logProjectGeneratedEvent(generator, project);
