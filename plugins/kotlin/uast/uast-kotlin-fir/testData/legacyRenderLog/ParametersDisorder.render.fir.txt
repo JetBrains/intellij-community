@@ -25,9 +25,9 @@ public final class ParametersDisorderKt {
 }
 
 public final class A {
-    public fun A() = UastEmptyExpression
     public final fun with2Receivers(@org.jetbrains.annotations.NotNull $this$with2Receivers: java.lang.String, @org.jetbrains.annotations.NotNull a: int, @org.jetbrains.annotations.NotNull b: float) : void {
     }
+    public fun A() = UastEmptyExpression
 }
 
 public class Parent {

@@ -2,7 +2,6 @@ UFile (package = A.B.C)
     UClass (name = Foo)
         UMethod (name = Foo)
     UClass (name = Bar)
-        UMethod (name = Bar)
         UMethod (name = getFoo)
             UBlockExpression
                 UReturnExpression
@@ -15,3 +14,4 @@ UFile (package = A.B.C)
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
                             UIdentifier (Identifier (Foo))
                             USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+        UMethod (name = Bar)

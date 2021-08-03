@@ -1,6 +1,5 @@
 UFile (package = ) [public final class TryCatch {...]
     UClass (name = TryCatch) [public final class TryCatch {...}]
-        UMethod (name = TryCatch) [public fun TryCatch() = UastEmptyExpression]
         UMethod (name = catches) [public final fun catches() : void {...}]
             UBlockExpression [{...}] = external finalizer()()
                 UTryExpression [try {...}] = external finalizer()()
@@ -25,8 +24,8 @@ UFile (package = ) [public final class TryCatch {...]
             UBlockExpression [{...}] = Undetermined
         UMethod (name = finalizer) [public final fun finalizer() : void {...}]
             UBlockExpression [{...}] = Undetermined
+        UMethod (name = TryCatch) [public fun TryCatch() = UastEmptyExpression]
     UClass (name = TryCatchAnnotations) [public final class TryCatchAnnotations {...}]
-        UMethod (name = TryCatchAnnotations) [public fun TryCatchAnnotations() = UastEmptyExpression]
         UMethod (name = catches) [@java.lang.SuppressWarnings(value = "Something")...}]
             UAnnotation (fqName = java.lang.SuppressWarnings) [@java.lang.SuppressWarnings(value = "Something")]
                 UNamedExpression (name = value) [value = "Something"] = Undetermined
@@ -57,3 +56,4 @@ UFile (package = ) [public final class TryCatch {...]
             UBlockExpression [{...}] = Undetermined
         UMethod (name = finalizer) [public final fun finalizer() : void {...}]
             UBlockExpression [{...}] = Undetermined
+        UMethod (name = TryCatchAnnotations) [public fun TryCatchAnnotations() = UastEmptyExpression]
