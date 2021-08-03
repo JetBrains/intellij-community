@@ -9,6 +9,7 @@ import com.intellij.debugger.ui.HotSwapUIImpl
 import com.intellij.execution.runToolbar.*
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -24,6 +25,8 @@ class RunToolbarHotSwapAction : AnAction(), RTBarAction {
       HotSwapUI.getInstance(project).reloadChangedClasses(session, DebuggerSettings.getInstance().COMPILE_BEFORE_HOTSWAP)
     }
   }
+
+  override fun setShortcutSet(shortcutSet: ShortcutSet) {}
 
   private fun getSession(e: AnActionEvent): DebuggerSession? {
     return e.environment()?.let { environment ->

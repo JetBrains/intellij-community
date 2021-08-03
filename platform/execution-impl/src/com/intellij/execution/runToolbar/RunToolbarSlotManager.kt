@@ -4,6 +4,7 @@ package com.intellij.execution.runToolbar
 import com.intellij.CommonBundle
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Executor
+import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -86,6 +87,13 @@ class RunToolbarSlotManager(val project: Project) {
 
     slot.environment = env
     slot.waitingForProcess.clear()
+
+    /**
+     * TODO add listener of run toolbar availability
+     */
+    if(RunToolbarProcess.Companion.isAvailable()) {
+      RunManager.getInstance(project).selectedConfiguration = env.runnerAndConfigurationSettings
+    }
 
     activeProcesses.updateActiveProcesses(slotsData)
   }

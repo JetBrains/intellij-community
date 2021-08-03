@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutorRegistryImpl
 import com.intellij.execution.executors.ExecutorGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.actionSystem.SplitButtonAction
 import java.util.function.Function
 
@@ -23,6 +24,8 @@ internal class RunToolbarExecutorGroupAction(private val group: RunToolbarExecut
 
     } ?: false
   }
+
+  override fun setShortcutSet(shortcutSet: ShortcutSet) {}
 }
 
 internal class RunToolbarExecutorGroup(executorGroup: ExecutorGroup<*>,
@@ -34,6 +37,8 @@ internal class RunToolbarExecutorGroup(executorGroup: ExecutorGroup<*>,
   override fun displayTextInToolbar(): Boolean {
     return true
   }
+
+  override fun setShortcutSet(shortcutSet: ShortcutSet) {}
 
   override fun update(e: AnActionEvent) {
     super.update(e)

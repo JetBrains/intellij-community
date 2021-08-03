@@ -7,6 +7,7 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.project.DumbAware
 
 class RunToolbarStopAction : AnAction(AllIcons.Actions.Suspend), DumbAware, RTBarAction {
@@ -17,6 +18,8 @@ class RunToolbarStopAction : AnAction(AllIcons.Actions.Suspend), DumbAware, RTBa
       if (canBeStopped(it)) ExecutionManagerImpl.stopProcess(it)
     }
   }
+
+  override fun setShortcutSet(shortcutSet: ShortcutSet) {}
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.environment()?.let {

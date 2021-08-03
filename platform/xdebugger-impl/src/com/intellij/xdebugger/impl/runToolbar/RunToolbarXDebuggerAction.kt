@@ -7,6 +7,7 @@ import com.intellij.execution.runToolbar.isItRunToolbarMainSlot
 import com.intellij.execution.runToolbar.isOpened
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase
@@ -22,6 +23,8 @@ abstract class RunToolbarXDebuggerAction : XDebuggerActionBase(true), RTBarActio
       RunToolbarSlotManager.getInstance(it).getState().isSingleMain()
     } ?: false else true
   }
+
+  override fun setShortcutSet(shortcutSet: ShortcutSet) {}
 }
 
 class RunToolbarPauseAction : RunToolbarXDebuggerAction() {

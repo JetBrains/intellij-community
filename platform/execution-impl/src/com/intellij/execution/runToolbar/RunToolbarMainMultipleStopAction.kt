@@ -5,6 +5,7 @@ import com.intellij.build.events.BuildEventsNls
 import com.intellij.execution.actions.StopAction
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.project.Project
 import javax.swing.Icon
 
@@ -20,6 +21,8 @@ class RunToolbarMainMultipleStopAction : StopAction(), RTBarAction {
       state.isActive() && !state.isSingleMain()
     } ?: false
   }
+
+  override fun setShortcutSet(shortcutSet: ShortcutSet) {}
 
  override fun getActionIcon(e: AnActionEvent): Icon {
     e.project?.let { project ->

@@ -7,6 +7,7 @@ import com.intellij.execution.ExecutorRegistryImpl
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.compound.SettingsAndEffectiveTarget
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import javax.swing.Icon
@@ -20,6 +21,8 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
   override fun getInformativeIcon(project: Project, selectedConfiguration: RunnerAndConfigurationSettings): Icon {
     return executor.icon
   }
+
+  override fun setShortcutSet(shortcutSet: ShortcutSet) {}
 
   override fun actionPerformed(e: AnActionEvent) {
     e.project?.let { project ->

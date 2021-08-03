@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
+import com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -10,8 +10,6 @@ import javax.swing.Icon
 
 interface RunToolbarProcess {
   companion object {
-    private const val runDebugKey = "ide.new.navbar"
-
     const val RUN_WIDGET_MORE_ACTION_GROUP = "RunToolbarMoreActionGroup"
     const val RUN_WIDGET_GROUP = "RunToolbarProcessActionGroup"
 
@@ -19,7 +17,7 @@ interface RunToolbarProcess {
 
     @JvmStatic
     fun isAvailable(): Boolean {
-      return Registry.get(runDebugKey).asBoolean()
+      return ExperimentalToolbarSettings.newToolbarEnabled
     }
 
     val EP_NAME: ExtensionPointName<RunToolbarProcess> = ExtensionPointName("com.intellij.runToolbarProcess")

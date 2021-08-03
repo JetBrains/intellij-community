@@ -6,6 +6,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.FakeRerunAction
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.project.DumbAware
 
 open class RunToolbarRerunAction : FakeRerunAction(), RTBarAction, DumbAware {
@@ -23,6 +24,8 @@ open class RunToolbarRerunAction : FakeRerunAction(), RTBarAction, DumbAware {
         RunToolbarSlotManager.getInstance(it).getState().isSingleMain()
       } ?: false else true
   }
+
+  override fun setShortcutSet(shortcutSet: ShortcutSet) {}
 
   override fun actionPerformed(event: AnActionEvent) {
     event.environment()?.let {

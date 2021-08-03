@@ -44,9 +44,6 @@ internal fun AnActionEvent.addWaitingForAProcess(executorId: String) {
 
 internal fun AnActionEvent.setConfiguration(value: RunnerAndConfigurationSettings?) {
   runToolbarData()?.configuration = value
-  this.project?.let {
-    RunManager.getInstance(it).selectedConfiguration = value
-  }
 }
 
 internal fun AnActionEvent.configuration(): RunnerAndConfigurationSettings? {
