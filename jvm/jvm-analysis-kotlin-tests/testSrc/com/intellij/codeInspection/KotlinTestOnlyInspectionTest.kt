@@ -6,6 +6,10 @@ import com.intellij.jvm.analysis.JvmAnalysisKtTestsUtil
 class KotlinTestOnlyInspectionTest : TestOnlyInspectionTestBase() {
   override fun getBasePath() = JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/testonly"
 
+  fun `test @TestOnly on use-site targets`() {
+    myFixture.testHighlighting("UseSiteTargets.kt")
+  }
+
   fun `test @TestOnly in production code`() {
     myFixture.testHighlighting("TestOnlyTest.kt")
   }
