@@ -2,22 +2,22 @@ public final class BrokenMethodKt {
     public static final fun main(@org.jetbrains.annotations.NotNull args: java.lang.String[]) : void {
         public static final class TestUsed {
             @org.jetbrains.annotations.NotNull private final var parameter: java.lang.CharSequence
-            public fun TestUsed(@org.jetbrains.annotations.NotNull parameter: java.lang.CharSequence) = UastEmptyExpression
             public final fun getParameter() : java.lang.CharSequence = UastEmptyExpression
             public final fun component1() : java.lang.CharSequence = UastEmptyExpression
             public final fun copy(@org.jetbrains.annotations.NotNull parameter: java.lang.CharSequence) : TestUsed = UastEmptyExpression
+            public fun TestUsed(@org.jetbrains.annotations.NotNull parameter: java.lang.CharSequence) = UastEmptyExpression
             public static final class Used {
                 @null public static final var Companion: TestUsed.Used.Companion
                 @org.jetbrains.annotations.NotNull private final var parameter: java.lang.Object
-                public fun Used(@org.jetbrains.annotations.NotNull parameter: java.lang.Object) = UastEmptyExpression
                 public final fun getParameter() : java.lang.Object = UastEmptyExpression
                 public final fun component1() : java.lang.Object = UastEmptyExpression
                 public final fun copy(@org.jetbrains.annotations.NotNull parameter: java.lang.Object) : TestUsed.Used = UastEmptyExpression
+                public fun Used(@org.jetbrains.annotations.NotNull parameter: java.lang.Object) = UastEmptyExpression
                 public static final class Companion {
-                    private fun Companion() = UastEmptyExpression
                     public final fun doStuff1(@org.jetbrains.annotations.NotNull $this$doStuff1: java.lang.Object) : TestUsed.Used {
                         return <anonymous class>(this)
                     }
+                    private fun Companion() = UastEmptyExpression
                 }
             }
         }

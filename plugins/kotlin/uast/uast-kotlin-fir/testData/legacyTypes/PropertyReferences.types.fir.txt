@@ -56,14 +56,6 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
             ULiteralExpression (value = 0) [0] : PsiType:int
         UField (name = mutableProp) [@org.jetbrains.annotations.NotNull private var mutableProp: int]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-        UMethod (name = A) [public fun A(@org.jetbrains.annotations.NotNull init: int) {...}]
-            UParameter (name = init) [@org.jetbrains.annotations.NotNull var init: int]
-                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}]
-                UBlockExpression [{...}] : PsiType:Unit
-                    UBinaryExpression (operator = =) [mutableProp = init] : PsiType:Unit
-                        USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
-                        USimpleNameReferenceExpression (identifier = init) [init] : PsiType:int
         UMethod (name = getMutableProp) [public final fun getMutableProp() : int = UastEmptyExpression]
         UMethod (name = setMutableProp) [public final fun setMutableProp(value: int) : void = UastEmptyExpression]
             UParameter (name = value) [var value: int]
@@ -79,3 +71,11 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
                     USimpleNameReferenceExpression (identifier = x) [x] : PsiType:int
                 UReturnExpression [return privateProp] : PsiType:Void
                     USimpleNameReferenceExpression (identifier = privateProp) [privateProp] : PsiType:int
+        UMethod (name = A) [public fun A(@org.jetbrains.annotations.NotNull init: int) {...}]
+            UParameter (name = init) [@org.jetbrains.annotations.NotNull var init: int]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            UBlockExpression [{...}]
+                UBlockExpression [{...}] : PsiType:Unit
+                    UBinaryExpression (operator = =) [mutableProp = init] : PsiType:Unit
+                        USimpleNameReferenceExpression (identifier = mutableProp) [mutableProp] : PsiType:int
+                        USimpleNameReferenceExpression (identifier = init) [init] : PsiType:int

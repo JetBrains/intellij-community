@@ -1,5 +1,4 @@
 public final class TryCatch {
-    public fun TryCatch() = UastEmptyExpression
     public final fun catches() : void {
         try {
             body()
@@ -17,10 +16,10 @@ public final class TryCatch {
     }
     public final fun finalizer() : void {
     }
+    public fun TryCatch() = UastEmptyExpression
 }
 
 public final class TryCatchAnnotations {
-    public fun TryCatchAnnotations() = UastEmptyExpression
     @java.lang.SuppressWarnings(value = "Something")
     public final fun catches() : void {
         try {
@@ -39,4 +38,5 @@ public final class TryCatchAnnotations {
     }
     public final fun finalizer() : void {
     }
+    public fun TryCatchAnnotations() = UastEmptyExpression
 }

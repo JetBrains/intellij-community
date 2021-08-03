@@ -4,7 +4,7 @@ public final class MethodReferenceKt {
 }
 
 public final class Foo {
-    public fun Foo() = UastEmptyExpression
     public final fun bar() : void {
     }
+    public fun Foo() = UastEmptyExpression
 }

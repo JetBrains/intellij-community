@@ -25,12 +25,12 @@ public final class CommentOwnersKt {
 
 public final class TopLevelClass {
     @org.jetbrains.annotations.NotNull private final var classLevelProperty: int = 42
-    public fun TopLevelClass(@org.jetbrains.annotations.NotNull t: int) {
-        <anonymous class>()
-    }
     public final fun getClassLevelProperty() : int = UastEmptyExpression
     public final fun classLevelMethod() : void {
         return TODO()
+    }
+    public fun TopLevelClass(@org.jetbrains.annotations.NotNull t: int) {
+        <anonymous class>()
     }
     public static final class NestedClass {
         public fun NestedClass() = UastEmptyExpression

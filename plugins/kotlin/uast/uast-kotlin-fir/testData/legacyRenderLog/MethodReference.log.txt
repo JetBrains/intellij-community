@@ -5,6 +5,6 @@ UFile (package = )
             UCallableReferenceExpression (name = bar)
         UMethod (name = getX)
     UClass (name = Foo)
-        UMethod (name = Foo)
         UMethod (name = bar)
             UBlockExpression
+        UMethod (name = Foo)

@@ -1,6 +1,5 @@
 UFile (package = ) [public final class PropertyTest {...]
     UClass (name = PropertyTest) [public final class PropertyTest {...}]
-        UMethod (name = PropertyTest) [public fun PropertyTest() = UastEmptyExpression]
         UMethod (name = getStringRepresentation) [public final fun getStringRepresentation() : java.lang.String {...}]
             UBlockExpression [{...}]
                 UReturnExpression [return this.toString()]
@@ -21,3 +20,4 @@ UFile (package = ) [public final class PropertyTest {...]
             UParameter (name = data) [@org.jetbrains.annotations.NotNull var data: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:Unit
+        UMethod (name = PropertyTest) [public fun PropertyTest() = UastEmptyExpression]

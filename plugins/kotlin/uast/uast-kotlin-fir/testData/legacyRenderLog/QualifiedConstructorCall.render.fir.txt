@@ -5,8 +5,8 @@ public final class Foo {
 }
 
 public final class Bar {
-    public fun Bar() = UastEmptyExpression
     public final fun getFoo() : A.B.C.Foo {
         return A.B.C.<anonymous class>()
     }
+    public fun Bar() = UastEmptyExpression
 }

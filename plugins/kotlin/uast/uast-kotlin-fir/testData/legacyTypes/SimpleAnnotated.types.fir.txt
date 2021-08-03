@@ -6,7 +6,6 @@ UFile (package = ) [public final class SimpleAnnotated {...]
                 UNamedExpression (name = version) [version = "1.0"]
                     ULiteralExpression (value = "1.0") ["1.0"] : PsiType:String
             ULiteralExpression (value = "Mary") ["Mary"] : PsiType:String
-        UMethod (name = SimpleAnnotated) [public fun SimpleAnnotated() = UastEmptyExpression]
         UMethod (name = method) [@kotlin.Suppress(names = "abc")...}]
             UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "abc")]
                 UNamedExpression (name = names) [names = "abc"]
@@ -20,3 +19,4 @@ UFile (package = ) [public final class SimpleAnnotated {...]
             UAnnotation (fqName = kotlin.SinceKotlin) [@kotlin.SinceKotlin(version = "1.0")]
                 UNamedExpression (name = version) [version = "1.0"]
                     ULiteralExpression (value = "1.0") ["1.0"] : PsiType:String
+        UMethod (name = SimpleAnnotated) [public fun SimpleAnnotated() = UastEmptyExpression]

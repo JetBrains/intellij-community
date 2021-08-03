@@ -26,7 +26,6 @@ UFile (package = ) [public final class NonTrivialIdentifiersKt {...]
                                             UIdentifier (Identifier (()) [UIdentifier (Identifier (())]
                                             USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:Unit
     UClass (name = A) [public final class A {...}]
-        UMethod (name = A) [public fun A() = UastEmptyExpression]
         UMethod (name = invoke) [public final fun invoke() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:Unit
@@ -36,3 +35,4 @@ UFile (package = ) [public final class NonTrivialIdentifiersKt {...]
             UParameter (name = f) [@org.jetbrains.annotations.NotNull var f: kotlin.jvm.functions.Function0<? extends kotlin.Unit>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:Unit
+        UMethod (name = A) [public fun A() = UastEmptyExpression]

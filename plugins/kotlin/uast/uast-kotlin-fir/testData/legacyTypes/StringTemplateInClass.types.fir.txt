@@ -8,5 +8,5 @@ UFile (package = ) [public final class Demo {...]
                     UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
                     USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:NonExistentClass
                     ULiteralExpression (value = "lorem") ["lorem"] : PsiType:String
-        UMethod (name = Demo) [public fun Demo() = UastEmptyExpression]
         UMethod (name = getFoo) [public final fun getFoo() : error.NonExistentClass = UastEmptyExpression]
+        UMethod (name = Demo) [public fun Demo() = UastEmptyExpression]
