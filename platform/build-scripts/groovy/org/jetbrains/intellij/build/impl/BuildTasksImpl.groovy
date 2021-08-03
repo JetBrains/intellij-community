@@ -243,6 +243,10 @@ final class BuildTasksImpl extends BuildTasks {
     }
     jvmArgs.addAll(BuildUtils.propertiesToJvmArgs(systemProperties))
     jvmArgs.addAll(vmOptions)
+    String debugPort = System.getProperty("intellij.build.${arguments.first()}.debug.port")
+    if (debugPort != null) {
+      jvmArgs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:$debugPort".toString())
+    }
 
     List<Path> additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
     Set<String> additionalPluginIds = new HashSet<>()
