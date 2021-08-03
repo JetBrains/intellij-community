@@ -7,7 +7,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.EditCustomVmOptionsAction;
-import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.StartupUtil;
 import com.intellij.jna.JnaLoader;
@@ -209,7 +208,8 @@ final class SystemHealthMonitor extends PreloadingActivity {
     AppExecutorUtil.getAppExecutorService().execute(() -> {
       try {
         if (StartupUtil.getShellEnvLoadingFuture().get() == Boolean.FALSE) {
-          NotificationAction action = ShowLogAction.isSupported() ? ShowLogAction.notificationAction() : null;
+          NotificationAction action = NotificationAction.createSimpleExpiring(
+            IdeBundle.message("shell.env.loading.learn.more"), () -> BrowserUtil.browse("https://jb.gg/shell-env"));
           String appName = ApplicationNamesInfo.getInstance().getFullProductName(), shell = System.getenv("SHELL");
           showNotification("shell.env.loading.failed", true, action, appName, shell);
         }
