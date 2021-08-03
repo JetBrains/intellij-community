@@ -111,8 +111,9 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     boolean unitTestMode = application.isUnitTestMode();
 
     if (!unitTestMode || HONOUR_RECENT_FILES_IN_TESTS.get(application) == Boolean.TRUE) {
-      //TODO: untie IdeDocumentHistory from EditorWindow
-      IdeUiService.getInstance().isFileRecentlyChanged(project, file);
+      if (IdeUiService.getInstance().isFileRecentlyChanged(project, file)) {
+        return true;
+      }
     }
 
     if (!unitTestMode) {
