@@ -29,9 +29,9 @@ public final class ResolveKt {
 }
 
 public class A {
-    public fun A() = UastEmptyExpression
     public final fun foo() : void {
     }
+    public fun A() = UastEmptyExpression
     fun inlineFoo() : kotlin.Unit {
     }
 }
