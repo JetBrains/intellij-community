@@ -200,7 +200,7 @@ public class Alarm implements Disposable {
     _addRequest(request, delayMillis, modalityState);
   }
 
-  void cancelAllAndAddRequest(@NotNull Runnable request, int delayMillis, @Nullable ModalityState modalityState) {
+  public void cancelAllAndAddRequest(@NotNull Runnable request, int delayMillis, @Nullable ModalityState modalityState) {
     synchronized (LOCK) {
       cancelAllRequests();
       _addRequest(request, delayMillis, modalityState);
