@@ -436,36 +436,33 @@ class ArtifactTest : ArtifactsTestCase() {
   }
 
   fun `test commit and dispose modifiable model`() = runWriteAction {
-    runWriteAction {
-      val modifiableModel = ArtifactManager.getInstance(project).createModifiableModel()
-      val artifact = modifiableModel.addArtifact("MyArtifact", PlainArtifactType.getInstance())
-      modifiableModel.commit()
+    val modifiableModel = ArtifactManager.getInstance(project).createModifiableModel()
+    val artifact = modifiableModel.addArtifact("MyArtifact", PlainArtifactType.getInstance())
+    modifiableModel.commit()
 
-      val modifiableModel2 = ArtifactManager.getInstance(project).createModifiableModel()
-      val modifiableArtifact = modifiableModel2.getOrCreateModifiableArtifact(artifact)
-      modifiableArtifact.name = "AnotherName"
-      modifiableModel2.commit()
-      modifiableModel2.dispose()
-    }
+    val modifiableModel2 = ArtifactManager.getInstance(project).createModifiableModel()
+    val modifiableArtifact = modifiableModel2.getOrCreateModifiableArtifact(artifact)
+    modifiableArtifact.name = "AnotherName"
+    modifiableModel2.commit()
+    modifiableModel2.dispose()
   }
 
   fun `test replace root element`() = runWriteAction {
-    runWriteAction {
-      val modifiableModel = ArtifactManager.getInstance(project).createModifiableModel()
-      val artifact = modifiableModel.addArtifact("MyArtifact", PlainArtifactType.getInstance())
-      val rootElement = ArtifactRootElementImpl()
-      artifact.rootElement = rootElement
-      modifiableModel.commit()
+    val modifiableModel = ArtifactManager.getInstance(project).createModifiableModel()
+    val artifact = modifiableModel.addArtifact("MyArtifact", PlainArtifactType.getInstance())
+    val rootElement = ArtifactRootElementImpl()
+    artifact.rootElement = rootElement
+    modifiableModel.commit()
 
-      val anotherModifiableModel = ArtifactManager.getInstance(project).createModifiableModel()
-      val anotherModifiableArtifact = anotherModifiableModel.getOrCreateModifiableArtifact(artifact)
-      val anotherRootElement = ArtifactRootElementImpl()
-      anotherModifiableArtifact.rootElement = anotherRootElement
-      anotherModifiableModel.commit()
+    val anotherModifiableModel = ArtifactManager.getInstance(project).createModifiableModel()
+    val anotherModifiableArtifact = anotherModifiableModel.getOrCreateModifiableArtifact(artifact)
+    val anotherRootElement = ArtifactRootElementImpl()
+    anotherModifiableArtifact.rootElement = anotherRootElement
+    anotherModifiableModel.commit()
 
-      val rootElements = WorkspaceModel.getInstance(project).entityStorage.current.entities(ArtifactRootElementEntity::class.java).toList()
-      assertOneElement(rootElements)
-    }
+    val rootElements = WorkspaceModel.getInstance(project).entityStorage.current.entities(ArtifactRootElementEntity::class.java).toList()
+    assertOneElement(rootElements)
+    Unit
   }
 
   fun `test set property`() = runWriteAction {
