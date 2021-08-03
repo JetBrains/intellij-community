@@ -196,7 +196,8 @@ public class IdeErrorMessages {
         String MESSAGE_FOR_CONCURRENT_HASH_MAP_CONTAINS =
                 KotlinIdeaAnalysisBundle.htmlMessage(
                 "html.method.contains.from.concurrenthashmap.may.have.unexpected.semantics.it.calls.containsvalue.instead.of.containskey.br.use.explicit.form.of.the.call.to.containskey.containsvalue.contains.or.cast.the.value.to.kotlin.collections.map.instead.br.see.https.youtrack.jetbrains.com.issue.kt.18053.for.more.details.html");
-        MAP.put(CONCURRENT_HASH_MAP_CONTAINS_OPERATOR, MESSAGE_FOR_CONCURRENT_HASH_MAP_CONTAINS);
+        MAP.put(CONCURRENT_HASH_MAP_CONTAINS_OPERATOR.getErrorFactory(), MESSAGE_FOR_CONCURRENT_HASH_MAP_CONTAINS);
+        MAP.put(CONCURRENT_HASH_MAP_CONTAINS_OPERATOR.getWarningFactory(), MESSAGE_FOR_CONCURRENT_HASH_MAP_CONTAINS);
 
         MAP.setImmutable();
     }
