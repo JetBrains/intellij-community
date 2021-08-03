@@ -39,7 +39,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -320,22 +319,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     if (!hasJUnit5EnginesAPI(globalSearchScope, psiFacade) || !isCustomJUnit5(globalSearchScope)) {
       PsiClass testAnnotation = dumbService.computeWithAlternativeResolveEnabled(() -> psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope));
       String jupiterVersion = ObjectUtils.notNull(getVersion(testAnnotation), "5.0.0");
-      if (hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
-        String moduleNameToMove = "org.junit.jupiter.api";
-        if (!hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope)) {
-          downloadDependenciesWhenRequired(project, additionalDependencies,
-                                           new RepositoryLibraryProperties("org.junit.jupiter", "junit-jupiter-engine", jupiterVersion));
-        }
-        else {
-          moduleNameToMove = "org.junit.jupiter.engine";
-        }
-
-        if (isModularized) {
-          //put engine and dependencies or api only (when engine is attached to the module path above) on the module path
-          for (PsiJavaModule module : JavaModuleNameIndex.getInstance().get(moduleNameToMove, project, globalSearchScope)) {
-            JavaParametersUtil.putDependenciesOnModulePath(javaParameters, module, true);
-          }
-        }
+      if (hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope) &&
+          !hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope)) {
+        downloadDependenciesWhenRequired(project, additionalDependencies,
+                                         new RepositoryLibraryProperties("org.junit.jupiter", "junit-jupiter-engine", jupiterVersion));
       }
 
       if (!hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope) &&
