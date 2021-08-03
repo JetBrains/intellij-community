@@ -10,6 +10,7 @@ import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
 public final class JpsCachesPluginUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.JpsCachesPluginUtil");
   public static final String PLUGIN_NAME = "jps-cache-loader";
+  public static final String COMPATIBLE_JPS_VERSION = "212.3340";
   public static final ExecutorService EXECUTOR_SERVICE = AppExecutorUtil.createBoundedApplicationPoolExecutor("JpsCacheLoader Pool",
                                                                                                          INSTANCE, getThreadPoolSize());
   private JpsCachesPluginUtil() {}
