@@ -47,7 +47,7 @@ object AdditionalKotlinArtifacts {
         )
         lazyUnpackJar(
             testDataJar,
-            File(PathManager.getHomePath(), "out").resolve("kotlinc-testdata"),
+            File(PathManager.getCommunityHomePath()).resolve("out").resolve("kotlinc-testdata"),
             "testData"
         )
     }
