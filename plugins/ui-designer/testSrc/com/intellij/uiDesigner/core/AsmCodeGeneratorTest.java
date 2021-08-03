@@ -93,10 +93,8 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, BaseState.class);
     appendPath(cp, KDeclarationContainer.class);
     appendPath(cp, NotNullProducer.class);  // intellij.platform.util
-    appendPath(cp, Strings.class);  // intellij.platform.util.strings
-    appendPath(cp, FList.class);  // intellij.platform.util.collections
+    appendPath(cp, Strings.class);  // intellij.platform.util.base
     appendPath(cp, XmlDomReader.class);  // intellij.platform.util.xmlDom
-    appendPath(cp, StartUpMeasurer.class);  // intellij.platform.util.diagnostic
     appendPath(cp, NotNullFunction.class);  // intellij.platform.util.rt
     appendPath(cp, SimpleTextAttributes.class);
     appendPath(cp, UISettings.class);
