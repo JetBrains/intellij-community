@@ -6,14 +6,14 @@ UFile (package = ) [public final class Foo {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UField (name = b) [@org.jetbrains.annotations.NotNull private final var b: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UMethod (name = getA) [public final fun getA() : int = UastEmptyExpression]
-            UMethod (name = getB) [public final fun getB() : int = UastEmptyExpression]
             UMethod (name = getAPlusB) [public final fun getAPlusB() : int {...}]
                 UBlockExpression [{...}] = Nothing
                     UReturnExpression [return a + b] = Nothing
                         UBinaryExpression (operator = +) [a + b] = Undetermined
                             USimpleNameReferenceExpression (identifier = a) [a] = Undetermined
                             USimpleNameReferenceExpression (identifier = b) [b] = Undetermined
+            UMethod (name = getA) [public final fun getA() : int = UastEmptyExpression]
+            UMethod (name = getB) [public final fun getB() : int = UastEmptyExpression]
             UMethod (name = Bar) [public fun Bar(@org.jetbrains.annotations.NotNull a: int, @org.jetbrains.annotations.NotNull b: int) = UastEmptyExpression]
                 UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                     UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
