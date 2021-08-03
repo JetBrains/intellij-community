@@ -35,14 +35,6 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
     }
   }
 
-  public void dropMemoryCache() {
-    synchronized (myDataLock) {
-      if (myMap.isDirty()) {
-        myMap.dropMemoryCaches();
-      }
-    }
-  }
-
   @Override
   public void close() throws IOException {
     synchronized (myDataLock) {
@@ -126,10 +118,7 @@ public abstract class AbstractStateStorage<Key, T> implements StorageOwner {
 
   @Override
   public void flush(boolean memoryCachesOnly) {
-    if (memoryCachesOnly) {
-      dropMemoryCache();
-    }
-    else {
+    if (!memoryCachesOnly) {
       force();
     }
   }
