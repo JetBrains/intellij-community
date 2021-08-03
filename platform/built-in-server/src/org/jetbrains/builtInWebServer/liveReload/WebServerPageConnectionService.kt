@@ -252,7 +252,8 @@ class WebServerPageConnectionService {
     /**
      * Start to listen for files changes on HTTP request with RELOAD_URL_PARAM, stop on last WS client disconnect
      */
-    private var myListenerDisposable: Disposable? = null
+    private var myFileListenerDisposable: Disposable? = null
+    private var myDocumentListenerDisposable: Disposable? = null
 
     private val myMessageId = AtomicInteger(0)
     private val myLinkedFilesToReload: MutableMap<Int, MutableSet<VirtualFile>> = HashMap()
@@ -295,23 +296,25 @@ class WebServerPageConnectionService {
     @Synchronized
     fun pageRequested(uri: String, file: VirtualFile, reloadMode: ReloadMode): Int {
       if (myRequestedPages.isEmpty) {
-        if (myListenerDisposable == null) {
-          val disposable = Disposer.newDisposable(ApplicationManager.getApplication(), WebServerFileContentListener::class.java.simpleName)
+        if (myFileListenerDisposable == null) {
+          val disposable = Disposer.newDisposable(ApplicationManager.getApplication(), "RequestedPagesState.myFileListenerDisposable")
           VirtualFileManager.getInstance().addAsyncFileListener(WebServerFileContentListener(), disposable)
-          myListenerDisposable = disposable
-          if (reloadMode == ReloadMode.RELOAD_ON_CHANGE) {
-            EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
-              override fun documentChanged(event: DocumentEvent) {
-                val virtualFile = FileDocumentManager.getInstance().getFile(event.document)
-                if (isTrackedFile(virtualFile)) {
-                  FileDocumentManager.getInstance().saveDocument(event.document)
-                }
-              }
-            }, disposable)
-          }
+          myFileListenerDisposable = disposable
         }
         else {
           LOGGER.error("Listener already added")
+        }
+        if (reloadMode == ReloadMode.RELOAD_ON_CHANGE && myDocumentListenerDisposable == null) {
+          val disposable = Disposer.newDisposable(ApplicationManager.getApplication(), "RequestedPagesState.myDocumentListenerDisposable")
+          EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
+            override fun documentChanged(event: DocumentEvent) {
+              val virtualFile = FileDocumentManager.getInstance().getFile(event.document)
+              if (isTrackedFile(virtualFile)) {
+                FileDocumentManager.getInstance().saveDocument(event.document)
+              }
+            }
+          }, disposable)
+          myDocumentListenerDisposable = disposable
         }
       }
       val clientId = ++myLastClientId
@@ -371,9 +374,13 @@ class WebServerPageConnectionService {
     private fun cleanupIfEmpty() {
       if (myRequestedPages.isEmpty) {
         myRequestedFilesWithoutReferrer.clear()
-        if (myListenerDisposable != null) {
-          Disposer.dispose(Objects.requireNonNull(myListenerDisposable)!!)
-          myListenerDisposable = null
+        if (myFileListenerDisposable != null) {
+          Disposer.dispose(Objects.requireNonNull(myFileListenerDisposable)!!)
+          myFileListenerDisposable = null
+        }
+        if (myDocumentListenerDisposable != null) {
+          Disposer.dispose(Objects.requireNonNull(myDocumentListenerDisposable)!!)
+          myDocumentListenerDisposable = null
         }
       }
     }
