@@ -201,9 +201,9 @@ public final class BuildManager implements Disposable {
     @Override
     public void runTask() {
       if (shouldSaveDocuments()) {
-        ApplicationManager.getApplication().invokeAndWait(() ->
-                                                            ((FileDocumentManagerImpl)FileDocumentManager.getInstance())
-                                                              .saveAllDocuments(false));
+        ApplicationManager.getApplication().invokeAndWait(
+          () -> ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveAllDocuments(false)
+        );
       }
     }
 
@@ -213,21 +213,28 @@ public final class BuildManager implements Disposable {
     }
   };
 
+  private final Runnable myGCTask = () -> {
+    // todo: make customizable in UI?
+    final int unusedThresholdDays = Registry.intValue("compiler.build.data.unused.threshold", -1);
+    if (unusedThresholdDays <= 0) {
+      return;
+    }
 
-  private static class GCRunnable implements Runnable {
-
-    private final Path myBuildSystemDir;
-
-    private GCRunnable(Path buildSystemDir) {myBuildSystemDir = buildSystemDir;}
-
-    @Override
-    public void run() {
-      // todo: make customizable in UI?
-      final int unusedThresholdDays = Registry.intValue("compiler.build.data.unused.threshold", -1);
-      if (unusedThresholdDays <= 0) {
-        return;
+    Collection<File> systemDirs = Collections.singleton(getBuildSystemDirectory().toFile());
+    if (Boolean.valueOf(System.getProperty("compiler.build.data.clean.unused.wsl"))) {
+      final List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
+      if (!distributions.isEmpty()) {
+        systemDirs = new ArrayList<>(systemDirs);
+        for (WSLDistribution distribution : distributions) {
+          final Path wslSystemDir = WslBuildCommandLineBuilder.getWslBuildSystemDirectory(distribution);
+          if (wslSystemDir != null) {
+            systemDirs.add(wslSystemDir.toFile());
+          }
+        }
       }
-      File buildSystemDir = myBuildSystemDir.toFile();
+    }
+
+    for (File buildSystemDir : systemDirs) {
       File[] dirs = buildSystemDir.listFiles(pathname -> pathname.isDirectory() && !TEMP_DIR_NAME.equals(pathname.getName()));
       if (dirs != null) {
         final Date now = new Date();
@@ -237,12 +244,8 @@ public final class BuildManager implements Disposable {
             final Pair<Date, File> usageData = readUsageFile(usageFile);
             if (usageData != null) {
               final File projectFile = usageData.second;
-              if (projectFile != null && !projectFile.exists() ||
-                  DateFormatUtil.getDifferenceInDays(usageData.first, now) > unusedThresholdDays) {
-                LOG.info("Clearing project build data because the project does not exist or was not opened for more than " +
-                         unusedThresholdDays +
-                         " days: " +
-                         buildDataProjectDir);
+              if (projectFile != null && !projectFile.exists() || DateFormatUtil.getDifferenceInDays(usageData.first, now) > unusedThresholdDays) {
+                LOG.info("Clearing project build data because the project does not exist or was not opened for more than " + unusedThresholdDays + " days: " + buildDataProjectDir);
                 FileUtil.delete(buildDataProjectDir);
               }
             }
@@ -253,7 +256,7 @@ public final class BuildManager implements Disposable {
         }
       }
     }
-  }
+  };
 
   private final BuildMessageDispatcher myMessageDispatcher = new BuildMessageDispatcher();
 
@@ -385,19 +388,8 @@ public final class BuildManager implements Disposable {
     ShutDownTracker.getInstance().registerShutdownTask(this::stopListening);
 
     if (!IS_UNIT_TEST_MODE) {
-      ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService()
-        .scheduleWithFixedDelay(() -> runCommand(new GCRunnable(LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory())), 3, 180, TimeUnit.MINUTES);
+      ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> runCommand(myGCTask), 3, 180, TimeUnit.MINUTES);
       Disposer.register(this, () -> future.cancel(false));
-      if (Boolean.valueOf(System.getProperty("compiler.build.data.clean.unused.wsl"))) {
-        WslDistributionManager.getInstance().getInstalledDistributions().forEach(distribution -> {
-          Path wslBuildSystemDirectory = WslBuildCommandLineBuilder.getWslBuildSystemDirectory(distribution);
-          if (wslBuildSystemDirectory != null) {
-            ScheduledFuture<?> wslFuture = AppExecutorUtil.getAppScheduledExecutorService()
-              .scheduleWithFixedDelay(() -> runCommand(new GCRunnable(wslBuildSystemDirectory)), 3, 180, TimeUnit.MINUTES);
-            Disposer.register(this, () -> wslFuture.cancel(false));
-          }
-        });
-      }
     }
   }
 
