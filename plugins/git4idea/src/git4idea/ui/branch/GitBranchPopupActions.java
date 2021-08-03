@@ -538,24 +538,8 @@ public class GitBranchPopupActions {
           askNewBranchNameAndCheckout(project, repositories, remoteBranchName, suggestedLocalName);
           return;
         }
-        boolean hasCommits = !conflictingLocalBranches.isEmpty() &&
-                             checkCommitsUnderProgress(project, repositories, remoteBranchName, suggestedLocalName);
-        if (hasCommits) {
-          int result =
-            Messages.showYesNoCancelDialog(
-              GitBundle.message("local.branch.already.exists.and.has.commits.which.do.not.exist.in.remote",
-                                suggestedLocalName, remoteBranchName), GitBundle.message("checkout.0", remoteBranchName),
-              GitBundle.message("checkout.and.rebase"), GitBundle.message("branches.drop.local.commits"),
-              IdeBundle.message("button.cancel"), null);
-          if (result == Messages.CANCEL) return;
-          if (result == Messages.YES) {
-            checkout(project, repositories, remoteBranchName, suggestedLocalName, true);
-            return;
-          }
-        }
-        GitBrancher brancher = GitBrancher.getInstance(project);
-        brancher
-          .checkoutNewBranchStartingFrom(suggestedLocalName, remoteBranchName, !conflictingLocalBranches.isEmpty(), repositories, null);
+        new GitBranchCheckoutOperation(project, repositories)
+          .perform(remoteBranchName, new GitNewBranchOptions(suggestedLocalName, true, true));
       }
 
       @Override
