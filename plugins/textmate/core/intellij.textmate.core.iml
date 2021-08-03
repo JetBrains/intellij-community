@@ -15,7 +15,7 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" exported="" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.collections" />
-    <orderEntry type="module" module-name="intellij.platform.util.strings" />
+    <orderEntry type="module" module-name="intellij.platform.util.base" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
   </component>
