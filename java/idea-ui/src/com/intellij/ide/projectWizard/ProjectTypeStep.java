@@ -329,8 +329,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     }
 
     if (isNewWizard()) {
-      groups.add(0, new TemplatesGroup(NewProjectModuleType.Companion.getINSTANCE().createModuleBuilder()));
       groups.add(0, new TemplatesGroup(NewWizardEmptyModuleType.Companion.getINSTANCE().createModuleBuilder()));
+      groups.add(0, new TemplatesGroup(NewProjectModuleType.Companion.getINSTANCE().createModuleBuilder()));
     }
 
     return groups;
@@ -803,7 +803,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
           if (index < 1) return false;
           TemplatesGroup upper = groups.get(index - 1);
           if (isNewWizard()) {
-            return upper.getModuleBuilder() instanceof NewProjectModuleBuilder;
+            return upper.getModuleBuilder() instanceof NewWizardEmptyModuleBuilder;
           }
 
           if (upper.getParentGroup() == null && value.getParentGroup() == null) return true;
