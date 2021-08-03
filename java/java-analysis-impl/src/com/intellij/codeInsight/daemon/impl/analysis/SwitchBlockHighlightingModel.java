@@ -650,7 +650,7 @@ public class SwitchBlockHighlightingModel {
         PsiElement elementCoversType = findTotalPatternForType(elements, mySelectorType);
         PsiElement defaultElement = SwitchUtils.findDefaultElement(myBlock);
         if (defaultElement != null && elementCoversType != null) {
-          results.add(createError(defaultElement, JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
+          results.add(createError(defaultElement.getFirstChild(), JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
           results.add(createError(elementCoversType, JavaErrorBundle.message("switch.total.pattern.and.default.exist")));
           return;
         }
