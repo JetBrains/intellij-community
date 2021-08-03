@@ -482,6 +482,22 @@ class ArtifactTest : ArtifactsTestCase() {
     }
   }
 
+  fun `test work with removed artifact via bridge`() = runWriteAction {
+    val artifactEntity = WorkspaceModel.getInstance(project).updateProjectModel {
+      val element = it.addArtifactRootElementEntity(emptyList(), MySource)
+      it.addArtifactEntity("MyArtifact", PlainArtifactType.getInstance().id, true, null, element, MySource)
+    }
+
+    val artifactBridge = ArtifactManager.getInstance(project).artifacts[0]
+
+    WorkspaceModel.getInstance(project).updateProjectModel {
+      it.removeEntity(artifactEntity)
+    }
+
+    artifactBridge.rootElement.children
+    Unit
+  }
+
   private inline fun <T> runWithRegisteredExtension(extension: T, extensionPoint: ExtensionPointName<T>, action: () -> Unit) {
     val disposable = Disposer.newDisposable()
     registerExtension(extension, extensionPoint, disposable)

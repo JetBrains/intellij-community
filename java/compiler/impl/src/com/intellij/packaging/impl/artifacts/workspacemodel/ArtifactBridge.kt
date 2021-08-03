@@ -19,7 +19,6 @@ import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.util.JpsPathUtil
@@ -48,7 +47,9 @@ open class ArtifactBridge(
             return@forEach
           }
 
-          entityStorage = VersionedEntityStorageOnStorage(event.storageBefore)
+          // We inject a builder instead of store because requesting of packaging elements adds new bridges to this builder.
+          // If case of storage here, the new bridges will be added to the store.
+          entityStorage = VersionedEntityStorageOnBuilder(event.storageBefore.toBuilder())
           assert(entityStorage.current.resolve(artifactId) != null) { "Cannot resolve artifact $artifactId." }
         }
       }
