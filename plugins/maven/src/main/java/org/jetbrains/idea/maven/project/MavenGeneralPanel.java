@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,6 +18,7 @@ import org.jetbrains.idea.maven.execution.MavenSettingsObservable;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Arrays;
 
 public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservable {
@@ -40,12 +42,14 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
 
   private JCheckBox showDialogWithAdvancedSettingsCheckBox;
   private JCheckBox useMavenConfigCheckBox;
+  private JBLabel mavenConfigWarningLabel;
   private boolean isShowAdvancedSettingsCheckBox = false;
 
   public MavenGeneralPanel() {
     fillOutputLevelCombobox();
     fillChecksumPolicyCombobox();
     fillFailureBehaviorCombobox();
+    fillUseMavenConfigGroup();
     setAnchor(myMultiProjectBuildFailPolicyLabel);
   }
 
@@ -67,6 +71,12 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
                           each -> Pair.create(each.getDisplayString(), each));
   }
 
+  private void fillUseMavenConfigGroup() {
+    useMavenConfigCheckBox.addChangeListener(e -> mavenConfigWarningLabel.setVisible(useMavenConfigCheckBox.isSelected()));
+    mavenConfigWarningLabel.setIcon(AllIcons.General.BalloonWarning);
+    Font font = useMavenConfigCheckBox.getFont();
+    mavenConfigWarningLabel.setFont(new Font(font.getName(), font.getStyle(), font.getSize() - 2));
+  }
 
   public void showCheckBoxWithAdvancedSettings() {
     isShowAdvancedSettingsCheckBox = true;
@@ -119,7 +129,9 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     ComboBoxUtil.select(pluginUpdatePolicyComboModel, data.getPluginUpdatePolicy());
 
     showDialogWithAdvancedSettingsCheckBox.setSelected(data.isShowDialogWithAdvancedSettings());
+
     useMavenConfigCheckBox.setSelected(data.isUseMavenConfig());
+    mavenConfigWarningLabel.setVisible(useMavenConfigCheckBox.isSelected());
   }
 
   @Nls

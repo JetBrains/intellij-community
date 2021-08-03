@@ -57,7 +57,6 @@ public class MavenProjectsProcessorReadingTask implements MavenProjectsProcessor
                       MavenEmbeddersManager embeddersManager,
                       MavenConsole console,
                       MavenProgressIndicator indicator) throws MavenProcessCanceledException {
-    mySettings.updateFromMavenConfig(myTree.getRootProjects());
     if (myFilesToUpdate == null) {
       myTree.updateAll(myForce, mySettings, indicator);
     }
@@ -65,6 +64,7 @@ public class MavenProjectsProcessorReadingTask implements MavenProjectsProcessor
       myTree.delete(myFilesToDelete, mySettings, indicator);
       myTree.update(myFilesToUpdate, myForce, mySettings, indicator);
     }
+    mySettings.updateFromMavenConfig(myTree.getRootProjectsFiles());
 
     if (myOnCompletion != null) myOnCompletion.run();
   }

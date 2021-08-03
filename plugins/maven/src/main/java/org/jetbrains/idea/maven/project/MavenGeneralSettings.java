@@ -216,13 +216,13 @@ public class MavenGeneralSettings implements Cloneable {
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public @Nullable File getEffectiveUserSettingsIoFile() {
-    return MavenWslUtil.getUserSettings(myProject, getUserSettingsFile(), getMavenConfigInner());
+    return MavenWslUtil.getUserSettings(myProject, getUserSettingsFile(), getMavenConfig());
   }
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public @Nullable File getEffectiveGlobalSettingsIoFile() {
-    return MavenWslUtil.getGlobalSettings(myProject, getMavenHome(), getMavenConfigInner());
+    return MavenWslUtil.getGlobalSettings(myProject, getMavenHome(), getMavenConfig());
   }
 
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
@@ -275,7 +275,7 @@ public class MavenGeneralSettings implements Cloneable {
     File result = myEffectiveLocalRepositoryCache;
     if (result != null) return result;
 
-    result = MavenWslUtil.getLocalRepo(myProject, overriddenLocalRepository, mavenHome, mavenSettingsFile, getMavenConfigInner());
+    result = MavenWslUtil.getLocalRepo(myProject, overriddenLocalRepository, mavenHome, mavenSettingsFile, getMavenConfig());
     myEffectiveLocalRepositoryCache = result;
     return result;
   }
@@ -467,9 +467,13 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   @Transient
-  public void updateFromMavenConfig(@NotNull List<MavenProject> mavenRootProjects) {
+  public void updateFromMavenConfig(@NotNull List<VirtualFile> mavenRootProjects) {
+    if (mavenRootProjects.isEmpty() || !useMavenConfig) return;
     mavenConfigCache = null;
-    MavenConfig config = getMavenConfig(mavenRootProjects);
+
+    VirtualFile file = mavenRootProjects.get(0);
+    MavenConfig config = MavenConfigParser.parse(file.isDirectory() ? file.getPath() : file.getParent().getPath());
+    mavenConfigCache = config;
     if (config == null) return;
 
     boolean needUpdate;
@@ -514,20 +518,15 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   @Transient
-  public MavenConfig getMavenConfig(@NotNull List<MavenProject> mavenRootProjects) {
-    if (mavenRootProjects.isEmpty() || !useMavenConfig) return null;
+  public MavenConfig getMavenConfig() {
+    if (!useMavenConfig) return null;
     if (mavenConfigCache != null) return mavenConfigCache;
 
-    MavenConfig mavenConfig = MavenConfigParser.parse(mavenRootProjects.get(0).getDirectoryFile().getPath());
-    mavenConfigCache = mavenConfig;
-    return mavenConfig;
-  }
+    MavenProjectsManager instance = myProject != null ? MavenProjectsManager.getInstance(myProject) : null;
+    if (instance == null) return null;
 
-  @Transient
-  private MavenConfig getMavenConfigInner() {
-    if (myProject == null) return null;
-    MavenProjectsManager instance = MavenProjectsManager.getInstance(myProject);
-    return instance != null ? getMavenConfig(instance.getRootProjects()) : null;
+    updateFromMavenConfig(MavenUtil.collectFiles(instance.getRootProjects()));
+    return mavenConfigCache;
   }
 
   private void fireChanged() {

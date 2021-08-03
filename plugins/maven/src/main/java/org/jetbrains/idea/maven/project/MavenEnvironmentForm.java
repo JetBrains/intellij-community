@@ -44,7 +44,6 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -113,8 +112,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
   @NotNull
   private File doResolveDefaultLocalRepository() {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-    List<MavenProject> projects = projectsManager != null ? projectsManager.getRootProjects() : Collections.emptyList();
-    MavenConfig config = projects.isEmpty() ? null : projectsManager.getGeneralSettings().getMavenConfig(projects);
+    MavenConfig config = projectsManager != null ? projectsManager.getGeneralSettings().getMavenConfig() : null;
     return MavenWslUtil.getLocalRepo(myProject, "",
                                      FileUtil.toSystemIndependentName(mavenHomeField.getText().trim()),
                                      settingsFileComponent.getComponent().getText(), config);
@@ -123,8 +121,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor, MavenSettingsObser
   @NotNull
   private File doResolveDefaultUserSettingsFile() {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-    MavenConfig config = projectsManager != null
-                         ? projectsManager.getGeneralSettings().getMavenConfig(projectsManager.getRootProjects()) : null;
+    MavenConfig config = projectsManager != null ? projectsManager.getGeneralSettings().getMavenConfig() : null;
     return MavenWslUtil.getUserSettings(myProject, "", config);
   }
 
