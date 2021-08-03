@@ -92,7 +92,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
       @Override
       public void visitMethod(PsiMethod method) {
-        checkNullableStuffForMethod(method, holder, isOnTheFly);
+        checkNullableStuffForMethod(method, holder);
       }
 
       @Override
@@ -697,7 +697,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     return "NullableProblems";
   }
 
-  private void checkNullableStuffForMethod(PsiMethod method, final ProblemsHolder holder, boolean isOnFly) {
+  private void checkNullableStuffForMethod(PsiMethod method, final ProblemsHolder holder) {
     Annotated annotated = check(method, holder, method.getReturnType());
 
     List<PsiMethod> superMethods = ContainerUtil.map(
@@ -706,7 +706,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     final NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(holder.getProject());
 
     checkSupers(method, holder, annotated, superMethods);
-    checkParameters(method, holder, superMethods, nullableManager, isOnFly);
+    checkParameters(method, holder, superMethods, nullableManager);
     checkOverriders(method, holder, annotated, nullableManager);
   }
 
@@ -779,8 +779,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   private void checkParameters(PsiMethod method,
                                ProblemsHolder holder,
                                List<? extends PsiMethod> superMethods,
-                               NullableNotNullManager nullableManager,
-                               boolean isOnFly) {
+                               NullableNotNullManager nullableManager) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
@@ -790,7 +789,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
       checkSuperParameterAnnotations(holder, nullableManager, parameter, superParameters);
 
-      checkNullLiteralArgumentOfNotNullParameterUsages(method, holder, nullableManager, isOnFly, i, parameter);
+      checkNullLiteralArgumentOfNotNullParameterUsages(method, holder, nullableManager, i, parameter);
     }
   }
 
@@ -892,10 +891,9 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   private void checkNullLiteralArgumentOfNotNullParameterUsages(PsiMethod method,
                                                                 ProblemsHolder holder,
                                                                 NullableNotNullManager nullableManager,
-                                                                boolean isOnFly,
                                                                 int parameterIdx,
                                                                 PsiParameter parameter) {
-    if (!REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER || !isOnFly) return;
+    if (!REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER || !holder.isOnTheFly()) return;
 
     PsiElement elementToHighlight;
     if (DfaPsiUtil.getTypeNullability(getMemberType(parameter)) == Nullability.NOT_NULL) {
