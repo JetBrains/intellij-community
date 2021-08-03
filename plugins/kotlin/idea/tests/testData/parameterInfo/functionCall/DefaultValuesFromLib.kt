@@ -1,3 +1,4 @@
+// IGNORE_FIR
 fun f() {
     listOf(1).joinToString(<caret>)
 }

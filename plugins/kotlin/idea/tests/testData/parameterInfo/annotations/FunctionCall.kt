@@ -1,3 +1,4 @@
+// IGNORE_FIR
 annotation class Fancy
 
 private fun abc(@Fancy foo: Int) {
