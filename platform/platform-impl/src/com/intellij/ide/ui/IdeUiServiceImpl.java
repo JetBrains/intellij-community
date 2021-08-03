@@ -28,17 +28,20 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.SystemNotifications;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.ssl.CertificateManager;
+import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
@@ -140,5 +143,30 @@ public class IdeUiServiceImpl extends IdeUiService{
   public VirtualFile[] chooseFiles(FileChooserDescriptor descriptor,
                                    Project project, VirtualFile toSelect) {
     return FileChooser.chooseFiles(descriptor, project, toSelect);
+  }
+
+  @Override
+  public SSLContext getSslContext() {
+    return CertificateManager.getInstance().getSslContext();
+  }
+
+  @Override
+  public String getProxyLogin() {
+    return HttpConfigurable.getInstance().getProxyLogin();
+  }
+
+  @Override
+  public String getPlainProxyPassword() {
+    return HttpConfigurable.getInstance().getPlainProxyPassword();
+  }
+
+  @Override
+  public boolean isProxyAuth() {
+    return HttpConfigurable.getInstance().PROXY_AUTHENTICATION;
+  }
+
+  @Override
+  public List<Proxy> getProxyList(URL url) {
+    return CommonProxy.getInstance().select(url);
   }
 }

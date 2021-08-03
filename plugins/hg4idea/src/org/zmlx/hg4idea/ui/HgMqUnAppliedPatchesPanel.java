@@ -2,6 +2,7 @@
 package org.zmlx.hg4idea.ui;
 
 import com.google.common.primitives.Ints;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -83,7 +84,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     });
     myPatchTable.setShowColumns(true);
     myPatchTable.setFillsViewportHeight(true);
-    myPatchTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+    myPatchTable.getEmptyText().setText(IdeCoreBundle.message("message.nothingToShow"));
     myPatchTable.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
     myPatchTable.setDragEnabled(true);
     new TableSpeedSearch(myPatchTable);

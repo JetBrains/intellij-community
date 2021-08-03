@@ -15,14 +15,17 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.List;
 
 @ApiStatus.Experimental
@@ -92,6 +95,26 @@ public class IdeUiService {
 
   public VirtualFile[] chooseFiles(FileChooserDescriptor descriptor, Project project, VirtualFile toSelect) {
     return new VirtualFile[0];
+  }
+
+  public SSLContext getSslContext() {
+    return null;
+  }
+
+  public String getProxyLogin() {
+    return null;
+  }
+
+  public String getPlainProxyPassword() {
+    return null;
+  }
+
+  public boolean isProxyAuth() {
+    return false;
+  }
+
+  public List<Proxy> getProxyList(URL url) {
+    return new ArrayList<>();
   }
 
 

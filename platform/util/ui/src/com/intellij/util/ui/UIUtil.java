@@ -3584,4 +3584,16 @@ public final class UIUtil {
     ObjectUtils.consumeIfCast(focusOwner.getParent(), JTable.class, table -> TableUtil.stopEditing(table));
     ObjectUtils.consumeIfCast(focusOwner.getParent(), JTree.class, tree -> tree.stopEditing());
   }
+
+  public static String colorToHex(final Color color) {
+    return to2DigitsHex(color.getRed())
+           + to2DigitsHex(color.getGreen())
+           + to2DigitsHex(color.getBlue());
+  }
+
+  private static String to2DigitsHex(int i) {
+    String s = Integer.toHexString(i);
+    if (s.length() < 2) s = "0" + s;
+    return s;
+  }
 }
