@@ -57,36 +57,27 @@ internal class JBGridImpl : JBGrid {
    * Layouts components
    */
   fun layout(rect: Rectangle) {
-    resizeOneDimension(layoutData.columnsCoord, resizableColumns, rect.width)
-    resizeOneDimension(layoutData.rowsCoord, resizableRows, rect.height)
+    val columnsCoord = layoutData.columnsSizeCalculator.calculateCoords(rect.width, resizableColumns)
+    val rowsCoord = layoutData.rowsSizeCalculator.calculateCoords(rect.height, resizableRows)
 
-    cells.forEach { cell ->
-      var leftCellCoord = layoutData.columnsCoord[cell.constraints.x]
-      var topCellCoord = layoutData.rowsCoord[cell.constraints.y]
-      val nextColumn = cell.constraints.x + cell.constraints.width
-      val nextRow = cell.constraints.y + cell.constraints.height
-      var width = layoutData.columnsCoord[nextColumn] - leftCellCoord
-      var height = layoutData.rowsCoord[nextRow] - topCellCoord
-      leftCellCoord += rect.x
-      topCellCoord += rect.y
-
-      // todo check col/row visibility for last col/row
-      if (isAfterColumnDistance(nextColumn - 1)) {
-        width -= columnsDistance[nextColumn - 1]
-      }
-      if (isAfterRowDistance(nextRow - 1)) {
-        height -= rowsDistance[nextRow - 1]
-      }
+    layoutData.visibleCellsData.forEach { layoutCellData ->
+      val cell = layoutCellData.cell
+      val constraints = cell.constraints
+      var x = columnsCoord[constraints.x]
+      var y = rowsCoord[constraints.y]
+      val nextColumn = constraints.x + constraints.width
+      val nextRow = constraints.y + constraints.height
+      val width = columnsCoord[nextColumn] - x - layoutCellData.gapWidth
+      val height = rowsCoord[nextRow] - y - layoutCellData.gapHeight
+      x += rect.x + constraints.gaps.left - constraints.visualPaddings.left
+      y += rect.y + constraints.gaps.top - constraints.visualPaddings.top
 
       when (cell) {
         is JBComponentCell -> {
-          val component = cell.component
-          if (component.isVisible) {
-            layoutComponent(component, cell.constraints, leftCellCoord, topCellCoord, width, height)
-          }
+          layoutComponent(cell.component, layoutCellData, x, y, width, height)
         }
         is JBGridCell -> {
-          (cell.content as JBGridImpl).layout(Rectangle(leftCellCoord, topCellCoord, width, height))
+          (cell.content as JBGridImpl).layout(Rectangle(x, y, width, height))
         }
       }
     }
@@ -96,121 +87,86 @@ internal class JBGridImpl : JBGrid {
    * Calculates all data in [layoutData], measures all components etc
    */
   fun calculateLayoutData() {
+    layoutData.columnsSizeCalculator.reset()
+    layoutData.rowsSizeCalculator.reset()
+
+    calculateLayoutDataStep1()
+    calculateLayoutDataStep2()
+  }
+
+  private fun calculateLayoutDataStep1() {
     layoutData.dimension = getDimension()
-    val preferredSizes = mutableMapOf<JComponent, Dimension>()
-    val columnsCoordCalculator = JBCoordCalculator()
-    val rowsCoordCalculator = JBCoordCalculator()
+    val visibleCellsData = mutableListOf<LayoutCellData>()
 
     cells.forEach { cell ->
-      val preferredSize: Dimension?
       when (cell) {
         is JBComponentCell -> {
           val component = cell.component
           if (component.isVisible) {
-            preferredSize = component.preferredSize
-            preferredSizes[component] = preferredSize
-          }
-          else {
-            preferredSize = null
+            visibleCellsData.add(LayoutCellData(cell, component.preferredSize))
           }
         }
         is JBGridCell -> {
+          // todo visibility, visibleColumns and visibleRows
           val grid = cell.content as JBGridImpl
           grid.calculateLayoutData()
-          preferredSize = grid.layoutData.preferredSize
-        }
-      }
-
-      if (preferredSize != null) {
-        with(cell.constraints) {
-          val rightColumn = x + width - 1
-          val bottomRow = y + height - 1
-          val rightDistance = if (isAfterColumnDistance(rightColumn)) columnsDistance[rightColumn] else 0
-          val bottomDistance = if (isAfterRowDistance(bottomRow)) rowsDistance[bottomRow] else 0
-
-          columnsCoordCalculator.addConstraint(
-            x, width,
-            preferredSize.width + gaps.width - visualPaddings.width + rightDistance
-          )
-          rowsCoordCalculator.addConstraint(
-            y, height,
-            preferredSize.height + gaps.height - visualPaddings.height + bottomDistance
-          )
+          visibleCellsData.add(LayoutCellData(cell, grid.layoutData.preferredSize))
         }
       }
     }
 
-    layoutData.preferredSizes = preferredSizes
-    layoutData.columnsCoord = columnsCoordCalculator.calculate(layoutData.dimension.width)
-    layoutData.rowsCoord = rowsCoordCalculator.calculate(layoutData.dimension.height)
+    layoutData.visibleCellsData = visibleCellsData
   }
 
+  private fun calculateLayoutDataStep2() {
+    fun isAfterColumnDistance(column: Int): Boolean {
+      return column < columnsDistance.size &&
+             column + 1 < layoutData.dimension.width // No distance after last column
+    }
 
-  private fun isAfterColumnDistance(column: Int): Boolean {
-    return column < columnsDistance.size && column + 1 < layoutData.dimension.width
-  }
+    fun isAfterRowDistance(row: Int): Boolean {
+      return row < rowsDistance.size
+             && row + 1 < layoutData.dimension.height // No distance after last row
+    }
 
-  private fun isAfterRowDistance(row: Int): Boolean {
-    return row < rowsDistance.size && row + 1 < layoutData.dimension.height
+    layoutData.visibleCellsData.forEach { layoutCellData ->
+      with(layoutCellData.cell.constraints) {
+        val rightColumn = x + width - 1
+        val bottomRow = y + height - 1
+        layoutCellData.rightDistance = if (isAfterColumnDistance(rightColumn)) columnsDistance[rightColumn] else 0
+        layoutCellData.bottomDistance = if (isAfterRowDistance(bottomRow)) rowsDistance[bottomRow] else 0
+
+        layoutData.columnsSizeCalculator.addConstraint(x, width, layoutCellData.cellWidth)
+        layoutData.rowsSizeCalculator.addConstraint(y, height, layoutCellData.cellHeight)
+      }
+    }
   }
 
   /**
-   * Resizes columns and rows in [layoutData] so that the grid occupies [fullSize] (if there are resizable columns)
-   * Extra size is distributed equally between [resizable]
+   * Layouts component into provided rectangle. ALl kinds of gaps and distances are applied in it
    */
-  private fun resizeOneDimension(coordinates: Array<Int>, resizable: Set<Int>, fullSize: Int) {
-    var extraSize = fullSize - coordinates.last()
-
-    if (extraSize == 0 || resizable.isEmpty()) {
-      return
-    }
-
-    var previousShift = 0
-    // Filter out resizable columns/rows that are out of scope
-    // todo use isColumnVisible?
-    var remainedResizable = resizable.count { it < coordinates.size - 1 }
-
-    for (i in coordinates.indices) {
-      coordinates[i] += previousShift
-
-      if (i < coordinates.size - 1 && i in resizable) {
-        // Use such correction so exactly whole extra size is used (rounding could break other approaches)
-        val correction = extraSize / remainedResizable
-        previousShift += correction
-        extraSize -= correction
-        remainedResizable--
-      }
-    }
-  }
-
-  private fun layoutComponent(
-    component: JComponent, constraints: JBConstraints, x: Int, y: Int,
-    width: Int, height: Int
-  ) {
-    val insideWidth = width - constraints.gaps.width + constraints.visualPaddings.width
-    val insideHeight = height - constraints.gaps.height + +constraints.visualPaddings.height
-    val preferredSize = layoutData.preferredSizes[component] ?: throw JBGridException()
-
+  private fun layoutComponent(component: JComponent, layoutCellData: LayoutCellData, x: Int, y: Int, width: Int, height: Int) {
+    val constraints = layoutCellData.cell.constraints
     val resultWidth = if (constraints.horizontalAlign == HorizontalAlign.FILL)
-      insideWidth
+      width
     else
-      min(insideWidth, preferredSize.width)
+      min(width, layoutCellData.preferredSize.width)
     val resultHeight = if (constraints.verticalAlign == VerticalAlign.FILL)
-      insideHeight
+      height
     else
-      min(insideHeight, preferredSize.height)
-    val resultX = x + constraints.gaps.left - constraints.visualPaddings.left +
+      min(height, layoutCellData.preferredSize.height)
+    val resultX = x +
                   when (constraints.horizontalAlign) {
                     HorizontalAlign.LEFT -> 0
-                    HorizontalAlign.CENTER -> (insideWidth - resultWidth) / 2
-                    HorizontalAlign.RIGHT -> insideWidth - resultWidth
+                    HorizontalAlign.CENTER -> (width - resultWidth) / 2
+                    HorizontalAlign.RIGHT -> width - resultWidth
                     HorizontalAlign.FILL -> 0
                   }
-    val resultY = y + constraints.gaps.top - constraints.visualPaddings.top +
+    val resultY = y +
                   when (constraints.verticalAlign) {
                     VerticalAlign.TOP -> 0
-                    VerticalAlign.CENTER -> (insideHeight - resultHeight) / 2
-                    VerticalAlign.BOTTOM -> insideHeight - resultHeight
+                    VerticalAlign.CENTER -> (height - resultHeight) / 2
+                    VerticalAlign.BOTTOM -> height - resultHeight
                     VerticalAlign.FILL -> 0
                   }
 
@@ -254,40 +210,30 @@ internal class JBGridImpl : JBGrid {
  */
 private class JBLayoutData {
 
-  var dimension: Dimension = Dimension()
-  var preferredSizes = emptyMap<JComponent, Dimension>()
-  var columnsCoord = emptyArray<Int>()
-  var rowsCoord = emptyArray<Int>()
+  var dimension = Dimension()
+  var visibleCellsData = emptyList<LayoutCellData>()
+  val columnsSizeCalculator = JBColumnsSizeCalculator()
+  val rowsSizeCalculator = JBColumnsSizeCalculator()
 
   val preferredSize: Dimension
-    get() = Dimension(columnsCoord.last(), rowsCoord.last())
+    get() = Dimension(columnsSizeCalculator.calculatePreferredSize(), rowsSizeCalculator.calculatePreferredSize())
 
 }
 
-private class JBCoordCalculator {
+private data class LayoutCellData(val cell: JBCell, val preferredSize: Dimension,
+                                  var rightDistance: Int = 0, var bottomDistance: Int = 0) {
 
-  /**
-   * [size] is a width/height constraint for columns/rows with correspondent [cellIndex] and [cellSize].
-   * It includes gaps, visualPaddings, "right column"/"bottom row" distances except last columns/rows
-   */
-  private data class SizeConstraint(val cellIndex: Int, val cellSize: Int, val size: Int)
+  val gapWidth: Int
+    get() = cell.constraints.gaps.width - cell.constraints.visualPaddings.width + rightDistance
 
-  private val sizeConstraints = mutableListOf<SizeConstraint>()
+  val gapHeight: Int
+    get() = cell.constraints.gaps.height - cell.constraints.visualPaddings.height + bottomDistance
 
-  fun addConstraint(cellIndex: Int, cellSize: Int, size: Int) =
-    sizeConstraints.add(SizeConstraint(cellIndex, cellSize, size))
+  val cellWidth: Int
+    get() = preferredSize.width + gapWidth
 
-  /**
-   * Calculates minimal coordinates of columns/rows with size limitations from [sizeConstraints]
-   */
-  fun calculate(dimension: Int): Array<Int> {
-    val result = Array(dimension + 1) { 0 }
-    sizeConstraints.sortWith(Comparator.comparingInt(SizeConstraint::cellIndex))
-    for ((cellIndex, cellSize, size) in sizeConstraints) {
-      result[cellIndex + cellSize] = max(result[cellIndex] + size, result[cellIndex + cellSize])
-    }
-    return result
-  }
+  val cellHeight: Int
+    get() = preferredSize.height + gapHeight
 }
 
 private sealed class JBCell constructor(val constraints: JBConstraints)

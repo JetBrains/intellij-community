@@ -13,7 +13,6 @@ import java.awt.Component
 import java.awt.Dimension
 import javax.swing.*
 import javax.swing.border.Border
-import javax.swing.border.EmptyBorder
 import kotlin.random.Random
 
 
@@ -57,11 +56,10 @@ fun createTodoPanel(): JPanel {
   val result = JPanel()
   val todo = listOf(
     "Implement cells which occupies all remaining columns",
-    "Invisible components are not collapsed while layout",
-    "Resize non resizable cells when there is no space",
+    "Resize non resizable cells when there is no enough space",
     "Tests",
-    "Wrong button alignment in right part of tabs",
-    "visualPaddings can depend on component size? E.g. checkBox"
+    "visualPaddings can depend on component size? E.g. checkBox",
+    "SubGrids: visibility, visualPaddings"
   )
   result.add(
     JLabel("<html>TODO list<br><br>&bull " + todo.joinToString("<br>&bull "))
@@ -75,7 +73,6 @@ fun createVisualPaddingsPanel(): JPanel {
   rootGrid.resizableColumns = setOf(1)
   rootGrid.resizableRows = setOf(2)
   val panel = JPanel(layoutManager)
-  panel.border = EmptyBorder(20, 20, 20, 20)
 
   fillGridByLabels(panel, rootGrid, 3, 4) { grid, x, y ->
     if (x == 0 && y == 1) {
