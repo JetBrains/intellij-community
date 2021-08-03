@@ -137,8 +137,8 @@ UFile (package = )
                                 UIdentifier (Identifier (foo))
                                 USimpleNameReferenceExpression (identifier = foo, resolvesTo = null)
     UClass (name = A)
-        UMethod (name = A)
         UMethod (name = foo)
             UBlockExpression
+        UMethod (name = A)
         UMethod (name = inlineFoo)
             UBlockExpression

@@ -17,7 +17,6 @@ public final class ObjectsKt {
 public final class RunnableManager {
     @null public static final var INSTANCE: RunnableManager
     @org.jetbrains.annotations.NotNull private final var tasks: java.util.List<java.lang.Runnable> = mutableListOf()
-    private fun RunnableManager() = UastEmptyExpression
     public final fun getTasks() : java.util.List<java.lang.Runnable> = UastEmptyExpression
     public final fun register(@org.jetbrains.annotations.NotNull runnable: java.lang.Runnable) : void {
         tasks.add(runnable)
@@ -27,4 +26,5 @@ public final class RunnableManager {
             <anonymous class>(t).<anonymous class>()
         }
     }
+    private fun RunnableManager() = UastEmptyExpression
 }

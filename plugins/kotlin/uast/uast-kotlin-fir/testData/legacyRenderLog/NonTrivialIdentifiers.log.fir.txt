@@ -26,7 +26,6 @@ UFile (package = )
                                             UIdentifier (Identifier (())
                                             USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null)
     UClass (name = A)
-        UMethod (name = A)
         UMethod (name = invoke)
             UBlockExpression
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
@@ -36,3 +35,4 @@ UFile (package = )
             UParameter (name = f)
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
+        UMethod (name = A)

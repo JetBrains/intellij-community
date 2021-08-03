@@ -1,6 +1,6 @@
 public final class C {
-    public fun C() = UastEmptyExpression
     @null
     public final fun foo() : void {
     }
+    public fun C() = UastEmptyExpression
 }

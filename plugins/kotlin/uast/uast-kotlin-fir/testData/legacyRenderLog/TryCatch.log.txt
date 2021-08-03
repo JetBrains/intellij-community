@@ -1,6 +1,5 @@
 UFile (package = )
     UClass (name = TryCatch)
-        UMethod (name = TryCatch)
         UMethod (name = catches)
             UBlockExpression
                 UTryExpression
@@ -25,8 +24,8 @@ UFile (package = )
             UBlockExpression
         UMethod (name = finalizer)
             UBlockExpression
+        UMethod (name = TryCatch)
     UClass (name = TryCatchAnnotations)
-        UMethod (name = TryCatchAnnotations)
         UMethod (name = catches)
             UAnnotation (fqName = java.lang.SuppressWarnings)
                 UNamedExpression (name = value)
@@ -57,3 +56,4 @@ UFile (package = )
             UBlockExpression
         UMethod (name = finalizer)
             UBlockExpression
+        UMethod (name = TryCatchAnnotations)

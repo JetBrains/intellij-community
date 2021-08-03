@@ -56,14 +56,6 @@ UFile (package = )
             ULiteralExpression (value = 0)
         UField (name = mutableProp)
             UAnnotation (fqName = org.jetbrains.annotations.NotNull)
-        UMethod (name = A)
-            UParameter (name = init)
-                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
-            UBlockExpression
-                UBlockExpression
-                    UBinaryExpression (operator = =)
-                        USimpleNameReferenceExpression (identifier = mutableProp)
-                        USimpleNameReferenceExpression (identifier = init)
         UMethod (name = getMutableProp)
         UMethod (name = setMutableProp)
             UParameter (name = value)
@@ -79,3 +71,11 @@ UFile (package = )
                     USimpleNameReferenceExpression (identifier = x)
                 UReturnExpression
                     USimpleNameReferenceExpression (identifier = privateProp)
+        UMethod (name = A)
+            UParameter (name = init)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            UBlockExpression
+                UBlockExpression
+                    UBinaryExpression (operator = =)
+                        USimpleNameReferenceExpression (identifier = mutableProp)
+                        USimpleNameReferenceExpression (identifier = init)
