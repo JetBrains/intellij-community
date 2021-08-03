@@ -34,6 +34,14 @@ public class RedundantMethodOverride extends S {
       System.out.println(f);
     }
   }
+
+  @Override
+  void <warning descr="Method 'y()' is identical to its super method">y</warning>() {
+    label1:
+    while(true) {
+      if (true) break label1;
+    }
+  }
 }
 class S {
 
@@ -63,6 +71,13 @@ class S {
     try {
     } catch (RuntimeException e) {
       System.out.println(e);
+    }
+  }
+
+  void y() {
+    label:
+    while(true) {
+      if (true) break label;
     }
   }
 }
