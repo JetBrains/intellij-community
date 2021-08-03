@@ -21,6 +21,6 @@ class ProhibitJvmOverloadsOnConstructorsOfAnnotationClassesMigrationInspection :
     }
 
     override val diagnosticFactory: DiagnosticFactoryWithPsiElement<KtAnnotationEntry, *>
-        get() = ErrorsJvm.OVERLOADS_ANNOTATION_CLASS_CONSTRUCTOR
+        get() = ErrorsJvm.OVERLOADS_ANNOTATION_CLASS_CONSTRUCTOR.errorFactory
 }
 
