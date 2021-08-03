@@ -1,3 +1,4 @@
+// IGNORE_FIR
 fun <T> f(t1: T, t2: T){}
 
 fun test() {

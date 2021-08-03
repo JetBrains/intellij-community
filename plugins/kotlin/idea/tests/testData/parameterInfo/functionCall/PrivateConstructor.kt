@@ -1,3 +1,4 @@
+// IGNORE_FIR
 class A private constructor(f: Boolean) {
     constructor(): this(true)
 }

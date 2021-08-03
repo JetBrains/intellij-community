@@ -1,3 +1,4 @@
+// IGNORE_FIR
 class A()
 
 fun A.index(x: Int) : Int {
