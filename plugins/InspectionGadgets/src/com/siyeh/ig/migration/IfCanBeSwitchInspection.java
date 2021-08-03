@@ -108,6 +108,10 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     this.onlySuggestNullSafe = onlySuggestNullSafe;
   }
 
+  public static @NotNull String getReplaceWithSwitchFixName(){
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.IF, PsiKeyword.SWITCH);
+  }
+
   private static class IfCanBeSwitchFix extends InspectionGadgetsFix {
 
     IfCanBeSwitchFix() {}
@@ -115,7 +119,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.IF, PsiKeyword.SWITCH);
+      return getReplaceWithSwitchFixName();
     }
 
     @Override
