@@ -7,6 +7,7 @@ import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.*;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public final class JavaParametersUtil {
@@ -195,20 +197,26 @@ public final class JavaParametersUtil {
                                                  PsiJavaModule module,
                                                  boolean includeTests) {
     Project project = module.getProject();
-    
 
-    Set<PsiJavaModule> explicitModules = new LinkedHashSet<>();
-    explicitModules.add(module);
-    collectExplicitlyAddedModules(project, javaParameters, explicitModules);
 
-    Set<PsiJavaModule> forModulePath = new HashSet<>(explicitModules);
-    for (PsiJavaModule explicitModule : explicitModules) {
-      forModulePath.addAll(JavaModuleGraphUtil.getAllDependencies(explicitModule));
-    }
-    
-    if (!includeTests) {
-      putProvidersOnModulePath(project, explicitModules, forModulePath);
-    }
+    Set<PsiJavaModule> forModulePath = new HashSet<>();
+    ReadAction.nonBlocking(() -> {
+      Set<PsiJavaModule> explicitModules = new LinkedHashSet<>();
+
+      explicitModules.add(module);
+      collectExplicitlyAddedModules(project, javaParameters, explicitModules);
+
+      forModulePath.addAll(explicitModules);
+      for (PsiJavaModule explicitModule : explicitModules) {
+        forModulePath.addAll(JavaModuleGraphUtil.getAllDependencies(explicitModule));
+      }
+
+      if (!includeTests) {
+        putProvidersOnModulePath(project, forModulePath, forModulePath);
+      }
+    })
+      .inSmartMode(project)
+      .executeSynchronously();
 
     JarFileSystem jarFS = JarFileSystem.getInstance();
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
@@ -217,12 +225,13 @@ public final class JavaParametersUtil {
     PathsList modulePath = javaParameters.getModulePath();
 
     forModulePath.stream()
-      .filter(javaModule -> !PsiJavaModule.JAVA_BASE.equals(javaModule.getName()))
-      .map(javaModule -> getClasspathEntry(javaModule, fileIndex, jarFS))
+      .map(javaModule -> ReadAction.compute(() -> PsiJavaModule.JAVA_BASE.equals(javaModule.getName()) 
+                                                  ? null 
+                                                  : getClasspathEntry(javaModule, fileIndex, jarFS)))
       .filter(Objects::nonNull)
       .forEach(file -> putOnModulePath(modulePath, classPath, file));
 
-    VirtualFile productionOutput = getClasspathEntry(module, fileIndex, jarFS);
+    VirtualFile productionOutput = ReadAction.compute(() -> getClasspathEntry(module, fileIndex, jarFS));
     if (productionOutput != null) {
       putOnModulePath(modulePath, classPath, productionOutput);
     }
@@ -244,9 +253,9 @@ public final class JavaParametersUtil {
     }
   }
 
-  private static void putProvidersOnModulePath(Project project, Set<PsiJavaModule> explicitModules, Set<PsiJavaModule> forModulePath) {
+  private static void putProvidersOnModulePath(Project project, Set<PsiJavaModule> initialModules, Set<PsiJavaModule> forModulePath) {
     Set<String> interfaces = new HashSet<>();
-    for (PsiJavaModule explicitModule : explicitModules) {
+    for (PsiJavaModule explicitModule : initialModules) {
       for (PsiUsesStatement use : explicitModule.getUses()) {
         PsiClassType useClassType = use.getClassType();
         if (useClassType != null) {
@@ -257,6 +266,12 @@ public final class JavaParametersUtil {
 
     if (interfaces.isEmpty()) return;
 
+    Set<PsiJavaModule> added = new HashSet<>();
+    Consumer<PsiJavaModule> registerProviders = javaModule -> {
+      if (forModulePath.add(javaModule)) {
+        added.add(javaModule);
+      }
+    };
     JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
     for (String key : index.getAllKeys(project)) {
       nextModule: 
@@ -265,11 +280,15 @@ public final class JavaParametersUtil {
         for (PsiProvidesStatement provide : aModule.getProvides()) {
           PsiClassType provideInterfaceType = provide.getInterfaceType();
           if (provideInterfaceType != null && interfaces.contains(provideInterfaceType.getCanonicalText())) {
-            forModulePath.add(aModule);
+            registerProviders.accept(aModule);
+            JavaModuleGraphUtil.getAllDependencies(aModule).forEach(registerProviders);
             continue nextModule;
           }
         }
       }
+    }
+    if (!added.isEmpty()) {
+      putProvidersOnModulePath(project, added, forModulePath);
     }
   }
 
