@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptMarkerFile
 import org.jetbrains.kotlin.resolve.jvm.KotlinSafeClassFinder
 
 class KotlinScriptDependenciesClassFinder(private val project: Project) : NonClasspathClassFinder(project), KotlinSafeClassFinder {
-    private val useOnlyForScripts = Registry.`is`("kotlin.resolve.scripting.limit.dependency.element.finder")
+    private val useOnlyForScripts = Registry.`is`("kotlin.resolve.scripting.limit.dependency.element.finder", true)
 
     /*
         'PsiElementFinder's are global and can be called for any context.
