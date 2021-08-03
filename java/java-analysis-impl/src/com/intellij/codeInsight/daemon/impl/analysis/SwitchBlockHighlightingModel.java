@@ -259,7 +259,8 @@ public class SwitchBlockHighlightingModel {
           PsiSwitchLabelStatementBase labelStatement = PsiTreeUtil.getParentOfType(element, PsiSwitchLabelStatementBase.class);
           if (labelStatement != null && labelStatement.isDefaultCase()) {
             registerDeleteDefaultFix(myFile, info);
-          } else {
+          }
+          else {
             QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteSwitchLabelFix((PsiCaseLabelElement)element));
           }
           results.add(info);
@@ -666,7 +667,7 @@ public class SwitchBlockHighlightingModel {
                                    boolean inclusiveTotalAndDefault) {
       if (inclusiveTotalAndDefault) {
         PsiCaseLabelElement elementCoversType = findTotalPatternForType(elements, mySelectorType);
-        PsiElement defaultElement = findDefaultElement();
+        PsiElement defaultElement = SwitchUtils.findDefaultElement(myBlock);
         if (defaultElement != null && elementCoversType != null) {
           HighlightInfo defaultInfo =
             createError(defaultElement.getFirstChild(), JavaErrorBundle.message("switch.total.pattern.and.default.exist"));
@@ -708,7 +709,7 @@ public class SwitchBlockHighlightingModel {
         QuickFixAction.registerQuickFixAction(info, getFixFactory().createDeleteSwitchLabelFix((PsiCaseLabelElement)defaultElement));
         return;
       }
-      SwitchBlockHighlightingModel.registerDeleteDefaultFix(myFile, info);
+      registerDeleteDefaultFix(myFile, info);
       ProblemDescriptor descriptor = ProblemDescriptorUtil.toProblemDescriptor(myFile, info);
     }
 
@@ -761,27 +762,6 @@ public class SwitchBlockHighlightingModel {
         // todo here we may try to create a quick-fix to provide missing labels
       }
       results.add(info);
-    }
-
-    @Nullable
-    private PsiElement findDefaultElement() {
-      PsiCodeBlock body = myBlock.getBody();
-      if (body == null) return null;
-      for (PsiStatement statement : body.getStatements()) {
-        if (!(statement instanceof PsiSwitchLabelStatementBase)) continue;
-        PsiSwitchLabelStatementBase switchLabel = (PsiSwitchLabelStatementBase)statement;
-        if (switchLabel.isDefaultCase()) {
-          return switchLabel;
-        }
-        PsiCaseLabelElementList labelElementList = switchLabel.getCaseLabelElementList();
-        if (labelElementList == null) continue;
-        for (PsiCaseLabelElement element : labelElementList.getElements()) {
-          if (element instanceof PsiDefaultCaseLabelElement) {
-            return element;
-          }
-        }
-      }
-      return null;
     }
 
     @Nullable
@@ -863,7 +843,6 @@ public class SwitchBlockHighlightingModel {
       COMPLETE_WITH_TOTAL,
       COMPLETE_WITHOUT_TOTAL
     }
-
   }
 }
 
