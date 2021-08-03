@@ -319,6 +319,15 @@ public abstract class DialogWrapper {
     myDoNotAsk = doNotAsk;
   }
 
+  /**
+   * @deprecated Please use setDoNotAskOption(com.intellij.openapi.ui.DoNotAskOption) instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  public void setDoNotAskOption(@Nullable DoNotAskOption doNotAsk) {
+    myDoNotAsk = doNotAsk;
+  }
+
   protected @NotNull Alarm.ThreadToUse getValidationThreadToUse() {
     return Alarm.ThreadToUse.SWING_THREAD;
   }
