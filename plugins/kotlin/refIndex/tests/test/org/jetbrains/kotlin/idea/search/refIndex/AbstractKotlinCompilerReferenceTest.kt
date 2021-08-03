@@ -24,7 +24,9 @@ abstract class AbstractKotlinCompilerReferenceTest : KotlinCompilerReferenceTest
         val usages = config[USAGES]?.asJsonArray?.map { it.asString }
         val mainFile = config["mainFile"]?.asString ?: usages?.first() ?: error("Main file not found")
         val shouldBeFixed = config[SHOULD_BE_USAGE]?.asJsonArray?.map { it.asString }.orEmpty()
-        val usagesSet = usages?.also { it.intersect(shouldBeFixed).ifNotEmpty { error("$this should be omitted in '$USAGES'") } }?.toSet()
+        val usagesSet = usages?.also {
+            it.intersect(shouldBeFixed).ifNotEmpty { error("$this should be omitted in '$USAGES'") }
+        }?.toSortedSet()
 
         val allFiles = listOf(mainFile) + Path(testDataFilePath).listDirectoryEntries().map { it.name }.minus(mainFile)
         myFixture.configureByFiles(*allFiles.toTypedArray())
@@ -34,7 +36,7 @@ abstract class AbstractKotlinCompilerReferenceTest : KotlinCompilerReferenceTest
             usagesSet,
             getReferentFilesForElementUnderCaret()?.also {
                 it.intersect(shouldBeFixed).ifNotEmpty { error("$this should be moved from '$SHOULD_BE_USAGE' to '$USAGES") }
-            }
+            }?.toSortedSet()
         )
     }
 

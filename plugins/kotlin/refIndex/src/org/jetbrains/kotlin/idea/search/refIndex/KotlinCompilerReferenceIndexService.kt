@@ -53,11 +53,14 @@ import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.incremental.LookupStorage
 import org.jetbrains.kotlin.incremental.LookupSymbol
 import org.jetbrains.kotlin.incremental.storage.RelativeFileToPathConverter
+import org.jetbrains.kotlin.load.java.getPropertyNamesCandidatesByAccessorName
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
+import org.jetbrains.kotlin.synthetic.canBePropertyAccessor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
 import java.nio.file.Path
@@ -240,7 +243,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
 
     private fun referentFiles(element: PsiElement): Set<VirtualFile>? = tryWithReadLock(fun(): Set<VirtualFile>? {
         val storage = storage ?: return null
-        val originalFqNames = extractFqNames(element).ifEmpty { return null }
+        val originalFqNames = extractFqNames(element) ?: return null
         val virtualFile = PsiUtilCore.getVirtualFile(element) ?: return null
         if (projectFileIndex.isInSource(virtualFile) && virtualFile in dirtyScopeHolder) return null
         if (projectFileIndex.isInLibrary(virtualFile)) return null
@@ -364,10 +367,14 @@ private fun executeOnBuildThread(compilationFinished: () -> Unit): Unit =
         BuildManager.getInstance().runCommand(compilationFinished)
     }
 
-private fun extractFqNames(element: PsiElement): List<FqName> {
-    val originalElement = element.unwrapped ?: return emptyList()
+private fun extractFqNames(element: PsiElement): List<FqName>? {
+    val originalElement = element.unwrapped ?: return null
     extractFqName(originalElement)?.let { return listOf(it) }
-    return if (originalElement is KtParameter) extractFqNamesFromParameter(originalElement) else emptyList()
+    return when (originalElement) {
+        is PsiMethod -> extractFqNamesFromPsiMethod(originalElement)
+        is KtParameter -> extractFqNamesFromParameter(originalElement)
+        else -> null
+    }
 }
 
 private fun extractFqName(element: PsiElement): FqName? = when (element) {
@@ -375,15 +382,27 @@ private fun extractFqName(element: PsiElement): FqName? = when (element) {
     is KtConstructor<*> -> element.getContainingClassOrObject().fqName
     is KtNamedFunction -> element.fqName
     is KtProperty -> element.takeUnless(KtProperty::isOverridable)?.fqName
-    is PsiMethod -> if (element.isConstructor) element.containingClass?.getKotlinFqName() else element.getKotlinFqName()
     is PsiField -> element.takeIf { it.hasModifier(JvmModifier.STATIC) }?.getKotlinFqName()
     else -> null
 }
 
-private fun extractFqNamesFromParameter(parameter: KtParameter): List<FqName> {
-    val parameterFqName = parameter.takeIf(KtParameter::hasValOrVar)?.fqName ?: return emptyList()
-    if (parameter.containingClass()?.isData() == false) return listOfNotNull(parameterFqName.takeUnless { parameter.isOverridable })
+private fun extractFqNamesFromParameter(parameter: KtParameter): List<FqName>? {
+    val parameterFqName = parameter.takeIf(KtParameter::hasValOrVar)?.fqName ?: return null
+    if (parameter.containingClass()?.isData() == false) return parameterFqName.takeUnless { parameter.isOverridable }?.let(::listOf)
 
-    val parameterIndex = parameter.parameterIndex().takeUnless { it == -1 }?.plus(1) ?: return emptyList()
+    val parameterIndex = parameter.parameterIndex().takeUnless { it == -1 }?.plus(1) ?: return null
     return listOf(parameterFqName, FqName(parameterFqName.parent().asString() + ".component$parameterIndex"))
+}
+
+private fun extractFqNamesFromPsiMethod(psiMethod: PsiMethod): List<FqName>? {
+    if (psiMethod.isConstructor) return psiMethod.containingClass?.getKotlinFqName()?.let(::listOf)
+
+    val fqName = psiMethod.getKotlinFqName() ?: return null
+    val listOfFqName = listOf(fqName)
+    if (psiMethod.hasModifier(JvmModifier.STATIC)) return listOfFqName
+
+    val name = psiMethod.name.takeIf { canBePropertyAccessor(it) }?.let(Name::identifier) ?: return listOfFqName
+    val parentFqName = fqName.parent()
+
+    return listOfFqName + getPropertyNamesCandidatesByAccessorName(name).map { parentFqName.child(name) }
 }

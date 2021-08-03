@@ -366,6 +366,26 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
                 runTest("testData/compilerIndex/functions/members/javaMethod/");
             }
 
+            @TestMetadata("javaMethodSyntheticGet")
+            public void testJavaMethodSyntheticGet() throws Exception {
+                runTest("testData/compilerIndex/functions/members/javaMethodSyntheticGet/");
+            }
+
+            @TestMetadata("javaMethodSyntheticIs")
+            public void testJavaMethodSyntheticIs() throws Exception {
+                runTest("testData/compilerIndex/functions/members/javaMethodSyntheticIs/");
+            }
+
+            @TestMetadata("javaMethodSyntheticIsSet")
+            public void testJavaMethodSyntheticIsSet() throws Exception {
+                runTest("testData/compilerIndex/functions/members/javaMethodSyntheticIsSet/");
+            }
+
+            @TestMetadata("javaMethodSyntheticSet")
+            public void testJavaMethodSyntheticSet() throws Exception {
+                runTest("testData/compilerIndex/functions/members/javaMethodSyntheticSet/");
+            }
+
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compilerIndex/functions/members/extensionOperators")
             public static class ExtensionOperators extends AbstractKotlinCompilerReferenceTest {
