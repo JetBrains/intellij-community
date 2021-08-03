@@ -2,12 +2,14 @@
 
 package org.jetbrains.kotlin.idea.fir.highlighter
 
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.fir.addExternalTestFiles
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingTest
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 
 abstract class AbstractFirHighlightingTest : AbstractHighlightingTest() {
@@ -23,8 +25,10 @@ abstract class AbstractFirHighlightingTest : AbstractHighlightingTest() {
     }
 
     override fun tearDown() {
-        project.invalidateCaches(file as? KtFile)
-        super.tearDown()
+        runAll(
+            ThrowableRunnable { project.invalidateCaches(file as? KtFile) },
+            ThrowableRunnable { super.tearDown() }
+        )
     }
 
     override fun checkHighlighting(fileText: String) {

@@ -3,16 +3,20 @@
 package org.jetbrains.kotlin.idea.fir.findUsages
 
 import com.intellij.psi.PsiElement
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesWithDisableComponentSearchTest
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractFindUsagesWithDisableComponentSearchFirTest : AbstractFindUsagesWithDisableComponentSearchTest() {
     override fun isFirPlugin(): Boolean = true
 
     override fun tearDown() {
-        project.invalidateCaches(file as? KtFile)
-        super.tearDown()
+        runAll(
+            ThrowableRunnable { project.invalidateCaches(file as? KtFile) },
+            ThrowableRunnable { super.tearDown() }
+        )
     }
 
     override fun <T : PsiElement> doTest(path: String) = doTestWithFIRFlagsByPath(path) {
