@@ -18,7 +18,7 @@ import static org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts.comp
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/ultraLightScripts")
+@TestMetadata("../../../../out/kotlinc-testdata/testData/compiler/testData/asJava/ultraLightScripts")
 public class UltraLightScriptLoadingTestGenerated extends AbstractUltraLightScriptLoadingTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
