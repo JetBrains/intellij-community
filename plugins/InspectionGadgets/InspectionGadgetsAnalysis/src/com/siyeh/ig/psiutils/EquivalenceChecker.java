@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -251,13 +251,23 @@ public class EquivalenceChecker {
     if (!codeBlocksMatch(finallyBlock1, finallyBlock2).isExactMatch()) {
       return EXACT_MISMATCH;
     }
-    final PsiCodeBlock[] catchBlocks1 = statement1.getCatchBlocks();
-    final PsiCodeBlock[] catchBlocks2 = statement2.getCatchBlocks();
-    if (catchBlocks1.length != catchBlocks2.length) {
+    final PsiCatchSection @NotNull [] catchSections1 = statement1.getCatchSections();
+    final PsiCatchSection @NotNull [] catchSections2 = statement2.getCatchSections();
+    if (catchSections1.length != catchSections2.length) {
       return EXACT_MISMATCH;
     }
-    for (int i = 0; i < catchBlocks2.length; i++) {
-      if (!codeBlocksMatch(catchBlocks1[i], catchBlocks2[i]).isExactMatch()) {
+    for (int i = 0; i < catchSections2.length; i++) {
+      PsiCatchSection section1 = catchSections1[i];
+      PsiCatchSection section2 = catchSections2[i];
+      PsiParameter parameter1 = section1.getParameter();
+      PsiParameter parameter2 = section2.getParameter();
+      if (parameter1 == null || parameter2 == null) {
+        return Match.exact(parameter1 == parameter2);
+      }
+      if (!variableSignatureMatch(parameter1, parameter2)) {
+        return EXACT_MISMATCH;
+      }
+      if (!codeBlocksMatch(section1.getCatchBlock(), section2.getCatchBlock()).isExactMatch()) {
         return EXACT_MISMATCH;
       }
     }
@@ -342,14 +352,8 @@ public class EquivalenceChecker {
       return EXACT_MISMATCH;
     }
     final PsiParameter parameter1 = statement1.getIterationParameter();
-    final PsiParameter parameter2 = statement1.getIterationParameter();
-    final String name1 = parameter1.getName();
-    final String name2 = parameter2.getName();
-    if (!name1.equals(name2)) {
-      return EXACT_MISMATCH;
-    }
-    final PsiType type1 = parameter1.getType();
-    if (!type1.equals(parameter2.getType())) {
+    final PsiParameter parameter2 = statement2.getIterationParameter();
+    if (!variableSignatureMatch(parameter1, parameter2)) {
       return EXACT_MISMATCH;
     }
     final PsiStatement body1 = statement1.getBody();

@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MessageDialogBuilder;
@@ -172,9 +173,13 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
         return;
       }
 
+      Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
+      ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
       for (Map.Entry<C, IdeaPluginDescriptorImpl> entry : selection.entrySet()) {
         IdeaPluginDescriptorImpl descriptor = entry.getValue();
-        List<IdeaPluginDescriptorImpl> dependents = myPluginModel.getDependents(descriptor);
+        List<IdeaPluginDescriptorImpl> dependents = MyPluginModel.getDependents(descriptor,
+                                                                                pluginIdMap,
+                                                                                applicationInfo);
 
         if (dependents.isEmpty() ||
             askToUninstall(getUninstallDependentsMessage(descriptor, dependents), entry.getKey())) {

@@ -10,7 +10,6 @@ import java.net.URI
 
 internal class InlineLinkGeneratingProvider(baseURI: URI?): LinkGeneratingProvider(baseURI) {
   override fun getRenderInfo(text: String, node: ASTNode): RenderInfo? {
-    println(text)
     val label = node.findChildOfType(MarkdownElementTypes.LINK_TEXT)
                 ?: return null
     return RenderInfo(

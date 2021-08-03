@@ -12,6 +12,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * @see com.intellij.execution.junit.UAssertHint for usage from UAST
+ */
 public final class AssertHint {
   @NonNls private static final String ORG_TESTNG_ASSERT = "org.testng.Assert";
   private final int myArgIndex;
@@ -49,7 +52,7 @@ public final class AssertHint {
   public boolean isExpectedActualOrder() {
     return myParameterOrder == ParameterOrder.EXPECTED_ACTUAL_MESSAGE || myParameterOrder == ParameterOrder.MESSAGE_EXPECTED_ACTUAL;
   }
-  
+
   /**
    * @return index of the first (left) argument in expected/actual pair.
    */

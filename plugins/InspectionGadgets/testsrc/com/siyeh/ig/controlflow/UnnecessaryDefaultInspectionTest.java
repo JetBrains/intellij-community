@@ -84,10 +84,113 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
                   "}");
   }
 
+  public void testCaseDefaultInEnumSwitch() {
+    doTest("class X {" +
+           "  void x(E e) {" +
+           "    switch (e) {" +
+           "      case A, B:" +
+           "        break;" +
+           "      case /*'default' branch is unnecessary*/default/*_*//**/:" +
+           "        break;" +
+           "    }" +
+           "  }" +
+           "}");
+    checkQuickFix("Remove 'default' branch",
+                  "class X {" +
+                  "  void x(E e) {" +
+                  "    switch (e) {" +
+                  "      case A, B:" +
+                  "        break;\n" +
+                  "}" +
+                  "  }" +
+                  "}");
+  }
+
+  public void testCaseDefaultWithEnumElements() {
+    doTest("class X {" +
+           "  void x(E e) {" +
+           "    switch (e) {" +
+           "      case A, /*'default' branch is unnecessary*/default/*_*//**/, B:" +
+           "        break;" +
+           "    }" +
+           "  }" +
+           "}");
+    checkQuickFix("Remove 'default' branch",
+                  "class X {" +
+                  "  void x(E e) {" +
+                  "    switch (e) {" +
+                  "      case A, B:" +
+                  "        break;" +
+                  "    }" +
+                  "  }" +
+                  "}");
+  }
+
+  public void testCaseDefaultInSealedSwitch() {
+    doTest("class X {" +
+           "  void x(I i) {" +
+           "    switch (i) {" +
+           "      case (I ii && false):" +
+           "        break;" +
+           "      case C1 c1:" +
+           "        break;" +
+           "      case C2 c1:" +
+           "        break;" +
+           "      case /*'default' branch is unnecessary*/default/*_*//**/:" +
+           "        break;" +
+           "    }" +
+           "  }" +
+           "}");
+    checkQuickFix("Remove 'default' branch",
+                  "class X {" +
+                  "  void x(I i) {" +
+                  "    switch (i) {" +
+                  "      case (I ii && false):" +
+                  "        break;" +
+                  "      case C1 c1:" +
+                  "        break;" +
+                  "      case C2 c1:" +
+                  "        break;\n" +
+                  "}" +
+                  "  }" +
+                  "}");
+  }
+
+  public void testCaseDefaultWithPattern() {
+    doTest("class X {" +
+           "  void x(I i) {" +
+           "    switch (i) {" +
+           "      case /*'default' branch is unnecessary*/default/*_*//**/, <error descr=\"Illegal fall-through to a pattern\">(I ii && false)</error>:" +
+           "        break;" +
+           "      case C1 c1:" +
+           "        break;" +
+           "      case C2 c2:" +
+           "        break;" +
+           "    }" +
+           "  }" +
+           "}");
+    checkQuickFix("Remove 'default' branch",
+                  "class X {" +
+                  "  void x(I i) {" +
+                  "    switch (i) {" +
+                  "      case (I ii && false):" +
+                  "        break;" +
+                  "      case C1 c1:" +
+                  "        break;" +
+                  "      case C2 c2:" +
+                  "        break;" +
+                  "    }" +
+                  "  }" +
+                  "}");
+  }
+
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {
-      "enum E { A, B }"
+      "enum E { A, B }",
+      "sealed interface I {}",
+      "final class C1 implements I {}",
+      "final class C2 implements I {}",
     };
   }
 

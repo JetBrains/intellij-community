@@ -25,6 +25,9 @@ final class PluginLayout extends BaseLayout {
   final List<String> pathsToScramble = new ArrayList<>()
   Collection<String> scrambleClasspathPlugins = []
   BiPredicate<BuildContext, File> scrambleClasspathFilter = { context, file -> return true } as BiPredicate<BuildContext, File>
+  /**
+   * See {@link org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#zkmScriptStub}
+   */
   String zkmScriptStub
   Boolean pluginCompatibilityExactVersion = false
   Boolean retainProductDescriptorForBundledPlugin = false
@@ -222,13 +225,14 @@ final class PluginLayout extends BaseLayout {
     }
 
     /**
-     * Specifies a relative to $buildContext.paths.projectHome path to a zkm script stub file.
-     * If scramble tool is not defined, scramble toot will expect to find the script stub file at "$buildContext.paths.projectHome/plugins/{@code pluginName}/build/script.zkm.stub"
+     * Specifies a relative to {@link org.jetbrains.intellij.build.BuildPaths#communityHome} path to a zkm script stub file.
+     * If scramble tool is not defined, scramble toot will expect to find the script stub file at "{@link org.jetbrains.intellij.build.BuildPaths#projectHome}/plugins/{@code pluginName}/build/script.zkm.stub".
+     * Project home cannot be used since it is not constant (for example for Rider).
      *
-     * @param relativePath - a path to a jar file relative to project home directory
+     * @param communityRelativePath - a path to a jar file relative to community project home directory
      */
-    void zkmScriptStub(String relativePath) {
-      layout.zkmScriptStub = relativePath
+    void zkmScriptStub(String communityRelativePath) {
+      layout.zkmScriptStub = communityRelativePath
     }
 
     /**

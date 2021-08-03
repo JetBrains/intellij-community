@@ -1668,6 +1668,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
+  public VirtualFile getOriginalVirtualFile() {
+    if (myFile instanceof VirtualFileWindow) {
+      return ((VirtualFileWindow) myFile).getDelegate();
+    } else {
+      return myFile;
+    }
+  }
+
+  @Override
   public PsiFile getFile() {
     return myFile != null ? ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(myFile)) : null;
   }

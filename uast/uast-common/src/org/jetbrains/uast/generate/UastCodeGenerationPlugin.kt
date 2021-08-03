@@ -47,9 +47,6 @@ interface UastElementFactory {
 
   fun createSimpleReference(variable: UVariable, context: PsiElement?): USimpleNameReferenceExpression?
 
-  @Deprecated("Use PsiElement context variant")
-  fun createQualifiedReference(qualifiedName: String, context: UElement?): UQualifiedReferenceExpression?
-
   fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression?
 
   fun createParenthesizedExpression(expression: UExpression,
@@ -80,6 +77,8 @@ interface UastElementFactory {
                            expectedReturnType: PsiType?,
                            kind: UastCallKind,
                            context: PsiElement? = null): UCallExpression?
+
+  fun createCallableReferenceExpression(receiver: UExpression?, methodName: String, context: PsiElement?): UCallableReferenceExpression?
 
   fun createIfExpression(condition: UExpression, thenBranch: UExpression, elseBranch: UExpression?, context: PsiElement?): UIfExpression?
 

@@ -17,7 +17,7 @@ public class MavenGeneralSettingsTest extends CodeInsightFixtureTestCase {
       .getVirtualFile().getParent();
 
     MavenGeneralSettings settings = new MavenGeneralSettings(getProject());
-    settings.updateFromMavenConfig(Collections.singletonList(new MavenProject(virtualFile)));
+    settings.updateFromMavenConfig(Collections.singletonList(virtualFile));
 
     Assert.assertEquals(MavenExecutionOptions.ChecksumPolicy.NOT_SET, settings.getChecksumPolicy());
     Assert.assertEquals(MavenExecutionOptions.FailureMode.NOT_SET, settings.getFailureBehavior());
@@ -36,7 +36,7 @@ public class MavenGeneralSettingsTest extends CodeInsightFixtureTestCase {
 
     MavenGeneralSettings settings = new MavenGeneralSettings(getProject());
     settings.setUseMavenConfig(true);
-    settings.updateFromMavenConfig(Collections.singletonList(new MavenProject(virtualFile)));
+    settings.updateFromMavenConfig(Collections.singletonList(virtualFile));
     Assert.assertEquals(MavenExecutionOptions.ChecksumPolicy.FAIL, settings.getChecksumPolicy());
     Assert.assertEquals(MavenExecutionOptions.FailureMode.FAST, settings.getFailureBehavior());
     Assert.assertEquals(MavenExecutionOptions.LoggingLevel.DISABLED, settings.getOutputLevel());

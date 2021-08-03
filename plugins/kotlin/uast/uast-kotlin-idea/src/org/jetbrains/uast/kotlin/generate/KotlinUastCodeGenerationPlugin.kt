@@ -82,10 +82,6 @@ private fun hasBraces(oldPsi: KtBlockExpression): Boolean = oldPsi.lBrace != nul
 class KotlinUastElementFactory(project: Project) : UastElementFactory {
     private val psiFactory = KtPsiFactory(project)
 
-    override fun createQualifiedReference(qualifiedName: String, context: UElement?): UQualifiedReferenceExpression? {
-        return createQualifiedReference(qualifiedName, context?.sourcePsi)
-    }
-
     override fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression? {
         return psiFactory.createExpression(qualifiedName).let {
             when (it) {
@@ -138,6 +134,16 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
 
         return KotlinUFunctionCallExpression(methodCall, null)
 
+    }
+
+    override fun createCallableReferenceExpression(
+        receiver: UExpression?,
+        methodName: String,
+        context: PsiElement?
+    ): UCallableReferenceExpression? {
+        val text = receiver?.sourcePsi?.text ?: ""
+        val callableExpression = psiFactory.createCallableReferenceExpression("$text::$methodName") ?: return null
+        return KotlinUCallableReferenceExpression(callableExpression, null)
     }
 
     override fun createStringLiteralExpression(text: String, context: PsiElement?): ULiteralExpression? {

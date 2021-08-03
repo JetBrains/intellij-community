@@ -69,6 +69,10 @@ public class DeleteSwitchLabelFix extends LocalQuickFixAndIntentionActionOnPsiEl
                      @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
     PsiCaseLabelElement labelElement = ObjectUtils.tryCast(startElement, PsiCaseLabelElement.class);
     if (labelElement == null) return;
+    deleteLabelElement(labelElement);
+  }
+
+  public static void deleteLabelElement(@NotNull PsiCaseLabelElement labelElement) {
     PsiSwitchLabelStatementBase label = PsiImplUtil.getSwitchLabel(labelElement);
     if (label == null) return;
     PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();

@@ -761,14 +761,15 @@ public final class PluginManagerCore {
 
     if (explicitlyEnabled != null) {
       // add all required dependencies
-      Set<IdeaPluginDescriptorImpl> finalExplicitlyEnabled = explicitlyEnabled;
-      Set<IdeaPluginDescriptor> depProcessed = new HashSet<>();
-      for (IdeaPluginDescriptorImpl descriptor : new ArrayList<>(explicitlyEnabled)) {
-        processAllNonOptionalDependencies(descriptor, idMap, depProcessed, (id, dependency) -> {
-          finalExplicitlyEnabled.add(dependency);
+      List<IdeaPluginDescriptorImpl> nonOptionalDependencies = new ArrayList<>();
+      for (IdeaPluginDescriptorImpl descriptor : explicitlyEnabled) {
+        processAllNonOptionalDependencies(descriptor, idMap, (__, dependency) -> {
+          nonOptionalDependencies.add(dependency);
           return FileVisitResult.CONTINUE;
         });
       }
+
+      explicitlyEnabled.addAll(nonOptionalDependencies);
     }
 
     Map<PluginId, Set<String>> brokenPluginVersions = getBrokenPluginVersions();
@@ -1273,16 +1274,16 @@ public final class PluginManagerCore {
   @ApiStatus.Internal
   private static boolean processAllNonOptionalDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                                            @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToMap,
-                                                           @NotNull Set<IdeaPluginDescriptor> depProcessed,
+                                                           @NotNull Set<PluginId> depProcessed,
                                                            @NotNull BiFunction<@NotNull PluginId, @Nullable IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
     for (PluginId dependencyId : getNonOptionalDependenciesIds(rootDescriptor)) {
       IdeaPluginDescriptorImpl descriptor = idToMap.get(dependencyId);
-      PluginId pluginId = descriptor == null ? dependencyId : descriptor.getPluginId();
+      PluginId pluginId = descriptor != null ? descriptor.getPluginId() : dependencyId;
       switch (consumer.apply(pluginId, descriptor)) {
         case TERMINATE:
           return false;
         case CONTINUE:
-          if (descriptor != null && depProcessed.add(descriptor)) {
+          if (descriptor != null && depProcessed.add(descriptor.getPluginId())) {
             processAllNonOptionalDependencies(descriptor, idToMap, depProcessed, consumer);
           }
           break;

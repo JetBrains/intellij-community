@@ -376,10 +376,12 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     getParameters().myOpenModulesConfigurator = on;
   }
 
-  public MavenGeneralSettings getGeneralSettings() {
+  private MavenGeneralSettings getGeneralSettings() {
     if (getParameters().myGeneralSettingsCache == null) {
       ApplicationManager.getApplication().runReadAction(() -> {
-        getParameters().myGeneralSettingsCache = getDirectProjectsSettings().generalSettings.clone();
+        getParameters().myGeneralSettingsCache = getDirectProjectsSettings().getGeneralSettings().clone();
+        getParameters().myGeneralSettingsCache.setUseMavenConfig(true);
+        getParameters().myGeneralSettingsCache.updateFromMavenConfig(getParameters().myFiles);
       });
     }
     return getParameters().myGeneralSettingsCache;
@@ -388,7 +390,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   public MavenImportingSettings getImportingSettings() {
     if (getParameters().myImportingSettingsCache == null) {
       ApplicationManager.getApplication().runReadAction(() -> {
-        getParameters().myImportingSettingsCache = getDirectProjectsSettings().importingSettings.clone();
+        getParameters().myImportingSettingsCache = getDirectProjectsSettings().getImportingSettings().clone();
       });
     }
     return getParameters().myImportingSettingsCache;

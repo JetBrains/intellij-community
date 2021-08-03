@@ -45,8 +45,6 @@ internal class IntelliJImageGeneratingProvider(linkMap: LinkMap, baseURI: URI?) 
   }
 
   override fun renderLink(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode, info: RenderInfo) {
-    println(text)
-    println(info.destination)
     val url = makeAbsoluteUrl(info.destination)
     visitor.consumeTagOpen(
       node,

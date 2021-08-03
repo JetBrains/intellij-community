@@ -80,9 +80,11 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent();
-      // todo reuse the quick-fix for DefaultCaseLabelElement
       if (element instanceof PsiSwitchLabelStatementBase) {
         DeleteSwitchLabelFix.deleteLabel((PsiSwitchLabelStatementBase)element);
+      }
+      else if (element instanceof PsiDefaultCaseLabelElement) {
+        DeleteSwitchLabelFix.deleteLabelElement(((PsiDefaultCaseLabelElement)element));
       }
     }
   }

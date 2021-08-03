@@ -85,7 +85,7 @@ internal class IncrementalDOMBuilder(html: String, private val basePath: Path? =
     if (node.nodeName() != "img" || node.hasAttr(IntelliJImageGeneratingProvider.generatedAttributeName)) {
       return node
     }
-    val url = Urls.parse(node.attr("src"), asLocalIfNoScheme = true).also(::println) ?: return node
+    val url = Urls.parse(node.attr("src"), asLocalIfNoScheme = true) ?: return node
     if (url.scheme == null || url.scheme == "file") {
       if (!FileUtil.isAbsolute(url.path)) {
         val fixedPath = FileUtil.toSystemIndependentName(Paths.get(basePath.toString(), url.path).toString())
