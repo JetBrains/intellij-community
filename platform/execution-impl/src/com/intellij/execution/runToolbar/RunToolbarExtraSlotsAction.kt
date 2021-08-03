@@ -2,7 +2,11 @@
 package com.intellij.execution.runToolbar
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.*
+import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
@@ -12,13 +16,11 @@ import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.ComponentPopupBuilderImpl
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.PositionTracker
 import com.intellij.util.ui.UIUtil
-import java.awt.AWTEvent
-import java.awt.Dialog
-import java.awt.Point
-import java.awt.Toolkit
+import java.awt.*
 import java.awt.event.*
 import java.util.function.Supplier
 import javax.swing.JComponent
@@ -39,9 +41,18 @@ class RunToolbarExtraSlotsAction : AnAction(), CustomComponentAction, DumbAware 
       val isOpened = e.dataContext.getData(RunToolbarMainWidgetComponent.RUN_TOOLBAR_MAIN_WIDGET_COMPONENT_KEY)?.isOpened
                      ?: false
       e.presentation.icon = when {
-        isOpened -> AllIcons.Toolbar.Collapse
-        slotManager.slotsCount() == 0 -> AllIcons.Toolbar.AddSlot
-        else -> AllIcons.Toolbar.Expand
+        isOpened -> {
+          e.presentation.text = ActionsBundle.message("action.RunToolbarExtraSlotsAction.hide.text")
+          AllIcons.Toolbar.Collapse
+        }
+        slotManager.slotsCount() == 0 -> {
+          e.presentation.text = ActionsBundle.message("action.RunToolbarExtraSlotsAction.text")
+          AllIcons.Toolbar.AddSlot
+        }
+        else -> {
+          e.presentation.text = ActionsBundle.message("action.RunToolbarExtraSlotsAction.show.text")
+          AllIcons.Toolbar.Expand
+        }
       }
     }
   }
