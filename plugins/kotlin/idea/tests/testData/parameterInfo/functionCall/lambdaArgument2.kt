@@ -1,3 +1,4 @@
+// IGNORE_FIR
 fun test() {
     foo({ 1 }, { 2 }) {<caret> it.length }
 }

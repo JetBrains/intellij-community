@@ -1,3 +1,4 @@
+// IGNORE_FIR
 fun <T, V> foo(t: T): T = t
 
 fun bar() {
