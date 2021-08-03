@@ -9,6 +9,9 @@ internal object FUSGroupIds {
 
     // FIELDS
     const val MODULE_OPERATION_PROVIDER_CLASS = "module_operation_provider_class"
+    const val PACKAGE_ID = "package_id"
+    const val PACKAGE_VERSION = "package_version"
+    const val PACKAGE_FROM_VERSION = "package_from_version"
     const val REPOSITORY_ID = "repository_id"
     const val REPOSITORY_URL = "repository_url"
     const val REPOSITORY_USES_CUSTOM_URL = "repository_uses_custom_url"
@@ -25,7 +28,7 @@ internal object FUSGroupIds {
     const val FILE_TYPE = "file_type"
     const val DETAILS_LINK_LABEL = "details_link_label"
     const val DETAILS_VISIBLE = "details_visible"
-    const val SEARCH_QUERY_LENGTH = "search_query"
+    const val SEARCH_QUERY_LENGTH = "search_query_length"
 
     // ENUMS
 
@@ -127,7 +130,10 @@ internal object FUSGroupIds {
     const val RUN_QUICK_FIX = "run_quick_fix"
     const val DETAILS_LINK_CLICK = "details_link_click"
     const val TOGGLE = "toggle"
-    const val SEARCH_REQUEST = "search_request"
+    const val SEARCH_QUERY_CHANGED = "search_query_changed"
     const val SEARCH_QUERY_CLEAR = "search_query_clear"
     const val UPGRADE_ALL = "upgrade_all_event"
+
+    // VALIDATORS
+    const val RULE_TOP_PACKAGE_ID = "top_package_id"
 }
