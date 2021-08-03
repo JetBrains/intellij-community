@@ -2049,6 +2049,12 @@ class Bar {{
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
+  void testCompletionShouldNotAddExtraComma() {
+    configureByTestName()
+    myFixture.performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT)
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
+
   @NeedsIndex.Full
   void testCompletingClassWithSameNameAsPackage() {
     myFixture.addClass("package Apple; public class Apple {}")
