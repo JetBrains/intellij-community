@@ -1,7 +1,7 @@
 class Test {
   void insideSwitch(Object o) {
     switch (o){
-      case /*unused*/ Object s /*unused*/ -> System.out.println();
+      case /*unused*/ Object <warning descr="Pattern variable 's' is never used"><caret>s</warning> /*unused*/ -> System.out.println();
     }
     switch (o){
       case Object s -> System.out.println(s);
