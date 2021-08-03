@@ -47,7 +47,7 @@ public class MessagesServiceImpl implements MessagesService {
                                int defaultOptionIndex,
                                int focusedOptionIndex,
                                @Nullable Icon icon,
-                               @Nullable DialogWrapper.DoNotAskOption doNotAskOption,
+                               @Nullable DoNotAskOption doNotAskOption,
                                boolean alwaysUseIdeaUI,
                                @Nullable String helpId) {
     if (isApplicationInUnitTestOrHeadless()) {
@@ -136,7 +136,7 @@ public class MessagesServiceImpl implements MessagesService {
       return TestDialogManager.getTestInputImplementation().show(message, validator);
     }
 
-    final InputDialog dialog = project != null
+    final MessageInputDialog dialog = project != null
                                ? new PasswordInputDialog(project, message, title, icon, validator)
                                : new PasswordInputDialog(message, title, icon, validator);
     dialog.show();
@@ -167,9 +167,9 @@ public class MessagesServiceImpl implements MessagesService {
       return TestDialogManager.getTestInputImplementation().show(message, validator);
     }
 
-    InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator,
-                                         new String[]{getOkButton(), getCancelButton()},
-                                         0, comment);
+    MessageInputDialog dialog = new MessageInputDialog(project, message, title, icon, initialValue, validator,
+                                                       new String[]{getOkButton(), getCancelButton()},
+                                                       0, comment);
 
     final JTextComponent field = dialog.getTextField();
     if (selection != null) {
@@ -193,8 +193,8 @@ public class MessagesServiceImpl implements MessagesService {
       return TestDialogManager.getTestInputImplementation().show(message, validator);
     }
 
-    InputDialog dialog = new MultilineInputDialog(project, message, title, icon, initialValue, validator,
-                                                                    new String[]{getOkButton(), getCancelButton()}, 0);
+    MessageInputDialog dialog = new MessageMultilineInputDialog(project, message, title, icon, initialValue, validator,
+                                                                new String[]{getOkButton(), getCancelButton()}, 0);
     dialog.show();
     return dialog.getInputString();
   }
@@ -289,5 +289,10 @@ public class MessagesServiceImpl implements MessagesService {
       builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
     });
     builder.show();
+  }
+
+  @Override
+  public boolean isAlertEnabled() {
+    return AlertMessagesManager.isEnabled();
   }
 }

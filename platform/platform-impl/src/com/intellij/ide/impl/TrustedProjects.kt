@@ -12,7 +12,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
@@ -126,8 +126,8 @@ fun Project.setTrusted(value: Boolean) {
   }
 }
 
-fun createDoNotAskOptionForLocation(projectLocationPath: String): DialogWrapper.DoNotAskOption {
-  return object : DialogWrapper.DoNotAskOption.Adapter() {
+fun createDoNotAskOptionForLocation(projectLocationPath: String): DoNotAskOption {
+  return object : DoNotAskOption.Adapter() {
     override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
       if (isSelected && exitCode == Messages.YES) {
         TrustedProjectsStatistics.TRUST_LOCATION_CHECKBOX_SELECTED.log()

@@ -19,7 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
@@ -81,7 +81,7 @@ class ManageProjectTemplatesDialog extends DialogWrapper {
 
     myDescriptionPane = new JTextPane();
     myDescriptionPane.setPreferredSize(JBUI.size(300, 50));
-    Messages.installHyperlinkSupport(myDescriptionPane);
+    MessageDialog.installHyperlinkSupport(myDescriptionPane);
     myPanel.add(ScrollPaneFactory.createScrollPane(myDescriptionPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                                                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED), BorderLayout.SOUTH);
 

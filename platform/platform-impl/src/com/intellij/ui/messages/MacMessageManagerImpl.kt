@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.ui.DialogWrapper.DoNotAskOption
+import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.messages.AlertMessagesManager
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher

@@ -11,7 +11,7 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -297,7 +297,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     String title = VcsBundle.message("create.patch.commit.action.title");
 
     Boolean[] ref = new Boolean[1];
-    DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
+    DoNotAskOption option = new DoNotAskOption() {
       @Override
       public boolean isToBeShown() {
         return true;

@@ -2,7 +2,7 @@
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
@@ -69,7 +69,7 @@ public class ProjectTemplateList extends JPanel {
     myList.setCellRenderer(renderer);
     myList.getSelectionModel().addListSelectionListener(__ -> updateSelection());
 
-    Messages.installHyperlinkSupport(myDescriptionPane);
+    MessageDialog.installHyperlinkSupport(myDescriptionPane);
   }
 
   private void updateSelection() {

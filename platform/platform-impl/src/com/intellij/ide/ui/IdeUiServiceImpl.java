@@ -15,10 +15,10 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.EdtDataContext;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessDialog;
-import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -137,33 +137,8 @@ public class IdeUiServiceImpl extends IdeUiService{
   }
 
   @Override
-  public String showQuestionDialog(String message, String title) {
-    return Messages.showInputDialog(message, title, Messages.getQuestionIcon());
-  }
-
-  @Override
-  public void showErrorDialog(String message, String title) {
-    Messages.showErrorDialog(message, title);
-  }
-
-  @Override
   public VirtualFile[] chooseFiles(FileChooserDescriptor descriptor,
                                    Project project, VirtualFile toSelect) {
     return FileChooser.chooseFiles(descriptor, project, toSelect);
-  }
-
-  @Override
-  public void showMessageDialog(Component component, String message, String title, Icon icon) {
-    Messages.showMessageDialog(component, message, title, icon);
-  }
-
-  @Override
-  public int showYesNoCancelDialog(@Nullable Project project,
-                                   String message,
-                                   @NotNull String title,
-                                   @NotNull String yes,
-                                   @NotNull String no,
-                                   @NotNull String cancel, @Nullable Icon icon) {
-    return Messages.showYesNoCancelDialog(project, message,title, yes, no, cancel, icon);
   }
 }

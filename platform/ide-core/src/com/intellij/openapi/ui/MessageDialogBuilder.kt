@@ -4,9 +4,7 @@ package com.intellij.openapi.ui
 import com.intellij.CommonBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper.DoNotAskOption
 import com.intellij.openapi.ui.Messages.*
-import com.intellij.openapi.ui.messages.AlertMessagesManager
 import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.DialogMessage
@@ -246,7 +244,7 @@ class OkCancelDialogBuilder internal constructor(title: String, message: String)
 }
 
 private inline fun <T> showMessage(project: Project?, parentComponent: Component?, mac: (Window?) -> T, other: () -> T): T {
-  if (canShowMacSheetPanel() || (SystemInfoRt.isMac && AlertMessagesManager.isEnabled())) {
+  if (canShowMacSheetPanel() || (SystemInfoRt.isMac && MessagesService.getInstance().isAlertEnabled())) {
     try {
       val window = if (parentComponent == null) {
         WindowManager.getInstance().suggestParentWindow(project)

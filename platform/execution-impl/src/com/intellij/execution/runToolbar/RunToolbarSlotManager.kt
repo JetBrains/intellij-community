@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.Messages
 import java.util.*
 import java.util.function.Function
@@ -159,7 +159,7 @@ class RunToolbarSlotManager(val project: Project) {
               "qwerty",
               "qwerty",
               CommonBundle.getCancelButtonText(),
-              Messages.getQuestionIcon(), object : DialogWrapper.DoNotAskOption.Adapter() {
+              Messages.getQuestionIcon(), object : DoNotAskOption.Adapter() {
               override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
 
               }

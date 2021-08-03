@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.colors.AbstractKeyDescriptor;
 import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -102,7 +102,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
     myEffectsCombo.addActionListener(actionListener);
 
     //noinspection HardCodedStringLiteral
-    Messages.configureMessagePaneUi(myInheritanceLabel, "<html>", null);
+    MessageDialog.configureMessagePaneUi(myInheritanceLabel, "<html>", null);
     myInheritanceLabel.addHyperlinkListener(e -> myDispatcher.getMulticaster().onHyperLinkClicked(e));
     myInheritanceLabel.setBorder(JBUI.Borders.empty(4, 0, 4, 4));
     myLabelFont.setVisible(false); // hide for now as it doesn't look that good

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.IconButton
 import com.intellij.openapi.util.NlsContexts
@@ -55,7 +56,7 @@ class AlertMessagesManager : MacMessages() {
                                      noText: String,
                                      cancelText: String,
                                      window: Window?,
-                                     doNotAskOption: DialogWrapper.DoNotAskOption?,
+                                     doNotAskOption: DoNotAskOption?,
                                      icon: Icon?,
                                      helpId: String?): Int {
     val dialog = AlertDialog(null, window, message, title, arrayOf(yesText, cancelText, noText), 0, -1, getIcon(icon), doNotAskOption,
@@ -79,7 +80,7 @@ class AlertMessagesManager : MacMessages() {
                                yesText: String,
                                noText: String,
                                window: Window?,
-                               doNotAskDialogOption: DialogWrapper.DoNotAskOption?,
+                               doNotAskDialogOption: DoNotAskOption?,
                                icon: Icon?,
                                helpId: String?): Boolean {
     return showMessageDialog(null, window, message, title, arrayOf(yesText, noText), 0, -1, icon, doNotAskDialogOption,
@@ -96,7 +97,7 @@ class AlertMessagesManager : MacMessages() {
                                  window: Window?,
                                  defaultOptionIndex: Int,
                                  focusedOptionIndex: Int,
-                                 doNotAskOption: DialogWrapper.DoNotAskOption?,
+                                 doNotAskOption: DoNotAskOption?,
                                  icon: Icon?,
                                  helpId: String?): Int {
     return showMessageDialog(null, window, message, title, buttons, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, helpId)
@@ -110,7 +111,7 @@ class AlertMessagesManager : MacMessages() {
                         defaultOptionIndex: Int,
                         focusedOptionIndex: Int,
                         icon: Icon?,
-                        doNotAskOption: DialogWrapper.DoNotAskOption?,
+                        doNotAskOption: DoNotAskOption?,
                         helpId: String?): Int {
     val dialog = AlertDialog(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex, getIcon(icon),
                              doNotAskOption, helpId)
@@ -375,7 +376,7 @@ private class AlertDialog(project: Project?,
       myMessageComponent = messageComponent
 
       val lines = myMessage.length / 100
-      val scrollPane = Messages.wrapToScrollPaneIfNeeded(messageComponent, 100, 15, if (lines < 4) 4 else lines)
+      val scrollPane = MessageDialog.wrapToScrollPaneIfNeeded(messageComponent, 100, 15, if (lines < 4) 4 else lines)
       if (scrollPane is JScrollPane) {
         scrollPane.isOpaque = false
         scrollPane.viewport.isOpaque = false

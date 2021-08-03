@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.tasks.CommitPlaceholderProvider;
 import com.intellij.tasks.TaskApiBundle;
 import com.intellij.tasks.TaskManager;
@@ -117,7 +117,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     setupPlaceholdersComment();
     String advertiser = repository.getRepositoryType().getAdvertiser();
     if (advertiser != null) {
-      Messages.installHyperlinkSupport(myAdvertiser);
+      MessageDialog.installHyperlinkSupport(myAdvertiser);
       myAdvertiser.setText(advertiser);
     }
     else {

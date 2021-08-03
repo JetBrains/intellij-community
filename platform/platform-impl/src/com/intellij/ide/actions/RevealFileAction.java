@@ -18,7 +18,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -134,7 +134,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
                                 @DialogMessage String message,
                                 @DialogTitle String title,
                                 @NotNull File file,
-                                @Nullable DialogWrapper.DoNotAskOption option) {
+                                @Nullable DoNotAskOption option) {
     String ok = getActionName(null), cancel = IdeBundle.message("action.close");
     if (Messages.showOkCancelDialog(project, message, title, ok, cancel, Messages.getInformationIcon(), option) == Messages.OK) {
       openFile(file);

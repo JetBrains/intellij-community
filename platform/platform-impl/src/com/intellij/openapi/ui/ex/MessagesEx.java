@@ -4,6 +4,7 @@ package com.intellij.openapi.ui.ex;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageInputDialog;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
@@ -228,8 +229,8 @@ public final class MessagesEx extends Messages {
 
     @Override
     public UserInput askUser() {
-      InputDialog
-        dialog = new InputDialog(getProject(), getMessage(), getTitle(), getIcon(), myDefaultValue, null, getOptions(), getDefaultOption());
+      MessageInputDialog
+        dialog = new MessageInputDialog(getProject(), getMessage(), getTitle(), getIcon(), myDefaultValue, null, getOptions(), getDefaultOption());
       dialog.show();
       return new UserInput(dialog.getTextField().getText(), dialog.getExitCode());
     }

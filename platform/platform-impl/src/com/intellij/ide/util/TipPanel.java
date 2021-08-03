@@ -7,7 +7,7 @@ import com.intellij.ide.TipsOfTheDayUsagesCollector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.DialogWrapper.DoNotAskOption;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;

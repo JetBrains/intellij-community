@@ -7,15 +7,14 @@ import com.intellij.credentialStore.kdbx.KdbxPassword
 import com.intellij.credentialStore.kdbx.KdbxPassword.Companion.createAndClear
 import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.credentialStore.kdbx.loadKdbx
-import com.intellij.ide.ui.IdeUiService
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
 import java.awt.Component
@@ -70,9 +69,9 @@ open class KeePassFileManager(private val file: Path,
     }
     catch (e: Exception) {
       LOG.warn(e)
-      IdeUiService.getInstance().showMessageDialog(event?.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)!!,
-                                          CredentialStoreBundle.message("kee.pass.dialog.message"),
-                                          CredentialStoreBundle.message("kee.pass.dialog.title.cannot.import"), UIUtil.getErrorIcon());
+      Messages.showMessageDialog(event?.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)!!,
+                                      CredentialStoreBundle.message("kee.pass.dialog.message"),
+                                      CredentialStoreBundle.message("kee.pass.dialog.title.cannot.import"), Messages.getErrorIcon());
     }
   }
 

@@ -32,7 +32,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
@@ -677,7 +677,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       return true;
     }
 
-    DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
+    DoNotAskOption option = new DoNotAskOption() {
       @Override
       public boolean isToBeShown() {
         return GeneralSettings.getInstance().isConfirmExit() && ProjectManager.getInstance().getOpenProjects().length > 0;

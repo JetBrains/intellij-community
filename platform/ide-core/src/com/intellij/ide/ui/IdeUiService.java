@@ -90,30 +90,10 @@ public class IdeUiService {
     return false;
   }
 
-  public String showQuestionDialog(String message, String title) {
-    return null;
-  }
-
-  public void showErrorDialog(String message, String title) {
-  }
-
-  public void showMessageDialog(Component component, String message, String title, Icon icon) {
-  }
-
   public VirtualFile[] chooseFiles(FileChooserDescriptor descriptor, Project project, VirtualFile toSelect) {
     return new VirtualFile[0];
   }
 
-
-  public int showYesNoCancelDialog(@Nullable Project project,
-                                          @NlsContexts.DialogMessage String message,
-                                          @NotNull @NlsContexts.DialogTitle String title,
-                                          @NotNull @NlsContexts.Button String yes,
-                                          @NotNull @NlsContexts.Button String no,
-                                          @NotNull @NlsContexts.Button String cancel,
-                                          @Nullable Icon icon) {
-    return 0;
-  }
 
   public static IdeUiService getInstance() {
     return ApplicationManager.getApplication().getService(IdeUiService.class);

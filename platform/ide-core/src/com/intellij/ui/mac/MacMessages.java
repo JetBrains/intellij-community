@@ -2,7 +2,7 @@
 package com.intellij.ui.mac;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.UIUtil;
@@ -27,7 +27,7 @@ public abstract class MacMessages {
                                             @NlsContexts.Button @NotNull String noText,
                                             @NlsContexts.Button @NotNull String cancelText,
                                             @Nullable Window window,
-                                            @Nullable DialogWrapper.DoNotAskOption doNotAskOption,
+                                            @Nullable DoNotAskOption doNotAskOption,
                                             @Nullable Icon icon,
                                             @Nullable String helpId);
   public static @NotNull MacMessages getInstance() {
@@ -56,19 +56,19 @@ public abstract class MacMessages {
                                         @Nullable Window window,
                                         int defaultOptionIndex,
                                         int focusedOptionIndex,
-                                        @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption,
+                                        @Nullable DoNotAskOption doNotAskDialogOption,
                                         @Nullable Icon icon,
                                         @Nullable String helpId);
 
   /**
-   * @deprecated Use {@link #showMessageDialog(String, String, String[], Window, int, int, DialogWrapper.DoNotAskOption, Icon, String)}
+   * @deprecated Use {@link #showMessageDialog(String, String, String[], Window, int, int, DoNotAskOption, Icon, String)}
    */
   @Deprecated
   public int showMessageDialog(@NlsContexts.DialogTitle @NotNull String title,
                                @NlsContexts.DialogMessage String message,
                                @NlsContexts.Button String @NotNull [] buttons, boolean errorStyle,
                                @Nullable Window window, int defaultOptionIndex, int focusedOptionIndex,
-                               @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption) {
+                               @Nullable DoNotAskOption doNotAskDialogOption) {
     return showMessageDialog(title, message, buttons, window, defaultOptionIndex, focusedOptionIndex, doNotAskDialogOption,
                              errorStyle ? UIUtil.getErrorIcon() : UIUtil.getInformationIcon(), null);
   }
@@ -82,7 +82,7 @@ public abstract class MacMessages {
                                           @NlsContexts.Button @NotNull String yesText,
                                           @NlsContexts.Button @NotNull String noText,
                                           @Nullable Window window,
-                                          @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption,
+                                          @Nullable DoNotAskOption doNotAskDialogOption,
                                           @Nullable Icon icon,
                                           @Nullable String helpId);
 

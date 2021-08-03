@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.options.OptionsBundle;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.components.JBCheckBox;
@@ -73,7 +73,7 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
                                           HtmlChunk.text("(" + languageDefaultPageID + ")")).toString();
 
     //noinspection HardCodedStringLiteral
-    Messages.configureMessagePaneUi(myInheritanceLabel, "<html>", null);
+    MessageDialog.configureMessagePaneUi(myInheritanceLabel, "<html>", null);
     myInheritanceLabel.setText(checkRightArrow(inheritanceText));
     myInheritanceLabel.setToolTipText(checkRightArrow(inheritanceTooltip));
     myInheritanceLabel.addHyperlinkListener(e -> myDispatcher.getMulticaster().onHyperLinkClicked(e));
