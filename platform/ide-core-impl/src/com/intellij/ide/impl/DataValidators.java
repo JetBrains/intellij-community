@@ -24,11 +24,11 @@ public abstract class DataValidators {
 
   public abstract void collectValidators(@NotNull Registry registry);
 
-  interface Validator<T> {
+  public interface Validator<T> {
     boolean checkValid(@NotNull T data, @NotNull String dataId, @NotNull Object source);
   }
 
-  interface Registry {
+  public interface Registry {
     <T> void register(@NotNull DataKey<T> key, @NotNull Validator<? super T> validator);
   }
 
