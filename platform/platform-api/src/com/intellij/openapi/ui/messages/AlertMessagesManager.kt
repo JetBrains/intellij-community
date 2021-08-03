@@ -146,7 +146,7 @@ private class AlertDialog(project: Project?,
                           val myDefaultOptionIndex: Int,
                           val myFocusedOptionIndex: Int,
                           icon: Icon,
-                          doNotAskOption: DoNotAskOption?,
+                          doNotAskOption: com.intellij.openapi.ui.DoNotAskOption?,
                           val myHelpId: String?) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE, false) {
 
   private val myIsTitleComponent = SystemInfoRt.isMac || !Registry.`is`("ide.message.dialogs.as.swing.alert.show.title.bar", false)

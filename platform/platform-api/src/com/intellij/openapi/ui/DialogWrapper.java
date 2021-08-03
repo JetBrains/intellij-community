@@ -178,7 +178,7 @@ public abstract class DialogWrapper {
   private boolean myUserSizeSet;
   private Dimension  myActualSize;
   private List<ValidationInfo> myInfo = List.of();
-  private @Nullable DoNotAskOption myDoNotAsk;
+  private @Nullable com.intellij.openapi.ui.DoNotAskOption myDoNotAsk;
   private Action myYesAction;
   private Action myNoAction;
   private int myCurrentOptionsButtonIndex = -1;
@@ -315,7 +315,7 @@ public abstract class DialogWrapper {
     return UIBundle.message("dialog.options.do.not.show");
   }
 
-  public void setDoNotAskOption(@Nullable DoNotAskOption doNotAsk) {
+  public void setDoNotAskOption(@Nullable com.intellij.openapi.ui.DoNotAskOption doNotAsk) {
     myDoNotAsk = doNotAsk;
   }
 
@@ -2163,5 +2163,14 @@ public abstract class DialogWrapper {
       }
       return super.getBackground();
     }
+  }
+
+  /**
+   * @deprecated Please use com.intellij.openapi.ui.DoNotAskOption instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  public interface DoNotAskOption extends com.intellij.openapi.ui.DoNotAskOption {
+    public abstract class Adapter extends com.intellij.openapi.ui.DoNotAskOption.Adapter {}
   }
 }
