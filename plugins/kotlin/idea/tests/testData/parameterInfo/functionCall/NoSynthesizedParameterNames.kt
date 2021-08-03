@@ -1,3 +1,4 @@
+// IGNORE_FIR
 // WITH_RUNTIME
 
 lateinit var x: java.lang.Readable

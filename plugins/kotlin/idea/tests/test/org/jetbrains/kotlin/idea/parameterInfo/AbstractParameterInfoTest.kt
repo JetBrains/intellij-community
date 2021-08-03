@@ -43,7 +43,7 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
         ThrowableRunnable { super.tearDown() },
     )
 
-    protected fun doTest(fileName: String) {
+    protected open fun doTest(fileName: String) {
         val prefix = FileUtil.getNameWithoutExtension(PathUtil.getFileName(fileName))
         val mainFile = File(FileUtil.toSystemDependentName(fileName))
         mainFile.parentFile
