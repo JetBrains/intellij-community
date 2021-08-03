@@ -420,6 +420,9 @@ class PostHighlightingVisitor {
   private HighlightInfo checkUnusedParameter(@NotNull PsiParameter parameter,
                                              @NotNull PsiIdentifier identifier,
                                              @Nullable PsiMethod declarationMethod) {
+    if (parameter instanceof PsiPatternVariable && parameter.getDeclarationScope().getParent() instanceof PsiSwitchBlock) {
+      return null;
+    }
     if (!myRefCountHolder.isReferenced(parameter) && !UnusedSymbolUtil.isImplicitUsage(myProject, parameter)) {
       String message = JavaErrorBundle.message(parameter instanceof PsiPatternVariable ? 
                                                "pattern.variable.is.not.used" : "parameter.is.not.used", identifier.getText());
