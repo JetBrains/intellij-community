@@ -15,6 +15,7 @@
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="kotlin.resources-fir" />
     <orderEntry type="module" module-name="kotlin.common" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />
