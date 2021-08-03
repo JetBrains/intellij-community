@@ -2,9 +2,11 @@
 
 package org.jetbrains.kotlin.idea.fir.codeinsight
 
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.codeInsight.Java8OverrideImplementTest
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -14,8 +16,10 @@ internal class FirJava8OverrideImplementTest : Java8OverrideImplementTest<KtClas
     override fun isFirPlugin(): Boolean = true
 
     override fun tearDown() {
-        project.invalidateCaches(file as? KtFile)
-        super.tearDown()
+        runAll(
+            ThrowableRunnable { project.invalidateCaches(file as? KtFile) },
+            ThrowableRunnable { super.tearDown() }
+        )
     }
 }
 

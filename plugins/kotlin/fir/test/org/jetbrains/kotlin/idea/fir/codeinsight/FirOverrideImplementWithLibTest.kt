@@ -2,10 +2,12 @@
 
 package org.jetbrains.kotlin.idea.fir.codeinsight
 
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.codeInsight.OverrideImplementWithLibTest
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.TestRoot
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -18,10 +20,12 @@ internal class FirOverrideImplementWithLibTest : OverrideImplementWithLibTest<Kt
     override fun isFirPlugin(): Boolean = true
 
     override fun tearDown() {
-        // If we pass something as a context, then the DependencyListForCliModule will be built with dependencies from the previous test
-        // and will not be reinitialized later on. Because of that the first test might pass, but the other ones probably won't
-        project.invalidateCaches(context = null)
-        super.tearDown()
+        runAll(
+            // If we pass something as a context, then the DependencyListForCliModule will be built with dependencies from the previous test
+            // and will not be reinitialized later on. Because of that the first test might pass, but the other ones probably won't
+            ThrowableRunnable { project.invalidateCaches(context = null) },
+            ThrowableRunnable { super.tearDown() }
+        )
     }
 }
 
