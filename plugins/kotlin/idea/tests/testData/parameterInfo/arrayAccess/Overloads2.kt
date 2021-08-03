@@ -1,3 +1,4 @@
+// IGNORE_FIR
 class A {
     operator fun get(x: String) = 1
     operator fun get(x: String, y: Boolean) = 2

@@ -1,3 +1,4 @@
+// IGNORE_FIR
 interface A
 
 fun A.foo(i: Int) = i

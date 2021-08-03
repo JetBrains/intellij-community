@@ -1,3 +1,4 @@
+// IGNORE_FIR
 @Suppress("DEPRECATED_SINCE_KOTLIN_OUTSIDE_KOTLIN_SUBPACKAGE")
 @Deprecated("")
 @DeprecatedSinceKotlin(warningSince = "999.999")

@@ -1,3 +1,4 @@
+// IGNORE_FIR
 class C {
     operator fun get(pInt: Int, pString: String){}
 }
