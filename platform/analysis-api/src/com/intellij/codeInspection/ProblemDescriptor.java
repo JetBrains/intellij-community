@@ -5,6 +5,8 @@ import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,4 +53,42 @@ public interface ProblemDescriptor extends CommonProblemDescriptor {
   void setProblemGroup(@Nullable ProblemGroup problemGroup);
 
   boolean showTooltip();
+
+  /**
+   * Returns the equivalent ProblemDescriptor that could be applied to the
+   * non-physical copy of the file used to preview the modification.
+   *
+   * @param target target non-physical file
+   * @return the problem descriptor that could be applied to the non-physical copy of the file.
+   */
+  default @NotNull ProblemDescriptor getDescriptorForPreview(@NotNull PsiFile target) {
+    PsiElement start;
+    PsiElement end;
+    PsiElement psi;
+    try {
+      start = PsiTreeUtil.findSameElementInCopy(getStartElement(), target);
+      end = PsiTreeUtil.findSameElementInCopy(getEndElement(), target);
+      psi = PsiTreeUtil.findSameElementInCopy(getPsiElement(), target);
+    }
+    catch (RuntimeException e) {
+      throw new RuntimeException("Failed to obtain element copy for preview; descriptor: " + this, e);
+    }
+    return new ProblemDescriptor() {
+      //@formatter:off
+      @Override public PsiElement getPsiElement() { return psi;}
+      @Override public PsiElement getStartElement() { return start;}
+      @Override public PsiElement getEndElement() { return end;}
+      @Override public TextRange getTextRangeInElement() { return getTextRangeInElement();}
+      @Override public int getLineNumber() { return getLineNumber();}
+      @Override public @NotNull ProblemHighlightType getHighlightType() { return getHighlightType();}
+      @Override public boolean isAfterEndOfLine() { return isAfterEndOfLine();}
+      @Override public void setTextAttributes(TextAttributesKey key) {}
+      @Override public @Nullable ProblemGroup getProblemGroup() { return getProblemGroup(); }
+      @Override public void setProblemGroup(@Nullable ProblemGroup problemGroup) {}
+      @Override public boolean showTooltip() { return showTooltip();}
+      @Override public @NotNull String getDescriptionTemplate() { return getDescriptionTemplate();}
+      @Override public QuickFix<?> @Nullable [] getFixes() { return QuickFix.EMPTY_ARRAY;}
+      //@formatter:on
+    };
+  }
 }
