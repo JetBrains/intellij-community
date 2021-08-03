@@ -1128,12 +1128,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("fir", testDataPath = "..") {
         testClass<AbstractHLLocalInspectionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
-            model("idea/testData/inspectionsLocal/redundantVisibilityModifier", pattern = pattern)
+            model("idea/tests/testData/inspectionsLocal/redundantVisibilityModifier", pattern = pattern)
             model("fir/testData/inspectionsLocal", pattern = pattern)
         }
     }
 
-    testGroup("fir", testDataPath = "../completion/testData") {
+    testGroup("fir", testDataPath = "../completion/tests/testData") {
         testClass<AbstractHighLevelJvmBasicCompletionTest> {
             model("basic/common")
             model("basic/java")
@@ -1167,7 +1167,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("fir", testDataPath = "../idea/testData/findUsages") {
+    testGroup("fir", testDataPath = "../idea/tests/testData/findUsages") {
         testClass<AbstractFindUsagesFirTest> {
             model("kotlin", pattern = Patterns.forRegex("""^(.+)\.0\.(kt|kts)$"""))
             model("java", pattern = Patterns.forRegex("""^(.+)\.0\.java$"""))
