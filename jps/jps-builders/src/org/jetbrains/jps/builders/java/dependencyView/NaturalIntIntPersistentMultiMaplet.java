@@ -224,12 +224,7 @@ class NaturalIntIntPersistentMultiMaplet extends IntIntMultiMaplet {
 
   @Override
   public void flush(boolean memoryCachesOnly) {
-    if (memoryCachesOnly) {
-      if (myMap.isDirty()) {
-        myMap.dropMemoryCaches();
-      }
-    }
-    else {
+    if (!memoryCachesOnly) {
       myMap.force();
     }
   }
