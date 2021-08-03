@@ -107,7 +107,7 @@ public class PySkeletonGenerator {
    */
   // TODO get rid of skeletonPath and currentFolder parameters and configure generator explicitly with builder
   public PySkeletonGenerator(String skeletonPath, @NotNull final Sdk pySdk, @Nullable final String currentFolder) {
-    mySkeletonsPath = skeletonPath;
+    mySkeletonsPath = StringUtil.trimTrailing(skeletonPath, '\\');
     mySdk = pySdk;
     myCurrentFolder = currentFolder;
   }
