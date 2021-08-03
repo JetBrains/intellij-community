@@ -75,6 +75,8 @@ dependencies {
     jpsLikeJarDependency(intellijPluginDep("junit", forIde = true), JpsDepScope.COMPILE) // 'intellij.junit' dependency
     jpsLikeJarDependency("org.jetbrains.teamcity:serviceMessages:2019.1.4", JpsDepScope.COMPILE, { isTransitive = false }) // 'intellij.junit' dependency
     jpsLikeJarDependency(intellijPluginDep("testng", forIde = true), JpsDepScope.COMPILE) // 'intellij.testng' dependency
+    jpsLikeJarDependency(intellijDep(forIde = true), JpsDepScope.COMPILE, { includeJars("intellij-xml") }) // 'intellij.xml.psi.impl' dependency
+    jpsLikeModuleDependency(":kotlin-ide.kotlin.jvm-run-configurations", JpsDepScope.COMPILE, exported = true)
 }
 
 configurations.all {

@@ -9,12 +9,12 @@ import com.intellij.execution.configurations.SimpleConfigurationType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NotNullLazyValue
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle
 
 class KotlinStandaloneScriptRunConfigurationType : SimpleConfigurationType(
     "KotlinStandaloneScriptRunConfigurationType",
-    KotlinJvmBundle.message("name.kotlin.script"),
-    KotlinJvmBundle.message("run.kotlin.script"),
+    KotlinRunConfigurationsBundle.message("name.kotlin.script"),
+    KotlinRunConfigurationsBundle.message("run.kotlin.script"),
     NotNullLazyValue.createValue { KotlinIcons.SMALL_LOGO }
 ) {
     override fun createTemplateConfiguration(project: Project): RunConfiguration {

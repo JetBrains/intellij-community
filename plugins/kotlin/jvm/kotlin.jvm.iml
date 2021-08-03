@@ -60,8 +60,8 @@
     <orderEntry type="module" module-name="intellij.junit" />
     <orderEntry type="module" module-name="intellij.properties.psi.impl" />
     <orderEntry type="module" module-name="intellij.properties" />
-    <orderEntry type="module" module-name="intellij.testng" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="kotlin.jvm-run-configurations" exported="" />
   </component>
 </module>
