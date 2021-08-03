@@ -87,13 +87,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   PsiFile getFile();
 
-  /**
-   * Returns the current virtual file
-   * @return the current virtual file
-   */
-  @Nullable
-  VirtualFile getVirtualFile();
-
   void setTestDataPath(@NotNull String dataPath);
 
   @NotNull
