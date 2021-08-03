@@ -47,7 +47,7 @@ public final class VirtualFilePointerContainerImpl extends TraceableDisposable i
   @NonNls public static final String JAR_DIRECTORY_ELEMENT = "jarDirectory";
   @NonNls public static final String RECURSIVE_ATTR = "recursive";
 
-  VirtualFilePointerContainerImpl(@NotNull VirtualFilePointerManager manager,
+  public VirtualFilePointerContainerImpl(@NotNull VirtualFilePointerManager manager,
                                   @NotNull Disposable parentDisposable,
                                   @Nullable VirtualFilePointerListener listener) {
     super(TRACE_CREATION && !ApplicationManagerEx.isInStressTest());

@@ -38,7 +38,7 @@ public class VirtualFilePointerImpl extends TraceableDisposable implements Virtu
   boolean recursive; // true if the validityChanged() event should be fired for any change under this directory. Used for library jar directories.
   final VirtualFilePointerListener myListener;
 
-  VirtualFilePointerImpl(@Nullable VirtualFilePointerListener listener) {
+  public VirtualFilePointerImpl(@Nullable VirtualFilePointerListener listener) {
     super(TRACE_CREATION);
     myListener = listener;
   }
