@@ -19,6 +19,9 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
+import org.jetbrains.uast.internal.UElementAlternative
+import org.jetbrains.uast.internal.accommodate
+import org.jetbrains.uast.internal.alternative
 import org.jetbrains.uast.kotlin.psi.*
 
 interface BaseKotlinConverter {

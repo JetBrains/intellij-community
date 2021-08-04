@@ -16,10 +16,11 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
-import org.jetbrains.kotlin.idea.configuration.kotlinImportingDiagnosticsContainer
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.externalSystemTestRunTasks
-import org.jetbrains.kotlin.idea.framework.GRADLE_SYSTEM_ID
+import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
+import org.jetbrains.kotlin.idea.gradleJava.configuration.kotlinGradleProjectDataOrFail
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinImportingDiagnostic
 import org.jetbrains.kotlin.idea.project.isHMPPEnabled
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.project.platform
