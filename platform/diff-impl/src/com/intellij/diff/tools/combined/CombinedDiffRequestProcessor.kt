@@ -114,7 +114,7 @@ open class CombinedDiffRequestProcessor(project: Project?,
             }
 
           val childViewer = frameDiffTool
-                              ?.apply { DiffUtil.findToolSubstitutor(this, context, request) }
+                              ?.let { findSubstitutor(it, context, childDiffRequest) }
                               ?.createComponent(context, childDiffRequest)
                             ?: continue
 
@@ -130,6 +130,10 @@ open class CombinedDiffRequestProcessor(project: Project?,
           val content = CombinedDiffBlockContent(childViewer, childRequest.path, childRequest.fileStatus)
           viewer.addChildBlock(content, index > 0)
         }
+      }
+
+      private fun findSubstitutor(tool: FrameDiffTool, context: DiffContext, request: DiffRequest): FrameDiffTool {
+        return DiffUtil.findToolSubstitutor(tool, context, request) as? FrameDiffTool ?: tool
       }
 
       private fun getDiffToolsExceptUnified(context: DiffContext,
