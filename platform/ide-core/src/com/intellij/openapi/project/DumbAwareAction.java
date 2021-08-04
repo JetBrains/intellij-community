@@ -61,15 +61,15 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     super(dynamicText, icon);
   }
 
-  static class SimpleDumbAwareAction extends DumbAwareAction implements ActionWithDelegate<Consumer<? super AnActionEvent>>,
+  public static class SimpleDumbAwareAction extends DumbAwareAction implements ActionWithDelegate<Consumer<? super AnActionEvent>>,
                                                                         LightEditCompatible {
     private final Consumer<? super AnActionEvent> myActionPerformed;
 
-    SimpleDumbAwareAction(Consumer<? super AnActionEvent> actionPerformed) {
+    public SimpleDumbAwareAction(Consumer<? super AnActionEvent> actionPerformed) {
       myActionPerformed = actionPerformed;
     }
 
-    SimpleDumbAwareAction(@NlsActions.ActionText String text,
+    public SimpleDumbAwareAction(@NlsActions.ActionText String text,
                           Consumer<? super AnActionEvent> actionPerformed) {
       super(text);
       myActionPerformed = actionPerformed;
