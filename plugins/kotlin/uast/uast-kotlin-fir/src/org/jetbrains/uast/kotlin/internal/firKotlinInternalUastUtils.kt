@@ -5,7 +5,11 @@ package org.jetbrains.uast.kotlin.internal
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.calls.KtCall
+import org.jetbrains.kotlin.idea.frontend.api.types.KtClassErrorType
+import org.jetbrains.kotlin.idea.frontend.api.types.KtType
+import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin
 import org.jetbrains.uast.kotlin.lz
@@ -26,4 +30,10 @@ internal fun KtCall.toPsiMethod(): PsiMethod? {
         //  this happens while destructuring a variable via Pair casting (testDestructuringDeclaration).
         return null
     }
+}
+
+internal fun KtAnalysisSession.nullability(ktType: KtType?): TypeNullability? {
+    if (ktType == null) return null
+    if (ktType is KtClassErrorType) return null
+    return if (ktType.canBeNull) TypeNullability.NULLABLE else TypeNullability.NOT_NULL
 }
