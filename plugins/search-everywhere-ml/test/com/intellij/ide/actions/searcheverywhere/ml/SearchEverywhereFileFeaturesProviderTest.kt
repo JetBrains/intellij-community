@@ -375,9 +375,9 @@ internal class SearchEverywhereFileFeaturesProviderTest
     return files
   }
 
-
   override fun tearDown() {
-    super.tearDown()
+    EditorHistoryManager.getInstance(project).removeAllFiles()
     mockedFileStatsProvider.clearStats()
+    super.tearDown()
   }
 }

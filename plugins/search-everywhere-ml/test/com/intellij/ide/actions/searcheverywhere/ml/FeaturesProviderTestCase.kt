@@ -3,7 +3,6 @@ package com.intellij.ide.actions.searcheverywhere.ml
 import com.intellij.ide.actions.searcheverywhere.ml.FeaturesProviderTestCase.AssertionElementSelector.AssertionSpecifier
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.openapi.application.PluginPathManager
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
@@ -18,11 +17,6 @@ internal abstract class FeaturesProviderTestCase<T : SearchEverywhereElementFeat
   override fun setUp() {
     super.setUp()
     provider.init(project)
-  }
-
-  override fun tearDown() {
-    super.tearDown()
-    EditorHistoryManager.getInstance(project).removeAllFiles()
   }
 
   override fun getTestDataPath(): String {
