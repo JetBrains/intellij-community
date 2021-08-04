@@ -1,95 +1,70 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.annotate;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.vcs.annotate
 
-import com.intellij.ide.PowerSaveMode;
-import com.intellij.openapi.components.Service;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.update.DisposableUpdate;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.vcs.CacheableAnnotationProvider;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.PowerSaveMode
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.Service.Level
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ui.update.DisposableUpdate
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.vcs.CacheableAnnotationProvider
 
-@Service
-public final class AnnotationsPreloader {
-  private static final Logger LOG = Logger.getInstance(AnnotationsPreloader.class);
+@Service(Level.PROJECT)
+internal class AnnotationsPreloader(private val project: Project) {
+  private val updateQueue = MergingUpdateQueue("Annotations preloader queue", 1000, true, null, project, null, false)
 
-  private final MergingUpdateQueue myUpdateQueue;
-  private final Project myProject;
+  private fun schedulePreloading(file: VirtualFile) {
+    if (project.isDisposed || file.fileType.isBinary) return
 
-  public AnnotationsPreloader(@NotNull Project project) {
-    myProject = project;
-    myUpdateQueue = new MergingUpdateQueue("Annotations preloader queue", 1000, true, null, project, null, false);
-  }
-
-  private static boolean isEnabled() {
-    // TODO: check cores number?
-    return AdvancedSettings.getBoolean("vcs.annotations.preload") && !PowerSaveMode.isEnabled();
-  }
-
-  private void schedulePreloading(@NotNull final VirtualFile file) {
-    if (myProject.isDisposed() || file.getFileType().isBinary()) return;
-
-    myUpdateQueue.queue(new DisposableUpdate(myProject, file) {
-      @Override
-      public void doRun() {
+    updateQueue.queue(object : DisposableUpdate(project, file) {
+      override fun doRun() {
         try {
-          long start = 0;
-          if (LOG.isDebugEnabled()) {
-            start = System.currentTimeMillis();
-          }
-          if (!FileEditorManager.getInstance(myProject).isFileOpen(file)) return;
+          val start = if (LOG.isDebugEnabled) System.currentTimeMillis() else 0
 
-          FileStatus fileStatus = ChangeListManager.getInstance(myProject).getStatus(file);
-          if (fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.ADDED || fileStatus == FileStatus.IGNORED) {
-            return;
-          }
+          if (!FileEditorManager.getInstance(project).isFileOpen(file)) return
 
-          AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
-          if (vcs == null) return;
+          val fileStatus = ChangeListManager.getInstance(project).getStatus(file)
+          if (fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.ADDED || fileStatus == FileStatus.IGNORED) return
 
-          CacheableAnnotationProvider annotationProvider = ObjectUtils.tryCast(vcs.getAnnotationProvider(),
-                                                                               CacheableAnnotationProvider.class);
-          if (annotationProvider == null) return;
+          val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file) ?: return
+          val annotationProvider = vcs.annotationProvider as? CacheableAnnotationProvider ?: return
 
-          annotationProvider.populateCache(file);
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Preloaded VCS annotations for ", file.getName(), " in ", String.valueOf(System.currentTimeMillis() - start), "ms");
-          }
+          annotationProvider.populateCache(file)
+          LOG.debug { "Preloaded VCS annotations for ${file.name} in ${System.currentTimeMillis() - start} ms" }
         }
-        catch (VcsException e) {
-          LOG.info(e);
+        catch (e: VcsException) {
+          LOG.info(e)
         }
       }
-    });
+    })
   }
 
-  public static class AnnotationsPreloaderFileEditorManagerListener implements FileEditorManagerListener {
-    private final Project myProject;
+  internal class AnnotationsPreloaderFileEditorManagerListener(private val project: Project) : FileEditorManagerListener {
+    override fun selectionChanged(event: FileEditorManagerEvent) {
+      if (!isEnabled()) return
+      val file = event.newFile ?: return
 
-    public AnnotationsPreloaderFileEditorManagerListener(Project project) {
-      myProject = project;
+      project.service<AnnotationsPreloader>().schedulePreloading(file)
     }
+  }
 
-    @Override
-    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-      if (!isEnabled()) return;
-      VirtualFile file = event.getNewFile();
-      if (file != null) {
-        myProject.getService(AnnotationsPreloader.class).schedulePreloading(file);
-      }
-    }
+  companion object {
+    private val LOG = logger<AnnotationsPreloader>()
+
+    // TODO: check cores number?
+    private fun isEnabled(): Boolean =
+      AdvancedSettings.getBoolean("vcs.annotations.preload") && !PowerSaveMode.isEnabled()
   }
 }
