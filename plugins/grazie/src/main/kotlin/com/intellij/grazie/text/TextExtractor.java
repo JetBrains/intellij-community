@@ -115,7 +115,7 @@ public abstract class TextExtractor {
   }
 
   private static boolean isAtFileStart(TextContent content) {
-    PsiFile file = content.getCommonParent().getContainingFile();
+    PsiFile file = content.getContainingFile();
     int textStart = content.textOffsetToFile(0);
     return file.getViewProvider().getContents().subSequence(0, textStart).chars().noneMatch(Character::isLetterOrDigit);
   }
