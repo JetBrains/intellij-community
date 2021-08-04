@@ -26,7 +26,7 @@ abstract class AbstractFirHighlightingTest : AbstractHighlightingTest() {
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { project.invalidateCaches(file as? KtFile) },
+            ThrowableRunnable { project.invalidateCaches() },
             ThrowableRunnable { super.tearDown() }
         )
     }

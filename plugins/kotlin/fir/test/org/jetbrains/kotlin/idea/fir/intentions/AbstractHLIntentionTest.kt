@@ -33,8 +33,8 @@ abstract class AbstractHLIntentionTest : AbstractIntentionTest() {
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { project.invalidateCaches(file as? KtFile) },
-            ThrowableRunnable { super.tearDown() }
+          ThrowableRunnable { project.invalidateCaches() },
+          ThrowableRunnable { super.tearDown() }
         )
     }
 
