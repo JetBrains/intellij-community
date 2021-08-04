@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.idea.caches.project
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
@@ -32,7 +31,7 @@ interface KotlinStdlibCache {
             if (IdeBuiltInsLoadingState.isFromClassLoader) {
                 Disabled
             } else {
-                ServiceManager.getService(project, KotlinStdlibCache::class.java)
+                project.getService(KotlinStdlibCache::class.java)
                     ?: error("Failed to load service ${KotlinStdlibCache::class.java.name}")
             }
 
