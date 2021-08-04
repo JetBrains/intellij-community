@@ -243,5 +243,5 @@ public interface ToolWindow extends BusyObject {
     return ActionCallback.DONE;
   }
 
-  void setTitleActions(@NotNull List<AnAction> actions);
+  void setTitleActions(@NotNull List<? extends AnAction> actions);
 }
