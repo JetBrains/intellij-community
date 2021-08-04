@@ -6,9 +6,9 @@ import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.isMainFunction
 import org.jetbrains.kotlin.idea.platform.tooling
 import org.jetbrains.kotlin.idea.project.platform
+import org.jetbrains.kotlin.idea.run.KotlinMainFunctionLocatingService
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.isCommon
@@ -20,13 +20,12 @@ class KotlinRunLineMarkerContributor : RunLineMarkerContributor() {
 
         if (function.nameIdentifier != element) return null
 
-        if (function.isMainFunction()) {
-            val platform = function.containingKtFile.module?.platform ?: return null
-            if (platform.isCommon() || !platform.idePlatformKind.tooling.acceptsAsEntryPoint(function)) return null
+        val mainLocatingService = KotlinMainFunctionLocatingService.getInstance()
+        if (!mainLocatingService.isMain(function)) return null
 
-            return Info(AllIcons.RunConfigurations.TestState.Run, null, *ExecutorAction.getActions(Int.MAX_VALUE))
-        }
+        val platform = function.containingKtFile.module?.platform ?: return null
+        if (platform.isCommon() || !platform.idePlatformKind.tooling.acceptsAsEntryPoint(function)) return null
 
-        return null
+        return Info(AllIcons.RunConfigurations.TestState.Run, null, *ExecutorAction.getActions(Int.MAX_VALUE))
     }
 }
