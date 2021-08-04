@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.psi.*
  * A service for detecting entry points (like "main" function) in classes and objects.
  *
  * Abstracts away the usage of the different Kotlin frontends (detecting "main" requires resolve).
+ *
+ * See also [org.jetbrains.kotlin.idea.MainFunctionDetector] for the FE10-specific version of this service.
  */
 interface KotlinMainFunctionLocatingService {
     fun isMain(function: KtNamedFunction): Boolean
