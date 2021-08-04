@@ -836,7 +836,16 @@ public class EquivalenceChecker {
     }
     final PsiTypeElement typeElement1 = instanceOfExpression1.getCheckType();
     final PsiTypeElement typeElement2 = instanceOfExpression2.getCheckType();
-    return typeElementsAreEquivalent(typeElement1, typeElement2);
+    if (!typeElementsAreEquivalent(typeElement1, typeElement2).isExactMatch()) {
+      return EXACT_MISMATCH;
+    }
+    PsiPatternVariable patternVariable1 = JavaPsiPatternUtil.getPatternVariable(instanceOfExpression1.getPattern());
+    PsiPatternVariable patternVariable2 = JavaPsiPatternUtil.getPatternVariable(instanceOfExpression2.getPattern());
+    if (patternVariable1 == null || patternVariable2 == null) {
+      return Match.exact(patternVariable1 == patternVariable2);
+    }
+    markDeclarationsAsEquivalent(patternVariable1, patternVariable2);
+    return EXACT_MATCH;
   }
 
   protected Match typeElementsAreEquivalent(PsiTypeElement typeElement1, PsiTypeElement typeElement2) {
