@@ -25,13 +25,13 @@ public class CaseSensitivityDetectionTest {
   public void windowsFSRootsMustHaveDefaultSensitivity() {
     assumeWindows();
 
-    String systemDrive = System.getenv("SystemDrive");  // typically "C:"
+    String systemDrive = System.getenv("SystemDrive");  // typically, "C:"
     assertNotNull(systemDrive);
     File root = new File(systemDrive + '\\');
     CaseSensitivity rootCs = FileSystemUtil.readParentCaseSensitivity(root);
     assertEquals(systemDrive, CaseSensitivity.INSENSITIVE, rootCs);
 
-    String systemRoot = System.getenv("SystemRoot");  // typically "C:\Windows"
+    String systemRoot = System.getenv("SystemRoot");  // typically, "C:\Windows"
     assertNotNull(systemRoot);
     File child = new File(systemRoot);
     assertEquals(root, child.getParentFile());
@@ -134,17 +134,17 @@ public class CaseSensitivityDetectionTest {
 
   @Test
   public void caseSensitivityNativeWrappersMustWorkAtLeastInSimpleCases() {
-    FileAttributes.CaseSensitivity defaultCS = SystemInfo.isFileSystemCaseSensitive ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
+    CaseSensitivity defaultCS = SystemInfo.isFileSystemCaseSensitive ? CaseSensitivity.SENSITIVE : CaseSensitivity.INSENSITIVE;
     assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(tempDir.newFile("dir0/child.txt")));
-    assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(tempDir.newFile("dir0/0"))); // there's toggleable "child.txt" in this dir already
+    assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(tempDir.newFile("dir0/0"))); // there's a toggleable "child.txt" in this dir already
     assertEquals(defaultCS, FileSystemUtil.readCaseSensitivityByNativeAPI(tempDir.newFile("dir1/0")));
   }
 
   @Test
   public void caseSensitivityMustBeDeducibleByPureJavaIOAtLeastInSimpleCases() {
-    FileAttributes.CaseSensitivity defaultCS = SystemInfo.isFileSystemCaseSensitive ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
+    CaseSensitivity defaultCS = SystemInfo.isFileSystemCaseSensitive ? CaseSensitivity.SENSITIVE : CaseSensitivity.INSENSITIVE;
     assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaIO(tempDir.newFile("dir0/child.txt")));
-    assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaIO(tempDir.newFile("dir0/0"))); // there's toggleable "child.txt" in this dir already
+    assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaIO(tempDir.newFile("dir0/0"))); // there's a toggleable "child.txt" in this dir already
     assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaIO(tempDir.newDirectory("dir0/Ubuntu")));
     //assertEquals(defaultCS, FileSystemUtil.readParentCaseSensitivityByJavaIO(tempDir.newFile("dir1/0")));
   }
