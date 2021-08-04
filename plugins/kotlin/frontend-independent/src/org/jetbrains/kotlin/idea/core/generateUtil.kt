@@ -194,6 +194,16 @@ private fun removeAfterOffset(offset: Int, whiteSpace: PsiWhiteSpace): PsiElemen
     return whiteSpace
 }
 
+@Deprecated(
+    "provided for BWC",
+    replaceWith = ReplaceWith("GenerateUtilKt.insertMembersAfter"),
+    level = DeprecationLevel.ERROR
+)
+@JvmName(name = "insertMember")
+fun <T : KtDeclaration> _insertMember(editor: Editor?, classOrObject: KtClassOrObject, declaration: T, anchor: PsiElement? = null): T {
+    return insertMembersAfter(editor, classOrObject, listOf(declaration), anchor).single().element as T
+}
+
 fun <T : KtDeclaration> insertMembersAfter(
     editor: Editor?,
     classOrObject: KtClassOrObject,
