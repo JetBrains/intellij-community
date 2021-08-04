@@ -152,9 +152,7 @@ object DynamicPlugins {
       .toList()
 
     val operationText = if (load) "load" else "unload"
-    val message = descriptors.joinToString(prefix = "Plugins to $operationText: [", postfix = "]") {
-      it.pluginId.idString
-    }
+    val message = descriptors.joinToString(prefix = "Plugins to $operationText: [", postfix = "]")
     LOG.info(message)
 
     if (!descriptors.all { allowLoadUnloadWithoutRestart(it, context = descriptors) }) {
