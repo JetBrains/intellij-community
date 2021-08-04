@@ -7,7 +7,6 @@ import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.*;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -198,25 +197,19 @@ public final class JavaParametersUtil {
                                                  boolean includeTests) {
     Project project = module.getProject();
 
+    Set<PsiJavaModule> explicitModules = new LinkedHashSet<>();
 
-    Set<PsiJavaModule> forModulePath = new HashSet<>();
-    ReadAction.nonBlocking(() -> {
-      Set<PsiJavaModule> explicitModules = new LinkedHashSet<>();
+    explicitModules.add(module);
+    collectExplicitlyAddedModules(project, javaParameters, explicitModules);
 
-      explicitModules.add(module);
-      collectExplicitlyAddedModules(project, javaParameters, explicitModules);
+    Set<PsiJavaModule> forModulePath = new HashSet<>(explicitModules);
+    for (PsiJavaModule explicitModule : explicitModules) {
+      forModulePath.addAll(JavaModuleGraphUtil.getAllDependencies(explicitModule));
+    }
 
-      forModulePath.addAll(explicitModules);
-      for (PsiJavaModule explicitModule : explicitModules) {
-        forModulePath.addAll(JavaModuleGraphUtil.getAllDependencies(explicitModule));
-      }
-
-      if (!includeTests) {
-        putProvidersOnModulePath(project, forModulePath, forModulePath);
-      }
-    })
-      .inSmartMode(project)
-      .executeSynchronously();
+    if (!includeTests) {
+      putProvidersOnModulePath(project, forModulePath, forModulePath);
+    }
 
     JarFileSystem jarFS = JarFileSystem.getInstance();
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
@@ -225,13 +218,13 @@ public final class JavaParametersUtil {
     PathsList modulePath = javaParameters.getModulePath();
 
     forModulePath.stream()
-      .map(javaModule -> ReadAction.compute(() -> PsiJavaModule.JAVA_BASE.equals(javaModule.getName()) 
-                                                  ? null 
-                                                  : getClasspathEntry(javaModule, fileIndex, jarFS)))
+      .map(javaModule -> PsiJavaModule.JAVA_BASE.equals(javaModule.getName()) 
+                         ? null 
+                         : getClasspathEntry(javaModule, fileIndex, jarFS))
       .filter(Objects::nonNull)
       .forEach(file -> putOnModulePath(modulePath, classPath, file));
 
-    VirtualFile productionOutput = ReadAction.compute(() -> getClasspathEntry(module, fileIndex, jarFS));
+    VirtualFile productionOutput = getClasspathEntry(module, fileIndex, jarFS);
     if (productionOutput != null) {
       putOnModulePath(modulePath, classPath, productionOutput);
     }
