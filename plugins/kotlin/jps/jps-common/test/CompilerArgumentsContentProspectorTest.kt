@@ -112,7 +112,6 @@ class CompilerArgumentsContentProspectorTest {
         private val commonCompilerArgumentsArrayProperties = listOf(
             CommonCompilerArguments::pluginOptions,
             CommonCompilerArguments::pluginClasspaths,
-            CommonCompilerArguments::experimental,
             CommonCompilerArguments::useExperimental,
             CommonCompilerArguments::optIn,
             CommonCompilerArguments::commonSources,
