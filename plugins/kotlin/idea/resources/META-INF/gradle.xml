@@ -36,22 +36,24 @@
     <extensions defaultExtensionNs="com.intellij">
         <projectTaskRunner implementation="org.jetbrains.kotlin.idea.gradle.execution.KotlinMPPGradleProjectTaskRunner"
                            id="gradle.mpp" order="first, before gradle"/>
-        <externalProjectDataService implementation="org.jetbrains.kotlin.idea.configuration.KotlinSourceSetDataService"/>
-        <externalProjectDataService implementation="org.jetbrains.kotlin.idea.configuration.KotlinGradleProjectSettingsDataService"/>
+      <externalProjectDataService implementation="org.jetbrains.kotlin.idea.configuration.KotlinSourceSetDataService"/>
+      <externalProjectDataService implementation="org.jetbrains.kotlin.idea.configuration.KotlinGradleProjectSettingsDataService"/>
 
-        <registryKey key="kotlin.mpp.tests.force.gradle"
-                     description="Run multi-platform tests with Gradle runner even if the platform runner is used by default.
+      <registryKey key="kotlin.mpp.tests.force.gradle"
+                   description="Run multi-platform tests with Gradle runner even if the platform runner is used by default.
                      This setting currently affects only HMPP projects. You may need to delete existing test configurations for the change to take place."
-                     defaultValue="true"
-                     restartRequired="false"/>
+                   defaultValue="true"
+                   restartRequired="false"/>
 
-        <registryKey key="kotlin.gradle.scripts.scriptConfigurationsNeedToBeUpdatedFloatingNotification"
-                     description="Show floating notification in the editor when script configuration need to be updated"
-                     defaultValue="true"
-                     restartRequired="false"/>
+      <registryKey key="kotlin.gradle.scripts.scriptConfigurationsNeedToBeUpdatedFloatingNotification"
+                   description="Show floating notification in the editor when script configuration need to be updated"
+                   defaultValue="true"
+                   restartRequired="false"/>
 
-        <projectService serviceImplementation="org.jetbrains.kotlin.idea.scripting.gradle.legacy.GradleStandaloneScriptActionsManager"/>
-        <projectService serviceImplementation="org.jetbrains.kotlin.idea.scripting.gradle.settings.StandaloneScriptsStorage"/>
+      <projectService serviceImplementation="org.jetbrains.kotlin.idea.scripting.gradle.legacy.GradleStandaloneScriptActionsManager"/>
+      <projectService serviceImplementation="org.jetbrains.kotlin.idea.scripting.gradle.settings.StandaloneScriptsStorage"/>
+
+      <newProjectWizard.buildSystem.kotlin implementation="org.jetbrains.kotlin.tools.projectWizard.GradleKotlinBuildSystemType"/>
     </extensions>
 
     <actions>
