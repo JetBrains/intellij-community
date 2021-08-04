@@ -21,4 +21,8 @@ public class RedundantMethodOverrideInspection17Test extends LightJavaInspection
   public void testSwitch() {
     doTest();
   }
+
+  public void testInstanceOf() {
+    doTest();
+  }
 }
