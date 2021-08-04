@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
