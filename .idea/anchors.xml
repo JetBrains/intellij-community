@@ -14,6 +14,8 @@
         <entry key="kotlinc.kotlinx-serialization-compiler-plugin" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.noarg-compiler-plugin" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.sam-with-receiver-compiler-plugin" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.high-level-api-fir" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.high-level-api" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-jps-common" value="kotlin.util.compiler-classpath" />
       </map>
     </option>
