@@ -681,10 +681,12 @@ public final class FileSystemUtil {
 
       CoreFoundation.CFTypeRef url = cf.CFURLCreateFromFileSystemRepresentation(null, path, path.length(), true);
       try {
-        PointerByReference resultPtr = new PointerByReference();
+        PointerByReference resultPtr = new PointerByReference(), errorPtr = new PointerByReference();
         Pointer result;
-        if (!cf.CFURLCopyResourcePropertyForKey(url, CoreFoundation.kCFURLVolumeSupportsCaseSensitiveNamesKey, resultPtr, null)) {
-          LOG.warn("CFURLCopyResourcePropertyForKey(" + path + "): error");
+        if (!cf.CFURLCopyResourcePropertyForKey(url, CoreFoundation.kCFURLVolumeSupportsCaseSensitiveNamesKey, resultPtr, errorPtr)) {
+          Pointer error = errorPtr.getValue();
+          String description = error != null ? cf.CFErrorGetDomain(error).stringValue() + '/' + cf.CFErrorGetCode(error) : "error";
+          LOG.warn("CFURLCopyResourcePropertyForKey(" + path + "): " + description);
         }
         else if ((result = resultPtr.getValue()) == null) {
           LOG.info("CFURLCopyResourcePropertyForKey(" + path + "): property not available");
@@ -711,7 +713,10 @@ public final class FileSystemUtil {
     CFStringRef kCFURLVolumeSupportsCaseSensitiveNamesKey = CFStringRef.createCFString("NSURLVolumeSupportsCaseSensitiveNamesKey");
 
     CFTypeRef CFURLCreateFromFileSystemRepresentation(CFAllocatorRef allocator, String buffer, long bufLen, boolean isDirectory);
-    boolean CFURLCopyResourcePropertyForKey(CFTypeRef url, CFStringRef key, PointerByReference propertyValueTypeRefPtr, Pointer error);
+    boolean CFURLCopyResourcePropertyForKey(CFTypeRef url, CFStringRef key, PointerByReference propertyValueTypeRefPtr, PointerByReference error);
+
+    CFStringRef CFErrorGetDomain(Pointer errorRef);
+    CFIndex CFErrorGetCode(Pointer errorRef);
   }
   //</editor-fold>
 
