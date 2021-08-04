@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard
 
-import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.LabelAndComponent
-import com.intellij.ide.NewProjectWizard
+import com.intellij.ide.*
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.BuildSystemWithSettings
 import com.intellij.openapi.observable.properties.GraphProperty
@@ -23,7 +21,7 @@ class KotlinNewProjectWizard : NewProjectWizard<KotlinSettings> {
   override val language: String = "Kotlin"
   override var settingsFactory = { KotlinSettings() }
 
-  override fun settingsList(settings: KotlinSettings): List<LabelAndComponent> {
+  override fun settingsList(settings: KotlinSettings): List<SettingsComponent> {
       var component: JComponent = JBLabel()
       panel {
           row {
@@ -45,7 +43,7 @@ class KotlinNewProjectWizard : NewProjectWizard<KotlinSettings> {
       return listOf(
           LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.build.system")), component),
           LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.jdk")), sdkCombo)
-      ).plus(settings.buildSystems.value.map { LabelAndComponent(component = it.advancedSettings()) })
+      ).plus(settings.buildSystems.value.map { JustComponent(it.advancedSettings()) })
   }
 
   override fun setupProject(project: Project, settings: KotlinSettings, context: WizardContext) {

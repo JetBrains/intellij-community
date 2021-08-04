@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard.generators
 
-import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.LabelAndComponent
-import com.intellij.ide.NewProjectWizard
+import com.intellij.ide.*
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.BuildSystemWithSettings
 import com.intellij.openapi.application.runWriteAction
@@ -28,7 +26,7 @@ class JavaNewProjectWizard : NewProjectWizard<JavaSettings> {
   override val language: String = "Java"
   override var settingsFactory = { JavaSettings() }
 
-  override fun settingsList(settings: JavaSettings): List<LabelAndComponent> {
+  override fun settingsList(settings: JavaSettings): List<SettingsComponent> {
     var component: JComponent = JBLabel()
     panel {
       row {
@@ -56,7 +54,7 @@ class JavaNewProjectWizard : NewProjectWizard<JavaSettings> {
     return listOf(
       LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.build.system")), component),
       LabelAndComponent(JBLabel(JavaUiBundle.message("label.project.wizard.new.project.jdk")), sdkCombo)
-    ).plus(settings.buildSystemButtons.value.map { LabelAndComponent(component = it.advancedSettings()) })
+    ).plus(settings.buildSystemButtons.value.map { JustComponent(it.advancedSettings()) })
   }
 
   override fun setupProject(project: Project, settings: JavaSettings, context: WizardContext) {
