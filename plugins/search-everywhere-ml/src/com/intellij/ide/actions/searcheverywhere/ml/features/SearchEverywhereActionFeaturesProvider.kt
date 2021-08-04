@@ -33,7 +33,8 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementF
   override fun getElementFeatures(element: Any,
                                   currentTime: Long,
                                   queryLength: Int,
-                                  elementPriority: Int): Map<String, Any> {
+                                  elementPriority: Int,
+                                  cache: Any?): Map<String, Any> {
     if (element !is GotoActionModel.MatchedValue) {
       // not an action/option
       return emptyMap()

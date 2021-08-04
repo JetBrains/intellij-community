@@ -7,22 +7,17 @@ import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereEle
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModel
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModelProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
-import com.intellij.openapi.project.Project
 
 internal class SearchEverywhereMlSearchState(
   val sessionStartTime: Long, val searchStartTime: Long,
   val searchIndex: Int, val searchStartReason: SearchRestartReason, val tabId: String,
   val keysTyped: Int, val backspacesTyped: Int, val queryLength: Int,
-  project: Project?
+  private val providersCaches: Map<Class<out SearchEverywhereElementFeaturesProvider>, Any>
 ) {
   private val cachedElementsInfo: MutableMap<Int, SearchEverywhereMLItemInfo> = hashMapOf()
   private val cachedMLWeight: MutableMap<Int, Double> = hashMapOf()
 
   private val model: SearchEverywhereActionsRankingModel = SearchEverywhereActionsRankingModel(SearchEverywhereActionsRankingModelProvider())
-
-  init {
-    SearchEverywhereElementFeaturesProvider.getFeatureProviders().forEach { it.init(project) }
-  }
 
   @Synchronized
   fun getElementFeatures(elementId: Int,
@@ -33,7 +28,8 @@ internal class SearchEverywhereMlSearchState(
     return cachedElementsInfo.computeIfAbsent(elementId) {
       val features = mutableMapOf<String, Any>()
       SearchEverywhereElementFeaturesProvider.getFeatureProviders().forEach { provider ->
-        features.putAll(provider.getElementFeatures(element, sessionStartTime, queryLength, priority))
+        val cache = providersCaches[provider::class.java]
+        features.putAll(provider.getElementFeatures(element, sessionStartTime, queryLength, priority, cache))
       }
 
       return@computeIfAbsent SearchEverywhereMLItemInfo(elementId, contributor.searchProviderId, features)

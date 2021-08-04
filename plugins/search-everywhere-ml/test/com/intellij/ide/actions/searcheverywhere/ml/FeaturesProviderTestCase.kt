@@ -14,11 +14,6 @@ internal abstract class FeaturesProviderTestCase<T : SearchEverywhereElementFeat
     SearchEverywhereElementFeaturesProvider.EP_NAME.findExtensionOrFail(providerClass)
   }
 
-  override fun setUp() {
-    super.setUp()
-    provider.init(project)
-  }
-
   override fun getTestDataPath(): String {
     return PluginPathManager.getPluginHomePath("search-everywhere-ml").plus("/testData")
   }
@@ -54,9 +49,6 @@ internal abstract class FeaturesProviderTestCase<T : SearchEverywhereElementFeat
    *   - [AssertionSpecifier.withCurrentTime]
    *   - [AssertionSpecifier.withQueryLength]
    *   - [AssertionSpecifier.withPriority]
-   *
-   * Additionally, if the feature provider needs to be reinitialized, for instance, to obtain
-   * some copy of data as a cache, use [AssertionSpecifier.withProviderReloaded].
    */
   inner class AssertionElementSelector(private val feature: String?) {
     fun <E : Any> ofElement(element: E) = AssertionSpecifier(element)
@@ -66,6 +58,7 @@ internal abstract class FeaturesProviderTestCase<T : SearchEverywhereElementFeat
       private var currentTime = 0L
       private var queryLength = 0
       private var elementPriority = 0
+      private val cache = provider.getDataToCache(project)
 
       /**
        * Specifies the current time / session start time that will be passed when obtaining the features,
@@ -95,14 +88,6 @@ internal abstract class FeaturesProviderTestCase<T : SearchEverywhereElementFeat
       }
 
       /**
-       * Reloads the feature provider
-       */
-      fun withProviderReloaded(): AssertionSpecifier<E> {
-        provider.init(project)
-        return this
-      }
-
-      /**
        * Checks if the specified [feature] of the element has the [expectedValue]
        */
       fun isEqualTo(expectedValue: Any?) = assert(expectedValue)
@@ -115,7 +100,7 @@ internal abstract class FeaturesProviderTestCase<T : SearchEverywhereElementFeat
       fun changes(from: Any?, to: Any?) = ChangeOperation(from, to)
 
       private fun assert(expectedValue: Any?) {
-        features = provider.getElementFeatures(element, currentTime, queryLength, elementPriority)
+        features = provider.getElementFeatures(element, currentTime, queryLength, elementPriority, cache)
 
         if (features.isEmpty()) {
           fail("The provider ${providerClass.simpleName} has returned empty map of features. Maybe element type is incorrect?")

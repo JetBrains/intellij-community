@@ -16,16 +16,17 @@ abstract class SearchEverywhereElementFeaturesProvider {
   }
 
   /**
-   * This method will be executed when the Search Everywhere session starts.
+   * Returns data to be cached in the search session
    */
-  open fun init(project: Project?) {
-
+  open fun getDataToCache(project: Project?): Any? {
+    return null
   }
 
   abstract fun getElementFeatures(element: Any,
                                   currentTime: Long,
                                   queryLength: Int,
-                                  elementPriority: Int): Map<String, Any>
+                                  elementPriority: Int,
+                                  cache: Any?): Map<String, Any>
 
   protected fun withUpperBound(value: Int): Int {
     if (value > 100) return 101

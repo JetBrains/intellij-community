@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFileSystemItem
@@ -13,6 +14,7 @@ import java.util.concurrent.atomic.AtomicReference
 internal class SearchEverywhereMLSearchSession(project: Project?, private val sessionId: Int) {
   private val itemIdProvider = SearchEverywhereMlItemIdProvider()
   private val sessionStartTime: Long = System.currentTimeMillis()
+  private val providersCaches: Map<Class<out SearchEverywhereElementFeaturesProvider>, Any>
 
   // context features are calculated once per Search Everywhere session
   private val cachedContextInfo: SearchEverywhereMLContextInfo = SearchEverywhereMLContextInfo(project)
@@ -21,6 +23,13 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   // element features & ML score are also re-calculated on each typing because some of them might change, e.g. matching degree
   private val currentSearchState: AtomicReference<SearchEverywhereMlSearchState?> = AtomicReference<SearchEverywhereMlSearchState?>()
   private val logger: SearchEverywhereMLStatisticsCollector = SearchEverywhereMLStatisticsCollector()
+
+  init {
+    providersCaches = SearchEverywhereElementFeaturesProvider.getFeatureProviders()
+      .associate { it::class.java to it.getDataToCache(project) }
+      .mapNotNull { it.value?.let { value -> it.key to value }}
+      .toMap()
+  }
 
   fun onSearchRestart(project: Project?, previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
                       reason: SearchRestartReason,
@@ -33,7 +42,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
       val searchReason = if (prevState == null) SearchRestartReason.SEARCH_STARTED else reason
       val nextSearchIndex = (prevState?.searchIndex ?: 0) + 1
       SearchEverywhereMlSearchState(sessionStartTime, startTime, nextSearchIndex, searchReason, tabId, keysTyped, backspacesTyped,
-                                    queryLength, project)
+                                    queryLength, providersCaches)
     }
 
     if (prevState != null && isMLSupportedTab(tabId)) {

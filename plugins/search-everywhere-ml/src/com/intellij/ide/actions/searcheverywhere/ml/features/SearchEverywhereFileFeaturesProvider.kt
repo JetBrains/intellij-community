@@ -39,14 +39,12 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     internal const val WAS_MODIFIED_IN_LAST_MONTH_DATA_KEY = "wasModifiedInLastMonth"
   }
 
-  private lateinit var cachedFileTypeStats: Map<String, FileTypeUsageSummary>
-
-  override fun init(project: Project?) {
+  override fun getDataToCache(project: Project?): Any? {
     if (project == null) {
-      return
+      return null
     }
 
-    cachedFileTypeStats = deepCopyFileTypeStats(project)
+    return deepCopyFileTypeStats(project)
   }
 
   /**
@@ -58,7 +56,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
   private fun deepCopyFileTypeStats(project: Project): Map<String, FileTypeUsageSummary> {
     val service = project.service<FileTypeUsageSummaryProvider>()
     val statsCopy = service.getFileTypeStats().mapValues {
-     FileTypeUsageSummary().apply { lastUsed = it.value.lastUsed; usageCount = it.value.usageCount }
+      FileTypeUsageSummary(it.value.usageCount, it.value.lastUsed)
     }
 
     return statsCopy
@@ -67,17 +65,23 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
   override fun getElementFeatures(element: Any,
                                   currentTime: Long,
                                   queryLength: Int,
-                                  elementPriority: Int): Map<String, Any> {
+                                  elementPriority: Int,
+                                  cache: Any?): Map<String, Any> {
     val item = when (element) {
       is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> (element.item as PsiFileSystemItem)
       is PsiFileSystemItem -> element
       else -> return emptyMap()
     }
 
-    return getFeatures(item, currentTime, elementPriority)
+    @Suppress("UNCHECKED_CAST")
+    val fileTypeStats = cache as? Map<String, FileTypeUsageSummary>
+    return getFeatures(item, currentTime, elementPriority, fileTypeStats)
   }
 
-  private fun getFeatures(item: PsiFileSystemItem, currentTime: Long, elementPriority: Int): Map<String, Any> {
+  private fun getFeatures(item: PsiFileSystemItem,
+                          currentTime: Long,
+                          elementPriority: Int,
+                          fileTypeStats: Map<String, FileTypeUsageSummary>?): Map<String, Any> {
     val data = hashMapOf<String, Any>(
       IS_FAVORITE_DATA_KEY to isFavorite(item),
       IS_DIRECTORY_DATA_KEY to item.isDirectory,
@@ -94,7 +98,10 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     data[RECENT_INDEX_DATA_KEY] = getRecentFilesIndex(item)
     data[PREDICTION_SCORE_DATA_KEY] = getPredictionScore(item)
     data.putAll(getModificationTimeStats(item, currentTime))
-    data.putAll(getFileTypeStats(item, currentTime))
+
+    if (fileTypeStats != null) {
+      data.putAll(getFileTypeStats(item, currentTime, fileTypeStats))
+    }
 
     return data
   }
@@ -134,9 +141,11 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
     )
   }
 
-  private fun getFileTypeStats(item: PsiFileSystemItem, currentTime: Long): Map<String, Any> {
-    val totalUsage = cachedFileTypeStats.values.sumBy { it.usageCount }
-    val stats = cachedFileTypeStats[item.virtualFile.fileType.name]
+  private fun getFileTypeStats(item: PsiFileSystemItem,
+                               currentTime: Long,
+                               fileTypeStats: Map<String, FileTypeUsageSummary>): Map<String, Any> {
+    val totalUsage = fileTypeStats.values.sumBy { it.usageCount }
+    val stats = fileTypeStats[item.virtualFile.fileType.name]
 
     val timeSinceLastUsage = if (stats == null) Long.MAX_VALUE else currentTime - stats.lastUsed
     val usageRatio = if (stats == null) 0.0 else roundDouble(stats.usageCount.toDouble() / totalUsage)
