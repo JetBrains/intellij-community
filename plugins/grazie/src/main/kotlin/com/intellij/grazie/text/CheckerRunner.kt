@@ -121,7 +121,7 @@ internal class CheckerRunner(val text: TextContent) {
     sentences.find { problem.highlightRange.intersects(it.range.first, it.range.last + 1) }?.token
 
   fun toFixes(problem: TextProblem): Array<LocalQuickFix> {
-    val file = text.commonParent.containingFile
+    val file = text.containingFile
     val result = arrayListOf<LocalQuickFix>()
     val spm = SmartPointerManager.getInstance(file.project)
     val underline = fileHighlightRanges(problem).map { spm.createSmartPsiFileRangePointer(file, it) }

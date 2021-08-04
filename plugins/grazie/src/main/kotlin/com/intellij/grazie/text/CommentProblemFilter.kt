@@ -15,7 +15,7 @@ internal class CommentProblemFilter : ProblemFilter() {
     val text = problem.text
     val domain = text.domain
     if (domain == COMMENTS || domain == DOCUMENTATION) {
-      if (isTodoComment(text.commonParent.containingFile, text)) {
+      if (isTodoComment(text.containingFile, text)) {
         return true
       }
       if (problem.rule.globalId.endsWith("DOUBLE_PUNCTUATION") && (isNumberRange(problem, text) || isPathPart(problem, text))) {
