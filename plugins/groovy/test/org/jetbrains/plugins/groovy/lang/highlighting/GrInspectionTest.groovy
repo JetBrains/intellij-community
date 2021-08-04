@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
@@ -79,6 +79,18 @@ class X {
 
   public static void main() {
     new <warning descr="'X' is deprecated">X</warning>().<warning descr="'foo' is deprecated">foo</warning>()
+  }
+}''', true, false, false, GrDeprecatedAPIUsageInspection)
+  }
+
+  void testDeprecated2() {
+    testHighlighting('''\
+class X {
+  @Deprecated
+  def X(){}
+
+  public static void main() {
+    new <warning descr="'X' is deprecated">X</warning>()
   }
 }''', true, false, false, GrDeprecatedAPIUsageInspection)
   }
