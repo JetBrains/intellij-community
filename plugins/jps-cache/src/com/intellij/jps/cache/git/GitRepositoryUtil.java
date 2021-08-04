@@ -10,7 +10,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public final class GitRepositoryUtil {
-  private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.git.GitRepositoryUtil");
+  private static final Logger LOG = Logger.getInstance(GitRepositoryUtil.class);
 
   private GitRepositoryUtil() {}
 

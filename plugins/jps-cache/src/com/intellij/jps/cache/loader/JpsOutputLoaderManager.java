@@ -50,7 +50,7 @@ import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerE
 import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.URL_ATTRIBUTE;
 
 public class JpsOutputLoaderManager implements Disposable {
-  private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.loader.JpsOutputLoaderManager");
+  private static final Logger LOG = Logger.getInstance(JpsOutputLoaderManager.class);
   private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
   private static final double SEGMENT_SIZE = 0.33;
   private final AtomicBoolean hasRunningTask;

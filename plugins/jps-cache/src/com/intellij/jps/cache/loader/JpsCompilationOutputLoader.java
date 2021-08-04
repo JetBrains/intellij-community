@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 import static com.intellij.jps.cache.JpsCachesPluginUtil.EXECUTOR_SERVICE;
 
 class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResult>> {
-  private static final Logger LOG = Logger.getInstance("com.intellij.jps.loader.JpsCompilationOutputLoader");
+  private static final Logger LOG = Logger.getInstance(JpsCompilationOutputLoader.class);
   private static final String RESOURCES_PRODUCTION = "resources-production";
   private static final String JAVA_PRODUCTION = "java-production";
   private static final String RESOURCES_TEST = "resources-test";

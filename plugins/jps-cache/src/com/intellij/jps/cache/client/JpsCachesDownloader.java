@@ -27,7 +27,7 @@ import static com.intellij.jps.cache.JpsCachesPluginUtil.EXECUTOR_SERVICE;
 import static com.intellij.jps.cache.statistics.JpsCacheUsagesCollector.DOWNLOAD_SIZE_EVENT_ID;
 
 class JpsCachesDownloader {
-  private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.JpsOutputsDownloader");
+  private static final Logger LOG = Logger.getInstance(JpsCachesDownloader.class);
   private static final byte MAX_RETRY_COUNT = 3;
   private static final String CDN_CACHE_HEADER = "X-Cache";
   private int hitsCount = 0;
