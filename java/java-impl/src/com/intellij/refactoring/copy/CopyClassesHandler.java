@@ -2,6 +2,7 @@
 package com.intellij.refactoring.copy;
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditorHelper;
@@ -12,6 +13,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
@@ -19,7 +21,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,7 +37,7 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClas
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ThrowableConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -337,16 +338,6 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     }
   }
 
-  private static <T, E extends Throwable> T executeWithUpdatingAddedFilesDisabled(PsiDirectoryImpl directory,
-                                                                                  ThrowableComputable<T, E> computable) throws E {
-    Ref<T> ref = new Ref<>();
-    directory.executeWithUpdatingAddedFilesDisabled(() ->{
-      T result = computable.compute();
-      ref.set(result);
-    });
-    return ref.get();
-  }
-
   private static List<PsiFile> checkExistingFiles(@NotNull Collection<PsiFile> files, @NotNull PsiDirectory directory,
                                                   @Nullable Map<PsiFile, String> relativePaths, @Nullable String className){
     SkipOverwriteChoice choice = SkipOverwriteChoice.OVERWRITE;
@@ -370,14 +361,14 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
   }
 
   private static <E extends IncorrectOperationException> void runWriteAction(@NotNull Project project,
-                                                                             @NlsContexts.ProgressTitle String title,
-                                                                             @NotNull ThrowableRunnable<E> action) throws E {
+                                                                             @NotNull @NlsContexts.ProgressTitle String title,
+                                                                             @NotNull ThrowableConsumer<@Nullable ProgressIndicator, E> consumer) throws E {
     if (Registry.is("run.refactorings.under.progress")){
       ApplicationEx application = ApplicationManagerEx.getApplicationEx();
       AtomicReference<Throwable> thrown = new AtomicReference<>();
-      application.runWriteActionWithNonCancellableProgressInDispatchThread(title, project, null, progress -> {
+      application.runWriteActionWithCancellableProgressInDispatchThread(title, project, null, progress -> {
         try {
-          action.run();
+          consumer.consume(progress);
         }
         catch (Throwable e) {
           thrown.set(e);
@@ -391,7 +382,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       }
     }
     else {
-      WriteAction.run(action);
+      WriteAction.run(() -> consumer.consume(null));
     }
   }
 
@@ -404,12 +395,20 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     final List<PsiFile> createdFiles = new ArrayList<>(fileToClasses.size());
     final List<PsiFile> filesToProcess = checkExistingFiles(fileToClasses.keySet(), targetDirectory, fileToRelativePath, copyClassName);
 
-    runWriteAction(project, RefactoringBundle.message("command.name.copy"), () -> {
-      for (final PsiFile psiFile : filesToProcess) {
+    runWriteAction(project, RefactoringBundle.message("command.name.copy"), progress -> {
+      for (int i = 0; i < filesToProcess.size(); i++) {
+        final PsiFile psiFile = filesToProcess.get(i);
+        if (progress != null) {
+          progress.setIndeterminate(false);
+          progress.setFraction((float)i/filesToProcess.size());
+          progress.setText2(InspectionsBundle.message("processing.progress.text", psiFile.getName()));
+        }
         final PsiClass[] sources = fileToClasses.get(psiFile);
         final String relativePath = fileToRelativePath != null ? fileToRelativePath.get(psiFile) : null;
         final PsiDirectoryImpl directory = (PsiDirectoryImpl)getOrCreateRelativeDirectory(targetDirectory, relativePath);
-        final PsiFile createdFile = executeWithUpdatingAddedFilesDisabled(directory, () -> copy(directory, psiFile, copyClassName));
+        Ref<PsiFile> createdFileReference = new Ref<>();
+        directory.executeWithUpdatingAddedFilesDisabled(() -> createdFileReference.set(copy(directory, psiFile, copyClassName)));
+        final PsiFile createdFile = createdFileReference.get();
         if (createdFile == null) continue;
         createdFiles.add(createdFile);
 
@@ -444,27 +443,32 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     DumbService.getInstance(project).completeJustSubmittedTasks();
     CopyFilesOrDirectoriesHandler.updateAddedFiles(createdFiles);
 
-    runWriteAction(project, RefactoringBundle.message("copy.update.references"), () -> {
+    runWriteAction(project, RefactoringBundle.message("copy.update.references"), progress -> {
       final Set<PsiElement> rebindExpressions = new HashSet<>();
-      for (PsiElement element : oldToNewMap.values()) {
-        if (element == null) {
+      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+      float numberOfProcessedClasses = 0;
+      for (PsiClass copiedClass : oldToNewMap.values()) {
+        if (copiedClass == null) {
           LOG.error(oldToNewMap.keySet());
           continue;
         }
-        decodeRefs(element, oldToNewMap, rebindExpressions);
-      }
-
-      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-      for (PsiFile psiFile : createdFiles) {
+        if (progress != null) {
+          progress.setIndeterminate(false);
+          progress.setFraction(numberOfProcessedClasses/filesToProcess.size());
+          progress.setText2(InspectionsBundle.message("processing.progress.text", copiedClass.getName()));
+          numberOfProcessedClasses++;
+        }
+        decodeRefs(copiedClass, oldToNewMap, rebindExpressions);
+        final PsiFile psiFile = copiedClass.getContainingFile();
         if (psiFile instanceof PsiJavaFile) {
           codeStyleManager.removeRedundantImports((PsiJavaFile)psiFile);
         }
-      }
-      for (PsiElement expression : rebindExpressions) {
-        //filter out invalid elements which are produced by nested elements:
-        //new expressions/type elements, like: List<List<String>>; new Foo(new Foo()), etc
-        if (expression.isValid()) {
-          codeStyleManager.shortenClassReferences(expression);
+        for (PsiElement expression : rebindExpressions) {
+          //filter out invalid elements which are produced by nested elements:
+          //new expressions/type elements, like: List<List<String>>; new Foo(new Foo()), etc
+          if (expression.isValid()) {
+            codeStyleManager.shortenClassReferences(expression);
+          }
         }
       }
     });
