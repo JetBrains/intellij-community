@@ -5,6 +5,7 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.PortableCachesLoadListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jps.cache.JpsCacheBundle;
+import com.intellij.jps.cache.JpsCacheStartupActivity;
 import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.jps.cache.git.GitCommitsIterator;
 import com.intellij.jps.cache.git.GitRepositoryUtil;
@@ -266,6 +267,10 @@ public class JpsOutputLoaderManager implements Disposable {
     }
     if (myWorkspaceConfiguration.MAKE_PROJECT_ON_SAVE) {
       LOG.warn("Project automatic build should be disabled, it can affect portable caches");
+      return false;
+    }
+    if (!JpsCacheStartupActivity.isLineEndingsConfiguredCorrectly()) {
+      LOG.warn("Git line-endings not configured correctly for the project");
       return false;
     }
     hasRunningTask.set(true);
