@@ -11,8 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public class CheckForUpdateAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    String place = e.getPlace();
-    if (ActionPlaces.WELCOME_SCREEN.equals(place)) {
+    if (ActionPlaces.WELCOME_SCREEN.equals(e.getPlace())) {
       e.getPresentation().setEnabledAndVisible(true);
     }
     else {
@@ -20,7 +19,7 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
     }
 
     if (ExternalUpdateManager.ACTUAL != null) {
-      e.getPresentation().setDescription(ActionsBundle.messagePointer("action.CheckForUpdate.description.plugins"));
+      e.getPresentation().setDescription(ActionsBundle.message("action.CheckForUpdate.description.plugins"));
     }
   }
 
