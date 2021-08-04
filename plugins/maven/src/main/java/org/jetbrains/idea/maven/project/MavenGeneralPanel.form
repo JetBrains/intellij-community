@@ -190,7 +190,7 @@
               <horizontalAlignment value="10"/>
               <horizontalTextPosition value="11"/>
               <labelFor value=""/>
-              <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.environment.use.maven.config.settings.tooltip"/>
+              <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.environment.use.maven.config.settings.hint"/>
               <toolTipText value=""/>
             </properties>
           </component>

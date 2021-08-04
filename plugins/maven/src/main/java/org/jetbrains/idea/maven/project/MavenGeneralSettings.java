@@ -30,7 +30,6 @@ import java.util.*;
 
 import static java.util.Objects.requireNonNullElse;
 import static org.jetbrains.idea.maven.config.MavenConfigSettings.*;
-import static org.jetbrains.idea.maven.execution.MavenExecutionOptions.ChecksumPolicy.NOT_SET;
 
 public class MavenGeneralSettings implements Cloneable {
   private transient Project myProject;
@@ -47,7 +46,7 @@ public class MavenGeneralSettings implements Cloneable {
   private String threads;
 
   private MavenExecutionOptions.LoggingLevel outputLevel = MavenExecutionOptions.LoggingLevel.INFO;
-  private MavenExecutionOptions.ChecksumPolicy checksumPolicy = NOT_SET;
+  MavenExecutionOptions.ChecksumPolicy checksumPolicy = MavenExecutionOptions.ChecksumPolicy.NOT_SET;
   private MavenExecutionOptions.FailureMode failureBehavior = MavenExecutionOptions.FailureMode.NOT_SET;
   private MavenExecutionOptions.PluginUpdatePolicy pluginUpdatePolicy = MavenExecutionOptions.PluginUpdatePolicy.DEFAULT;
 
@@ -477,7 +476,8 @@ public class MavenGeneralSettings implements Cloneable {
     if (config == null) return;
 
     boolean needUpdate;
-    MavenExecutionOptions.ChecksumPolicy checksumConfig = requireNonNullElse(config.getChecksumPolicy(), NOT_SET);
+    MavenExecutionOptions.ChecksumPolicy checksumConfig = requireNonNullElse(config.getChecksumPolicy(),
+                                                                             MavenExecutionOptions.ChecksumPolicy.NOT_SET);
     needUpdate = !Objects.equals(checksumConfig, checksumPolicy);
     checksumPolicy = checksumConfig;
 
@@ -491,23 +491,23 @@ public class MavenGeneralSettings implements Cloneable {
     needUpdate = needUpdate || !Objects.equals(outputLevel, outputLevelCongig);
     outputLevel = outputLevelCongig;
 
-    Boolean offlineConfig = requireNonNullElse(config.getBooleanSetting(OFFLINE), false);
+    Boolean offlineConfig = requireNonNullElse(config.hasOption(OFFLINE), false);
     needUpdate = needUpdate || !Objects.equals(workOffline, offlineConfig);
     workOffline = offlineConfig;
 
-    Boolean stackTracesConfig = requireNonNullElse(config.getBooleanSetting(ERRORS), false);
+    Boolean stackTracesConfig = requireNonNullElse(config.hasOption(ERRORS), false);
     needUpdate = needUpdate || !Objects.equals(printErrorStackTraces, stackTracesConfig);
     printErrorStackTraces = stackTracesConfig;
 
-    Boolean updateSnapshotsConfig = requireNonNullElse(config.getBooleanSetting(UPDATE_SNAPSHOTS), false);
+    Boolean updateSnapshotsConfig = requireNonNullElse(config.hasOption(UPDATE_SNAPSHOTS), false);
     needUpdate = needUpdate || !Objects.equals(alwaysUpdateSnapshots, updateSnapshotsConfig);
     alwaysUpdateSnapshots = updateSnapshotsConfig;
 
-    Boolean nonRecursiveConfig = requireNonNullElse(config.getBooleanSetting(NON_RECURSIVE), false);
+    Boolean nonRecursiveConfig = requireNonNullElse(config.hasOption(NON_RECURSIVE), false);
     needUpdate = needUpdate || !Objects.equals(nonRecursive, nonRecursiveConfig);
     nonRecursive = nonRecursiveConfig;
 
-    String threadsConfig = requireNonNullElse(config.getSetting(THREADS), StringUtils.EMPTY);
+    String threadsConfig = requireNonNullElse(config.getOptionValue(THREADS), StringUtils.EMPTY);
     needUpdate = needUpdate || !Objects.equals(threads, threadsConfig);
     threads = threadsConfig;
 

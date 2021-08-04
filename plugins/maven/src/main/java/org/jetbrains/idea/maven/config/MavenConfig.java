@@ -23,58 +23,50 @@ public class MavenConfig {
     baseDir = Objects.requireNonNull(dir);
   }
 
-  public Boolean getBooleanSetting(@NotNull MavenConfigSettings configSettings) {
-    Option option = optionMap.get(configSettings.key);
-    return option == null ? null : true;
+  public Boolean hasOption(@NotNull MavenConfigSettings configSetting) {
+    return optionMap.containsKey(configSetting.key);
   }
 
-  public static String getSetting(@Nullable MavenConfig mavenConfig,
-                                  @NotNull MavenConfigSettings configSettings) {
-    if (mavenConfig == null) return null;
-    Option option = mavenConfig.optionMap.get(configSettings.key);
-    return option == null ? null : option.getValue();
-  }
-
-  public String getSetting(@NotNull MavenConfigSettings configSettings) {
-    Option option = optionMap.get(configSettings.key);
+  public String getOptionValue(@NotNull MavenConfigSettings configSetting) {
+    Option option = optionMap.get(configSetting.key);
     return option == null ? null : option.getValue();
   }
 
   public MavenExecutionOptions.FailureMode getFailureMode() {
-    Boolean failure = getBooleanSetting(FAIL_NEVER);
+    Boolean failure = hasOption(FAIL_NEVER);
     if (BooleanUtils.isTrue(failure)) return MavenExecutionOptions.FailureMode.NEVER;
 
-    failure = getBooleanSetting(FAIL_AT_END);
+    failure = hasOption(FAIL_AT_END);
     if (BooleanUtils.isTrue(failure)) return MavenExecutionOptions.FailureMode.AT_END;
 
-    failure = getBooleanSetting(FAIL_FAST);
+    failure = hasOption(FAIL_FAST);
     if (BooleanUtils.isTrue(failure)) return MavenExecutionOptions.FailureMode.FAST;
 
     return null;
   }
 
   public MavenExecutionOptions.ChecksumPolicy getChecksumPolicy() {
-    Boolean checkSum = getBooleanSetting(CHECKSUM_WARNING_POLICY);
+    Boolean checkSum = hasOption(CHECKSUM_WARNING_POLICY);
     if (BooleanUtils.isTrue(checkSum)) return MavenExecutionOptions.ChecksumPolicy.WARN;
 
-    checkSum = getBooleanSetting(CHECKSUM_FAILURE_POLICY);
+    checkSum = hasOption(CHECKSUM_FAILURE_POLICY);
     if (BooleanUtils.isTrue(checkSum)) return MavenExecutionOptions.ChecksumPolicy.FAIL;
 
     return null;
   }
 
   public MavenExecutionOptions.LoggingLevel getOutputLevel() {
-    Boolean level = getBooleanSetting(QUIET);
+    Boolean level = hasOption(QUIET);
     if (BooleanUtils.isTrue(level)) return MavenExecutionOptions.LoggingLevel.DISABLED;
 
-    level = getBooleanSetting(DEBUG);
+    level = hasOption(DEBUG);
     if (BooleanUtils.isTrue(level)) return MavenExecutionOptions.LoggingLevel.DEBUG;
 
     return null;
   }
 
-  public String getFilePath(@NotNull MavenConfigSettings configSettings) {
-    Option option = optionMap.get(configSettings.key);
+  public String getFilePath(@NotNull MavenConfigSettings configSetting) {
+    Option option = optionMap.get(configSetting.key);
     if (option == null) return null;
 
     File file = new File(option.getValue());

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +19,6 @@ import org.jetbrains.idea.maven.execution.MavenSettingsObservable;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Arrays;
 
 public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservable {
@@ -73,9 +73,9 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
 
   private void fillUseMavenConfigGroup() {
     useMavenConfigCheckBox.addChangeListener(e -> mavenConfigWarningLabel.setVisible(useMavenConfigCheckBox.isSelected()));
-    mavenConfigWarningLabel.setIcon(AllIcons.General.BalloonWarning);
-    Font font = useMavenConfigCheckBox.getFont();
-    mavenConfigWarningLabel.setFont(new Font(font.getName(), font.getStyle(), font.getSize() - 2));
+    mavenConfigWarningLabel.setIcon(AllIcons.General.BalloonWarning12);
+    mavenConfigWarningLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+    mavenConfigWarningLabel.setVerticalTextPosition(SwingConstants.TOP);
   }
 
   public void showCheckBoxWithAdvancedSettings() {
@@ -91,7 +91,6 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
 
   protected void setData(MavenGeneralSettings data) {
     data.beginUpdate();
-
     data.setWorkOffline(checkboxWorkOffline.isSelected());
     mavenPathsForm.setData(data);
 
@@ -169,6 +168,6 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     watcher.registerComponent("checksumPolicy", checksumPolicyCombo);
     watcher.registerComponent("failPolicy", failPolicyCombo);
     watcher.registerComponent("showDialogWithAdvancedSettings", showDialogWithAdvancedSettingsCheckBox);
-    watcher.registerComponent("showDialogWithAdvancedSettings", useMavenConfigCheckBox);
+    watcher.registerComponent("useMavenConfigCheckBox", useMavenConfigCheckBox);
   }
 }

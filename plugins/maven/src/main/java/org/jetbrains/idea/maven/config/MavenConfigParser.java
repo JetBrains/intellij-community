@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.config;
 
+import com.intellij.util.ArrayUtil;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -11,6 +12,7 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,15 +34,15 @@ public class MavenConfigParser {
     }
 
     File configFile = new File(baseDir, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
-    List<Object> configArgs = new ArrayList<>();
+    List<String> configArgs = new ArrayList<>();
     try {
       if (configFile.isFile()) {
-        for (String arg : new String(Files.readAllBytes(configFile.toPath())).split("\\s+")) {
+        for (String arg : Files.readString(configFile.toPath(), Charset.defaultCharset()).split("\\s+")) {
           if (!arg.isEmpty()) {
             configArgs.add(arg);
           }
         }
-        String[] cleanArgs = CleanArgument.cleanArgs(configArgs.toArray(new String[0]));
+        String[] cleanArgs = CleanArgument.cleanArgs(ArrayUtil.toStringArray(configArgs));
         CommandLineParser parser = new GnuParser();
         CommandLine parse = parser.parse(options, cleanArgs, true);
         return new MavenConfig(Arrays.stream(parse.getOptions()).collect(Collectors.toMap(o -> o.getOpt(), Function.identity())), baseDir);
