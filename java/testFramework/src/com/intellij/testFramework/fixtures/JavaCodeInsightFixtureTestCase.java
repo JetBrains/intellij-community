@@ -35,6 +35,7 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase impl
 
   @Override
   protected void setUp() throws Exception {
+    initIndexingMode();
     super.setUp();
 
     TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());

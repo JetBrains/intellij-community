@@ -278,6 +278,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @Override
   protected void setUp() throws Exception {
+    initIndexingMode();
     super.setUp();
     getIndexingMode().setUpTest(getProject(), getTestRootDisposable());
   }

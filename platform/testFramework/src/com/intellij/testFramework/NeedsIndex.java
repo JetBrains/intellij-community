@@ -6,6 +6,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Markers for completion tests that require partial indexing.
+ * If you need to reproduce problem with a specific indexing mode,
+ * annotate test method with {@link Exact}.
+ * @see TestIndexingModeSupporter.IndexingMode
+ */
 public interface NeedsIndex {
 
     /**
@@ -46,4 +52,15 @@ public interface NeedsIndex {
     @interface ForStandardLibrary {
         String reason() default "";
     }
+
+  /**
+   * Could be used to quickly debug the test with a corresponding indexing mode
+   * @deprecated to avoid accidental commit: should be used for debug purpose only
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
+  @Deprecated
+  @interface Exact {
+    TestIndexingModeSupporter.IndexingMode value();
+  }
 }
