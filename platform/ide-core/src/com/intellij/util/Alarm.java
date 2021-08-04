@@ -207,7 +207,7 @@ public class Alarm implements Disposable {
     }
   }
 
-  public void _addRequest(@NotNull Runnable request, long delayMillis, @Nullable ModalityState modalityState) {
+  void _addRequest(@NotNull Runnable request, long delayMillis, @Nullable ModalityState modalityState) {
     Request requestToSchedule = new Request(request, modalityState, delayMillis);
     synchronized (LOCK) {
       checkDisposed();
