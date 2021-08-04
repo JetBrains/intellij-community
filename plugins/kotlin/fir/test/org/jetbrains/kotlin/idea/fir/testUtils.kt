@@ -17,15 +17,10 @@ import org.jetbrains.kotlin.psi.KtElement
 import java.io.File
 
 @OptIn(InvalidWayOfUsingAnalysisSession::class)
-fun Project.invalidateCaches(context: KtElement?) {
+fun Project.invalidateCaches() {
     LibraryModificationTracker.getInstance(this).incModificationCount()
     service<KotlinOutOfBlockModificationTrackerFactory>().incrementModificationsCount()
     service<KtAnalysisSessionProvider>().clearCaches()
-    if (context != null) {
-        ApplicationManager.getApplication().executeOnPooledThread {
-            runReadAction { analyse(context) { } }
-        }.get()
-    }
 }
 
 fun addExternalTestFiles(testDataFilePath: String) {

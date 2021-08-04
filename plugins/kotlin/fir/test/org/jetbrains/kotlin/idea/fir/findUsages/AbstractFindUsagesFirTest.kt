@@ -14,7 +14,7 @@ abstract class AbstractFindUsagesFirTest : AbstractFindUsagesTest() {
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { project.invalidateCaches(file as? KtFile) },
+            ThrowableRunnable { project.invalidateCaches() },
             ThrowableRunnable { super.tearDown() }
         )
     }

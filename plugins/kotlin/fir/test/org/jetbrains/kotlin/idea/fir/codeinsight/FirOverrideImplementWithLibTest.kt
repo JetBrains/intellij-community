@@ -23,7 +23,7 @@ internal class FirOverrideImplementWithLibTest : OverrideImplementWithLibTest<Kt
         runAll(
             // If we pass something as a context, then the DependencyListForCliModule will be built with dependencies from the previous test
             // and will not be reinitialized later on. Because of that the first test might pass, but the other ones probably won't
-            ThrowableRunnable { project.invalidateCaches(context = null) },
+            ThrowableRunnable { project.invalidateCaches() },
             ThrowableRunnable { super.tearDown() }
         )
     }

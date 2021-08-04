@@ -27,7 +27,7 @@ abstract class AbstractFirLightClassTest : KotlinLightCodeInsightFixtureTestCase
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { project.invalidateCaches(file as? KtFile) },
+            ThrowableRunnable { project.invalidateCaches() },
             ThrowableRunnable { super.tearDown() },
         )
     }
