@@ -31,11 +31,12 @@ public class InspectionOptionsPanel extends JPanel {
     myOptionAccessor = optionAccessor;
   }
 
-  public InspectionOptionsPanel(@NotNull InspectionProfileEntry owner,
-                                @NotNull @NlsContexts.Checkbox String label,
-                                @NonNls String property) {
-    this(owner);
-    addCheckbox(label, property);
+  public static InspectionOptionsPanel singleCheckBox(@NotNull InspectionProfileEntry owner,
+                                                      @NotNull @NlsContexts.Checkbox String label,
+                                                      @NonNls String property) {
+    var panel = new InspectionOptionsPanel(owner);
+    panel.addCheckbox(label, property);
+    return panel;
   }
 
   public void addRow(Component label, Component component) {
