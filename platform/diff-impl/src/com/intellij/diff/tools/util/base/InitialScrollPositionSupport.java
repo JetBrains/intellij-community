@@ -10,11 +10,14 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
+import java.util.Set;
 
 public final class InitialScrollPositionSupport {
   public abstract static class InitialScrollHelperBase {
@@ -108,6 +111,8 @@ public final class InitialScrollPositionSupport {
     public void onSlowRediff() {
       if (wasScrolled(getEditors())) myShouldScroll = false;
       if (myScrollToChange != null) return;
+
+      ensureEditorSizeIsUpToDate(getEditors());
       if (myShouldScroll) myShouldScroll = !doScrollToLine();
       if (myNavigationContext != null) return;
       if (myShouldScroll) myShouldScroll = !doScrollToPosition();
@@ -116,6 +121,8 @@ public final class InitialScrollPositionSupport {
     @RequiresEdt
     public void onRediff() {
       if (wasScrolled(getEditors())) myShouldScroll = false;
+
+      ensureEditorSizeIsUpToDate(getEditors());
       if (myShouldScroll) myShouldScroll = !doScrollToChange();
       if (myShouldScroll) myShouldScroll = !doScrollToLine();
       if (myShouldScroll) myShouldScroll = !doScrollToContext();
@@ -155,12 +162,16 @@ public final class InitialScrollPositionSupport {
     public void onSlowRediff() {
       if (wasScrolled(getEditors())) myShouldScroll = false;
       if (myScrollToChange != null) return;
+
+      ensureEditorSizeIsUpToDate(getEditors());
       if (myShouldScroll) myShouldScroll = !doScrollToLine();
       if (myShouldScroll) myShouldScroll = !doScrollToPosition();
     }
 
     public void onRediff() {
       if (wasScrolled(getEditors())) myShouldScroll = false;
+
+      ensureEditorSizeIsUpToDate(getEditors());
       if (myShouldScroll) myShouldScroll = !doScrollToChange();
       if (myShouldScroll) myShouldScroll = !doScrollToLine();
       if (myShouldScroll) myShouldScroll = !doScrollToPosition();
@@ -231,6 +242,13 @@ public final class InitialScrollPositionSupport {
       if (editor.getScrollingModel().getHorizontalScrollOffset() != 0) return true;
     }
     return false;
+  }
+
+  public static void ensureEditorSizeIsUpToDate(@NotNull List<? extends Editor> editors) {
+    Set<Window> windows = ContainerUtil.map2SetNotNull(editors, editor -> UIUtil.getWindow(editor.getComponent()));
+    for (Window window : windows) {
+      window.validate();
+    }
   }
 
   public static class EditorsVisiblePositions {
