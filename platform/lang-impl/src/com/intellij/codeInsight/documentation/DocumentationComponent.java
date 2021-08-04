@@ -123,7 +123,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final ActionToolbarImpl myToolBar;
   private volatile boolean myIsEmpty;
   private boolean mySizeTrackerRegistered;
-  private boolean myIgnoreFontSizeSliderChange;
   private String myExternalUrl;
   private DocumentationProvider myProvider;
   private Reference<Component> myReferenceComponent;
@@ -1421,9 +1420,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       DocFontSizePopup.show(() -> {
-        if (myIgnoreFontSizeSliderChange) {
-          return;
-        }
         applyFontProps();
         // resize popup according to new font size, if user didn't set popup size manually
         if (!myManuallyResized && myHint != null && myHint.getDimensionServiceKey() == null) showHint();
@@ -1584,13 +1580,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
       setQuickDocFontSize(newFontSize);
       applyFontProps();
-      myIgnoreFontSizeSliderChange = true;
-      try {
-        DocFontSizePopup.update();
-      }
-      finally {
-        myIgnoreFontSizeSliderChange = false;
-      }
+      DocFontSizePopup.update();
     }
   }
 
