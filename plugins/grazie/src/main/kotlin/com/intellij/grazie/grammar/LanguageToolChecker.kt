@@ -96,13 +96,26 @@ class LanguageToolChecker : TextChecker() {
 
       return try {
         ClassLoaderUtil.computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
-          val annotated = AnnotatedTextBuilder().addText(str).build()
-          LangTool.getTool(lang).check(annotated, true, JLanguageTool.ParagraphHandling.NORMAL,
+          val tool = LangTool.getTool(lang)
+          val sentences = tool.sentenceTokenize(str)
+          val result = ArrayList<Problem>()
+          var start = 0
+          for (sentence in sentences) {
+            if (sentence.length < 1000) {
+              val annotated = AnnotatedTextBuilder().addText(sentence).build()
+              val matches = tool.check(annotated, true, JLanguageTool.ParagraphHandling.NORMAL,
                                        null, JLanguageTool.Mode.ALL, JLanguageTool.Level.PICKY)
-            .asSequence()
-            .filter { !isKnownLTBug(it, text) }
-            .map { Problem(it, lang, text) }
-            .toList()
+              for (match in matches) {
+                match.setOffsetPosition(match.fromPos + start, match.toPos + start)
+                match.setPatternPosition(match.patternFromPos + start, match.patternToPos + start)
+                if (!isKnownLTBug(match, text)) {
+                  result.add(Problem(match, lang, text))
+                }
+              }
+            }
+            start += sentence.length
+          }
+          result
         }
       }
       catch (e: Throwable) {
