@@ -762,13 +762,14 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
 
   private void close(boolean emergency) throws IOException {
     if (myDoTrace) LOG.info("Closed " + myStorageFile);
-    if (myWal != null) {
-      myWal.close();
-    }
 
     getWriteLock().lock();
     try {
       if (isClosed()) return;
+
+      if (myWal != null) {
+        myWal.close();
+      }
 
       try {
         if (!emergency && myCompactOnClose && isCompactionSupported()) {

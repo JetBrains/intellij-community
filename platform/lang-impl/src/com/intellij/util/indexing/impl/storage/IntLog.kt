@@ -70,7 +70,7 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
         ProgressManager.checkCanceled()
       }
       withLock(true) {
-        if (!myKeyHashToVirtualFileMapping.processAll { key ->
+        if (!myKeyHashToVirtualFileMapping.processAll { _, key ->
             if (isReadAction) {
               ProgressManager.checkCanceled()
             }
@@ -231,7 +231,7 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
                                                                     IntPairInArrayKeyDescriptor)
       oldMapping.lockRead()
       try {
-        oldMapping.processAll { key: IntArray ->
+        oldMapping.processAll { _, key: IntArray ->
           val inputId = key[1]
           val keyHash = key[0]
           val absInputId = abs(inputId)

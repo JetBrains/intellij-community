@@ -69,6 +69,12 @@ public class ResizeableMappedFile implements Forceable {
     myLastWrittenLogicalSize = myLogicalSize = readLength();
   }
 
+  public void clear() throws IOException {
+    myStorage.resize(0);
+    myLogicalSize = 0;
+    myLastWrittenLogicalSize = 0;
+  }
+
   public long length() {
     return myLogicalSize;
   }

@@ -468,6 +468,13 @@ public class PersistentMapTest extends PersistentMapTestBase {
 
     runIteration(mapConstructorWithBrokenKeyDescriptor);
     runIteration(mapConstructorWithBrokenValueDescriptor);
+
+    try {
+      myMap.close();
+      fail();
+    }
+    catch (Exception ignored) {
+    }
   }
 
   public void testExistingKeys() throws IOException {

@@ -5,8 +5,10 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.io.keyStorage.AppendableObjectStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -24,6 +26,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private static final int DEFAULT_BTREE_PAGE_SIZE = 32768;
 
   private static final boolean DO_EXPENSIVE_CHECKS = SystemProperties.getBooleanProperty("idea.persistent.enumerator.do.expensive.checks", false);
+  @VisibleForTesting
+  public static final String DO_SELF_HEAL_PROP = "idea.persistent.enumerator.do.self.heal";
 
   static {
     BTREE_PAGE_SIZE = SystemProperties.getIntProperty("idea.btree.page.size", DEFAULT_BTREE_PAGE_SIZE);
@@ -181,9 +185,61 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @Override
-  protected void markCorrupted() {
-    diagnose();
-    super.markCorrupted();
+  protected boolean trySelfHeal() {
+    if (!SystemProperties.getBooleanProperty(DO_SELF_HEAL_PROP, false)) {
+      return false;
+    }
+    LOG.info("Trying to self-heal " + myFile);
+
+    class DataWithOffset {
+      final Data data;
+      final int offset;
+
+      DataWithOffset(Data data, int offset) {
+        this.data = data;
+        this.offset = offset;
+      }
+    }
+
+    List<DataWithOffset> items = new ArrayList<>();
+    try {
+      doIterateData((offset, data) -> {
+        items.add(new DataWithOffset(data, offset));
+        return true;
+      });
+
+      lockStorageWrite();
+      try {
+        myStorage.clear();
+        myKeyStorage.clear();
+        myStorage.ensureSize(4096);
+        markDirty(true);
+        putMetaData(0);
+        putMetaData2(0);
+
+        if (myBTree != null) {
+          myBTree.doClose();
+        }
+        setupEmptyFile();
+        doFlush();
+      }
+      finally {
+        unlockStorageWrite();
+      }
+
+      for (DataWithOffset item : items) {
+        int id = enumerate(item.data);
+        int expectedId = item.offset + 1;
+        if (expectedId != id) {
+          throw new IOException("Enumeration order has been changed while self-healing, were " + expectedId + " now " + id);
+        }
+      }
+    }
+    catch (Throwable throwable) {
+      LOG.info(throwable);
+      return false;
+    }
+    return true;
   }
 
   @NotNull

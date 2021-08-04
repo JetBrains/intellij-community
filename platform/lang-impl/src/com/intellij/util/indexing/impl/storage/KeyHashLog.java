@@ -148,7 +148,7 @@ class KeyHashLog<Key> implements Closeable {
       withLock(() -> {
         ProgressManager.checkCanceled();
 
-        myKeyHashToVirtualFileMapping.processAll(key -> {
+        myKeyHashToVirtualFileMapping.processAll((offset, key) -> {
           ProgressManager.checkCanceled();
           int inputId = key[1];
           int absInputId = Math.abs(inputId);
@@ -209,7 +209,7 @@ class KeyHashLog<Key> implements Closeable {
       AppendableStorageBackedByResizableMappedFile<int[]> oldMapping = openMapping(oldDataFile, 0);
       oldMapping.lockRead();
       try {
-        oldMapping.processAll(key -> {
+        oldMapping.processAll((offset, key) -> {
           int inputId = key[1];
           int keyHash = key[0];
           int absInputId = Math.abs(inputId);

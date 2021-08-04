@@ -2,11 +2,13 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectCache;
+import gnu.trove.TIntArrayList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -15,11 +17,12 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.*;
 
-public class BTreeEnumeratorTest {
-  private static final Logger LOG = Logger.getInstance(BTreeEnumeratorTest.class);
+public class PersistentBTreeEnumeratorTest {
+  private static final Logger LOG = Logger.getInstance(PersistentBTreeEnumeratorTest.class);
 
   private static final String COLLISION_1 = "";
   private static final String COLLISION_2 = "\u0000";
@@ -167,15 +170,12 @@ public class BTreeEnumeratorTest {
     assertNotEquals(1000, value);
 
     assertNull(myEnumerator.valueOf(1000));
-    assertTrue(myEnumerator.isCorrupted());
     assertEquals(string, myEnumerator.valueOf(value));
 
     myEnumerator.force();
 
     assertNull(myEnumerator.valueOf(1000));
     assertEquals(string, myEnumerator.valueOf(value));
-
-    assertTrue(myEnumerator.isCorrupted());
   }
 
   @Test
@@ -203,6 +203,50 @@ public class BTreeEnumeratorTest {
     LOG.debug(String.format("File size = %d bytes\n", myFile.length()));
   }
 
+  @Test
+  public void testCorruptionRecovery() throws IOException {
+    System.setProperty(PersistentBTreeEnumerator.DO_SELF_HEAL_PROP, Boolean.toString(true));
+    try {
+      String[] values = new String[] {"AAA", "BBB", "CCC", "DDD", "EEE", "HHH", "JJJ", "ZZZ"};
+      int[] ids = new int[values.length];
+      for (int i = 0, length = values.length; i < length; i++) {
+        String value = values[i];
+        ids[i] = myEnumerator.enumerate(value);
+      }
+
+      for (int i = 0; i < values.length; i++) {
+        String value = values[i];
+        assertEquals(ids[i], myEnumerator.catchCorruption(new CorruptAndEnumerateAfter(value)).intValue());
+      }
+    }
+    finally {
+      System.setProperty(PersistentBTreeEnumerator.DO_SELF_HEAL_PROP, Boolean.toString(false));
+    }
+  }
+
+  @Test
+  public void testCorruptionRecoveryForLargeEnumerator() throws IOException {
+    System.setProperty(PersistentBTreeEnumerator.DO_SELF_HEAL_PROP, Boolean.toString(true));
+    try {
+      List<String> values = new ArrayList<>();
+      TIntArrayList ids = new TIntArrayList();
+      for (int i = 0; i < 1_000_000; i++) {
+        String value = String.valueOf(i);
+        values.add(value);
+        ids.add(myEnumerator.enumerate(value));
+      }
+
+      for (int i = 0; i < values.size(); i += 50_000) {
+        String value = values.get(i);
+        System.out.println("checked " + i);
+        assertEquals(ids.get(i), myEnumerator.catchCorruption(new CorruptAndEnumerateAfter(value)).intValue());
+      }
+    }
+    finally {
+      System.setProperty(PersistentBTreeEnumerator.DO_SELF_HEAL_PROP, Boolean.toString(false));
+    }
+  }
+
   private static final StringBuilder builder = new StringBuilder(100);
   private static final Random random = new Random(13101977);
 
@@ -213,5 +257,22 @@ public class BTreeEnumeratorTest {
       builder.append((char)(32 + random.nextInt(2 + i >> 1)));
     }
     return builder.toString();
+  }
+
+  private class CorruptAndEnumerateAfter implements ThrowableComputable<Integer, IOException> {
+    private final AtomicBoolean myIoExceptionThrown = new AtomicBoolean(false);
+    private final String myValue;
+
+    private CorruptAndEnumerateAfter(String value) { myValue = value; }
+
+    @Override
+    public Integer compute() throws IOException {
+      if (!myIoExceptionThrown.get()) {
+        myIoExceptionThrown.set(true);
+        throw new IOException("Corrupted!!!");
+      }
+
+      return myEnumerator.tryEnumerate(myValue);
+    }
   }
 }
