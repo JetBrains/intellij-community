@@ -2,7 +2,6 @@
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.Problem
-import com.intellij.analysis.problemsView.ProblemsListener
 import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
@@ -10,16 +9,16 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 
-open class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualFile) : Root(panel) {
+internal class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualFile) : Root(panel) {
 
   private val problems = mutableSetOf<HighlightingProblem>()
   private val filter = ProblemFilter(panel.state)
 
-  protected val provider = object : ProblemsProvider {
+  private val provider = object : ProblemsProvider {
     override val project = panel.project
   }
 
-  protected open val watcher = createWatcher(provider, this, file, HighlightSeverity.INFORMATION.myVal + 1)
+  private val watcher = createWatcher(provider, file)
 
   init {
     Disposer.register(this, provider)
@@ -45,10 +44,8 @@ open class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualFile)
     else -> emptyList()
   }
 
-  protected open fun createWatcher(provider: ProblemsProvider,
-                                   listener: ProblemsListener,
-                                   file: VirtualFile,
-                                   level: Int): HighlightingWatcher =
+  private fun createWatcher(provider: ProblemsProvider,
+                            file: VirtualFile): HighlightingWatcher =
     HighlightingWatcher(provider, this, file, HighlightSeverity.INFORMATION.myVal + 1)
 
   override fun getOtherProblemCount() = 0
