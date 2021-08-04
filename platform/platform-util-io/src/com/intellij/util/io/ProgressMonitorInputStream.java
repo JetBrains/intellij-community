@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 
-public final class ProgressMonitorInputStream extends InputStream {
+final class ProgressMonitorInputStream extends InputStream {
   private final ProgressIndicator indicator;
   private final InputStream in;
 

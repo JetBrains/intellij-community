@@ -19,7 +19,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
-public class NonProjectFileWritingAccessDialog extends DialogWrapper {
+class NonProjectFileWritingAccessDialog extends DialogWrapper {
   private JPanel myPanel;
   private JLabel myListTitle;
   private JList<VirtualFile> myFileList;
@@ -27,7 +27,7 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
   private JRadioButton myUnlockDirButton;
   private JRadioButton myUnlockAllButton;
 
-  public NonProjectFileWritingAccessDialog(@NotNull Project project, @NotNull List<? extends VirtualFile> nonProjectFiles) {
+  NonProjectFileWritingAccessDialog(@NotNull Project project, @NotNull List<? extends VirtualFile> nonProjectFiles) {
     super(project);
     setTitle(IdeBundle.message("dialog.title.non.project.files.protection"));
 

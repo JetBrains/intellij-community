@@ -1,9 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.ui;
+package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.actions.RevealFileAction;
+import com.intellij.ide.ui.IdeUiService;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
@@ -17,8 +18,6 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.UnlockOption;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
-import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -32,7 +31,6 @@ import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -46,15 +44,14 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
 
-public class IdeUiServiceImpl extends IdeUiService{
+public class IdeUiServiceImpl extends IdeUiService {
   @Override
   public void revealFile(File file) {
     RevealFileAction.openFile(file);
   }
 
   @Override
-  public UnlockOption askForUnlock(@NotNull Project project,
-                                   List<VirtualFile> files) {
+  public UnlockOption askForUnlock(@NotNull Project project, List<? extends VirtualFile> files) {
     NonProjectFileWritingAccessDialog dialog = new NonProjectFileWritingAccessDialog(project, files);
     if (!dialog.showAndGet()) return null;
     return dialog.getUnlockOption();
@@ -63,12 +60,11 @@ public class IdeUiServiceImpl extends IdeUiService{
   @Override
   public boolean isFileRecentlyChanged(Project project, VirtualFile file) {
     IdeDocumentHistoryImpl documentHistory = (IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(project);
-    if (documentHistory.isRecentlyChanged(file)) return true;
-    return false;
+    return documentHistory.isRecentlyChanged(file);
   }
 
   @Override
-  public void logUsageEvent(Class clazz, String groupId, String eventId) {
+  public void logUsageEvent(Class<?> clazz, String groupId, String eventId) {
     PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(clazz);
     String factoryClass = pluginInfo.isSafeToReport() ? clazz.getName() : "third.party";
     FeatureUsageData data = new FeatureUsageData().addData("factory", factoryClass).addPluginInfo(pluginInfo);

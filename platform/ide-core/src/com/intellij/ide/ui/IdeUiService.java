@@ -32,8 +32,7 @@ public class IdeUiService {
   public void revealFile(File file) {
   }
 
-  public UnlockOption askForUnlock(@NotNull Project project,
-                                   List<VirtualFile> files) {
+  public UnlockOption askForUnlock(@NotNull Project project, List<? extends VirtualFile> files) {
     return null;
   }
 
@@ -42,7 +41,7 @@ public class IdeUiService {
     return false;
   }
 
-  public void logUsageEvent(Class clazz, String groupId, String eventId) {
+  public void logUsageEvent(Class<?> clazz, String groupId, String eventId) {
 
   }
 
