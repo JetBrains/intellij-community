@@ -8,7 +8,6 @@ import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.Range
 import com.sun.jdi.Location
-import org.jetbrains.kotlin.codegen.coroutines.isResumeImplMethodNameFromAnyLanguageSettings
 import org.jetbrains.kotlin.idea.core.util.isMultiLine
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isGeneratedLambdaName
 import org.jetbrains.kotlin.idea.debugger.isInsideInlineArgument
@@ -18,7 +17,6 @@ import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
-import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
 
 class KotlinLambdaMethodFilter(private val target: KotlinLambdaSmartStepTarget) : BreakpointStepMethodFilter {
@@ -64,7 +62,7 @@ class KotlinLambdaMethodFilter(private val target: KotlinLambdaSmartStepTarget) 
     private fun isTargetLambdaName(name: String?) =
         when {
             name == null -> false
-            target.isSuspend -> isResumeImplMethodNameFromAnyLanguageSettings(name)
+            target.isSuspend -> name == INVOKE_SUSPEND_METHOD_NAME
             else -> name == target.methodName || name.isGeneratedLambdaName()
         }
 }
