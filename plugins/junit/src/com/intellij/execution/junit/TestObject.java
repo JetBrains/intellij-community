@@ -519,9 +519,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       String qName = (String)element;
       int idx = qName.indexOf(',');
       String className = idx > 0 ? qName.substring(0, idx) : qName;
-      return JavaPsiFacade.getInstance(project).findClass(className, scope != null
-                                                                     ? scope.getGlobalSearchScope()
-                                                                     : GlobalSearchScope.projectScope(project));
+      return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> JavaPsiFacade.getInstance(project).findClass(className, scope != null ? scope.getGlobalSearchScope() : GlobalSearchScope.projectScope(project)));
 
     }
     if (element instanceof Location) {
