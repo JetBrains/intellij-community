@@ -21,9 +21,9 @@ UFile (package = ) [public final class WithGenericKt {...]
                     UBinaryExpressionWithType [null as T] : PsiType:T
                         ULiteralExpression (value = null) [null] : PsiType:Void
                         UTypeReferenceExpression (name = T) [T]
-        UMethod (name = castToString) [public static final fun castToString(@org.jetbrains.annotations.NotNull t: T) : void {...}]
-            UParameter (name = t) [@org.jetbrains.annotations.NotNull var t: T]
-                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+        UMethod (name = castToString) [public static final fun castToString(@org.jetbrains.annotations.Nullable t: T) : void {...}]
+            UParameter (name = t) [@org.jetbrains.annotations.Nullable var t: T]
+                UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
             UBlockExpression [{...}] : PsiType:String
                 UBinaryExpressionWithType [t as java.lang.String] : PsiType:String
                     USimpleNameReferenceExpression (identifier = t) [t] : PsiType:T

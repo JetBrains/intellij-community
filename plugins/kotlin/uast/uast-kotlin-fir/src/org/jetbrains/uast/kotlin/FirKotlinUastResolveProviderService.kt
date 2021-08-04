@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.firKotlinUastPlugin
+import org.jetbrains.uast.kotlin.internal.nullability
 import org.jetbrains.uast.kotlin.internal.toPsiMethod
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 
@@ -279,50 +280,42 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun nullability(psiElement: PsiElement): TypeNullability? {
         if (psiElement is KtTypeReference) {
             analyseForUast(psiElement) {
-                psiElement.getKtType().nullability()?.let { return it }
+                nullability(psiElement.getKtType())?.let { return it }
             }
         }
         if (psiElement is KtCallableDeclaration) {
             psiElement.typeReference?.let { typeReference ->
                 analyseForUast(typeReference) {
-                    typeReference.getKtType().nullability()?.let { return it }
+                    nullability(typeReference.getKtType())?.let { return it }
                 }
             }
         }
         if (psiElement is KtProperty) {
             psiElement.initializer?.let { propertyInitializer ->
                 analyseForUast(propertyInitializer) {
-                    propertyInitializer.getKtType().nullability()?.let { return it }
+                    nullability(propertyInitializer.getKtType())?.let { return it }
                 }
             }
             psiElement.delegateExpression?.let { delegatedExpression ->
                 analyseForUast(delegatedExpression) {
                     val typeArgument = (delegatedExpression.getKtType() as? KtNonErrorClassType)?.typeArguments?.firstOrNull()
-                    (typeArgument as? KtTypeArgumentWithVariance)?.type?.nullability()?.let { return it }
+                    nullability((typeArgument as? KtTypeArgumentWithVariance)?.type)?.let { return it }
                 }
             }
         }
         psiElement.getParentOfType<KtProperty>(false)?.let { property ->
             property.typeReference?.let { typeReference ->
                 analyseForUast(typeReference) {
-                    typeReference.getKtType().nullability()
+                    nullability(typeReference.getKtType())
                 }
             } ?:
             property.initializer?.let { propertyInitializer ->
                 analyseForUast(propertyInitializer) {
-                    propertyInitializer.getKtType().nullability()
+                    nullability(propertyInitializer.getKtType())
                 }
             }
         }?.let { return it }
         return null
-    }
-
-    private fun KtType.nullability(): TypeNullability? {
-        if (this !is KtTypeWithNullability) return null
-        return when (this.nullability) {
-            KtTypeNullability.NON_NULLABLE -> TypeNullability.NOT_NULL
-            KtTypeNullability.NULLABLE -> TypeNullability.NULLABLE
-        }
     }
 
     override fun evaluate(uExpression: UExpression): Any? {
