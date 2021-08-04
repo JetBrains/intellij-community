@@ -57,7 +57,6 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.util" scope="PROVIDED" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.javascript-support" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.jvm-decompiler" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.maven" scope="PROVIDED" />

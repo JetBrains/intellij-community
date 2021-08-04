@@ -117,7 +117,6 @@
           <element id="module-output" name="kotlin.jvm-debugger.eval4j" />
           <element id="module-output" name="kotlin.uast.uast-kotlin" />
           <element id="module-output" name="kotlin.uast.uast-kotlin-idea" />
-          <element id="module-output" name="kotlin.jvm-debugger.javascript-support" />
           <element id="module-output" name="kotlin.i18n" />
         </element>
       </element>
