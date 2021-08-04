@@ -202,7 +202,7 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
       if (!myReadDataLock.tryLock()) throw new ReferenceIndexUnavailableException();
       try {
         if (myReader == null) throw new ReferenceIndexUnavailableException();
-        return myReader.getNameEnumerator().getName(idx);
+        return myReader.getNameEnumerator().valueOf(idx);
       }
       finally {
         myReadDataLock.unlock();

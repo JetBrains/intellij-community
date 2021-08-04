@@ -115,15 +115,20 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
       Class<? extends CompilerRef> requiredCompilerRefClass = searchType.getRequiredClass(adapter);
 
       Map<VirtualFile, SearchId[]> candidatesPerFile = new HashMap<>();
-      myIndex.get(JavaCompilerIndices.BACK_HIERARCHY).getData(searchElement).forEach((fileId, defs) -> {
-        final List<CompilerRef> requiredCandidates = ContainerUtil.filter(defs, requiredCompilerRefClass::isInstance);
-        if (requiredCandidates.isEmpty()) return true;
-        final VirtualFile file = findFile(fileId);
-        if (file != null && effectiveSearchScope.contains(file)) {
-          candidatesPerFile.put(file, searchType.convertToIds(requiredCandidates, myIndex.getByteSeqEum()));
-        }
-        return true;
-      });
+      try {
+        myIndex.get(JavaCompilerIndices.BACK_HIERARCHY).getData(searchElement).process((fileId, defs) -> {
+          final List<CompilerRef> requiredCandidates = ContainerUtil.filter(defs, requiredCompilerRefClass::isInstance);
+          if (requiredCandidates.isEmpty()) return true;
+          final VirtualFile file = findFile(fileId);
+          if (file != null && effectiveSearchScope.contains(file)) {
+            candidatesPerFile.put(file, searchType.convertToIds(requiredCandidates, myIndex.getByteSeqEum()));
+          }
+          return true;
+        });
+      }
+      catch (IOException e) {
+        throw new StorageException(e);
+      }
       return candidatesPerFile.isEmpty() ? Collections.emptyMap() : candidatesPerFile;
     }
 

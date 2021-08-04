@@ -36,11 +36,28 @@ public abstract class ValueContainer<Value> {
     boolean perform(int id, T value);
   }
 
+  @FunctionalInterface
+  public interface ThrowableContainerProcessor<V, T extends Throwable> {
+    boolean process(int id, V value) throws T;
+  }
+
   public final boolean forEach(@NotNull ContainerAction<? super Value> action) {
     for (ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
       Value value = valueIterator.next();
       for (IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext();) {
         if (!action.perform(intIterator.next(), value)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  public final <T extends Throwable> boolean process(@NotNull ThrowableContainerProcessor<? super Value, T> action) throws T {
+    for (ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
+      Value value = valueIterator.next();
+      for (IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext();) {
+        if (!action.process(intIterator.next(), value)) {
           return false;
         }
       }
