@@ -24,7 +24,7 @@ import java.net.Authenticator
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-internal object LangTool : GrazieStateLifecycle {
+object LangTool : GrazieStateLifecycle {
   private val langs: MutableMap<Lang, JLanguageTool> = Collections.synchronizedMap(ContainerUtil.createSoftValueMap())
   private val rulesEnabledByDefault: MutableMap<Lang, Set<String>> = ConcurrentHashMap()
   private val executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LangTool")
@@ -37,6 +37,12 @@ internal object LangTool : GrazieStateLifecycle {
   }
 
   internal fun globalIdPrefix(lang: Lang): String = "LanguageTool." + lang.remote.iso.name + "."
+
+  @Suppress("UNUSED_PARAMETER", "DeprecatedCallableAddReplaceWith")
+  @Deprecated("use the other overload")
+  fun getTool(lang: Lang, state: GrazieConfig.State): JLanguageTool {
+    return getTool(lang)
+  }
 
   fun getTool(lang: Lang): JLanguageTool {
     // this is equivalent to computeIfAbsent, but allows multiple threads to create tools concurrently,
@@ -173,7 +179,7 @@ internal object LangTool : GrazieStateLifecycle {
     }
   }
 
-  fun runAsync(action: Runnable) {
+  internal fun runAsync(action: Runnable) {
     executor.execute {
       try {
         action.run()
@@ -182,7 +188,7 @@ internal object LangTool : GrazieStateLifecycle {
     }
   }
 
-  class Preloader : PreloadingActivity() {
+  internal class Preloader : PreloadingActivity() {
     override fun preload(indicator: ProgressIndicator): Unit = preloadAsync()
   }
 }
