@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFilePointer {
+class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFilePointer {
   private static final Logger LOG = Logger.getInstance(VirtualFilePointerImpl.class);
 
   private static final boolean TRACE_CREATION = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode();
@@ -38,7 +38,7 @@ public class VirtualFilePointerImpl extends TraceableDisposable implements Virtu
   boolean recursive; // true if the validityChanged() event should be fired for any change under this directory. Used for library jar directories.
   final VirtualFilePointerListener myListener;
 
-  public VirtualFilePointerImpl(@Nullable VirtualFilePointerListener listener) {
+  VirtualFilePointerImpl(@Nullable VirtualFilePointerListener listener) {
     super(TRACE_CREATION);
     myListener = listener;
   }
