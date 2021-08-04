@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenTestCase;
+import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
@@ -48,6 +49,7 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     MavenGeneralSettings settings = MavenWorkspaceSettingsComponent.getInstance(module.getProject()).getSettings().getGeneralSettings();
     String mavenHome = settings.getMavenHome();
     assertEquals(MavenServerManager.BUNDLED_MAVEN_3, mavenHome);
+    assertTrue(MavenProjectsNavigator.getInstance(module.getProject()).getGroupModules());
     assertTrue(settings.isUseMavenConfig());
   }
 

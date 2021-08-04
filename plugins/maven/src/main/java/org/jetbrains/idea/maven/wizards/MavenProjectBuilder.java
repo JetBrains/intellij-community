@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction;
 import org.jetbrains.idea.maven.server.MavenWrapperSupport;
@@ -185,6 +186,9 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
     if (!StringUtil.isEmptyOrSpaces(settingsFile)) {
       settings.getGeneralSettings().setUserSettingsFile(settingsFile.trim());
     }
+
+    MavenProjectsNavigator projectsNavigator = MavenProjectsNavigator.getInstance(project);
+    if (projectsNavigator != null) projectsNavigator.setGroupModules(true);
 
     String distributionUrl = MavenWrapperSupport.getWrapperDistributionUrl(ProjectUtil.guessProjectDir(project));
     if (distributionUrl != null) {
