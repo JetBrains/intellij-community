@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix
 import com.intellij.lang.jvm.actions.AnnotationAttributeValueRequest
 import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.openapi.diagnostic.logger
@@ -18,7 +19,7 @@ internal class CreateAnnotationAction(target: PsiModifierListOwner, override val
   CreateTargetAction<PsiModifierListOwner>(target, request) {
 
   override fun getText(): String =
-    QuickFixBundle.message("create.annotation.text", StringUtilRt.getShortName(request.qualifiedName))
+    AddAnnotationPsiFix.calcText(target, StringUtilRt.getShortName(request.qualifiedName))
 
   override fun getFamilyName(): String = QuickFixBundle.message("create.annotation.family")
 
