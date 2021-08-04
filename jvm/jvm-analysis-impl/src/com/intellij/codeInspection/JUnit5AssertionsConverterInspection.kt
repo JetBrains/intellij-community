@@ -141,6 +141,6 @@ class JUnit5AssertionsConverterInspection(val frameworkName: @NonNls String = "J
   }
 
   companion object {
-    const val MAX_CALL_SEARCH_LIMIT = 3
+    const val MAX_CALL_SEARCH_LIMIT = 2
   }
 }
