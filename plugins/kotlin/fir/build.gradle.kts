@@ -59,6 +59,7 @@ dependencies {
     jpsLikeModuleDependency(":kotlin-ide.kotlin.fir.fir-low-level-api-ide-impl", JpsDepScope.RUNTIME)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.uast.uast-kotlin-idea-fir", JpsDepScope.COMPILE)
     jpsLikeModuleDependency(":kotlin-ide.kotlin.uast.uast-kotlin-fir", JpsDepScope.RUNTIME)
+    jpsLikeModuleDependency(":kotlin-ide.kotlin.jvm-run-configurations", JpsDepScope.COMPILE)
 }
 
 configurations.all {
