@@ -66,7 +66,7 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val LOG = logger<StatisticBase>()
     private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
     private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
-    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 12)
+    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 13)
 
     var isLearnProjectCloseLogged = false
 
@@ -91,7 +91,9 @@ internal class StatisticBase : CounterUsagesCollector() {
         get() = listOf("{regexp#version}")
 
       override fun addData(fuData: FeatureUsageData, value: String?) {
-        fuData.addVersionByString(value)
+        if (value != null) {
+          fuData.addData(name, value)
+        }
       }
     }
 
