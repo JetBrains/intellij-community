@@ -62,7 +62,7 @@ public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
         return;
       }
 
-      final AssertHint hint = createAssertHint(callExpression);
+      final AssertHint<PsiExpression> hint = createAssertHint(callExpression);
       if (hint == null) {
         return;
       }
@@ -74,7 +74,7 @@ public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
     }
   }
 
-  AssertHint createAssertHint(@NotNull PsiMethodCallExpression expression) {
+  AssertHint<PsiExpression> createAssertHint(@NotNull PsiMethodCallExpression expression) {
     return AssertHint.create(expression, methodName -> methodNames.contains(methodName) ? 2 : null);
   }
 
@@ -155,7 +155,7 @@ public class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final AssertHint hint = createAssertHint(expression);
+      final AssertHint<PsiExpression> hint = createAssertHint(expression);
       if (hint == null) {
         return;
       }

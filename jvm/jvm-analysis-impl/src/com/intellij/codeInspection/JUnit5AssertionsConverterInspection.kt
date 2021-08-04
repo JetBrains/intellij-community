@@ -36,19 +36,19 @@ class JUnit5AssertionsConverterInspection(val frameworkName: @NonNls String = "J
     override fun visitCallExpression(node: UCallExpression): Boolean {
       if (node.methodIdentifier == null) return true
       doCheck(node, { node.methodIdentifier?.sourcePsi }) {
-        UAssertHint.create(node) { AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT[it] }
+        AssertHint.create(node) { AssertHint.ASSERT_METHOD_2_PARAMETER_COUNT[it] }
       }
       return true
     }
 
     override fun visitCallableReferenceExpression(node: UCallableReferenceExpression): Boolean {
       doCheck(node, { node.sourcePsi }) {
-        UAssertHint.create(node) { AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT[it] }
+        AssertHint.create(node) { AssertHint.ASSERT_METHOD_2_PARAMETER_COUNT[it] }
       }
       return true
     }
 
-    private fun doCheck(node: UExpression, toHighlight: () -> PsiElement?, createHint: () -> UAssertHint?) {
+    private fun doCheck(node: UExpression, toHighlight: () -> PsiElement?, createHint: () -> AssertHint<UExpression>?) {
       val sourcePsi = node.sourcePsi ?: return
       val project = sourcePsi.project
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
@@ -113,8 +113,8 @@ class JUnit5AssertionsConverterInspection(val frameworkName: @NonNls String = "J
         is UIdentifier -> { // UCallExpression
           val methodCall = uElement.getUCallExpression(MAX_CALL_SEARCH_LIMIT) ?: return
           val methodName = methodCall.methodName ?: return
-          val assertHint = UAssertHint.create(methodCall) {
-            AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT[it]
+          val assertHint = AssertHint.create(methodCall) {
+            AssertHint.ASSERT_METHOD_2_PARAMETER_COUNT[it]
           } ?: return
           val arguments = methodCall.valueArguments.toMutableList()
           if ("assertThat" != methodName) {
