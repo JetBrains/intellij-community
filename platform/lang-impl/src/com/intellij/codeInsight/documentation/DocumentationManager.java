@@ -350,7 +350,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   @Override
   protected void installComponentActions(@NotNull ToolWindow toolWindow, DocumentationComponent component) {
-    ((ToolWindowEx)toolWindow).setTitleActions(component.getActions());
+    toolWindow.setTitleActions(component.getNavigationActions());
     DefaultActionGroup group = new DefaultActionGroup(createActions());
     group.add(component.getFontSizeAction());
     ((ToolWindowEx)toolWindow).setAdditionalGearActions(group);

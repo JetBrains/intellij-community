@@ -90,6 +90,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 import java.util.Vector;
 import java.util.*;
 
@@ -118,6 +119,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private final Stack<Context> myBackStack = new Stack<>();
   private final Stack<Context> myForwardStack = new Stack<>();
+  private final List<? extends AnAction> myNavigationActions;
   private final ActionToolbarImpl myToolBar;
   private volatile boolean myIsEmpty;
   private boolean mySizeTrackerRegistered;
@@ -313,16 +315,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     setOpaque(true);
     myScrollPane.setBorder(JBUI.Borders.empty());
 
-    DefaultActionGroup actions = new DefaultActionGroup();
     BackAction back = new BackAction();
     ForwardAction forward = new ForwardAction();
     EditDocumentationSourceAction edit = new EditDocumentationSourceAction();
-    actions.add(back);
-    actions.add(forward);
-    actions.add(edit);
+    myNavigationActions = List.of(back, forward, edit);
 
+    List<AnAction> navigationAndAdditionalActions = new ArrayList<>(myNavigationActions);
     for (DocumentationActionProvider provider: DocumentationActionProvider.EP_NAME.getExtensions()) {
-      provider.additionalActions(this).forEach(actions::add);
+      navigationAndAdditionalActions.addAll(provider.additionalActions(this));
     }
 
     try {
@@ -352,7 +352,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       @Override
       public void invokePopup(Component comp, int x, int y) {
         ActionPopupMenu contextMenu = ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(
-          ActionPlaces.JAVADOC_TOOLBAR, actions, new MenuItemPresentationFactory(true));
+          ActionPlaces.JAVADOC_TOOLBAR,
+          new DefaultActionGroup(navigationAndAdditionalActions),
+          new MenuItemPresentationFactory(true)
+        );
         contextMenu.getComponent().show(comp, x, y);
       }
     };
@@ -364,10 +367,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     new ActivateLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), this);
 
     DefaultActionGroup toolbarActions = new DefaultActionGroup();
-    toolbarActions.add(actions);
+    toolbarActions.addAll(navigationAndAdditionalActions);
     toolbarActions.addAction(new ShowAsToolwindowAction()).setAsSecondary(true);
-    toolbarActions.addAction(new ToggleShowDocsOnHoverAction(myManager, true)).setAsSecondary(true);
-    toolbarActions.addAction(new MyShowSettingsAction(true)).setAsSecondary(true);
+    toolbarActions.addAction(new ToggleShowDocsOnHoverAction()).setAsSecondary(true);
+    toolbarActions.addAction(new MyShowSettingsAction()).setAsSecondary(true);
     toolbarActions.addAction(new ShowToolbarAction()).setAsSecondary(true);
     toolbarActions.addAction(new RestoreDefaultSizeAction()).setAsSecondary(true);
     myToolBar = new ActionToolbarImpl(ActionPlaces.JAVADOC_TOOLBAR, toolbarActions, true) {
@@ -428,12 +431,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     DefaultActionGroup gearActions = new MyGearActionGroup();
     ShowAsToolwindowAction showAsToolwindowAction = new ShowAsToolwindowAction();
     gearActions.add(showAsToolwindowAction);
-    gearActions.add(new ToggleShowDocsOnHoverAction(myManager, false));
-    gearActions.add(new MyShowSettingsAction(false));
+    gearActions.add(new ToggleShowDocsOnHoverAction());
+    gearActions.add(new MyShowSettingsAction());
     gearActions.add(new ShowToolbarAction());
     gearActions.add(new RestoreDefaultSizeAction());
     gearActions.addSeparator();
-    gearActions.addAll(actions);
+    gearActions.addAll(navigationAndAdditionalActions);
     Presentation presentation = new Presentation();
     presentation.setIcon(AllIcons.Actions.More);
     presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
@@ -489,12 +492,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     if (myControlPanel != null) myControlPanel.setBackground(color);
   }
 
-  public AnAction[] getActions() {
-    return myToolBar.getActions().stream().filter((action -> !(action instanceof Separator))).toArray(AnAction[]::new);
+  public List<? extends AnAction> getNavigationActions() {
+    return myNavigationActions;
   }
 
   public AnAction getFontSizeAction() {
-    return new MyShowSettingsAction(false);
+    return new MyShowSettingsAction();
   }
 
   public void removeCornerMenu() {
@@ -1409,18 +1412,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private class MyShowSettingsAction extends AnAction implements HintManagerImpl.ActionToIgnore {
-    private final boolean myOnToolbar;
 
-    MyShowSettingsAction(boolean onToolbar) {
+    MyShowSettingsAction() {
       super(CodeInsightBundle.message("javadoc.adjust.font.size"));
-      myOnToolbar = onToolbar;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      if (myManager == null || myOnToolbar && myManager.myToolWindow != null) {
-        e.getPresentation().setEnabledAndVisible(false);
-      }
     }
 
     @Override
@@ -1519,14 +1513,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private class ShowToolbarAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
     ShowToolbarAction() {
       super(CodeInsightBundle.messagePointer("javadoc.show.toolbar"));
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      if (myManager == null || myManager.myToolWindow != null) {
-        e.getPresentation().setEnabledAndVisible(false);
-      }
     }
 
     @Override
