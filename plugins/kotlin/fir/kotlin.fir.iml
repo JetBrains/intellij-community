@@ -41,5 +41,6 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea-fir" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.analysis" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jvm-run-configurations" />
   </component>
 </module>
