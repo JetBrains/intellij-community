@@ -35,6 +35,6 @@ abstract class IndentedPrintingVisitor(val shouldIndent: (PsiElement) -> Boolean
 }
 
 fun IndentedPrintingVisitor.visitUFileAndGetResult(uFile: UFile): String {
-    (uFile.sourcePsi as PsiFile).accept(this)
+    uFile.sourcePsi.accept(this)
     return result
 }

@@ -81,6 +81,10 @@ class KtSymbolBasedResolutionFacade(
 }
 
 class KtSymbolBasedKotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
+    override fun getResolutionFacade(element: KtElement): ResolutionFacade {
+        return getResolutionFacade(listOf(element))
+    }
+
     override fun getResolutionFacade(elements: List<KtElement>): ResolutionFacade =
         KtSymbolBasedResolutionFacade(project, FE10BindingContextImpl(project, elements.first()))
 
