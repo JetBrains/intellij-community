@@ -302,7 +302,8 @@ public final class ActionMenu extends JBMenu {
   }
 
   private void fillMenuWithRetries() {
-    while (!tryFillMenu()) {
+    int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
+    for (int i = 0; i < retries && !tryFillMenu(); i++) {
       if (!isSelected()) break;
     }
   }
