@@ -248,7 +248,7 @@ object UpdateChecker {
     try {
       indicator?.text = IdeBundle.message("updates.checking.platform")
       val productData = loadProductData(indicator)
-      if (!settings.isPlatformUpdateEnabled || productData == null) {
+      if (ExternalUpdateManager.ACTUAL != null || productData == null) {
         PlatformUpdates.Empty
       }
       else {
@@ -601,12 +601,7 @@ object UpdateChecker {
         NoUpdatesDialog(showSettingsLink).show()
       }
       else if (userInitiated) {
-        if (UpdateSettings.getInstance().isPlatformUpdateEnabled) {
-          showNotification(project, NotificationKind.PLUGINS, "no.updates.available", "", IdeBundle.message("updates.no.updates.notification"))
-        }
-        else {
-          showNotification(project, NotificationKind.PLUGINS, "no.updates.available", "", IdeBundle.message("updates.no.plugin.updates.notification"))
-        }
+        showNotification(project, NotificationKind.PLUGINS, "no.updates.available", "", NoUpdatesDialog.getNoUpdatesText())
       }
     }
   }

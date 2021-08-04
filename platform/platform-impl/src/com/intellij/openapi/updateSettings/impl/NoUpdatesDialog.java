@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,21 +39,25 @@ class NoUpdatesDialog extends AbstractUpdateDialog {
     private JEditorPane myMessageArea;
 
     NoUpdatesPanel() {
-      String app = ApplicationNamesInfo.getInstance().getFullProductName();
-      ExternalUpdateManager manager = ExternalUpdateManager.ACTUAL;
-      if (manager == null) {
-        myNothingToUpdateLabel.setText(IdeBundle.message("updates.no.updates.message", app));
-      }
-      else if (manager == ExternalUpdateManager.TOOLBOX) {
-        myNothingToUpdateLabel.setText(IdeBundle.message("updates.no.updates.toolbox.message", app));
-      }
-      else if (manager == ExternalUpdateManager.SNAP) {
-        myNothingToUpdateLabel.setText(IdeBundle.message("updates.no.updates.snap.message", app));
-      }
-      else {
-        myNothingToUpdateLabel.setText(IdeBundle.message("updates.no.updates.unknown.message", app, manager.toolName));
-      }
+      myNothingToUpdateLabel.setText(getNoUpdatesText());
       configureMessageArea(myMessageArea);
+    }
+  }
+
+  static @Nls(capitalization = Nls.Capitalization.Sentence) String getNoUpdatesText() {
+    String app = ApplicationNamesInfo.getInstance().getFullProductName();
+    ExternalUpdateManager manager = ExternalUpdateManager.ACTUAL;
+    if (manager == null) {
+      return IdeBundle.message("updates.no.updates.message", app);
+    }
+    else if (manager == ExternalUpdateManager.TOOLBOX) {
+      return IdeBundle.message("updates.no.updates.toolbox.message", app);
+    }
+    else if (manager == ExternalUpdateManager.SNAP) {
+      return IdeBundle.message("updates.no.updates.snap.message", app);
+    }
+    else {
+      return IdeBundle.message("updates.no.updates.unknown.message", app, manager.toolName);
     }
   }
 }
