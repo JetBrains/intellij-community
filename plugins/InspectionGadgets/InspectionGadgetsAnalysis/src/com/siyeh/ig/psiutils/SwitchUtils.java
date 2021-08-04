@@ -153,9 +153,9 @@ public final class SwitchUtils {
    * Returns true if given switch block has a rule-based format (like 'case 0 ->')
    * @param block a switch block to test
    * @return true if given switch block has a rule-based format; false if it has conventional label-based format (like 'case 0:')
-   * If switch body has no labels yet and language level permits,
-   * the rule-based format is assumed if the switch block is of the {@link PsiSwitchExpression} type.
+   * If switch body has no labels yet and language level permits the rule-based format is assumed.
    */
+  @Contract(pure = true)
   public static boolean isRuleFormatSwitch(@NotNull PsiSwitchBlock block) {
     if (!HighlightingFeature.ENHANCED_SWITCH.isAvailable(block)) {
       return false;
@@ -164,13 +164,26 @@ public final class SwitchUtils {
     final PsiCodeBlock switchBody = block.getBody();
     if (switchBody != null) {
       for (var child = switchBody.getFirstChild(); child != null; child = child.getNextSibling()) {
-        if (child instanceof PsiSwitchLabelStatementBase && !(child.getLastChild() instanceof PsiErrorElement)) {
+        if (child instanceof PsiSwitchLabelStatementBase && !isBeingCompleted((PsiSwitchLabelStatementBase)child)) {
           return child instanceof PsiSwitchLabeledRuleStatement;
         }
       }
     }
 
-    return block instanceof PsiSwitchExpression;
+    return true;
+  }
+
+  /**
+   * Checks if the label is being completed and there are no other case label elements in the list of the case label's elements
+   * @param label the label to analyze
+   * @return true if the label is currently being completed
+   */
+  @Contract(pure = true)
+  private static boolean isBeingCompleted(@NotNull PsiSwitchLabelStatementBase label) {
+    if (!(label.getLastChild() instanceof PsiErrorElement)) return false;
+
+    final PsiCaseLabelElementList list = label.getCaseLabelElementList();
+    return list != null && list.getElements().length == 1;
   }
 
   public static boolean canBeSwitchSelectorExpression(PsiExpression expression, LanguageLevel languageLevel) {
