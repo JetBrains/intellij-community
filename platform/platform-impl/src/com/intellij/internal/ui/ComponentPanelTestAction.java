@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui;
 
 import com.google.common.collect.ImmutableList;
@@ -576,6 +576,18 @@ public class ComponentPanelTestAction extends DumbAwareAction {
                                                  "Open file", () -> System.out.println("Browse file clicked"));
 
       ComboBox<String> eComboBox = new ComboBox<>(STRING_VALUES);
+      ComponentValidator eComboBoxValidator = new ComponentValidator(getDisposable()).withValidator(() -> {
+        Object item = eComboBox.getEditor().getItem();
+        String text = item == null ? "" : item.toString();
+        if (text.isBlank()) return new ValidationInfo("Blank lines are not supported", eComboBox);
+        if (text.contains("e")) return new ValidationInfo("Letter 'e' is prohibited", eComboBox);
+        return null; // text is valid
+      });
+
+      eComboBoxValidator.installOn(eComboBox);
+      eComboBoxValidator.revalidate(); // needed because text is already set
+      eComboBox.addActionListener(event -> eComboBoxValidator.revalidate());
+
       eComboBox.setEditable(true);
       eComboBox.setEditor(new BasicComboBoxEditor(){
         @Override
@@ -583,13 +595,15 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           ExtendableTextField ecbEditor = new ExtendableTextField();
           ecbEditor.addExtension(browseExtension);
           ecbEditor.setBorder(null);
+          ecbEditor.getDocument().addDocumentListener(new DocumentAdapter() {
+            @Override
+            protected void textChanged(@NotNull DocumentEvent event) {
+              eComboBoxValidator.revalidate();
+            }
+          });
           return ecbEditor;
         }
       });
-
-      new ComponentValidator(getDisposable())
-        .withValidator(() -> "Two".equals(eComboBox.getSelectedItem()) ? new ValidationInfo("Two is not preferred", eComboBox).asWarning() : null)
-        .installOn(eComboBox);
 
       ComboBox<String> animatedIconComboBox = new ComboBox<>();
       animatedIconComboBox.setEditable(true);
