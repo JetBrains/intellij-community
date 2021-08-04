@@ -81,7 +81,7 @@ public abstract class ApplicationCommandLineState<T extends
         boolean inLibrary = mainModule instanceof PsiCompiledElement || mainModule instanceof LightJavaModule;
         if (!inLibrary || ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByModule(module.getModule(), false)) != null) {
           params.setModuleName(ReadAction.compute(() -> mainModule.getName()));
-          JavaParametersUtil.putDependenciesOnModulePath(params, mainModule, false);
+          dumbService.runReadActionInSmartMode(() -> JavaParametersUtil.putDependenciesOnModulePath(params, mainModule, false));
         }
       }
     }
