@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -871,6 +872,7 @@ public final class IncProjectBuilder {
     private final List<BuildChunkTask> myTasksDependsOnThis = new ArrayList<>();
     private int mySelfScore = 0;
     private int myDepsScore = 0;
+    private int myIndex = 0;
 
     private BuildChunkTask(BuildTargetChunk chunk) {
       myChunk = chunk;
@@ -936,13 +938,14 @@ public final class IncProjectBuilder {
         myTasks.add(task);
         for (BuildTarget<?> target : chunk.getTargets()) {
           targetToTask.put(target, task);
-          task.mySelfScore += 1;
         }
+        task.mySelfScore = chunk.getTargets().size();
       }
 
-      Map<BuildTarget<?>, Collection<BuildTarget<?>>> transitiveDependencyCache = new HashMap<>(myTasks.size());
-
+      int taskCounter = 0;
       for (BuildChunkTask task : myTasks) {
+        task.myIndex = taskCounter;
+        taskCounter++;
         for (BuildTarget<?> target : task.getChunk().getTargets()) {
           for (BuildTarget<?> dependency : targetIndex.getDependencies(target, myContext)) {
             BuildChunkTask depTask = targetToTask.get(dependency);
@@ -950,16 +953,47 @@ public final class IncProjectBuilder {
               task.addDependency(depTask);
             }
           }
-          for (BuildTarget<?> dependency : getTransitiveDeps(targetIndex, target, myContext, transitiveDependencyCache)) {
-            BuildChunkTask depTask = targetToTask.get(dependency);
-            if (depTask != null && depTask != task) {
-              depTask.myDepsScore += task.mySelfScore;
-            }
-          }
         }
       }
 
+      Map<BuildChunkTask, ? extends Queue<BuildChunkTask>> taskToDependants = collectTaskToDependants(context, targetIndex, targetToTask);
+
+      // bitset stores indexes of transitively dependant tasks
+      HashMap<BuildChunkTask, BitSet> chunkToTransitive = new HashMap<>();
+      for (BuildChunkTask task : Lists.reverse(myTasks)) {
+        Queue<BuildChunkTask> dependantTasks = taskToDependants.get(task);
+        Set<BuildChunkTask> directDependants = new HashSet<>(dependantTasks != null ? dependantTasks : Collections.emptyList());
+        BitSet transitiveDependants = new BitSet();
+        for (BuildChunkTask directDependant : directDependants) {
+          BitSet dependantChunkTransitiveDependants = chunkToTransitive.get(directDependant);
+          transitiveDependants.or(dependantChunkTransitiveDependants);
+          transitiveDependants.set(directDependant.myIndex);
+        }
+        chunkToTransitive.put(task, transitiveDependants);
+        task.myDepsScore = transitiveDependants.cardinality();
+      }
+
       myTasksCountDown = new CountDownLatch(myTasks.size());
+    }
+
+    @NotNull
+    private Map<BuildChunkTask, ? extends Queue<BuildChunkTask>> collectTaskToDependants(CompileContext context,
+                                                                                         BuildTargetIndex targetIndex,
+                                                                                         Map<BuildTarget<?>, BuildChunkTask> targetToTask) {
+      ConcurrentHashMap<BuildChunkTask, ConcurrentLinkedQueue<BuildChunkTask>> taskToDependants = new ConcurrentHashMap<>(myTasks.size());
+      myTasks.parallelStream().forEach(task -> {
+        BuildTargetChunk chunk = task.getChunk();
+        for (BuildTarget<?> target : chunk.getTargets()) {
+          Collection<BuildTarget<?>> dependencies = targetIndex.getDependencies(target, context);
+          for (BuildTarget<?> dependency : dependencies) {
+            BuildChunkTask dependencyTask = targetToTask.get(dependency);
+            if (dependencyTask != task) {
+              taskToDependants.computeIfAbsent(dependencyTask, __ -> new ConcurrentLinkedQueue<>()).add(task);
+            }
+          }
+        }
+      });
+      return taskToDependants;
     }
 
     public void buildInParallel() throws IOException, ProjectBuildException {
@@ -1051,35 +1085,6 @@ public final class IncProjectBuilder {
         }
       });
     }
-  }
-
-  private static Iterable<? extends BuildTarget<?>> getTransitiveDeps(BuildTargetIndex index,
-                                                                      BuildTarget<?> target,
-                                                                      CompileContext context,
-                                                                      Map<BuildTarget<?>, Collection<BuildTarget<?>>> cache) {
-    if (cache.containsKey(target)) {
-      return cache.get(target);
-    }
-    Set<BuildTarget<?>> result = new HashSet<>();
-    LinkedList<BuildTarget<?>> queue = new LinkedList<>();
-    queue.add(target);
-    result.add(target);
-    while (!queue.isEmpty()) {
-      BuildTarget next = queue.pop();
-      Collection<BuildTarget<?>> transitive = cache.get(next);
-      if (transitive != null) {
-        result.addAll(transitive);
-      }
-      else {
-        Collection<BuildTarget<?>> dependencies = index.getDependencies(next, context);
-        for (BuildTarget<?> dependency : dependencies) {
-          if (dependency != target && result.add(dependency)) queue.add(dependency);
-        }
-      }
-    }
-    result.remove(target);
-    cache.put(target, result);
-    return result;
   }
 
   private void buildChunkIfAffected(CompileContext context, CompileScope scope, BuildTargetChunk chunk,
