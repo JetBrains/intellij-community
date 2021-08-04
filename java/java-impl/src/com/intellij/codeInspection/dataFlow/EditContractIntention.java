@@ -14,7 +14,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
-import com.intellij.openapi.ui.messages.MessageDialog;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -126,7 +126,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
 
     GridBagConstraints constraints =
       new GridBagConstraints(0, 0, 2, 1, 4.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.insets(2), 0, 0);
-    panel.add(MessageDialog.configureMessagePaneUi(new JTextPane(), JavaBundle.message("edit.contract.dialog.hint")), constraints);
+    panel.add(Messages.configureMessagePaneUi(new JTextPane(), JavaBundle.message("edit.contract.dialog.hint")), constraints);
     constraints.gridx = 0;
     constraints.gridy = 1;
     constraints.gridwidth = 1;

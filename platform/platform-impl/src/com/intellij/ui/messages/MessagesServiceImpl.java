@@ -136,7 +136,7 @@ public class MessagesServiceImpl implements MessagesService {
       return TestDialogManager.getTestInputImplementation().show(message, validator);
     }
 
-    final MessageInputDialog dialog = project != null
+    final InputDialog dialog = project != null
                                ? new PasswordInputDialog(project, message, title, icon, validator)
                                : new PasswordInputDialog(message, title, icon, validator);
     dialog.show();
@@ -167,9 +167,9 @@ public class MessagesServiceImpl implements MessagesService {
       return TestDialogManager.getTestInputImplementation().show(message, validator);
     }
 
-    MessageInputDialog dialog = new MessageInputDialog(project, message, title, icon, initialValue, validator,
-                                                       new String[]{getOkButton(), getCancelButton()},
-                                                       0, comment);
+    InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator,
+                                         new String[]{getOkButton(), getCancelButton()},
+                                         0, comment);
 
     final JTextComponent field = dialog.getTextField();
     if (selection != null) {
@@ -193,8 +193,8 @@ public class MessagesServiceImpl implements MessagesService {
       return TestDialogManager.getTestInputImplementation().show(message, validator);
     }
 
-    MessageInputDialog dialog = new MessageMultilineInputDialog(project, message, title, icon, initialValue, validator,
-                                                                new String[]{getOkButton(), getCancelButton()}, 0);
+    InputDialog dialog = new MessageMultilineInputDialog(project, message, title, icon, initialValue, validator,
+                                                         new String[]{getOkButton(), getCancelButton()}, 0);
     dialog.show();
     return dialog.getInputString();
   }
@@ -294,5 +294,19 @@ public class MessagesServiceImpl implements MessagesService {
   @Override
   public boolean isAlertEnabled() {
     return AlertMessagesManager.isEnabled();
+  }
+
+  @Override
+  public void showErrorDialog(@Nullable Project project,
+                              @Nullable @NlsContexts.DialogMessage String message,
+                              @NotNull @NlsContexts.DialogTitle String title) {
+    Messages.showErrorDialog(project, message, title);
+  }
+
+  @Override
+  public void showInfoMessage(@NotNull Component component,
+                              @NotNull @NlsContexts.DialogMessage String message,
+                              @NotNull @NlsContexts.DialogTitle String title) {
+    Messages.showInfoMessage(component, message, title);
   }
 }

@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -55,7 +54,7 @@ public class ConvertProjectDialog extends DialogWrapper {
     message.append(IdeBundle.message("conversion.dialog.text.1", context.getProjectFile().getFileName().toString(),
                                        ApplicationNamesInfo.getInstance().getFullProductName()));
     message.append(IdeBundle.message("conversion.dialog.text.2", myBackupDir.toString()));
-    MessageDialog.configureMessagePaneUi(myTextPane, XmlStringUtil.wrapInHtml(message), null);
+    Messages.configureMessagePaneUi(myTextPane, XmlStringUtil.wrapInHtml(message), null);
 
     myTextPane.addHyperlinkListener(new HyperlinkListener() {
       @Override

@@ -12,7 +12,7 @@ import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 
-public class MessageMultilineInputDialog extends MessageInputDialog {
+public class MessageMultilineInputDialog extends Messages.InputDialog {
   public MessageMultilineInputDialog(Project project,
                                      @NlsContexts.DialogMessage String message,
                                      @NlsContexts.DialogTitle String title,

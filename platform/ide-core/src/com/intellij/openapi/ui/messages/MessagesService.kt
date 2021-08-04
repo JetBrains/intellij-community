@@ -126,4 +126,12 @@ interface MessagesService {
                          lineJoiner: Function<in MutableList<String?>?, String?>?)
 
   fun isAlertEnabled() : Boolean
+
+  fun showErrorDialog(project: Project?,
+                      message: @DialogMessage String?,
+                      title: @NlsContexts.DialogTitle String);
+
+  fun showInfoMessage(component: Component, message: @DialogMessage String, title: @NlsContexts.DialogTitle String) {
+
+  }
 }

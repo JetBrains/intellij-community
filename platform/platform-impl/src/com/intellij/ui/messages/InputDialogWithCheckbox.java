@@ -2,7 +2,7 @@
 package com.intellij.ui.messages;
 
 import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.ui.MessageInputDialog;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-class InputDialogWithCheckbox extends MessageInputDialog {
+class InputDialogWithCheckbox extends Messages.InputDialog {
   private JCheckBox myCheckBox;
 
   InputDialogWithCheckbox(@NlsContexts.DialogMessage String message,

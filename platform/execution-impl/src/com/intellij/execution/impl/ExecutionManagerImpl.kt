@@ -38,7 +38,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.*
-import com.intellij.openapi.ui.DoNotAskOption
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
@@ -855,7 +855,7 @@ private fun userApprovesStopForSameTypeConfigurations(project: Project, configNa
   }
 
   @Suppress("DuplicatedCode")
-  val option = object : DoNotAskOption {
+  val option = object : DialogWrapper.DoNotAskOption {
     override fun isToBeShown() = config.isRestartRequiresConfirmation
 
     override fun setToBeShown(value: Boolean, exitCode: Int) {
@@ -890,7 +890,7 @@ private fun userApprovesStopForIncompatibleConfigurations(project: Project,
   }
 
   @Suppress("DuplicatedCode")
-  val option = object : DoNotAskOption {
+  val option = object : DialogWrapper.DoNotAskOption {
     override fun isToBeShown() = config.isStopIncompatibleRequiresConfirmation
 
     override fun setToBeShown(value: Boolean, exitCode: Int) {

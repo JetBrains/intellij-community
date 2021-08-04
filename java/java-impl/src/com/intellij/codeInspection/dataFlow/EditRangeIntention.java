@@ -13,7 +13,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
-import com.intellij.openapi.ui.messages.MessageDialog;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
@@ -118,7 +118,7 @@ public class EditRangeIntention extends BaseIntentionAction implements LowPriori
 
     GridBag c = new GridBag().setDefaultAnchor(GridBagConstraints.WEST).setDefaultFill(GridBagConstraints.HORIZONTAL)
       .setDefaultInsets(JBUI.insets(2)).setDefaultWeightX(0, 1.0).setDefaultWeightX(1, 3.0).setDefaultWeightY(1.0);
-    panel.add(MessageDialog.configureMessagePaneUi(new JTextPane(), JavaBundle.message("edit.range.dialog.message")), c.nextLine().next().coverLine());
+    panel.add(Messages.configureMessagePaneUi(new JTextPane(), JavaBundle.message("edit.range.dialog.message")), c.nextLine().next().coverLine());
 
     JLabel fromLabel = new JLabel(JavaBundle.message("label.from.inclusive"));
     fromLabel.setDisplayedMnemonic('f');

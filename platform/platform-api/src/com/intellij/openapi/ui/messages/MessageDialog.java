@@ -9,8 +9,6 @@ import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.BrowserHyperlinkListener;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
@@ -19,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.basic.BasicHTML;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -240,7 +237,7 @@ public class MessageDialog extends DialogWrapper {
     JPanel panel = createIconPanel();
     if (myMessage != null) {
       JTextPane messageComponent = createMessageComponent(myMessage);
-      panel.add(wrapToScrollPaneIfNeeded(messageComponent, 100, 15), BorderLayout.CENTER);
+      panel.add(Messages.wrapToScrollPaneIfNeeded(messageComponent, 100, 15), BorderLayout.CENTER);
     }
     return panel;
   }
@@ -272,67 +269,11 @@ public class MessageDialog extends DialogWrapper {
 
   protected JTextPane createMessageComponent(final @NlsContexts.DialogMessage String message) {
     final JTextPane messageComponent = new JTextPane();
-    return configureMessagePaneUi(messageComponent, message);
+    return Messages.configureMessagePaneUi(messageComponent, message);
   }
 
   @Override
   protected @Nullable String getHelpId() {
     return myHelpId;
-  }
-
-  public static @NotNull JComponent wrapToScrollPaneIfNeeded(@NotNull JComponent comp, int columns, int lines) {
-    return wrapToScrollPaneIfNeeded(comp, columns, lines, 4);
-  }
-
-  public static @NotNull JComponent wrapToScrollPaneIfNeeded(@NotNull JComponent comp, int columns, int maxLines, int lines) {
-    float fontSize = comp.getFont().getSize2D();
-    Dimension maxDim = new Dimension((int)(fontSize * columns), (int)(fontSize * maxLines));
-    Dimension prefDim = comp.getPreferredSize();
-    if (prefDim.width <= maxDim.width && prefDim.height <= maxDim.height) return comp;
-
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(comp);
-    scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    int barWidth = UIUtil.getScrollBarWidth();
-    Dimension preferredSize =
-      new Dimension(Math.min(prefDim.width, maxDim.width) + barWidth,
-                    Math.min(prefDim.height, maxDim.height) + barWidth);
-    if (prefDim.width > maxDim.width) { //Too wide single-line message should be wrapped
-      preferredSize.height = Math.max(preferredSize.height, (int)(lines * fontSize) + barWidth);
-    }
-    scrollPane.setPreferredSize(preferredSize);
-    return scrollPane;
-  }
-
-  public static @NotNull JTextPane configureMessagePaneUi(JTextPane messageComponent, @NlsContexts.DialogMessage String message) {
-    JTextPane pane = configureMessagePaneUi(messageComponent, message, null);
-    if (UIUtil.HTML_MIME.equals(pane.getContentType())) {
-      pane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
-    }
-    return pane;
-  }
-
-  public static @NotNull JTextPane configureMessagePaneUi(@NotNull JTextPane messageComponent,
-                                                          @Nullable @NlsContexts.DialogMessage String message,
-                                                          @Nullable UIUtil.FontSize fontSize) {
-    UIUtil.FontSize fixedFontSize = fontSize == null ? UIUtil.FontSize.NORMAL : fontSize;
-    messageComponent.setFont(UIUtil.getLabelFont(fixedFontSize));
-    if (BasicHTML.isHTMLString(message)) {
-      messageComponent.setEditorKit(UIUtil.getHTMLEditorKit());
-    }
-    messageComponent.setText(message);
-    messageComponent.setEditable(false);
-    if (messageComponent.getCaret() != null) {
-      messageComponent.setCaretPosition(0);
-    }
-
-    messageComponent.setBackground(UIUtil.getOptionPaneBackground());
-    messageComponent.setForeground(UIUtil.getLabelForeground());
-    return messageComponent;
-  }
-
-  public static void installHyperlinkSupport(JTextPane messageComponent) {
-    configureMessagePaneUi(messageComponent, "<html></html>");
   }
 }

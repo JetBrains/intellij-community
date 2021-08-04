@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("MessageUtil")
 package com.intellij.openapi.ui
 
@@ -30,7 +30,7 @@ fun showOkCancelDialog(@DialogTitle title: String,
                        @Button okText: String,
                        @Button cancelText: String = Messages.getCancelButton(),
                        icon: Icon? = null,
-                       doNotAskOption: DoNotAskOption? = null,
+                       doNotAskOption: DialogWrapper.DoNotAskOption? = null,
                        project: Project? = null): Int {
   return Messages.showOkCancelDialog(project, message, title, okText, cancelText, icon, doNotAskOption)
 }

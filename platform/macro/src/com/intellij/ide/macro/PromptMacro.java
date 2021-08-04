@@ -17,9 +17,9 @@
 package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeCoreBundle;
-import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.messages.MessagesService;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,8 +43,8 @@ public final class PromptMacro extends PromptingMacro implements SecondQueueExpa
   }
 
   public String promptUser() {
-    return Messages.showInputDialog(IdeCoreBundle.message("prompt.enter.parameters"), IdeCoreBundle.message("title.input"),
-                                    Messages.getQuestionIcon());
+    return MessagesService.getInstance().showInputDialog(null, null, IdeCoreBundle.message("prompt.enter.parameters"), IdeCoreBundle.message("title.input"),
+                                                         UIUtil.getQuestionIcon(), null, null, null, null);
   }
 
   @Override

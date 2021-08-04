@@ -376,7 +376,8 @@ private class AlertDialog(project: Project?,
       myMessageComponent = messageComponent
 
       val lines = myMessage.length / 100
-      val scrollPane = MessageDialog.wrapToScrollPaneIfNeeded(messageComponent, 100, 15, if (lines < 4) 4 else lines)
+      val scrollPane = Messages.wrapToScrollPaneIfNeeded(messageComponent, 100, 15,
+                                                                                                    if (lines < 4) 4 else lines)
       if (scrollPane is JScrollPane) {
         scrollPane.isOpaque = false
         scrollPane.viewport.isOpaque = false

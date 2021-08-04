@@ -2,11 +2,11 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.GeneralSettings;
-import com.intellij.openapi.ui.DoNotAskOption;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 
-public final class ProjectNewWindowDoNotAskOption implements DoNotAskOption {
+public final class ProjectNewWindowDoNotAskOption implements DialogWrapper.DoNotAskOption {
   @Override
   public boolean isToBeShown() {
     return true;

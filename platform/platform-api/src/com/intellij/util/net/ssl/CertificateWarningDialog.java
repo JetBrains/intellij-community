@@ -7,7 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.messages.MessageDialog;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
@@ -69,7 +69,7 @@ public class CertificateWarningDialog extends DialogWrapper {
     myCancelAction.putValue(DEFAULT_ACTION, true);
     myWarningSign.setIcon(AllIcons.General.WarningDialog);
 
-    MessageDialog.installHyperlinkSupport(myNoticePane);
+    Messages.installHyperlinkSupport(myNoticePane);
     //    myNoticePane.setFont(myNoticePane.getFont().deriveFont((float)FontSize.SMALL.getSize()));
 
     String path = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(manager.getCacertsPath()));

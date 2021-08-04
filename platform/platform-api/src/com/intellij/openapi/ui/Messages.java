@@ -6,21 +6,31 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.MessageException;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.mac.MacMessages;
 import com.intellij.util.Function;
 import com.intellij.util.PairFunction;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.plaf.basic.BasicHTML;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.List;
 
 import static com.intellij.openapi.util.NlsContexts.*;
@@ -31,10 +41,66 @@ import static com.intellij.openapi.util.NlsContexts.*;
 @ApiStatus.NonExtendable
 @SuppressWarnings("DeprecatedIsStillUsed")
 public class Messages {
-  public static final int OK = 0;
-  public static final int YES = 0;
-  public static final int NO = 1;
-  public static final int CANCEL = 2;
+  public static final int OK = MessageConstants.OK;
+  public static final int YES = MessageConstants.YES;
+  public static final int NO = MessageConstants.NO;
+  public static final int CANCEL = MessageConstants.CANCEL;
+
+  public static @NotNull JComponent wrapToScrollPaneIfNeeded(@NotNull JComponent comp, int columns, int lines) {
+    return wrapToScrollPaneIfNeeded(comp, columns, lines, 4);
+  }
+
+  public static @NotNull JComponent wrapToScrollPaneIfNeeded(@NotNull JComponent comp, int columns, int maxLines, int lines) {
+    float fontSize = comp.getFont().getSize2D();
+    Dimension maxDim = new Dimension((int)(fontSize * columns), (int)(fontSize * maxLines));
+    Dimension prefDim = comp.getPreferredSize();
+    if (prefDim.width <= maxDim.width && prefDim.height <= maxDim.height) return comp;
+
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(comp);
+    scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    int barWidth = UIUtil.getScrollBarWidth();
+    Dimension preferredSize =
+      new Dimension(Math.min(prefDim.width, maxDim.width) + barWidth,
+                    Math.min(prefDim.height, maxDim.height) + barWidth);
+    if (prefDim.width > maxDim.width) { //Too wide single-line message should be wrapped
+      preferredSize.height = Math.max(preferredSize.height, (int)(lines * fontSize) + barWidth);
+    }
+    scrollPane.setPreferredSize(preferredSize);
+    return scrollPane;
+  }
+
+  public static @NotNull JTextPane configureMessagePaneUi(JTextPane messageComponent, @DialogMessage String message) {
+    JTextPane pane = configureMessagePaneUi(messageComponent, message, null);
+    if (UIUtil.HTML_MIME.equals(pane.getContentType())) {
+      pane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
+    }
+    return pane;
+  }
+
+  public static @NotNull JTextPane configureMessagePaneUi(@NotNull JTextPane messageComponent,
+                                                          @Nullable @DialogMessage String message,
+                                                          @Nullable UIUtil.FontSize fontSize) {
+    UIUtil.FontSize fixedFontSize = fontSize == null ? UIUtil.FontSize.NORMAL : fontSize;
+    messageComponent.setFont(UIUtil.getLabelFont(fixedFontSize));
+    if (BasicHTML.isHTMLString(message)) {
+      messageComponent.setEditorKit(UIUtil.getHTMLEditorKit());
+    }
+    messageComponent.setText(message);
+    messageComponent.setEditable(false);
+    if (messageComponent.getCaret() != null) {
+      messageComponent.setCaretPosition(0);
+    }
+
+    messageComponent.setBackground(UIUtil.getOptionPaneBackground());
+    messageComponent.setForeground(UIUtil.getLabelForeground());
+    return messageComponent;
+  }
+
+  public static void installHyperlinkSupport(JTextPane messageComponent) {
+    configureMessagePaneUi(messageComponent, "<html></html>");
+  }
 
   @MagicConstant(intValues = {YES, NO})
   public @interface YesNoResult { }
@@ -139,7 +205,7 @@ public class Messages {
                                String @NotNull @NlsContexts.Button [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon,
-                               @Nullable DoNotAskOption doNotAskOption) {
+                               @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return MessagesService.getInstance()
       .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, false, null);
   }
@@ -153,18 +219,13 @@ public class Messages {
                                           String @NotNull @NlsContexts.Button [] options,
                                           int defaultOptionIndex,
                                           @Nullable Icon icon,
-                                          @Nullable DoNotAskOption doNotAskOption) {
+                                          @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return MessagesService.getInstance()
       .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, true, null);
   }
 
   public static boolean canShowMacSheetPanel() {
-    if (!SystemInfoRt.isMac || MessagesService.getInstance().isAlertEnabled()) {
-      return false;
-    }
-
-    Application app = ApplicationManager.getApplication();
-    return app != null && !app.isUnitTestMode() && !app.isHeadlessEnvironment() && Registry.is("ide.mac.message.dialogs.as.sheets", true);
+    return MessageDialogBuilderKt.canShowMacSheetPanel();
   }
 
   public static boolean isMacSheetEmulation() {
@@ -203,7 +264,7 @@ public class Messages {
    * Use this method only if you do not know project or component
    *
    * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
-   * @see #showDialog(Project, String, String, String[], int, Icon, DoNotAskOption)
+   * @see #showDialog(Project, String, String, String[], int, Icon, DialogWrapper.DoNotAskOption)
    * @see #showDialog(Component, String, String, String[], int, Icon)
    */
   public static int showDialog(@DialogMessage String message,
@@ -212,7 +273,7 @@ public class Messages {
                                int defaultOptionIndex,
                                int focusedOptionIndex,
                                @Nullable Icon icon,
-                               @Nullable DoNotAskOption doNotAskOption) {
+                               @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return MessagesService.getInstance()
       .showMessageDialog(null, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false, null);
   }
@@ -229,7 +290,7 @@ public class Messages {
                                String @NotNull @NlsContexts.Button [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon,
-                               @Nullable DoNotAskOption doNotAskOption) {
+                               @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return showDialog(message, title, options, defaultOptionIndex, defaultOptionIndex, icon, doNotAskOption);
   }
 
@@ -347,7 +408,7 @@ public class Messages {
                                     @NotNull @NlsContexts.Button String yesText,
                                     @NotNull @NlsContexts.Button String noText,
                                     @Nullable Icon icon,
-                                    @Nullable DoNotAskOption doNotAskOption) {
+                                    @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return MessageDialogBuilder.yesNo(title, message)
       .icon(icon)
       .doNotAsk(doNotAskOption)
@@ -371,7 +432,7 @@ public class Messages {
                                     @DialogMessage String message,
                                     @NotNull @DialogTitle String title,
                                     @Nullable Icon icon,
-                                    @Nullable DoNotAskOption doNotAskOption) {
+                                    @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return MessageDialogBuilder.yesNo(title, message)
       .icon(icon)
       .doNotAsk(doNotAskOption)
@@ -394,7 +455,7 @@ public class Messages {
                                     @Nls @NotNull @NlsContexts.Button String yesText,
                                     @Nls @NotNull @NlsContexts.Button String noText,
                                     @Nullable Icon icon,
-                                    @Nullable DoNotAskOption doNotAskOption) {
+                                    @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return MessageDialogBuilder.yesNo(title, message)
       .yesText(yesText)
       .noText(noText)
@@ -433,7 +494,7 @@ public class Messages {
                                        @NotNull @NlsContexts.Button String okText,
                                        @NotNull @NlsContexts.Button String cancelText,
                                        @Nullable Icon icon,
-                                       @Nullable DoNotAskOption doNotAskOption) {
+                                       @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return MessageDialogBuilder.okCancel(title, message)
       .yesText(okText)
       .noText(cancelText)
@@ -519,7 +580,7 @@ public class Messages {
    * Use this method only if you do not know project or component
    *
    * @return {@link #OK} if user pressed "Ok" or {@link #CANCEL} if user pressed "Cancel" button.
-   * @see #showOkCancelDialog(Project, String, String, String, String, Icon, DoNotAskOption)
+   * @see #showOkCancelDialog(Project, String, String, String, String, Icon, DialogWrapper.DoNotAskOption)
    * @see #showOkCancelDialog(Component, String, String, String, String, Icon)
    */
   @OkCancelResult
@@ -528,7 +589,7 @@ public class Messages {
                                        @NotNull @NlsContexts.Button String okText,
                                        @NotNull @NlsContexts.Button String cancelText,
                                        Icon icon,
-                                       @Nullable DoNotAskOption doNotAskOption) {
+                                       @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return MessageDialogBuilder.okCancel(title, message)
       .yesText(okText)
       .noText(cancelText)
@@ -746,7 +807,7 @@ public class Messages {
                                           @NotNull @NlsContexts.Button String no,
                                           @NotNull @NlsContexts.Button String cancel,
                                           Icon icon,
-                                          @Nullable DoNotAskOption doNotAskOption) {
+                                          @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return MessageDialogBuilder.yesNoCancel(title, message)
       .yesText(yes)
       .noText(no)
@@ -1037,5 +1098,191 @@ public class Messages {
                                         final @NonNls String dimensionServiceKey) {
     showTextAreaDialog(textField, title, dimensionServiceKey, ParametersListUtil.DEFAULT_LINE_PARSER,
                        ParametersListUtil.DEFAULT_LINE_JOINER);
+  }
+
+  public static class InputDialog extends MessageDialog {
+    public static final int INPUT_DIALOG_COLUMNS = 30;
+    protected JTextComponent myField;
+    private final InputValidator myValidator;
+    private final @DetailedDescription String myComment;
+  
+    public InputDialog(@Nullable Project project,
+                       @DialogMessage String message,
+                       @DialogTitle String title,
+                       @Nullable Icon icon,
+                       @Nullable @NonNls String initialValue,
+                       @Nullable InputValidator validator,
+                       String @NotNull @NlsContexts.Button [] options,
+                       int defaultOption,
+                       @Nullable @DetailedDescription String comment) {
+      super(project, true);
+      myComment = comment;
+      myValidator = validator;
+      _init(title, message, options, defaultOption, -1, icon, null, null);
+      myField.setText(initialValue);
+      enableOkAction();
+    }
+  
+    public InputDialog(@Nullable Project project,
+                       @DialogMessage String message,
+                       @DialogTitle String title,
+                       @Nullable Icon icon,
+                       @Nullable @NonNls String initialValue,
+                       @Nullable InputValidator validator,
+                       String @NotNull @NlsContexts.Button [] options,
+                       int defaultOption) {
+      this(project, message, title, icon, initialValue, validator, options, defaultOption, null);
+    }
+  
+    public InputDialog(@Nullable Project project,
+                       @DialogMessage String message,
+                       @DialogTitle String title,
+                       @Nullable Icon icon,
+                       @Nullable @NonNls String initialValue,
+                       @Nullable InputValidator validator) {
+      this(project, message, title, icon, initialValue, validator, new String[]{getOkButton(), getCancelButton()}, 0);
+    }
+  
+    public InputDialog(@NotNull Component parent,
+                       @DialogMessage String message,
+                       @DialogTitle String title,
+                       @Nullable Icon icon,
+                       @Nullable String initialValue,
+                       @Nullable InputValidator validator) {
+      super(null, parent, message, title, new String[]{getOkButton(), getCancelButton()}, -1, 0, icon, null, true);
+      myValidator = validator;
+      myComment = null;
+      myField.setText(initialValue);
+      enableOkAction();
+    }
+  
+    public InputDialog(@DialogMessage String message,
+                       @DialogTitle String title,
+                       @Nullable Icon icon,
+                       @Nullable String initialValue,
+                       @Nullable InputValidator validator) {
+      super(null, null, message, title, new String[]{getOkButton(), getCancelButton()}, 0, -1, icon, null, true);
+      myValidator = validator;
+      myComment = null;
+      myField.setText(initialValue);
+      enableOkAction();
+    }
+  
+    private void enableOkAction() {
+      getOKAction().setEnabled(myValidator == null || myValidator.checkInput(myField.getText().trim()));
+    }
+  
+    @Override
+    protected Action @NotNull [] createActions() {
+      final Action[] actions = new Action[myOptions.length];
+      for (int i = 0; i < myOptions.length; i++) {
+        String option = myOptions[i];
+        final int exitCode = i;
+        if (i == 0) { // "OK" is default button. It has index 0.
+          actions[0] = getOKAction();
+          actions[0].putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
+          myField.getDocument().addDocumentListener(new DocumentAdapter() {
+            @Override
+            public void textChanged(@NotNull DocumentEvent event) {
+              final String text = myField.getText().trim();
+              actions[exitCode].setEnabled(myValidator == null || myValidator.checkInput(text));
+              if (myValidator instanceof InputValidatorEx) {
+                setErrorText(((InputValidatorEx)myValidator).getErrorText(text), myField);
+              }
+            }
+          });
+        }
+        else {
+          actions[i] = new AbstractAction(option) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+              close(exitCode);
+            }
+          };
+        }
+      }
+      return actions;
+    }
+  
+    @Override
+    protected void doOKAction() {
+      String inputString = myField.getText().trim();
+      if (myValidator == null ||
+          myValidator.checkInput(inputString) &&
+          myValidator.canClose(inputString)) {
+        close(0);
+      }
+    }
+  
+    @Override
+    protected JComponent createCenterPanel() {
+      return null;
+    }
+  
+    @Override
+    protected JComponent createNorthPanel() {
+      JPanel panel = createIconPanel();
+  
+      JPanel messagePanel = createMessagePanel();
+      panel.add(messagePanel, BorderLayout.CENTER);
+  
+      if (myComment != null) {
+        return UI.PanelFactory.panel(panel).withComment(myComment).createPanel();
+      }
+      else {
+        return panel;
+      }
+    }
+  
+    @Override
+    protected @NotNull JPanel createMessagePanel() {
+      JPanel messagePanel = new JPanel(new BorderLayout());
+      if (myMessage != null) {
+        JComponent textComponent = createTextComponent();
+        messagePanel.add(textComponent, BorderLayout.NORTH);
+      }
+  
+      myField = createTextFieldComponent();
+      messagePanel.add(createScrollableTextComponent(), BorderLayout.SOUTH);
+  
+      return messagePanel;
+    }
+  
+    protected JComponent createScrollableTextComponent() {
+      return myField;
+    }
+  
+    protected JComponent createTextComponent() {
+      JComponent textComponent;
+      if (BasicHTML.isHTMLString(myMessage)) {
+        textComponent = createMessageComponent(myMessage);
+      }
+      else {
+        JLabel textLabel = new JLabel(myMessage);
+        textLabel.setUI(new MultiLineLabelUI());
+        textComponent = textLabel;
+      }
+      textComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 20));
+      return textComponent;
+    }
+  
+    public JTextComponent getTextField() {
+      return myField;
+    }
+  
+    protected JTextComponent createTextFieldComponent() {
+      JTextField field = new JTextField(INPUT_DIALOG_COLUMNS);
+      field.setMargin(JBInsets.create(0, 5));
+      return field;
+    }
+  
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myField;
+    }
+  
+    public @Nullable @NlsSafe String getInputString() {
+      return getExitCode() == 0 ? myField.getText().trim() : null;
+    }
   }
 }

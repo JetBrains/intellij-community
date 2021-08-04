@@ -2180,6 +2180,6 @@ public abstract class DialogWrapper {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   public interface DoNotAskOption extends com.intellij.openapi.ui.DoNotAskOption {
-    public abstract class Adapter extends com.intellij.openapi.ui.DoNotAskOption.Adapter {}
+    abstract class Adapter extends com.intellij.openapi.ui.DoNotAskOption.Adapter implements DoNotAskOption {}
   }
 }

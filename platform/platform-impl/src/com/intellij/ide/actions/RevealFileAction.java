@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -34,7 +33,6 @@ import com.intellij.util.SystemProperties;
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinDef;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,24 +134,11 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     return null;
   }
 
-  /**
-   * @deprecated Please use com.intellij.openapi.ui.DoNotAskOption instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   public static void showDialog(Project project,
                                 @DialogMessage String message,
                                 @DialogTitle String title,
                                 @NotNull File file,
                                 @Nullable DialogWrapper.DoNotAskOption option) {
-    showDialog(project, message, title, file, (DoNotAskOption)option);
-  }
-
-  public static void showDialog(Project project,
-                                @DialogMessage String message,
-                                @DialogTitle String title,
-                                @NotNull File file,
-                                @Nullable DoNotAskOption option) {
     String ok = getActionName(null), cancel = IdeBundle.message("action.close");
     if (Messages.showOkCancelDialog(project, message, title, ok, cancel, Messages.getInformationIcon(), option) == Messages.OK) {
       openFile(file);

@@ -21,7 +21,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -354,7 +354,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
       }
       catch (Exception ex) {
         LOG.warn(ex);
-        Messages.showErrorDialog(IdeCoreBundle.message("error.adding.module.to.project", ex.getMessage()), IdeCoreBundle.message("title.add.module"));
+        MessagesService.getInstance().showErrorDialog(project, IdeCoreBundle.message("error.adding.module.to.project", ex.getMessage()), IdeCoreBundle.message("title.add.module"));
       }
     }
     return null;

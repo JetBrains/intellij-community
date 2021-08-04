@@ -4,7 +4,6 @@ package com.intellij.ide.passwordSafe.ui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
@@ -33,8 +32,8 @@ public class PasswordPromptComponent {
   public PasswordPromptComponent(boolean memoryOnly, @NlsContexts.DialogMessage String message, boolean showUserName, @NlsContexts.Label @Nullable String passwordFieldLabel) {
     myIconLabel.setText("");
     myIconLabel.setIcon(Messages.getWarningIcon());
-    JTextPane messageField = MessageDialog.configureMessagePaneUi(new JTextPane(), message, UIUtil.FontSize.SMALL);
-    myMessagePanel.add(MessageDialog.wrapToScrollPaneIfNeeded(messageField, 80, 4), BorderLayout.CENTER);
+    JTextPane messageField = Messages.configureMessagePaneUi(new JTextPane(), message, UIUtil.FontSize.SMALL);
+    myMessagePanel.add(Messages.wrapToScrollPaneIfNeeded(messageField, 80, 4), BorderLayout.CENTER);
 
     if (memoryOnly) {
       myRememberCheckBox.setVisible(false);

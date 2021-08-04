@@ -2,13 +2,16 @@
 package com.intellij.openapi.ui
 
 import com.intellij.CommonBundle
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages.*
+import com.intellij.openapi.ui.MessageConstants.*
 import com.intellij.openapi.ui.messages.MessagesService
+import com.intellij.openapi.ui.messages.MessagesService.Companion.getInstance
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.mac.MacMessages
@@ -261,4 +264,12 @@ private inline fun <T> showMessage(project: Project?, parentComponent: Component
     }
   }
   return other()
+}
+
+fun canShowMacSheetPanel(): Boolean {
+  if (!SystemInfoRt.isMac || getInstance().isAlertEnabled()) {
+    return false
+  }
+  val app = ApplicationManager.getApplication()
+  return app != null && !app.isUnitTestMode && !app.isHeadlessEnvironment && Registry.`is`("ide.mac.message.dialogs.as.sheets", true)
 }

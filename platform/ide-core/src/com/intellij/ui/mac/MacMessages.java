@@ -3,7 +3,6 @@ package com.intellij.ui.mac;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DoNotAskOption;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+
+import static com.intellij.openapi.ui.MessageConstants.YesNoCancelResult;
 
 /**
  * @author pegov
@@ -20,7 +21,7 @@ public abstract class MacMessages {
     @NotNull MacMessages getMessageManager();
   }
 
-  @Messages.YesNoCancelResult
+  @YesNoCancelResult
   public abstract int showYesNoCancelDialog(@NlsContexts.DialogTitle @NotNull String title,
                                             @NlsContexts.DialogMessage @NotNull String message,
                                             @NlsContexts.Button @NotNull String yesText,

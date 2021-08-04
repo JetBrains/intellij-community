@@ -35,7 +35,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.ui.DoNotAskOption;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
@@ -343,7 +343,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
         final String message = CoverageBundle.message("display.coverage.prompt", suite.getPresentableName());
 
         final CoverageOptionsProvider coverageOptionsProvider = CoverageOptionsProvider.getInstance(myProject);
-        final DoNotAskOption doNotAskOption = new DoNotAskOption() {
+        final DialogWrapper.DoNotAskOption doNotAskOption = new DialogWrapper.DoNotAskOption() {
           @Override
           public boolean isToBeShown() {
             return coverageOptionsProvider.getOptionToReplace() == 3;

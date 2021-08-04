@@ -3,7 +3,7 @@ package com.intellij.ui.messages;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.ui.MessageInputDialog;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +13,7 @@ import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 
-class PasswordInputDialog extends MessageInputDialog {
+class PasswordInputDialog extends Messages.InputDialog {
   PasswordInputDialog(@NlsContexts.DialogMessage String message,
                       @Nls(capitalization = Nls.Capitalization.Title) String title,
                       @Nullable Icon icon,
