@@ -317,7 +317,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     BackAction back = new BackAction();
     ForwardAction forward = new ForwardAction();
     EditDocumentationSourceAction edit = new EditDocumentationSourceAction();
-    myExternalDocAction = new ExternalDocAction();
     actions.add(back);
     actions.add(forward);
     actions.add(edit);
@@ -345,6 +344,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       LOG.error(e);
     }
 
+    myExternalDocAction = new ExternalDocAction();
     myExternalDocAction.registerCustomShortcutSet(CustomShortcutSet.fromString("UP"), this);
     myExternalDocAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), myEditorPane);
     edit.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
@@ -1172,7 +1172,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final class ExternalDocAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     private ExternalDocAction() {
       super(CodeInsightBundle.message("javadoc.action.view.external"), null, AllIcons.Actions.PreviousOccurence);
-      registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), null);
+      setShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet());
     }
 
     @Override
