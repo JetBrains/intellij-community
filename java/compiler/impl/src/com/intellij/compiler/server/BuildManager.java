@@ -975,7 +975,7 @@ public final class BuildManager implements Disposable {
                 ).getCompileMessage());
                 // additional support for debugger auto-attach feature
                 //noinspection UseOfSystemOutOrSystemErr
-                System.out.println("Build: Listening for transport dt_socket at address " + debugPort.intValue()); //NON-NLS
+                System.out.println("Build: Listening for transport dt_socket at address: " + debugPort.intValue()); //NON-NLS
               }
 
               while (!processHandler.waitFor()) {
