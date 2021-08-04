@@ -58,7 +58,8 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
       return List.of();
     }
 
-    GeneralCommandLine commandLine = new GeneralCommandLine(wslExe.toString(), "-l", "-v").withCharset(StandardCharsets.UTF_16LE);
+    GeneralCommandLine commandLine = new GeneralCommandLine(wslExe.toString(), "--list", "--verbose").
+      withCharset(StandardCharsets.UTF_16LE);
 
     long startNano = System.nanoTime();
     ProcessOutput output;

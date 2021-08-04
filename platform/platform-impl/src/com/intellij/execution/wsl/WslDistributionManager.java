@@ -106,10 +106,12 @@ public abstract class WslDistributionManager implements Disposable {
   }
 
   private @NotNull List<WSLDistribution> loadInstalledDistributions() {
-    final int releaseId = WSLUtil.getWindowsReleaseId();
-    if (releaseId > 0 && releaseId  < 1903) return WSLUtil.getAvailableDistributions();
+    final WSLUtil.WSLToolFlags wslTool = WSLUtil.getWSLToolFlags();
+    if (wslTool == null || (!wslTool.isVerboseFlagAvailable && !wslTool.isQuiteFlagAvailable)) {
+      return WSLUtil.getAvailableDistributions();
+    }
 
-    if (Registry.is("wsl.list.prefer.verbose.output", true)) {
+    if (Registry.is("wsl.list.prefer.verbose.output", true) && wslTool.isQuiteFlagAvailable) {
       try {
         final var result = loadInstalledDistributionsWithVersions();
         return ContainerUtil.map(result, data -> {

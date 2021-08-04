@@ -2,28 +2,27 @@
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.jna.JnaLoader;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.WindowsRegistryUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.sun.jna.platform.win32.Advapi32Util;
-import com.sun.jna.platform.win32.WinReg;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -218,28 +217,42 @@ public final class WSLUtil {
     return descriptor != null ? descriptor.getMsId() : msOrInternalId;
   }
 
-  /**
-   * @return windows release id number (e.g 1903) or -1 in case of error
-   */
-  public static int getWindowsReleaseId() {
-    return WINDOWS_RELEASE_ID.getValue();
+  public static class WSLToolFlags {
+    public final boolean isQuiteFlagAvailable;
+    public final boolean isVerboseFlagAvailable;
+
+    WSLToolFlags(boolean isQuiteAvailable, boolean isVerboseAvailable) {
+      isQuiteFlagAvailable = isQuiteAvailable;
+      isVerboseFlagAvailable = isVerboseAvailable;
+    }
   }
 
-  private static final NotNullLazyValue<Integer> WINDOWS_RELEASE_ID =
-    NotNullLazyValue.createValue(() -> StringUtil.parseInt(getWindowsReleaseIdString(), -1));
+  private static final NullableLazyValue<WSLToolFlags> WSL_TOOL_FLAGS =
+    NullableLazyValue.createValue(() -> getWSLToolFlagsInternal());
 
-  private static @Nullable String getWindowsReleaseIdString() {
+  public static @Nullable WSLToolFlags getWSLToolFlags() {
+    return WSL_TOOL_FLAGS.getValue();
+  }
+
+  private static @Nullable WSLToolFlags getWSLToolFlagsInternal() {
+    final Path wslExe = WSLDistribution.findWslExe();
+    if (wslExe == null) return null;
+
+    final GeneralCommandLine commandLine = new GeneralCommandLine(wslExe.toString(), "--help").
+      withCharset(StandardCharsets.UTF_16LE);
+
     try {
-      if (JnaLoader.isLoaded()) {
-        return Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE,
-                                                   "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
-                                                   "ReleaseId");
-      }
+      final ProcessOutput output = ExecUtil.execAndGetOutput(commandLine, 5000);
+      if (output.isTimeout()) return null;
+
+      // intentionally do no check "wsl --help" output because it returns -1
+      final String stdout = output.getStdout();
+      return new WSLToolFlags(stdout.contains("--quiet"), stdout.contains("--verbose"));
     }
-    catch (Throwable e) {
-      LOG.warn("Cannot read Windows version", e);
+    catch (ExecutionException e) {
+      LOG.warn(e);
+      return null;
     }
-    return WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId");
   }
 
   /**
