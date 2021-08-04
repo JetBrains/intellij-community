@@ -17,7 +17,39 @@ import org.junit.runner.RunWith;
 @TestRoot("uast/uast-kotlin")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/declaration")
-public abstract class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationTest {
+@TestMetadata("../uast-kotlin-fir/testData/declaration")
+public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationTest {
+    private void runTest(String testDataFilePath) throws Exception {
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    }
 
+    @TestMetadata("doWhile.kt")
+    public void testDoWhile() throws Exception {
+        runTest("../uast-kotlin-fir/testData/declaration/doWhile.kt");
+    }
+
+    @TestMetadata("facade.kt")
+    public void testFacade() throws Exception {
+        runTest("../uast-kotlin-fir/testData/declaration/facade.kt");
+    }
+
+    @TestMetadata("if.kt")
+    public void testIf() throws Exception {
+        runTest("../uast-kotlin-fir/testData/declaration/if.kt");
+    }
+
+    @TestMetadata("importOnDemand.kt")
+    public void testImportOnDemand() throws Exception {
+        runTest("../uast-kotlin-fir/testData/declaration/importOnDemand.kt");
+    }
+
+    @TestMetadata("labeledExpression.kt")
+    public void testLabeledExpression() throws Exception {
+        runTest("../uast-kotlin-fir/testData/declaration/labeledExpression.kt");
+    }
+
+    @TestMetadata("objects.kt")
+    public void testObjects() throws Exception {
+        runTest("../uast-kotlin-fir/testData/declaration/objects.kt");
+    }
 }

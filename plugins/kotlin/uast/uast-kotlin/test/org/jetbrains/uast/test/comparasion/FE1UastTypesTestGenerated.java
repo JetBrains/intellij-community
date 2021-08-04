@@ -17,7 +17,49 @@ import org.junit.runner.RunWith;
 @TestRoot("uast/uast-kotlin")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/type")
-public abstract class FE1UastTypesTestGenerated extends AbstractFE1UastTypesTest {
+@TestMetadata("../uast-kotlin-fir/testData/type")
+public class FE1UastTypesTestGenerated extends AbstractFE1UastTypesTest {
+    private void runTest(String testDataFilePath) throws Exception {
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    }
 
+    @TestMetadata("accessArrayOfInlineClass.kt")
+    public void testAccessArrayOfInlineClass() throws Exception {
+        runTest("../uast-kotlin-fir/testData/type/accessArrayOfInlineClass.kt");
+    }
+
+    @TestMetadata("arrayConstructorsSimple.kt")
+    public void testArrayConstructorsSimple() throws Exception {
+        runTest("../uast-kotlin-fir/testData/type/arrayConstructorsSimple.kt");
+    }
+
+    @TestMetadata("arrayGetAssignMultiIndex.kt")
+    public void testArrayGetAssignMultiIndex() throws Exception {
+        runTest("../uast-kotlin-fir/testData/type/arrayGetAssignMultiIndex.kt");
+    }
+
+    @TestMetadata("classLiteral.kt")
+    public void testClassLiteral() throws Exception {
+        runTest("../uast-kotlin-fir/testData/type/classLiteral.kt");
+    }
+
+    @TestMetadata("typeCast.kt")
+    public void testTypeCast() throws Exception {
+        runTest("../uast-kotlin-fir/testData/type/typeCast.kt");
+    }
+
+    @TestMetadata("typeCheck.kt")
+    public void testTypeCheck() throws Exception {
+        runTest("../uast-kotlin-fir/testData/type/typeCheck.kt");
+    }
+
+    @TestMetadata("unresolved.kt")
+    public void testUnresolved() throws Exception {
+        runTest("../uast-kotlin-fir/testData/type/unresolved.kt");
+    }
+
+    @TestMetadata("withGeneric.kt")
+    public void testWithGeneric() throws Exception {
+        runTest("../uast-kotlin-fir/testData/type/withGeneric.kt");
+    }
 }
