@@ -241,11 +241,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   void updateMainMenuActions() {
-    ((IdeMenuBar)menuBar).updateMenuActions(true);
+    ((IdeMenuBar)menuBar).updateMenuActions(false);
     menuBar.repaint();
 
     if (myCustomFrameTitlePane != null) {
-      myCustomFrameTitlePane.updateMenuActions(true);
+      myCustomFrameTitlePane.updateMenuActions(false);
       myCustomFrameTitlePane.repaint();
     }
   }
