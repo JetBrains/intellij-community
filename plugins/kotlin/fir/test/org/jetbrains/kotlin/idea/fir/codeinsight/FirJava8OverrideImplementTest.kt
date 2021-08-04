@@ -17,7 +17,7 @@ internal class FirJava8OverrideImplementTest : Java8OverrideImplementTest<KtClas
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { project.invalidateCaches(file as? KtFile) },
+            ThrowableRunnable { project.invalidateCaches() },
             ThrowableRunnable { super.tearDown() }
         )
     }

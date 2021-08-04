@@ -18,7 +18,7 @@ abstract class AbstractFirReferenceResolveTest : AbstractReferenceResolveTest() 
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { project.invalidateCaches(myFixture.file as? KtFile) },
+            ThrowableRunnable { project.invalidateCaches() },
             ThrowableRunnable { super.tearDown() }
         )
     }
