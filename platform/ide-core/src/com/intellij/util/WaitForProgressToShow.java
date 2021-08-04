@@ -32,14 +32,14 @@ public final class WaitForProgressToShow {
   }
 
   /**
-   * @deprecated Use {@link ModalityUiUtil#invokeLaterIfNeeded(Runnable, ModalityState)} instead.
+   * @deprecated Use {@link ModalityUiUtil#invokeLaterIfNeeded(ModalityState, Runnable)} instead.
    */
   @Deprecated
   public static void runOrInvokeLaterAboveProgress(@NotNull Runnable command,
                                                    @Nullable ModalityState modalityState,
                                                    @NotNull Project project) {
     if (modalityState == null) modalityState = ModalityState.defaultModalityState();
-    ModalityUiUtil.invokeLaterIfNeeded(command, modalityState, project.getDisposed());
+    ModalityUiUtil.invokeLaterIfNeeded(modalityState, project.getDisposed(), command);
   }
 
   /**

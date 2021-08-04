@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
@@ -19,7 +18,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
-import com.intellij.psi.PsiManager
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.layout.*
@@ -61,15 +59,12 @@ object MarkdownImportExportUtils {
    * if the directory is not specified, the base directory of the project is refreshed.
    */
   fun refreshProjectDirectory(project: Project, refreshPath: String) {
-    ModalityUiUtil.invokeLaterIfNeeded(
-      {
-        LocalFileSystem
-          .getInstance()
-          .refreshAndFindFileByIoFile(File(refreshPath))
-          ?.refresh(true, true)
-      },
-      ModalityState.defaultModalityState()
-    )
+    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState()) {
+      LocalFileSystem
+        .getInstance()
+        .refreshAndFindFileByIoFile(File(refreshPath))
+        ?.refresh(true, true)
+    }
   }
 
   /**

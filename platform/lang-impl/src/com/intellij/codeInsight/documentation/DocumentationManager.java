@@ -1068,9 +1068,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       PsiElement element = collector.getElement(true);
       if (element == null || !ReadAction.compute(() -> element.isValid())) {
         LOG.debug("Element for which documentation was requested is not available anymore");
-        ModalityUiUtil.invokeLaterIfNeeded(() -> {
+        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any(), () -> {
           component.setText(CodeInsightBundle.message("no.documentation.found"), null, collector.provider);
-        }, ModalityState.any());
+        });
         callback.setDone();
         return;
       }
@@ -1104,7 +1104,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
       catch (Throwable e) {
         LOG.info(e);
-        ModalityUiUtil.invokeLaterIfNeeded(() -> {
+        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any(), () -> {
           //noinspection InstanceofCatchParameter
           String message = e instanceof IndexNotReadyException
                            ? CodeInsightBundle.message("documentation.message.documentation.is.not.available")
@@ -1112,7 +1112,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           component.setText(message, null, collector.provider);
           component.clearHistory();
           callback.setDone();
-        }, ModalityState.any());
+        });
         return;
       }
 

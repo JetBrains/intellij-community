@@ -84,8 +84,9 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   static final class EncodingProjectManagerStartUpActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
-      ModalityUiUtil.invokeLaterIfNeeded(() -> ((EncodingProjectManagerImpl)getInstance(project)).reloadAlreadyLoadedDocuments(),
-                                         ModalityState.NON_MODAL, project.getDisposed());
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.getDisposed(),
+                                         () -> ((EncodingProjectManagerImpl)getInstance(project)).reloadAlreadyLoadedDocuments()
+      );
     }
   }
 

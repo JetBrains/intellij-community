@@ -407,7 +407,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
 
   override fun runWhenProjectIsInitialized(action: Runnable) {
     if (DumbService.isDumbAware(action)) {
-      runAfterOpened { ModalityUiUtil.invokeLaterIfNeeded(action, ModalityState.NON_MODAL, project.disposed) }
+      runAfterOpened { ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.disposed, action) }
     }
     else {
       runAfterOpened { DumbService.getInstance(project).unsafeRunWhenSmart(action) }

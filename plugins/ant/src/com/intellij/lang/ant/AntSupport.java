@@ -25,7 +25,8 @@ public final class AntSupport {
     if (file.isValid() && ForcedAntFileAttribute.isAntFile(file) != value) {
       ForcedAntFileAttribute.forceAntFile(file, value);
       TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
-      ModalityUiUtil.invokeLaterIfNeeded(() -> PsiManager.getInstance(project).dropPsiCaches(), ModalityState.defaultModalityState(), project.getDisposed());
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), project.getDisposed(),
+                                         () -> PsiManager.getInstance(project).dropPsiCaches());
     }
   }
 

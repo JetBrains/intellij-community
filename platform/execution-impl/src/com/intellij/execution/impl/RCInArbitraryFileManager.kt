@@ -89,7 +89,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
 
   private fun deleteFile(file: VirtualFile) {
     ModalityUiUtil.invokeLaterIfNeeded(
-      Runnable { runWriteAction { file.delete(this@RCInArbitraryFileManager) } }, ModalityState.NON_MODAL)
+      ModalityState.NON_MODAL) { runWriteAction { file.delete(this@RCInArbitraryFileManager) } }
   }
 
   /**

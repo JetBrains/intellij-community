@@ -60,14 +60,14 @@ class AddExtLibraryDependencyFix extends OrderEntryFix {
     ModalityState modality = ModalityState.defaultModalityState();
     JavaProjectModelModificationService.getInstance(project)
       .addDependency(myCurrentModule, myLibraryDescriptor, myScope)
-      .onSuccess(__ -> ModalityUiUtil.invokeLaterIfNeeded(() -> {
+      .onSuccess(__ -> ModalityUiUtil.invokeLaterIfNeeded(modality, ___ -> editor.isDisposed() || myCurrentModule.isDisposed(), () -> {
         try {
           importClass(myCurrentModule, editor, restoreReference(), myQualifiedClassName);
         }
         catch (IndexNotReadyException e) {
           Logger.getInstance(AddExtLibraryDependencyFix.class).info(e);
         }
-      }, modality, ___ -> editor.isDisposed() || myCurrentModule.isDisposed()));
+      }));
   }
 
 }

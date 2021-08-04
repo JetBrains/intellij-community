@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ModalityUiUtil.invokeLaterIfNeeded
 import com.intellij.util.ui.UIUtil
-import java.util.*
 import javax.swing.event.HyperlinkEvent
 
 abstract class GenericNotifierImpl<T, Key>(@JvmField protected val myProject: Project,
@@ -37,11 +36,11 @@ abstract class GenericNotifierImpl<T, Key>(@JvmField protected val myProject: Pr
       myState.clear()
       currentNotifications
     }
-    invokeLaterIfNeeded(Runnable {
+    invokeLaterIfNeeded(ModalityState.NON_MODAL, myProject.disposed) {
       for (notification in notifications) {
         notification.expire()
       }
-    }, ModalityState.NON_MODAL, myProject.disposed)
+    }
   }
 
   private fun expireNotification(notification: MyNotification) = UIUtil.invokeLaterIfNeeded { notification.expire() }

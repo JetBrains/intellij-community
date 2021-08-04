@@ -309,9 +309,9 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
 
     if (runFromProjectWizard) {
       StartupManager.getInstance(module.getProject()).runAfterOpened(() -> {
-        ModalityUiUtil.invokeLaterIfNeeded(() -> {
+        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, module.getDisposed(), () -> {
           ApplicationManager.getApplication().runWriteAction(() -> onModuleInitialized(module));
-        }, ModalityState.NON_MODAL, module.getDisposed());
+        });
       });
     }
     else {

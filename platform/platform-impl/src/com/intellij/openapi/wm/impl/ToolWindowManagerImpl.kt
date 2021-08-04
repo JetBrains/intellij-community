@@ -1986,16 +1986,16 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       val toolWindowManager = toolWindow.toolWindowManager
       toolWindowManager.focusManager
         .doWhenFocusSettlesDown(ExpirableRunnable.forProject(toolWindowManager.project) {
-          ModalityUiUtil.invokeLaterIfNeeded(Runnable {
-            val entry = toolWindowManager.idToEntry[id] ?: return@Runnable
+          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), toolWindowManager.project.disposed) {
+            val entry = toolWindowManager.idToEntry[id] ?: return@invokeLaterIfNeeded
             val windowInfo = entry.readOnlyWindowInfo
             if (!windowInfo.isVisible) {
-              return@Runnable
+              return@invokeLaterIfNeeded
             }
 
             toolWindowManager.activateToolWindow(entry, toolWindowManager.getRegisteredMutableInfoOrLogError(entry.id),
                                                  autoFocusContents = false)
-          }, ModalityState.defaultModalityState(), toolWindowManager.project.disposed)
+          }
         })
     }
   }

@@ -128,12 +128,13 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     if (configuration.SHOW_BALLOONS) {
       if (project == null) {
-        ModalityUiUtil.invokeLaterIfNeeded(() -> showNotification(notification, null), ModalityState.any(),
-                                           ApplicationManager.getApplication().getDisposed());
+        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any(), ApplicationManager.getApplication().getDisposed(),
+                                           () -> showNotification(notification, null)
+        );
       }
       else if (!project.isDisposed()) {
         StartupManager.getInstance(project).runAfterOpened(() -> {
-          ModalityUiUtil.invokeLaterIfNeeded(() -> showNotification(notification, project), ModalityState.any(), project.getDisposed());
+          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any(), project.getDisposed(), () -> showNotification(notification, project));
         });
       }
     }

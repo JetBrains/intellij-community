@@ -171,8 +171,8 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       val projectFilePath = if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.directoryStorePath!! else store.projectFilePath
       for (p in openProjects) {
         if (ProjectUtil.isSameProject(projectFilePath, p)) {
-          ModalityUiUtil.invokeLaterIfNeeded({ ProjectUtil.focusProjectWindow(p, false) },
-                                             ModalityState.NON_MODAL)
+          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL
+          ) { ProjectUtil.focusProjectWindow(p, false) }
           return false
         }
       }

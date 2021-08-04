@@ -57,14 +57,11 @@ fun UsageReplacementStrategy.replaceUsagesInWholeProject(
                         .map { ref -> ref.expression }
                 }
 
-              ModalityUiUtil.invokeLaterIfNeeded(
-                {
+              ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL) {
                   project.executeWriteCommand(commandName) {
-                    this@replaceUsagesInWholeProject.replaceUsages(usages)
+                      this@replaceUsagesInWholeProject.replaceUsages(usages)
                   }
-                },
-                ModalityState.NON_MODAL
-              )
+              }
             }
         })
 }

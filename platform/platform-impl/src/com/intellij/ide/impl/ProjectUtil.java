@@ -286,12 +286,12 @@ public final class ProjectUtil extends ProjectUtilCore {
     }
 
     StartupManager.getInstance(project).runAfterOpened(() -> {
-      ModalityUiUtil.invokeLaterIfNeeded(() -> {
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.getDisposed(), () -> {
         ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
         if (toolWindow != null) {
           toolWindow.activate(null);
         }
-      }, ModalityState.NON_MODAL, project.getDisposed());
+      });
     });
     return project;
   }

@@ -85,7 +85,7 @@ public final class BuildContentManagerImpl implements BuildContentManager, Dispo
       return;
     }
     StartupManagerEx.getInstanceEx(myProject).runAfterOpened(() -> {
-      ModalityUiUtil.invokeLaterIfNeeded(runnable, ModalityState.defaultModalityState(), myProject.getDisposed());
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), myProject.getDisposed(), runnable);
     });
   }
 

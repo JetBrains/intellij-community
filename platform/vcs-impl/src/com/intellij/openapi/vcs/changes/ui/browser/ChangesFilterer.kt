@@ -174,10 +174,10 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
 
   private fun updatePresentation() {
     ModalityUiUtil.invokeLaterIfNeeded(
-      {
-        updateQueue.cancelAllUpdates()
-        listener.updateChanges()
-      }, ModalityState.any())
+      ModalityState.any()) {
+      updateQueue.cancelAllUpdates()
+      listener.updateChanges()
+    }
   }
 
   private fun resetFilter(): ProgressIndicator {

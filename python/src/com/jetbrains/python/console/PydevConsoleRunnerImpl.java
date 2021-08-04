@@ -1017,7 +1017,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         }
 
         if (rerun) {
-          ModalityUiUtil.invokeLaterIfNeeded(() -> myRerunAction.consume(displayName), ModalityState.defaultModalityState());
+          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> myRerunAction.consume(displayName));
         }
       }
     }.queue();

@@ -581,7 +581,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myFreezeSemaphore.up();
     myFinishSemaphore.up();
 
-    ModalityUiUtil.invokeLaterIfNeeded(() -> {
+    ModalityUiUtil.invokeLaterIfNeeded(myQueue.getModalityState(), () -> {
       final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
       if (!(phase instanceof CompletionPhase.BgCalculation) || phase.indicator != this) return;
 
@@ -619,7 +619,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(this));
         }
       }
-    }, myQueue.getModalityState());
+    });
   }
 
   private boolean hideAutopopupIfMeaningless() {
