@@ -76,6 +76,8 @@ class BuildOptions {
   static final String WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
   /** Sign *.exe files in Windows distribution. */
   static final String WIN_SIGN_STEP = "windows_sign"
+  static final Map<String,String> WIN_SIGN_OPTIONS =
+    System.getProperty("intellij.build.win.sign.options", "").tokenize(';')*.tokenize('=').collectEntries()
   /** Build Frankenstein artifacts. */
   static final String CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
   /** Toolbox links generator step */
