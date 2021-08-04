@@ -163,7 +163,7 @@ class BuildDependenciesDownloader {
     extractFileWithFlagFileLocation(archiveFile, target, flagFile)
   }
 
-  static void downloadFile(URI uri, Path target) {
+  private static void downloadFile(URI uri, Path target) {
     if (Files.exists(target)) {
       debug("Target file $target already exists, skipping download from $uri")
 
