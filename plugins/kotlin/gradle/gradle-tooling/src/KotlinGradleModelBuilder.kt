@@ -2,23 +2,24 @@
 
 package org.jetbrains.kotlin.gradle
 
+import org.gradle.api.Named
+import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ProjectDependency
+import org.gradle.api.provider.Property
 import org.gradle.tooling.BuildController
 import org.gradle.tooling.model.Model
 import org.gradle.tooling.model.gradle.GradleBuild
-import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
-import org.gradle.api.provider.Property
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 import java.io.File
 import java.io.Serializable
 import java.lang.reflect.InvocationTargetException
-import java.util.*
 
 interface ArgsInfo : Serializable {
     val currentArguments: List<String>
@@ -41,6 +42,8 @@ data class ArgsInfoImpl(
 
 typealias CompilerArgumentsBySourceSet = Map<String, ArgsInfo>
 
+typealias AdditionalVisibleSourceSetsBySourceSet = Map</* Source Set Name */ String, /* Visible Source Set Names */ Set<String>>
+
 /**
  * Creates deep copy in order to avoid holding links to Proxy objects created by gradle tooling api
  */
@@ -53,6 +56,7 @@ fun CompilerArgumentsBySourceSet.deepCopy(): CompilerArgumentsBySourceSet {
 interface KotlinGradleModel : Serializable {
     val hasKotlinPlugin: Boolean
     val compilerArgumentsBySourceSet: CompilerArgumentsBySourceSet
+    val additionalVisibleSourceSets: AdditionalVisibleSourceSetsBySourceSet
     val coroutines: String?
     val platformPluginId: String?
     val implements: List<String>
@@ -64,6 +68,7 @@ interface KotlinGradleModel : Serializable {
 data class KotlinGradleModelImpl(
     override val hasKotlinPlugin: Boolean,
     override val compilerArgumentsBySourceSet: CompilerArgumentsBySourceSet,
+    override val additionalVisibleSourceSets: AdditionalVisibleSourceSetsBySourceSet,
     override val coroutines: String?,
     override val platformPluginId: String?,
     override val implements: List<String>,
@@ -242,6 +247,7 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         val platformPluginId = platformPluginIds.singleOrNull { project.plugins.findPlugin(it) != null }
 
         val compilerArgumentsBySourceSet = LinkedHashMap<String, ArgsInfo>()
+        val additionalVisibleSourceSets = LinkedHashMap<String, Set<String>>()
         val extraProperties = HashMap<String, KotlinTaskProperties>()
 
         project.getAllTasks(false)[project]?.forEach { compileTask ->
@@ -253,6 +259,7 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
             val defaultArguments = compileTask.getCompilerArguments("getDefaultSerializedCompilerArguments").orEmpty()
             val dependencyClasspath = compileTask.getDependencyClasspath()
             compilerArgumentsBySourceSet[sourceSetName] = ArgsInfoImpl(currentArguments, defaultArguments, dependencyClasspath)
+            additionalVisibleSourceSets[sourceSetName] = getAdditionalVisibleSourceSets(project, sourceSetName)
             extraProperties.acknowledgeTask(compileTask, null)
         }
 
@@ -260,14 +267,27 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         val implementedProjects = getImplementedProjects(project)
 
         return KotlinGradleModelImpl(
-            kotlinPluginId != null || platformPluginId != null,
-            compilerArgumentsBySourceSet,
-            getCoroutines(project),
-            platform,
-            implementedProjects.map { it.pathOrName() },
-            platform ?: kotlinPluginId,
-            extraProperties,
-            project.gradle.gradleUserHomeDir.absolutePath
+            hasKotlinPlugin = kotlinPluginId != null || platformPluginId != null,
+            compilerArgumentsBySourceSet = compilerArgumentsBySourceSet,
+            additionalVisibleSourceSets = additionalVisibleSourceSets,
+            coroutines = getCoroutines(project),
+            platformPluginId = platform,
+            implements = implementedProjects.map { it.pathOrName() },
+            kotlinTarget = platform ?: kotlinPluginId,
+            kotlinTaskProperties = extraProperties,
+            gradleUserHome = project.gradle.gradleUserHomeDir.absolutePath
         )
+    }
+
+    private fun getAdditionalVisibleSourceSets(project: Project, sourceSetName: String): Set<String> {
+        val kotlinExtension = project.extensions.findByName("kotlin") ?: return emptySet()
+        val kotlinExtensionClass = kotlinExtension.javaClass
+        val getSourceSets = kotlinExtensionClass.getMethodOrNull("getSourceSets") ?: return emptySet()
+        val sourceSets = getSourceSets.invoke(kotlinExtension) as NamedDomainObjectCollection<*>
+        val sourceSet = sourceSets.findByName(sourceSetName) ?: return emptySet()
+        val sourceSetClass = sourceSet.javaClass
+        val getAdditionalVisibleSourceSets = sourceSetClass.getMethodOrNull("getAdditionalVisibleSourceSets") ?: return emptySet()
+        val additionalVisibleSourceSets = getAdditionalVisibleSourceSets.invoke(sourceSet) as List<*>
+        return additionalVisibleSourceSets.map { it as Named }.map { it.name }.toSet()
     }
 }

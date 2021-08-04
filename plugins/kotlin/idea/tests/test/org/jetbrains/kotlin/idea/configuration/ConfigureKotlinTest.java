@@ -45,8 +45,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
+import static java.util.Collections.*;
 
 @RunWith(JUnit38ClassRunner.class)
 public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
@@ -337,7 +336,8 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
                     facet,
                     "1.4",
                     platform,
-                    modelsProvider
+                    modelsProvider,
+                    emptySet()
             );
             assertEquals(platform, facet.getConfiguration().getSettings().getTargetPlatform());
             assertEquals(jvmTarget.getDescription(),

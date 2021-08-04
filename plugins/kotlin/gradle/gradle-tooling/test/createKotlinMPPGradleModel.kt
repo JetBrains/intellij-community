@@ -53,6 +53,7 @@ internal fun createKotlinSourceSet(
     intransitiveDependencies = emptyArray(),
     declaredDependsOnSourceSets = declaredDependsOnSourceSets,
     allDependsOnSourceSets = allDependsOnSourceSets,
+    additionalVisibleSourceSets = emptySet(),
     defaultActualPlatforms = KotlinPlatformContainerImpl().apply { pushPlatforms(platforms) },
 )
 

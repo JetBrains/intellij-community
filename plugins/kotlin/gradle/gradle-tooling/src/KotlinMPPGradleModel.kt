@@ -100,6 +100,7 @@ interface KotlinSourceSet : KotlinModule {
     )
     val allDependsOnSourceSets: Set<String>
 
+    val additionalVisibleSourceSets: Set<String>
 
     @Deprecated("Returns single target platform. Use actualPlatforms instead", level = DeprecationLevel.ERROR)
     val platform: KotlinPlatform

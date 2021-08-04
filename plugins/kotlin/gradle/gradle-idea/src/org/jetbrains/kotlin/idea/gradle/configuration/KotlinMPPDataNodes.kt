@@ -46,6 +46,7 @@ class KotlinSourceSetInfo @PropertyMapping("kotlinModule") constructor(val kotli
     var isTestModule: Boolean = false
     var sourceSetIdsByName: MutableMap<String, String> = LinkedHashMap()
     var dependsOn: List<String> = emptyList()
+    var additionalVisible: Set<String> = emptySet()
     var externalSystemRunTasks: Collection<ExternalSystemRunTask> = emptyList()
 }
 

@@ -12,7 +12,8 @@ class KotlinSourceSetProto(
     private val resourceDirs: Set<File>,
     private val regularDependencies: () -> Array<KotlinDependencyId>,
     private val intransitiveDependencies: () -> Array<KotlinDependencyId>,
-    val dependsOnSourceSets: Set<String>
+    val dependsOnSourceSets: Set<String>,
+    val additionalVisibleSourceSets: Set<String>
 ) {
     fun buildKotlinSourceSetImpl(
         doBuildDependencies: Boolean,
@@ -25,7 +26,8 @@ class KotlinSourceSetProto(
         regularDependencies = if (doBuildDependencies) regularDependencies() else emptyArray(),
         intransitiveDependencies = if(doBuildDependencies) intransitiveDependencies() else emptyArray(),
         declaredDependsOnSourceSets = dependsOnSourceSets,
-        allDependsOnSourceSets = allDependsOnSourceSets(allSourceSetsProtosByNames)
+        allDependsOnSourceSets = allDependsOnSourceSets(allSourceSetsProtosByNames),
+        additionalVisibleSourceSets = additionalVisibleSourceSets
     )
 }
 
@@ -48,6 +50,7 @@ class KotlinSourceSetImpl(
     override val declaredDependsOnSourceSets: Set<String>,
     @Suppress("OverridingDeprecatedMember")
     override val allDependsOnSourceSets: Set<String>,
+    override val additionalVisibleSourceSets: Set<String>,
     defaultActualPlatforms: KotlinPlatformContainerImpl = KotlinPlatformContainerImpl(),
     defaultIsTestModule: Boolean = false
 ) : KotlinSourceSet {
@@ -64,6 +67,7 @@ class KotlinSourceSetImpl(
         intransitiveDependencies = kotlinSourceSet.intransitiveDependencies.clone(),
         declaredDependsOnSourceSets = HashSet(kotlinSourceSet.declaredDependsOnSourceSets),
         allDependsOnSourceSets = HashSet(kotlinSourceSet.allDependsOnSourceSets),
+        additionalVisibleSourceSets = HashSet(kotlinSourceSet.additionalVisibleSourceSets),
         defaultActualPlatforms = KotlinPlatformContainerImpl(kotlinSourceSet.actualPlatforms)
     ) {
         this.isTestModule = kotlinSourceSet.isTestModule

@@ -88,7 +88,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     }
 
     companion object {
-        val masterKotlinPluginVersion: String = System.getenv("KOTLIN_GRADLE_PLUGIN_VERSION") ?: "1.5.255-SNAPSHOT"
+        val masterKotlinPluginVersion: String = System.getenv("KOTLIN_GRADLE_PLUGIN_VERSION") ?: "1.6.255-SNAPSHOT"
 
         @JvmStatic
         @Suppress("ACCIDENTAL_OVERRIDE")

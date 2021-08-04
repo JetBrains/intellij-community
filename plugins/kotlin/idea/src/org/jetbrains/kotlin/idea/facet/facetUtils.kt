@@ -23,12 +23,15 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.coerceAtMostVersion
 import org.jetbrains.kotlin.idea.configuration.externalCompilerVersion
 import org.jetbrains.kotlin.idea.core.isAndroidModule
+import org.jetbrains.kotlin.idea.defaultSubstitutors
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.platform.tooling
-import org.jetbrains.kotlin.idea.defaultSubstitutors
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
-import org.jetbrains.kotlin.platform.*
+import org.jetbrains.kotlin.platform.DefaultIdeTargetPlatformKindProvider
+import org.jetbrains.kotlin.platform.IdePlatformKind
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
@@ -151,9 +154,18 @@ fun Module.removeKotlinFacet(
 fun KotlinFacet.configureFacet(
     compilerVersion: String?,
     platform: TargetPlatform?,
-    modelsProvider: IdeModifiableModelsProvider
+    modelsProvider: IdeModifiableModelsProvider,
+    additionalVisibleModuleNames: Set<String>
 ) {
-    configureFacet(compilerVersion, platform, modelsProvider, false, emptyList(), emptyList())
+    configureFacet(
+        compilerVersion = compilerVersion,
+        platform = platform,
+        modelsProvider = modelsProvider,
+        hmppEnabled = false,
+        pureKotlinSourceFolders = emptyList(),
+        dependsOnList = emptyList(),
+        additionalVisibleModuleNames = additionalVisibleModuleNames
+    )
 }
 
 fun KotlinFacet.configureFacet(
@@ -162,15 +174,17 @@ fun KotlinFacet.configureFacet(
     modelsProvider: IdeModifiableModelsProvider,
     hmppEnabled: Boolean,
     pureKotlinSourceFolders: List<String>,
-    dependsOnList: List<String>
+    dependsOnList: List<String>,
+    additionalVisibleModuleNames: Set<String>
 ) {
     val module = module
     with(configuration.settings) {
-        compilerArguments = null
-        targetPlatform = null
-        compilerSettings = null
-        isHmppEnabled = hmppEnabled
-        dependsOnModuleNames = dependsOnList
+        this.compilerArguments = null
+        this.targetPlatform = null
+        this.compilerSettings = null
+        this.isHmppEnabled = hmppEnabled
+        this.dependsOnModuleNames = dependsOnList
+        this.additionalVisibleModuleNames = additionalVisibleModuleNames
         initializeIfNeeded(
             module,
             modelsProvider.getModifiableRootModel(module),

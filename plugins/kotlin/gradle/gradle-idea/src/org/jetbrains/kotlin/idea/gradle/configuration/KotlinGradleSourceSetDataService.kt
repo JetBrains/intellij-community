@@ -1,4 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("DEPRECATION_ERROR")
 
 package org.jetbrains.kotlin.idea.gradle.configuration
 
@@ -23,37 +24,35 @@ import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
-import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.TargetPlatformKind
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
 import org.jetbrains.kotlin.gradle.ArgsInfo
 import org.jetbrains.kotlin.gradle.CompilerArgumentsBySourceSet
 import org.jetbrains.kotlin.ide.konan.NativeLibraryKind
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
-import org.jetbrains.kotlin.idea.configuration.*
-import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade.Companion.KOTLIN_CODE_STYLE_GRADLE_SETTING
-import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX
+import org.jetbrains.kotlin.idea.configuration.KOTLIN_GROUP_ID
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.detectLibraryKind
 import org.jetbrains.kotlin.idea.gradle.KotlinGradleFacadeImpl
+import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade.Companion.KOTLIN_CODE_STYLE_GRADLE_SETTING
+import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX
 import org.jetbrains.kotlin.idea.gradle.inspections.getResolvedVersionByModuleData
-import org.jetbrains.kotlin.idea.platform.tooling
-import org.jetbrains.kotlin.idea.roots.findAll
-import org.jetbrains.kotlin.idea.roots.migrateNonJvmSourceFolders
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
+import org.jetbrains.kotlin.idea.platform.tooling
+import org.jetbrains.kotlin.idea.roots.migrateNonJvmSourceFolders
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.impl.isCommon
 import org.jetbrains.kotlin.platform.impl.isJavaScript
 import org.jetbrains.kotlin.platform.impl.isJvm
 import org.jetbrains.kotlin.psi.UserDataProperty
-import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
-import java.util.*
 
 var Module.compilerArgumentsBySourceSet
         by UserDataProperty(Key.create<CompilerArgumentsBySourceSet>("CURRENT_COMPILER_ARGUMENTS"))
@@ -163,6 +162,7 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
     ) {
         if (toImport.isEmpty()) return
         val projectDataNode = toImport.first().parent!!
+
         @Suppress("UNCHECKED_CAST")
         val moduleDataNodes = projectDataNode.children.filter { it.data is ModuleData } as List<DataNode<ModuleData>>
         val anyNonJvmModules = moduleDataNodes
@@ -264,9 +264,11 @@ fun configureFacetByGradleModule(
 
     val kotlinFacet = ideModule.getOrCreateFacet(modelsProvider, false, GradleConstants.SYSTEM_ID.id)
     kotlinFacet.configureFacet(
-        compilerVersion,
-        platform,
-        modelsProvider
+        compilerVersion = compilerVersion,
+        platform = platform,
+        modelsProvider = modelsProvider,
+        additionalVisibleModuleNames = if (sourceSetName != null)
+            getAdditionalVisibleModuleNames(moduleNode, sourceSetName) else emptySet()
     )
 
     if (sourceSetNode == null) {
@@ -312,6 +314,17 @@ private fun getExplicitOutputPath(moduleNode: DataNode<ModuleData>, platformKind
 
     val k2jsArgumentList = moduleNode.compilerArgumentsBySourceSet?.get(sourceSet)?.currentArguments ?: return null
     return K2JSCompilerArguments().apply { parseCommandLineArguments(k2jsArgumentList, this) }.outputFile
+}
+
+private fun getAdditionalVisibleModuleNames(moduleNode: DataNode<ModuleData>, sourceSetName: String): Set<String> {
+    return moduleNode.additionalVisibleSourceSets[sourceSetName].orEmpty()
+        .mapNotNull { additionalVisibleSourceSetName ->
+            moduleNode.children.map { it.data }
+                .filterIsInstance<GradleSourceSetData>().find { otherGradleSourceSetData ->
+                    otherGradleSourceSetData.moduleName == additionalVisibleSourceSetName
+                }
+        }.map { it.id }
+        .toSet()
 }
 
 internal fun adjustClasspath(kotlinFacet: KotlinFacet, dependencyClasspath: List<String>) {

@@ -461,7 +461,7 @@ private fun configureLanguageAndApiVersion(
             compilerArguments.apiVersion = null
         }
 
-        facet.configureFacet(languageVersion, null, modelsProvider)
+        facet.configureFacet(languageVersion, null, modelsProvider, emptySet())
         if (apiVersion != null) {
             facet.configuration.settings.apiLevel = LanguageVersion.fromVersionString(apiVersion)
         }

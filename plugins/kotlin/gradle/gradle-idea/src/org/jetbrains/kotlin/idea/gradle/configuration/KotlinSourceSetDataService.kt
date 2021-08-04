@@ -183,12 +183,13 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             val id = if (compilerArguments?.multiPlatform == true) GradleConstants.SYSTEM_ID.id else null
             val kotlinFacet = ideModule.getOrCreateFacet(modelsProvider, false, id)
             kotlinFacet.configureFacet(
-                compilerVersion,
-                platform,
-                modelsProvider,
-                mainModuleNode.isHmpp,
-                mainModuleNode.pureKotlinSourceFolders,
-                kotlinSourceSet.dependsOn
+                compilerVersion = compilerVersion,
+                platform = platform,
+                modelsProvider = modelsProvider,
+                hmppEnabled = mainModuleNode.isHmpp,
+                pureKotlinSourceFolders = mainModuleNode.pureKotlinSourceFolders,
+                dependsOnList = kotlinSourceSet.dependsOn,
+                additionalVisibleModuleNames = kotlinSourceSet.additionalVisible
             )
 
             val defaultCompilerArguments = kotlinSourceSet.defaultCompilerArguments
