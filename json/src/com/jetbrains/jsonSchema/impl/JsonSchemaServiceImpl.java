@@ -154,6 +154,15 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     return getSchemasForFile(file, false, false);
   }
 
+  @Nullable
+  public VirtualFile getDynamicSchemaForFile(@NotNull PsiFile psiFile) {
+    return ContentAwareJsonSchemaFileProvider.EP_NAME.extensions()
+      .map(provider -> provider.getSchemaFile(psiFile))
+      .filter(schemaFile -> schemaFile != null)
+      .findFirst()
+      .orElse(null);
+  }
+
   @NotNull
   public Collection<VirtualFile> getSchemasForFile(@NotNull VirtualFile file, boolean single, boolean onlyUserSchemas) {
     String schemaUrl = null;
