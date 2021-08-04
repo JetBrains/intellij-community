@@ -10,7 +10,7 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -199,7 +199,7 @@ final class RefreshSessionImpl extends RefreshSession {
           app.runWriteActionWithNonCancellableProgressInDispatchThread(IdeCoreBundle.message("progress.title.file.system.synchronization"), null, null, indicator -> {
             indicator.setText(IdeCoreBundle.message("progress.text.processing.detected.file.changes", events.size()));
             int progressThresholdMillis = 5_000;
-            ((ProgressIndicatorBase) indicator).setDelayInMillis(progressThresholdMillis);
+            ((ProgressIndicatorWithDelayedPresentation) indicator).setDelayInMillis(progressThresholdMillis);
             long start = System.currentTimeMillis();
 
             fireEventsInWriteAction(events, appliers, asyncEventProcessing);

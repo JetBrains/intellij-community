@@ -42,7 +42,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, Disposable {
+public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, Disposable, ProgressIndicatorWithDelayedPresentation {
   private static final Logger LOG = Logger.getInstance(ProgressWindow.class);
 
   private Runnable myDialogInitialization;
@@ -56,6 +56,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   private boolean myStoppedAlready;
   protected boolean myBackgrounded;
+  int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
   private boolean myModalityEntered;
 
   @FunctionalInterface
@@ -140,6 +141,21 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
         prepareShowDialog();
       }
     }
+  }
+
+  /**
+   * There is a possible case that many short (in terms of time) progress tasks are executed in a small amount of time.
+   * Problem: UI blinks and looks ugly if we show progress dialog for every such task (every dialog disappears shortly).
+   * Solution is to postpone showing progress dialog in assumption that the task may be already finished when it's
+   * time to show the dialog.
+   * <p/>
+   * Default value is {@link #DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS}
+   *
+   * @param delayInMillis   new delay time in milliseconds
+   */
+  @Override
+  public void setDelayInMillis(int delayInMillis) {
+    myDelayInMillis = delayInMillis;
   }
 
   protected void prepareShowDialog() {

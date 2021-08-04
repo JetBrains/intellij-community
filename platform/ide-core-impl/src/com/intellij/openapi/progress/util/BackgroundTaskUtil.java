@@ -41,7 +41,7 @@ public final class BackgroundTaskUtil {
   @RequiresEdt
   public static @NotNull ProgressIndicator executeAndTryWait(@NotNull Function<? super ProgressIndicator, /*@NotNull*/ ? extends Runnable> backgroundTask,
                                                              @Nullable Runnable onSlowAction) {
-    return executeAndTryWait(backgroundTask, onSlowAction, ProgressIndicatorBase.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, false);
+    return executeAndTryWait(backgroundTask, onSlowAction, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS, false);
   }
 
   /**
