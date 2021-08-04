@@ -164,9 +164,7 @@ class JUnit5ConverterInspection : AbstractBaseUastLocalInspectionTool(UClass::cl
               val project = elementToBind.project
               val uFactory = uElement?.getUastElementFactory(project) ?: return
               val qualifiedExpression = uFactory.createQualifiedReference(newQName, null) ?: return
-              val replaced = uElement.replace(qualifiedExpression)?.sourcePsi ?: return
-              val smartPointerManager = SmartPointerManager.getInstance(elementToBind.project)
-              refsToShorten.add(smartPointerManager.createSmartPsiElementPointer(replaced))
+              uElement.replace(qualifiedExpression)?.sourcePsi ?: return
             }
           }
         }

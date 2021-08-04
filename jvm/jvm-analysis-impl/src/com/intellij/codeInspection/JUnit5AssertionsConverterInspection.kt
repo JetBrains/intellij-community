@@ -6,7 +6,6 @@ import com.intellij.codeInsight.TestFrameworks
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.siyeh.ig.junit.JUnitCommonClassNames
@@ -106,9 +105,7 @@ class JUnit5AssertionsConverterInspection(val frameworkName: @NonNls String = "J
           val psiFactory = uElement.getUastElementFactory(project) ?: return
           val newQualifier = psiFactory.createQualifiedReference(newClassName, element) ?: return
           val newCallableReferences = psiFactory.createCallableReferenceExpression(newQualifier, methodName, null) ?: return
-          val replaced = uElement.replace(newCallableReferences) ?: return
-          val sourcePsi = replaced.sourcePsi ?: return
-          JavaCodeStyleManager.getInstance(project).shortenClassReferences(sourcePsi)
+          uElement.replace(newCallableReferences) ?: return
         }
         is UIdentifier -> { // UCallExpression
           val methodCall = uElement.getUCallExpression(MAX_CALL_SEARCH_LIMIT) ?: return
@@ -133,9 +130,7 @@ class JUnit5AssertionsConverterInspection(val frameworkName: @NonNls String = "J
             newReceiver, methodName, arguments, null, methodCall.kind, null
           ) ?: return
           val qualifiedCall = methodCall.getQualifiedParentOrThis()
-          val replaced = qualifiedCall.replace(newCall)
-          val sourcePsi = replaced?.sourcePsi ?: return
-          JavaCodeStyleManager.getInstance(project).shortenClassReferences(sourcePsi)
+          qualifiedCall.replace(newCall)
         }
       }
     }
