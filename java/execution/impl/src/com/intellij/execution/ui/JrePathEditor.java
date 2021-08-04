@@ -255,13 +255,14 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
 
   private void updateDefaultJrePresentation() {
     ReadAction
-      .nonBlocking(() -> myDefaultJreSelector.getDescriptionString())
-      .finishOnUiThread(ModalityState.any(), result -> {
+      .nonBlocking(myDefaultJreSelector::getDescriptionString)
+      .finishOnUiThread(ModalityState.stateForComponent(this), result -> {
         StatusText text = myComboboxEditor.getEmptyText();
         text.clear();
         text.appendText(ExecutionBundle.message("default.jre.name"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         text.appendText(result, SimpleTextAttributes.GRAYED_ATTRIBUTES);
       })
+      .expireWhen(() -> !myDefaultJreSelector.isValid())
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
