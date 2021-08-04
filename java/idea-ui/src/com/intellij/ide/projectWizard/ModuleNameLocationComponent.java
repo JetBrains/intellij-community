@@ -3,6 +3,7 @@ package com.intellij.ide.projectWizard;
 
 import com.intellij.core.CoreBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.BrowseFilesListener;
@@ -245,7 +246,7 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
     if (moduleFile.exists()) {
       int answer = MessageDialogBuilder.yesNo(IdeBundle.message("title.file.already.exists"),
                                               CoreBundle.message("prompt.overwrite.project.file", moduleFile.getAbsolutePath(),
-                                                                 IdeBundle.message("project.new.wizard.module.identification"))).show();
+                                                                 IdeCoreBundle.message("project.new.wizard.module.identification"))).show();
       if (answer != Messages.YES) {
         return false;
       }
