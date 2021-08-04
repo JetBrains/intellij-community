@@ -18,7 +18,7 @@ public class RedundantMethodOverrideInspection17Test extends LightJavaInspection
     return LightJavaCodeInsightFixtureTestCase.JAVA_17;
   }
 
-  public void testIdenticalSwitches() {
+  public void testSwitch() {
     doTest();
   }
 }
