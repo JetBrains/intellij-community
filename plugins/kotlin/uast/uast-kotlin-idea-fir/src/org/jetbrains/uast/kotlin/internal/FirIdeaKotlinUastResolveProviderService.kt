@@ -10,6 +10,7 @@ class FirIdeaKotlinUastResolveProviderService : FirKotlinUastResolveProviderServ
     override fun isJvmElement(psiElement: PsiElement): Boolean = psiElement.isJvmElement
 
     override fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement> {
-        TODO("Not yet implemented")
+        // TODO("Not yet implemented")
+        return emptySequence()
     }
 }
