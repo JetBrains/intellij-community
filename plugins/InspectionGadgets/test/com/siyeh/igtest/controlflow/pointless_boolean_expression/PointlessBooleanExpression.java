@@ -136,3 +136,9 @@ interface IVoid extends I<Void>{
     return null;
   }
 }
+class NegateReference {
+  void testFinalNegation() {
+    final var negate = true;
+    System.out.println(!negate);
+  }
+}
