@@ -9,12 +9,24 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenEv
 
 import java.util.function.Consumer;
 
+/**
+ * Log line parser for maven spy log - task execution process.
+ * {@link MavenSpyOutputParser)
+ */
 @ApiStatus.Experimental
 public interface MavenSpyLoggedEventParser {
   ExtensionPointName<MavenSpyLoggedEventParser> EP_NAME = ExtensionPointName.create("org.jetbrains.idea.maven.log.spy.parser");
 
   boolean supportsType(@NotNull MavenEventType type);
 
+  /**
+   * Process log line.
+   * @param parentId - node id from BuildTreeConsoleView.
+   * @param parsingContext - maven parsing context.
+   * @param logLine - log line text.
+   * @param messageConsumer build event consumer.
+   * @return true if log line consumed.
+   */
   boolean processLogLine(
     @NotNull Object parentId,
     @NotNull MavenParsingContext parsingContext,

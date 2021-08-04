@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.execution.build;
 
 import com.intellij.execution.Executor;
+import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Extension point to ability to delegate {@link ApplicationConfiguration} to maven exec goal.
  * @author ibessonov
  */
 public interface MavenExecutionEnvironmentProvider {

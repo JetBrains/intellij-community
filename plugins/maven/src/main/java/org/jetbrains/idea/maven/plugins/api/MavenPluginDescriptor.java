@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Extension point - plugin info data.
  * @author Sergey Evdokimov
  */
 public final class MavenPluginDescriptor implements PluginAware {

@@ -9,6 +9,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
+/**
+ * Extension point for create upload root for target configuration.
+ */
 public interface TargetConfigurationMavenExtension {
   @Nullable
   TargetEnvironment.UploadRoot createUploadRoot(@Nullable MavenRuntimeTargetConfiguration mavenRuntimeConfiguration,
