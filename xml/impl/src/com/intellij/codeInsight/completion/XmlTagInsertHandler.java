@@ -79,7 +79,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
     final XmlTag tag = PsiTreeUtil.getContextOfType(currentElementRef.get(), XmlTag.class, true);
 
-    if (tag == null || !(tag.getLanguage() instanceof XMLLanguage)) return;
+    if (tag == null) return;
 
     if (context.getCompletionChar() != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
       context.setAddCompletionChar(false);
@@ -141,7 +141,10 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
     // temp code
     PsiFile containingFile = tag.getContainingFile();
-    boolean htmlCode = HtmlUtil.hasHtml(containingFile) || HtmlUtil.supportsXmlTypedHandlers(containingFile);
+    boolean fileHasHtml = HtmlUtil.hasHtml(containingFile);
+    // Non-html code like Pug embedded in HTML template
+    if (fileHasHtml && !tag.getLanguage().isKindOf(XMLLanguage.INSTANCE)) return;
+    boolean htmlCode = fileHasHtml || HtmlUtil.supportsXmlTypedHandlers(containingFile);
     template.setToReformat(!htmlCode);
 
     StringBuilder indirectRequiredAttrs = addRequiredAttributes(descriptor, tag, template, containingFile);
