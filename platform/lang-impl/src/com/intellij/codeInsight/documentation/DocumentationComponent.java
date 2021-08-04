@@ -289,6 +289,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myEditorPane.setBorder(JBUI.Borders.empty());
     myScrollPane = new MyScrollPane();
     myScrollPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
+    myScrollPane.addMouseWheelListener(new FontSizeMouseWheelListener());
 
     FocusListener focusAdapter = new FocusAdapter() {
       @Override
@@ -1553,11 +1554,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     public Border getViewportBorder() {
       return null;
     }
+  }
+
+  private final class FontSizeMouseWheelListener implements MouseWheelListener {
 
     @Override
-    protected void processMouseWheelEvent(MouseWheelEvent e) {
+    public void mouseWheelMoved(MouseWheelEvent e) {
       if (!EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled() || !EditorUtil.isChangeFontSize(e)) {
-        super.processMouseWheelEvent(e);
         return;
       }
 
