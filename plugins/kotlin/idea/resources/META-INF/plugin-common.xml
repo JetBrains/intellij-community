@@ -720,8 +720,10 @@
 
     <!--kotlin script specific extensions-->
     <java.shortNamesCache implementation="org.jetbrains.kotlin.idea.core.script.dependencies.JavaClassesInScriptDependenciesShortNameCache"/>
-    <indexedRootsProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptDependenciesIndexableSetContributor"/>
-    <psi.clsCustomNavigationPolicy implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
+    <indexedRootsProvider
+            implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptDependenciesIndexableSetContributor"/>
+    <psi.clsCustomNavigationPolicy
+            implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptResolveScopeProvider"/>
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesResolveScopeProvider"/>
 
@@ -730,8 +732,12 @@
 
     <navbar implementation="org.jetbrains.kotlin.idea.navigationToolbar.KotlinNavBarModelExtension" order="first"/>
 
+    <codeInsight.inlayProvider language="kotlin"
+                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinCodeAuthorInlayHintsProvider"/>
+
     <statistics.counterUsagesCollector groupId="kotlin.code.vision" version="1"/>
-    <codeInsight.inlayProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionProvider"/>
+    <codeInsight.inlayProvider language="kotlin"
+                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionProvider"/>
 
     <psi.referenceContributor implementation="org.jetbrains.kotlin.idea.references.KotlinWebReferenceContributor"/>
   </extensions>

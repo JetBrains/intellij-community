@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.util.Consumer;
@@ -26,7 +27,7 @@ public class VcsHistoryCache {
   public VcsHistoryCache() {
     myLock = new Object();
     // increase cache size when preload enabled
-    boolean preloadEnabled = AdvancedSettings.getBoolean("vcs.annotations.preload");
+    boolean preloadEnabled = AdvancedSettings.getBoolean("vcs.annotations.preload") || Registry.is("vcs.code.author.inlay.hints");
     myHistoryCache = new SLRUMap<>(
       preloadEnabled ? 50 : 10,
       preloadEnabled ? 50 : 10);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.annotate;
 
 import com.intellij.idea.ActionsBundle;
@@ -56,6 +56,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+
+import static git4idea.annotate.GitAnnotationProviderKt.getAnnotationFromCache;
 
 @Service
 public final class GitAnnotationProvider implements AnnotationProviderEx, CacheableAnnotationProvider {
@@ -389,6 +391,11 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     myCache.putAnnotation(filePath, GitVcs.getKey(), revision, cacheData(fileAnnotation));
   }
 
+  @Override
+  public @Nullable FileAnnotation getFromCache(@NotNull VirtualFile file) {
+    return getAnnotationFromCache(myProject, file);
+  }
+
   @NotNull
   private GitFileAnnotation restoreFromCache(@NotNull VirtualFile file,
                                              @Nullable VcsRevisionNumber revisionNumber,
@@ -454,7 +461,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     return new CachedData(annotation.getLines());
   }
 
-  private static class CachedData {
+  static class CachedData {
     public final List<LineInfo> lines;
 
     CachedData(List<LineInfo> lines) {

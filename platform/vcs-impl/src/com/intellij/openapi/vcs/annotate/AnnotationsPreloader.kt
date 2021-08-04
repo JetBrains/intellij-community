@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.annotate
 
+import com.intellij.codeInsight.hints.isCodeAuthorInlayHintsEnabled
+import com.intellij.codeInsight.hints.refreshCodeAuthorInlayHints
 import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
@@ -25,7 +27,7 @@ import com.intellij.vcs.CacheableAnnotationProvider
 internal class AnnotationsPreloader(private val project: Project) {
   private val updateQueue = MergingUpdateQueue("Annotations preloader queue", 1000, true, null, project, null, false)
 
-  private fun schedulePreloading(file: VirtualFile) {
+  fun schedulePreloading(file: VirtualFile) {
     if (project.isDisposed || file.fileType.isBinary) return
 
     updateQueue.queue(object : DisposableUpdate(project, file) {
@@ -43,6 +45,8 @@ internal class AnnotationsPreloader(private val project: Project) {
 
           annotationProvider.populateCache(file)
           LOG.debug { "Preloaded VCS annotations for ${file.name} in ${System.currentTimeMillis() - start} ms" }
+
+          refreshCodeAuthorInlayHints()
         }
         catch (e: VcsException) {
           LOG.info(e)
@@ -65,6 +69,6 @@ internal class AnnotationsPreloader(private val project: Project) {
 
     // TODO: check cores number?
     private fun isEnabled(): Boolean =
-      AdvancedSettings.getBoolean("vcs.annotations.preload") && !PowerSaveMode.isEnabled()
+      (isCodeAuthorInlayHintsEnabled() || AdvancedSettings.getBoolean("vcs.annotations.preload")) && !PowerSaveMode.isEnabled()
   }
 }
