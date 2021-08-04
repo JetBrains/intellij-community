@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -119,6 +119,15 @@ public class CaseSensitivityDetectionTest {
     File file = tempDir.newFile("dir/0");
     assertFalse(FileSystemUtil.isCaseToggleable(file.getName()));
 
+    CaseSensitivity expected = SystemInfo.isWindows || SystemInfo.isMac ? CaseSensitivity.INSENSITIVE : CaseSensitivity.SENSITIVE;
+    assertEquals(expected, FileSystemUtil.readParentCaseSensitivity(file));
+  }
+
+  @Test
+  public void nativeApiWorksWithNonLatinPaths() {
+    String uni = SystemInfo.isWindows ? getUnicodeName(System.getProperty("sun.jnu.encoding")) : getUnicodeName();
+    assumeTrue(uni != null);
+    File file = tempDir.newFile(uni + "/0");
     CaseSensitivity expected = SystemInfo.isWindows || SystemInfo.isMac ? CaseSensitivity.INSENSITIVE : CaseSensitivity.SENSITIVE;
     assertEquals(expected, FileSystemUtil.readParentCaseSensitivity(file));
   }
