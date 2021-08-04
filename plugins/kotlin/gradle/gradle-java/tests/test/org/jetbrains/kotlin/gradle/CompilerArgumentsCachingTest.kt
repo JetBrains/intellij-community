@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.gradle
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.idea.gradle.configuration.CachedArgumentsRestoring
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.*
-import org.jetbrains.kotlin.test.testFramework.KtUsefulTestCase
+import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.junit.Assert
