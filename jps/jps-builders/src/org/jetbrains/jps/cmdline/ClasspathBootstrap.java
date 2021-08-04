@@ -63,7 +63,7 @@ public final class ClasspathBootstrap {
     "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
     "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
 
-    // needed for some lombok versions to function
+    // needed for some lombok and google errorprone compiler versions to function
     "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",
     "jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED",
     "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
