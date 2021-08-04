@@ -18,7 +18,6 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.java.JavaLanguageRuntimeType
 import com.intellij.execution.util.JavaParametersUtil
 import com.intellij.execution.util.ProgramParametersUtil
-import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
@@ -229,7 +228,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
     }
 
     private fun updateMainClassName(element: PsiElement) {
-        val container = KotlinMainFunctionLocatingService.getEntryPointContainer(element) ?: return
+        val container = EntryPointContainerFinder.find(element) ?: return
         val name = getStartClassFqName(container)
         if (name != null) {
             runClass = name
@@ -476,7 +475,7 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
                 return true
             }
 
-            return service<KotlinMainFunctionLocatingService>().hasMain(mainFunCandidates)
+            return KotlinMainFunctionLocatingService.getInstance().hasMain(mainFunCandidates)
         }
 
     }
