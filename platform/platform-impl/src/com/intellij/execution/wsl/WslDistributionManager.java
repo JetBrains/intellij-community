@@ -107,8 +107,14 @@ public abstract class WslDistributionManager implements Disposable {
 
   private @NotNull List<WSLDistribution> loadInstalledDistributions() {
     final int releaseId = WSLUtil.getWindowsReleaseId();
-    if (releaseId > 0 && releaseId  < 1903) return WSLUtil.getAvailableDistributions();
+    if (releaseId > 0 && releaseId < 2004) {
+      final WSLUtil.WSLToolFlags wslTool = WSLUtil.getWSLToolFlags();
+      if (wslTool == null || (!wslTool.isVerboseFlagAvailable && !wslTool.isQuietFlagAvailable)) {
+        return WSLUtil.getAvailableDistributions();
+      }
+    }
 
+    // we assume that after "2004" Windows release wsl.exe and all required flags are available
     if (Registry.is("wsl.list.prefer.verbose.output", true)) {
       try {
         final var result = loadInstalledDistributionsWithVersions();
