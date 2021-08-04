@@ -111,7 +111,7 @@ public abstract class WslDistributionManager implements Disposable {
       return WSLUtil.getAvailableDistributions();
     }
 
-    if (Registry.is("wsl.list.prefer.verbose.output", true) && wslTool.isQuiteFlagAvailable) {
+    if (Registry.is("wsl.list.prefer.verbose.output", true) && wslTool.isVerboseFlagAvailable) {
       try {
         final var result = loadInstalledDistributionsWithVersions();
         return ContainerUtil.map(result, data -> {

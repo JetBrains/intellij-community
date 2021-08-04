@@ -245,9 +245,9 @@ public final class WSLUtil {
       final ProcessOutput output = ExecUtil.execAndGetOutput(commandLine, 5000);
       if (output.isTimeout()) return null;
 
-      // intentionally do no check "wsl --help" output because it returns -1
+      // intentionally do no check "wsl --help" exit code because it returns -1
       final String stdout = output.getStdout();
-      return new WSLToolFlags(stdout.contains("--quiet"), stdout.contains("--verbose"));
+      return new WSLToolFlags(stdout.contains(" --quiet "), stdout.contains(" --verbose "));
     }
     catch (ExecutionException e) {
       LOG.warn(e);
