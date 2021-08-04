@@ -112,12 +112,18 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       ((DefaultActionGroup)actionManager.getAction(RUN_CONTEXT_GROUP_MORE))
         .add(action, new Constraints(Anchor.BEFORE, "CreateRunConfiguration"), actionManager);
     }
-    
+
     AnAction nonExistingAction = registerAction(actionManager, newConfigurationContextActionId(executor), runNonExistingContextAction, myContextActionIdToAction);
     ((DefaultActionGroup)actionManager.getAction(RUN_CONTEXT_GROUP_MORE))
       .add(nonExistingAction, new Constraints(Anchor.BEFORE, "CreateNewRunConfiguration"), actionManager);
 
-    if(RunToolbarProcess.isAvailable()) {
+    initRunToolbarExecutorActions(executor, actionManager);
+
+    myContextActionIdSet.add(executor.getContextActionId());
+  }
+
+  private synchronized void initRunToolbarExecutorActions(@NotNull Executor executor, @NotNull ActionManager actionManager) {
+    if (RunToolbarProcess.isAvailable()) {
       RunToolbarProcess.getProcessesByExecutorId(executor.getId()).forEach(process -> {
         if (executor instanceof ExecutorGroup) {
 
@@ -132,15 +138,17 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
             registerActionInGroup(actionManager, process.getActionId(), wrappedAction, RunToolbarProcess.RUN_WIDGET_GROUP,
                                   myRunWidgetIdToAction);
-          } else {
+          }
+          else {
             RunToolbarAdditionActionsHolder holder = new RunToolbarAdditionActionsHolder(executorGroup, process);
 
-            registerActionInGroup(actionManager, RunToolbarAdditionActionsHolder.getAdditionActionId(process), holder.getAdditionAction(), process.getMoreActionSubGroupName(),
+            registerActionInGroup(actionManager, RunToolbarAdditionActionsHolder.getAdditionActionId(process), holder.getAdditionAction(),
+                                  process.getMoreActionSubGroupName(),
                                   myRunWidgetIdToAction);
-            registerActionInGroup(actionManager, RunToolbarAdditionActionsHolder.getAdditionActionChooserGroupId(process), holder.getMoreActionChooserGroup(), process.getMoreActionSubGroupName(),
+            registerActionInGroup(actionManager, RunToolbarAdditionActionsHolder.getAdditionActionChooserGroupId(process),
+                                  holder.getMoreActionChooserGroup(), process.getMoreActionSubGroupName(),
                                   myRunWidgetIdToAction);
           }
-
         }
         else {
           ExecutorAction wrappedAction = new RunToolbarProcessAction(process, executor);
@@ -149,8 +157,6 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         }
       });
     }
-
-    myContextActionIdSet.add(executor.getContextActionId());
   }
 
   @NonNls

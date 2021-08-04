@@ -7,7 +7,6 @@ import com.intellij.execution.ExecutionManager
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 
 class RunToolbarComponentService(val project: Project) {
@@ -34,20 +33,32 @@ class RunToolbarComponentService(val project: Project) {
           }
           }
       })
+
+      extraSlots.addListener(object : ActiveListener {
+        override fun enabled() {
+          executions.forEach{
+            extraSlots.processStarted(it.value)
+          }
+        }
+      })
     }
   }
 
   private fun start(env: ExecutionEnvironment) {
     if(isRelevant(env)) {
       executions[env.executionId] = env
-      extraSlots.processStarted(env)
+      if(extraSlots.active) {
+        extraSlots.processStarted(env)
+      }
     }
   }
 
   private fun stop(env: ExecutionEnvironment) {
     if(isRelevant(env)) {
       executions.remove(env.executionId)
-      extraSlots.processStopped(env.executionId)
+      if(extraSlots.active) {
+        extraSlots.processStopped(env.executionId)
+      }
     }
   }
 

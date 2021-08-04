@@ -23,12 +23,21 @@ class RunToolbarSlotManager(val project: Project) {
     fun getInstance(project: Project): RunToolbarSlotManager = project.service()
   }
 
-  private val listeners = mutableListOf<SlotListener>()
+  private val slotListeners = mutableListOf<SlotListener>()
   internal fun addListener(listener: SlotListener) {
-    listeners.add(listener)
+    slotListeners.add(listener)
   }
 
   internal fun removeListener(listener: SlotListener) {
+    slotListeners.remove(listener)
+  }
+
+  private val listeners = mutableListOf<ActiveListener>()
+  internal fun addListener(listener: ActiveListener) {
+    listeners.add(listener)
+  }
+
+  internal fun removeListener(listener: ActiveListener) {
     listeners.remove(listener)
   }
 
@@ -54,6 +63,14 @@ class RunToolbarSlotManager(val project: Project) {
       return this != INACTIVE
     }
   }
+
+  internal var active: Boolean = false
+    set(value) {
+      if(field == value) return
+
+      field = value
+      listeners.forEach { if(value) it.enabled() else it.disabled()  }
+    }
 
   internal val mainSlotData = MainSlotData()
 
@@ -125,7 +142,7 @@ class RunToolbarSlotManager(val project: Project) {
     dataIds.add(slot.id)
     slotsData[slot.id] = slot
 
-    listeners.forEach{ it.slotAdded() }
+    slotListeners.forEach{ it.slotAdded() }
     return slot
   }
 
@@ -147,7 +164,7 @@ class RunToolbarSlotManager(val project: Project) {
         dataIds.remove(id)
 
         SwingUtilities.invokeLater {
-          listeners.forEach { it.slotRemoved(index) }
+          slotListeners.forEach { it.slotRemoved(index) }
         }
       }
 
@@ -173,9 +190,9 @@ class RunToolbarSlotManager(val project: Project) {
         } ?: run {
           remove()
         }
-      } ?: listeners.forEach { it.rebuildPopup() }
+      } ?: slotListeners.forEach { it.rebuildPopup() }
     } else {
-      listeners.forEach { it.rebuildPopup() }
+      slotListeners.forEach { it.rebuildPopup() }
     }
   }
 }
@@ -237,4 +254,9 @@ internal interface SlotListener {
   fun slotAdded()
   fun slotRemoved(index: Int)
   fun rebuildPopup()
+}
+
+internal interface ActiveListener {
+  fun enabled()
+  fun disabled() {}
 }
