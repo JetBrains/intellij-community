@@ -302,6 +302,11 @@ data class IfThenToSelectData(
             appendFixedText("(")
             valueArguments.forEachIndexed { index, arg ->
                 if (index != 0) appendFixedText(", ")
+                val argName = arg.getArgumentName()?.asName
+                if (argName != null) {
+                    appendName(argName)
+                    appendFixedText(" = ")
+                }
                 val argExpression = arg.getArgumentExpression()
                 if (argExpression?.evaluatesTo(receiverExpression) == true)
                     appendFixedText(parameterName)

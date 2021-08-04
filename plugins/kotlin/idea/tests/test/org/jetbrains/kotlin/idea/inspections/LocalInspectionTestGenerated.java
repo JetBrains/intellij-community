@@ -496,6 +496,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/callVariable2.kt");
             }
 
+            @TestMetadata("callWithNamedArgument.kt")
+            public void testCallWithNamedArgument() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/callWithNamedArgument.kt");
+            }
+
             @TestMetadata("conditionComparesNullWithNull.kt")
             public void testConditionComparesNullWithNull() throws Exception {
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/conditionComparesNullWithNull.kt");
