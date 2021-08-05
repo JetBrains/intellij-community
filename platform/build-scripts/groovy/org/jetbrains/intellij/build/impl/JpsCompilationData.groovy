@@ -13,6 +13,7 @@ final class JpsCompilationData {
   final Set<String> compiledModules = new HashSet<>()
   final Set<String> compiledModuleTests = new HashSet<>()
   final Set<String> builtArtifacts = new HashSet<>()
+  boolean compiledClassesAreLoaded
   boolean statisticsReported
   boolean projectDependenciesResolved
   final File buildLogFile

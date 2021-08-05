@@ -123,12 +123,10 @@ final class CompilationTasksImpl extends CompilationTasks {
            options.pathToCompiledClassesArchivesMetadata != null
   }
 
-  private static boolean areCompiledClassesReusedOrNotProvided
-
   @Override
   void reuseCompiledClassesIfProvided() {
     synchronized (CompilationTasksImpl) {
-      if (areCompiledClassesReusedOrNotProvided) {
+      if (context.compilationData.compiledClassesAreLoaded) {
         return
       }
       if (context.options.cleanOutputFolder) {
@@ -149,7 +147,7 @@ final class CompilationTasksImpl extends CompilationTasks {
       else if (jpsCache.canBeUsed && !jpsCache.isCompilationRequired()) {
         jpsCache.downloadCacheAndCompileProject()
       }
-      areCompiledClassesReusedOrNotProvided = true
+      context.compilationData.compiledClassesAreLoaded = true
     }
   }
 
