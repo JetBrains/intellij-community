@@ -41,6 +41,7 @@ import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
+import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.psi.stubs.SerializedStubTree;
@@ -1729,7 +1730,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     getChangedFilesCollector().scheduleForUpdate(file);
   }
 
-  public void doInvalidateIndicesForFile(int fileId, @NotNull VirtualFile file, boolean contentChanged) {
+  public void doInvalidateIndicesForFile(int fileId, @NotNull VirtualFile file) {
     IndexingFlag.cleanProcessedFlagRecursively(file);
 
     List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
@@ -1739,42 +1740,18 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     // it doesn't matter content hanged or not: indices might depend on file name too
     removeTransientFileDataFromIndices(nontrivialFileIndexedStates, fileId, file);
 
-    if (contentChanged) {
-      // only mark the file as outdated, reindex will be done lazily
-      if (!fileIndexedStatesToUpdate.isEmpty()) {
-        //noinspection ForLoopReplaceableByForEach
-        for (int i = 0, size = nontrivialFileIndexedStates.size(); i < size; ++i) {
-          final ID<?, ?> indexId = nontrivialFileIndexedStates.get(i);
-          if (needsFileContentLoading(indexId)) {
-            getIndex(indexId).invalidateIndexedStateForFile(fileId);
-          }
-        }
-
-        // the file is for sure not a dir and it was previously indexed by at least one index
-        if (file.isValid()) {
-          if (!isTooLarge(file)) {
-            getChangedFilesCollector().scheduleForUpdate(file);
-          }
-          else getChangedFilesCollector().scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file));
-        }
-        else {
-          LOG.info("Unexpected state in update:" + file);
-        }
+    // file was removed
+    for (ID<?, ?> indexId : nontrivialFileIndexedStates) {
+      if (!myRegisteredIndexes.isContentDependentIndex(indexId)) {
+        updateSingleIndex(indexId, null, fileId, null);
       }
     }
-    else { // file was removed
-      for (ID<?, ?> indexId : nontrivialFileIndexedStates) {
-        if (!myRegisteredIndexes.isContentDependentIndex(indexId)) {
-          updateSingleIndex(indexId, null, fileId, null);
-        }
-      }
-      if (!file.isDirectory()) {
-        // its data should be (lazily) wiped for every index
-        getChangedFilesCollector().scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file));
-      }
-      else {
-        getChangedFilesCollector().removeScheduledFileFromUpdate(file); // no need to update it anymore
-      }
+    if (!file.isDirectory()) {
+      // its data should be (lazily) wiped for every index
+      getChangedFilesCollector().scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file));
+    }
+    else {
+      getChangedFilesCollector().removeScheduledFileFromUpdate(file); // no need to update it anymore
     }
   }
 
@@ -1792,18 +1769,16 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     boolean fileIsDirectory = file.isDirectory();
     IndexedFileImpl indexedFile = new IndexedFileImpl(file, myIndexableFilesFilterHolder.findProjectForFile(fileId));
 
-    if (!contentChange) {
-      FileContent fileContent = null;
-
-      for (ID<?, ?> indexId : getContentLessIndexes(fileIsDirectory)) {
-        if (acceptsInput(indexId, indexedFile)) {
-          if (fileContent == null) {
-            fileContent = new IndexedFileWrapper(indexedFile);
-          }
-          updateSingleIndex(indexId, file, fileId, fileContent);
+    FileContent fileContent = null;
+    for (ID<?, ?> indexId : contentChange ? Collections.singleton(FileTypeIndex.NAME) : getContentLessIndexes(fileIsDirectory)) {
+      if (acceptsInput(indexId, indexedFile)) {
+        if (fileContent == null) {
+          fileContent = new IndexedFileWrapper(indexedFile);
         }
+        updateSingleIndex(indexId, file, fileId, fileContent);
       }
     }
+
     // For 'normal indices' schedule the file for update and reset stamps for all affected indices (there
     // can be client that used indices between before and after events, in such case indices are up to date due to force update
     // with old content)

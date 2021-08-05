@@ -120,10 +120,9 @@ public final class VfsEventsMerger {
   private static final short FILE_ADDED = 1;
   private static final short FILE_REMOVED = 2;
   private static final short FILE_CONTENT_CHANGED = 4;
-  private static final short BEFORE_FILE_CONTENT_CHANGED = 8;
-  private static final short FILE_TRANSIENT_STATE_CHANGED = 16;
+  private static final short FILE_TRANSIENT_STATE_CHANGED = 8;
 
-  @MagicConstant(flags = {FILE_ADDED, FILE_REMOVED, FILE_CONTENT_CHANGED, BEFORE_FILE_CONTENT_CHANGED, FILE_TRANSIENT_STATE_CHANGED})
+  @MagicConstant(flags = {FILE_ADDED, FILE_REMOVED, FILE_CONTENT_CHANGED, FILE_TRANSIENT_STATE_CHANGED})
   @interface EventMask { }
 
   static class ChangeInfo {
@@ -151,15 +150,10 @@ public final class VfsEventsMerger {
       builder.append("file: ").append(file.getPath()).append("; ")
         .append("operation: ");
       if ((eventMask & FILE_TRANSIENT_STATE_CHANGED) != 0) builder.append("TRANSIENT_STATE_CHANGE ");
-      if ((eventMask & BEFORE_FILE_CONTENT_CHANGED) != 0) builder.append("UPDATE-REMOVE ");
       if ((eventMask & FILE_CONTENT_CHANGED) != 0) builder.append("UPDATE ");
       if ((eventMask & FILE_REMOVED) != 0) builder.append("REMOVE ");
       if ((eventMask & FILE_ADDED) != 0) builder.append("ADD ");
       return builder.toString().trim();
-    }
-
-    boolean isBeforeContentChanged() {
-      return (eventMask & BEFORE_FILE_CONTENT_CHANGED) != 0;
     }
 
     boolean isContentChanged() {

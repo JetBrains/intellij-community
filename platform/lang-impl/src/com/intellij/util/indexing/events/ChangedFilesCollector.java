@@ -233,9 +233,8 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
       int fileId = info.getFileId();
       VirtualFile file = info.getFile();
       if (info.isTransientStateChanged()) myFileBasedIndex.doTransientStateChangeForFile(fileId, file);
-      if (info.isBeforeContentChanged()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file, true);
       if (info.isContentChanged()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, true);
-      if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file, false);
+      if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file);
       if (info.isFileAdded()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, false);
       return true;
     });
