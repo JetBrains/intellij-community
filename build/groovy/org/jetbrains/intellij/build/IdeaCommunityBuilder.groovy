@@ -37,6 +37,8 @@ final class IdeaCommunityBuilder {
   }
 
   void buildDistributions() {
+    compileModules()
+    buildContext.options.incrementalCompilation = true
     def tasks = BuildTasks.create(buildContext)
     tasks.buildDistributions()
     buildContext.messages.block("Build standalone JPS") {

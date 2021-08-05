@@ -49,7 +49,7 @@ final class CompilationTasksImpl extends CompilationTasks {
       if (jdkInfo.version.feature != 11) {
         context.messages.error("Build script must be executed under Java 11 to compile intellij project, but it's executed under Java $jdkInfo.version ($currentJdk)")
       }
-
+      resolveProjectDependencies()
       context.messages.progress("Compiling project")
       JpsCompilationRunner runner = new JpsCompilationRunner(context)
       try {
