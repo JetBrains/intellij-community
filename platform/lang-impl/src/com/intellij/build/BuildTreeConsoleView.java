@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build;
 
 import com.intellij.build.events.*;
@@ -142,7 +142,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myTreeModel, this);
     asyncTreeModel.addTreeModelListener(new ExecutionNodeAutoExpandingListener());
     myTree = initTree(asyncTreeModel);
-    myTree.getAccessibleContext().setAccessibleName(IdeBundle.message("build.toolwindow.tree.accessiblename"));
+    myTree.getAccessibleContext().setAccessibleName(IdeBundle.message("buildToolWindow.tree.accessibleName"));
 
     JPanel myContentPanel = new JPanel();
     myContentPanel.setLayout(new CardLayout());
