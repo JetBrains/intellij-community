@@ -55,8 +55,6 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.MathUtil;
-import com.intellij.util.Url;
-import com.intellij.util.Urls;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -64,7 +62,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.BuiltInServerManager;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -76,13 +73,12 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.renderable.RenderableImageProducer;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider, WidthBasedLayout {
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
@@ -116,13 +112,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private String myExternalUrl;
   private DocumentationProvider myProvider;
   private Reference<Component> myReferenceComponent;
-
-  private final MyDictionary<String, Image> myImageProvider = new MyDictionary<>() {
-    @Override
-    public Image get(Object key) {
-      return getImageByKeyImpl(key);
-    }
-  };
 
   private Runnable myToolwindowCallback;
   private final ActionButton myCorner;
@@ -235,7 +224,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         super.setDocument(doc);
         doc.putProperty("IgnoreCharsetDirective", Boolean.TRUE);
         if (doc instanceof StyledDocument) {
-          doc.putProperty("imageCache", myImageProvider);
+          doc.putProperty("imageCache", new DocumentationImageProvider(this, DocumentationComponent.this::getElement));
         }
       }
     };
@@ -873,33 +862,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myEditorPane.setFont(UIUtil.getFontWithFallback(fontName, Font.PLAIN, JBUIScale.scale(getQuickDocFontSize().getSize())));
   }
 
-  @Nullable
-  private Image getImageByKeyImpl(Object key) {
-    if (myManager == null || key == null) return null;
-    PsiElement element = getElement();
-    if (element == null) return null;
-    URL url = (URL)key;
-    Image inMemory = myManager.getElementImage(element, url.toExternalForm());
-    if (inMemory != null) {
-      return inMemory;
-    }
-
-    Url parsedUrl = Urls.parseEncoded(url.toExternalForm());
-    BuiltInServerManager builtInServerManager = BuiltInServerManager.getInstance();
-    if (parsedUrl != null && builtInServerManager.isOnBuiltInWebServer(parsedUrl)) {
-      try {
-        url = new URL(builtInServerManager.addAuthToken(parsedUrl).toExternalForm());
-      }
-      catch (MalformedURLException e) {
-        LOG.warn(e);
-      }
-    }
-    return Toolkit.getDefaultToolkit().createImage(new RenderableImageProducer(
-      new DocumentationRenderableImage(url, myEditorPane),
-      null
-    ));
-  }
-
   private void goBack() {
     if (myBackStack.isEmpty()) return;
     Context context = myBackStack.pop();
@@ -1283,38 +1245,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         // resize popup according to new font size, if user didn't set popup size manually
         if (!myManuallyResized && myHint != null && myHint.getDimensionServiceKey() == null) showHint();
       }, DocumentationComponent.this);
-    }
-  }
-
-  private abstract static class MyDictionary<K, V> extends Dictionary<K, V> {
-    @Override
-    public int size() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isEmpty() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Enumeration<K> keys() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Enumeration<V> elements() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public V put(K key, V value) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public V remove(Object key) {
-      throw new UnsupportedOperationException();
     }
   }
 

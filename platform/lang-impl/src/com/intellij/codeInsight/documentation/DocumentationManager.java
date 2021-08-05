@@ -114,7 +114,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   public static final String NEW_JAVADOC_LOCATION_AND_SIZE = "javadoc.popup.new";
   public static final DataKey<String> SELECTED_QUICK_DOC_TEXT = DataKey.create("QUICK_DOC.SELECTED_TEXT");
 
-  private static final Logger LOG = Logger.getInstance(DocumentationManager.class);
+  static final Logger LOG = Logger.getInstance(DocumentationManager.class);
   private static final String SHOW_DOCUMENTATION_IN_TOOL_WINDOW = "ShowDocumentationInToolWindow";
   private static final String DOCUMENTATION_AUTO_UPDATE_ENABLED = "DocumentationAutoUpdateEnabled";
 
@@ -1449,8 +1449,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return title != null ? title : element.getText();
   }
 
-  @Nullable
-  Image getElementImage(@NotNull PsiElement element, @NotNull String imageSpec) {
+  static @Nullable Image getElementImage(@NotNull PsiElement element, @NotNull String imageSpec) {
     DocumentationProvider provider = getProviderFromElement(element);
     if (provider instanceof CompositeDocumentationProvider) {
       for (DocumentationProvider p : ((CompositeDocumentationProvider)provider).getAllProviders()) {
