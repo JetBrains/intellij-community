@@ -132,7 +132,7 @@ public class Alarm implements Disposable {
                         EdtExecutorService.getScheduledExecutorInstance() :
 
                         // or pass to app pooled thread.
-                        // have to restrict the number of running tasks because otherwise the (implicit) contract of
+                        // have to restrict the number of running tasks because otherwise the (implicit) contract
                         // "addRequests with the same delay are executed in order" will be broken
                         AppExecutorUtil.createBoundedScheduledExecutorService("Alarm Pool", 1);
 

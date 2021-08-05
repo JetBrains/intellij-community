@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.CaptionPanel
-import com.intellij.ui.ComboboxSpeedSearch
 import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.SingleAlarm
