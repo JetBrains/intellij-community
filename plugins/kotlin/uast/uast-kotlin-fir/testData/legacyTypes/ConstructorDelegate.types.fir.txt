@@ -7,7 +7,7 @@ UFile (package = ) [public final class ConstructorDelegateKt {...]
                 UReturnExpression [return <init>(i)] : PsiType:Void
                     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(i)] : PsiType:BaseImpl
                         UIdentifier (Identifier (BaseImpl)) [UIdentifier (Identifier (BaseImpl))]
-                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:BaseImpl
+                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: BaseImpl) [<init>] : PsiType:BaseImpl
                         USimpleNameReferenceExpression (identifier = i) [i] : PsiType:int
     UClass (name = Base) [public abstract interface Base {...}]
         UMethod (name = print) [public abstract fun print() : void = UastEmptyExpression]

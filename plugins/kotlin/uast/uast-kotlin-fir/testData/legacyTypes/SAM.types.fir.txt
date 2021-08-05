@@ -63,7 +63,7 @@ UFile (package = ) [import java.lang.Thread...]
                     ULocalVariable (name = thread1) [var thread1: java.lang.Thread = <init>({ ...})]
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>({ ...})] : PsiType:Thread
                             UIdentifier (Identifier (Thread)) [UIdentifier (Identifier (Thread))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:Thread
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Thread) [<init>] : PsiType:Thread
                             ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
                                 UBlockExpression [{...}] : PsiType:Unit
                                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello1")] : PsiType:Unit
@@ -76,7 +76,7 @@ UFile (package = ) [import java.lang.Thread...]
                     ULocalVariable (name = thread2) [var thread2: java.lang.Thread = <init>(Runnable({ ...}))]
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(Runnable({ ...}))] : PsiType:Thread
                             UIdentifier (Identifier (Thread)) [UIdentifier (Identifier (Thread))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:Thread
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Thread) [<init>] : PsiType:Thread
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [Runnable({ ...})] : PsiType:Runnable
                                 UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
                                 USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = null) [Runnable] : PsiType:Runnable

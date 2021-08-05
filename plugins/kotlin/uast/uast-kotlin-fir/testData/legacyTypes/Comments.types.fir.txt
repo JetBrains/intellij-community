@@ -18,7 +18,7 @@ UFile (package = ) [public abstract interface Pizza {...]
                             USimpleNameReferenceExpression (identifier = lang) [lang] : PsiType:Unit
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("Margherita")] : PsiType:String
                             UIdentifier (Identifier (String)) [UIdentifier (Identifier (String))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:String
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: String) [<init>] : PsiType:String
                             ULiteralExpression (value = "Margherita") ["Margherita"] : PsiType:String
         UMethod (name = contains) [public fun contains(@org.jetbrains.annotations.NotNull ingredient: Pizza.Ingredient) : boolean {...}]
             UParameter (name = ingredient) [@org.jetbrains.annotations.NotNull var ingredient: Pizza.Ingredient]
