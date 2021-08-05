@@ -71,11 +71,14 @@ class RowsGridBuilder(private val panel: JComponent, private val grid: JBGrid = 
     val constraints = JBConstraints(grid, x, y, width = width, verticalAlign = verticalAlign, horizontalAlign = horizontalAlign,
                                     gaps = gaps, visualPaddings = visualPaddings)
     panel.add(component, constraints)
-    return skipCell()
+    return skip()
   }
 
-  fun skipCell(): RowsGridBuilder {
-    x++
+  /**
+   * Skips [count] cells in current row
+   */
+  fun skip(count: Int = 1): RowsGridBuilder {
+    x += count
     return this
   }
 }

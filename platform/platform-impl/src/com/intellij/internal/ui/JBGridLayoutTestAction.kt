@@ -220,7 +220,7 @@ fun createSubGridPanel(): JPanel {
     .cell(label(2, 0))
     .row()
     .cell(label(0, 1))
-    .skipCell()
+    .skip()
     .cell(label(2, 1))
     .row()
     .cell(label(0, 2))

@@ -4,7 +4,7 @@ package com.intellij.ui.dsl.gridLayout
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-data class Gaps(val top: Int, val left: Int, val bottom: Int, val right: Int) {
+data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val right: Int = 0) {
   companion object {
     val EMPTY = Gaps(0)
   }
