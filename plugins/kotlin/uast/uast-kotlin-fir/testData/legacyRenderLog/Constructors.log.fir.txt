@@ -74,6 +74,17 @@ UFile (package = )
                             USimpleNameReferenceExpression (identifier = toString, resolvesTo = null)
     UClass (name = AOnlyInit)
         UMethod (name = AOnlyInit)
+            UBlockExpression
+                UBlockExpression
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                        UIdentifier (Identifier (println))
+                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
+                        ULiteralExpression (value = 1)
+                UBlockExpression
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                        UIdentifier (Identifier (println))
+                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
+                        ULiteralExpression (value = 2)
     UClass (name = AWithSecondary)
         UField (name = a)
             UAnnotation (fqName = org.jetbrains.annotations.NotNull)

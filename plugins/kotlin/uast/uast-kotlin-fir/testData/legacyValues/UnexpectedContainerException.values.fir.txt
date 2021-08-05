@@ -14,4 +14,50 @@ UFile (package = ) [public abstract interface Callback {...]
                     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
                         UIdentifier (Identifier (UnsupportedOperationException)) [UIdentifier (Identifier (UnsupportedOperationException))]
                         USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
-        UMethod (name = Model) [public fun Model() = UastEmptyExpression]
+        UMethod (name = Model) [public fun Model() {...}]
+            UBlockExpression [{...}] = external crashMe(Callback.java, {
+    return anonymous object : Callback {
+                    override fun onError(throwable: Throwable) {
+                        throw UnsupportedOperationException("")
+                    }
+                }
+})(external java(), Undetermined)
+                UBlockExpression [{...}] = external crashMe(Callback.java, {
+    return anonymous object : Callback {
+                    override fun onError(throwable: Throwable) {
+                        throw UnsupportedOperationException("")
+                    }
+                }
+})(external java(), Undetermined)
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [crashMe(Callback.java, { ...})] = external crashMe(Callback.java, {
+    return anonymous object : Callback {
+                    override fun onError(throwable: Throwable) {
+                        throw UnsupportedOperationException("")
+                    }
+                }
+})(external java(), Undetermined)
+                        UIdentifier (Identifier (crashMe)) [UIdentifier (Identifier (crashMe))]
+                        USimpleNameReferenceExpression (identifier = crashMe, resolvesTo = null) [crashMe] = external crashMe(Callback.java, {
+    return anonymous object : Callback {
+                    override fun onError(throwable: Throwable) {
+                        throw UnsupportedOperationException("")
+                    }
+                }
+})(external java(), Undetermined)
+                        UQualifiedReferenceExpression [Callback.java] = external java()
+                            UClassLiteralExpression [Callback] = Callback
+                            USimpleNameReferenceExpression (identifier = java) [java] = external java()
+                        ULambdaExpression [{ ...}] = Undetermined
+                            UBlockExpression [{...}] = Nothing
+                                UReturnExpression [return anonymous object : Callback {...            }] = Nothing
+                                    UObjectLiteralExpression [anonymous object : Callback {...            }] = Undetermined
+                                        UClass (name = null) [final class null : Callback {...}]
+                                            UMethod (name = onError) [public fun onError(@org.jetbrains.annotations.NotNull throwable: java.lang.Throwable) : void {...}]
+                                                UParameter (name = throwable) [@org.jetbrains.annotations.NotNull var throwable: java.lang.Throwable]
+                                                    UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+                                                UBlockExpression [{...}] = Nothing
+                                                    UThrowExpression [throw <anonymous class>("")] = Nothing
+                                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<anonymous class>("")] = external <anonymous class>("")("")
+                                                            UIdentifier (Identifier (UnsupportedOperationException)) [UIdentifier (Identifier (UnsupportedOperationException))]
+                                                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>("")("")
+                                                            ULiteralExpression (value = "") [""] = ""
