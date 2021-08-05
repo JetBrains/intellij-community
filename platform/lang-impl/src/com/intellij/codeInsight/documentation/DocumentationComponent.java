@@ -54,8 +54,9 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.*;
+import com.intellij.util.MathUtil;
+import com.intellij.util.Url;
+import com.intellij.util.Urls;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -65,7 +66,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManager;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
@@ -76,18 +76,12 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
-import java.awt.image.renderable.RenderContext;
-import java.awt.image.renderable.RenderableImage;
 import java.awt.image.renderable.RenderableImageProducer;
-import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
-import java.util.Vector;
 import java.util.*;
 
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider, WidthBasedLayout {
@@ -900,75 +894,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         LOG.warn(e);
       }
     }
-    URL imageUrl = url;
-    return Toolkit.getDefaultToolkit().createImage(new RenderableImageProducer(new RenderableImage() {
-      private Image myImage;
-      private boolean myImageLoaded;
-      @Override
-      public Vector<RenderableImage> getSources() { return null; }
-
-      @Override
-      public Object getProperty(String name) { return null; }
-
-      @Override
-      public String[] getPropertyNames() { return ArrayUtilRt.EMPTY_STRING_ARRAY; }
-
-      @Override
-      public boolean isDynamic() { return false; }
-
-      @Override
-      public float getWidth() { return getImage().getWidth(null); }
-
-      @Override
-      public float getHeight() { return getImage().getHeight(null); }
-
-      @Override
-      public float getMinX() { return 0; }
-
-      @Override
-      public float getMinY() { return 0; }
-
-      @Override
-      public RenderedImage createScaledRendering(int w, int h, RenderingHints hints) { return createDefaultRendering(); }
-
-      @Override
-      public RenderedImage createDefaultRendering() { return (RenderedImage)getImage(); }
-
-      @Override
-      public RenderedImage createRendering(RenderContext renderContext) { return createDefaultRendering(); }
-
-      private Image getImage() {
-        if (!myImageLoaded) {
-          Image image = loadImageFromUrl();
-          myImage = ImageUtil.toBufferedImage(
-            image != null ? image : ((ImageIcon)UIManager.getLookAndFeelDefaults().get("html.missingImage")).getImage(),
-            false, true);
-
-          myImageLoaded = true;
-        }
-        return myImage;
-      }
-
-      @Nullable
-      private Image loadImageFromUrl() {
-        Image image = ImageLoader.loadFromUrl(imageUrl);
-        if (image != null &&
-            image.getWidth(null) > 0 &&
-            image.getHeight(null) > 0) {
-          return image;
-        }
-        try {
-          BufferedImage direct = ImageIO.read(imageUrl);
-          if (direct != null) return ImageUtil.ensureHiDPI(direct, ScaleContext.create(myEditorPane));
-        }
-        catch (IOException e) {
-          //ignore
-        }
-
-        return image;
-      }
-
-    }, null));
+    return Toolkit.getDefaultToolkit().createImage(new RenderableImageProducer(
+      new DocumentationRenderableImage(url, myEditorPane),
+      null
+    ));
   }
 
   private void goBack() {
