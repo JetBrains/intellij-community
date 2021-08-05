@@ -73,7 +73,18 @@ UFile (package = ) [public final class A {...]
                             UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
                             USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] : PsiType:String
     UClass (name = AOnlyInit) [public final class AOnlyInit {...}]
-        UMethod (name = AOnlyInit) [public fun AOnlyInit() = UastEmptyExpression]
+        UMethod (name = AOnlyInit) [public fun AOnlyInit() {...}]
+            UBlockExpression [{...}]
+                UBlockExpression [{...}] : PsiType:Unit
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(1)] : PsiType:Unit
+                        UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
+                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:Unit
+                        ULiteralExpression (value = 1) [1] : PsiType:int
+                UBlockExpression [{...}] : PsiType:Unit
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(2)] : PsiType:Unit
+                        UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
+                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:Unit
+                        ULiteralExpression (value = 2) [2] : PsiType:int
     UClass (name = AWithSecondary) [public final class AWithSecondary {...}]
         UField (name = a) [@org.jetbrains.annotations.NotNull private var a: java.lang.String]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]

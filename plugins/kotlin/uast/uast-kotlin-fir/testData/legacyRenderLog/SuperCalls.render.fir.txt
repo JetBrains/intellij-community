@@ -43,5 +43,7 @@ public final class C : A {
 
 public final class O : A {
     @null public static final var INSTANCE: O
-    private fun O() = UastEmptyExpression
+    private fun O() {
+        <anonymous class>("text")
+    }
 }

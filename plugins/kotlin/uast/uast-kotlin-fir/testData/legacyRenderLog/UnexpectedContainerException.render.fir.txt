@@ -6,5 +6,15 @@ public final class Model {
     public final fun crashMe(@org.jetbrains.annotations.NotNull clazz: java.lang.Class<T>, @org.jetbrains.annotations.NotNull factory: kotlin.jvm.functions.Function0<? extends T>) : void {
         throw <anonymous class>()
     }
-    public fun Model() = UastEmptyExpression
+    public fun Model() {
+        {
+            crashMe(Callback.java, {
+                return anonymous object : Callback {
+                                override fun onError(throwable: Throwable) {
+                                    throw UnsupportedOperationException("")
+                                }
+                            }
+            })
+        }
+    }
 }
