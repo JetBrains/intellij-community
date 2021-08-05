@@ -285,10 +285,10 @@ final class PersistentFSConnection {
         if (!myCorrupted) {
           createBrokenMarkerFile(e);
           myCorrupted = true;
-          doForce();
           if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
             showCorruptionNotification();
           }
+          doForce();
         }
       });
     }
