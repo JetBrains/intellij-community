@@ -6,7 +6,7 @@ import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
-import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlowOffset;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
@@ -23,10 +23,10 @@ import java.util.*;
 
 public class TryCatchTrap implements Trap {
   private final PsiElement myStatement;
-  private final LinkedHashMap<CatchClauseDescriptor, ? extends ControlFlowOffset> myClauses;
+  private final LinkedHashMap<CatchClauseDescriptor, ? extends ControlFlow.ControlFlowOffset> myClauses;
 
   public TryCatchTrap(@NotNull PsiElement tryStatement,
-                      @NotNull LinkedHashMap<CatchClauseDescriptor, ? extends ControlFlowOffset> clauses) {
+                      @NotNull LinkedHashMap<CatchClauseDescriptor, ? extends ControlFlow.ControlFlowOffset> clauses) {
     myStatement = tryStatement;
     myClauses = clauses;
   }
@@ -71,7 +71,7 @@ public class TryCatchTrap implements Trap {
     TypeConstraint throwableType = ((ExceptionTransfer)target).getThrowable();
     List<DfaInstructionState> result = new ArrayList<>();
     for (var entry : myClauses.entrySet()) {
-      ControlFlowOffset jumpOffset = entry.getValue();
+      ControlFlow.ControlFlowOffset jumpOffset = entry.getValue();
       CatchClauseDescriptor catchSection = entry.getKey();
 
       for (TypeConstraint caughtType : catchSection.constraints()) {
@@ -111,7 +111,7 @@ public class TryCatchTrap implements Trap {
 
   @Override
   public @NotNull Collection<@NotNull Integer> getPossibleTargets() {
-    return ContainerUtil.map(myClauses.values(), ControlFlowOffset::getInstructionOffset);
+    return ContainerUtil.map(myClauses.values(), ControlFlow.ControlFlowOffset::getInstructionOffset);
   }
 
   @Override

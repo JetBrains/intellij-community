@@ -7,13 +7,12 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.FList;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.IntStream;
 
 /**
  * A value that could be pushed to the stack and used for control transfer
@@ -48,13 +47,8 @@ public final class DfaControlTransferValue extends DfaValue {
   }
 
   public int @NotNull [] getPossibleTargetIndices() {
-    return IntStream.concat(traps
-      .stream()
-      .flatMap(trap -> trap.getPossibleTargets().stream())
-      .mapToInt(x -> x),
-      Arrays.stream(target.getPossibleTargets()))
-      .distinct()
-      .toArray();
+    return StreamEx.of(traps).flatCollection(Trap::getPossibleTargets).mapToInt(x -> x).append(target.getPossibleTargets())
+      .distinct().toArray();
   }
 
   public @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state, @NotNull DataFlowInterpreter interpreter) {

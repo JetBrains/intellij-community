@@ -8,10 +8,10 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class GotoInstruction extends Instruction {
-  private ControlFlowOffset myOffset;
+  private ControlFlow.ControlFlowOffset myOffset;
   private final boolean myShouldWiden;
 
-  public GotoInstruction(ControlFlowOffset offset) {
+  public GotoInstruction(ControlFlow.ControlFlowOffset offset) {
     this(offset, true);
   }
 
@@ -20,7 +20,7 @@ public class GotoInstruction extends Instruction {
    * @param shouldWiden if false, widening is not performed at this instruction, even if it's a back-branch.
    *                    Used to mark 'unrolled' loops, which are known to have very few iterations.
    */
-  public GotoInstruction(ControlFlowOffset offset, boolean shouldWiden) {
+  public GotoInstruction(ControlFlow.ControlFlowOffset offset, boolean shouldWiden) {
     myOffset = offset;
     myShouldWiden = shouldWiden;
   }
@@ -49,7 +49,7 @@ public class GotoInstruction extends Instruction {
   }
 
   public void setOffset(final int offset) {
-    myOffset = new FixedOffset(offset);
+    myOffset = new ControlFlow.FixedOffset(offset);
   }
 
 }

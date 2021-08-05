@@ -27,6 +27,7 @@ import com.intellij.codeInspection.dataFlow.jvm.transfer.TryCatchTrap.CatchClaus
 import com.intellij.codeInspection.dataFlow.jvm.transfer.TryCatchTrap.JavaCatchClauseDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow.ControlFlowOffset;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -51,7 +52,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.psi.CommonClassNames.*;
 
@@ -716,7 +716,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiStatement thenStatement = statement.getThenBranch();
     PsiStatement elseStatement = statement.getElseBranch();
 
-    DeferredOffset skipThenOffset = new DeferredOffset();
+    ControlFlow.DeferredOffset skipThenOffset = new ControlFlow.DeferredOffset();
 
     if (condition != null) {
       condition.accept(this);
@@ -730,7 +730,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     if (elseStatement != null) {
-      DeferredOffset skipElseOffset = new DeferredOffset();
+      ControlFlow.DeferredOffset skipElseOffset = new ControlFlow.DeferredOffset();
       Instruction instruction = new GotoInstruction(skipElseOffset);
       addInstruction(instruction);
       skipThenOffset.setOffset(getInstructionCount());
@@ -1519,7 +1519,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void generateShortCircuitAndOr(PsiExpression expression, PsiExpression[] operands, PsiType exprType, boolean and) {
-    DeferredOffset endOffset = new DeferredOffset();
+    ControlFlow.DeferredOffset endOffset = new ControlFlow.DeferredOffset();
     for (int i = 0; i < operands.length; i++) {
       PsiExpression operand = operands[i];
       operand.accept(this);
@@ -1527,7 +1527,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
       PsiExpression nextOperand = i == operands.length - 1 ? null : operands[i + 1];
       if (nextOperand != null) {
-        DeferredOffset nextOffset = new DeferredOffset();
+        ControlFlow.DeferredOffset nextOffset = new ControlFlow.DeferredOffset();
         addInstruction(new ConditionalGotoInstruction(nextOffset, DfTypes.booleanValue(and), operand));
         push(DfTypes.booleanValue(!and), expression);
         addInstruction(new GotoInstruction(endOffset));
@@ -1554,7 +1554,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (thenExpression != null) {
       PsiExpression condition = expression.getCondition();
       PsiExpression elseExpression = expression.getElseExpression();
-      DeferredOffset elseOffset = new DeferredOffset();
+      ControlFlow.DeferredOffset elseOffset = new ControlFlow.DeferredOffset();
       condition.accept(this);
       generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
       PsiType type = expression.getType();
@@ -1562,7 +1562,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       thenExpression.accept(this);
       generateBoxingUnboxingInstructionFor(thenExpression,type);
 
-      DeferredOffset endOffset = new DeferredOffset();
+      ControlFlow.DeferredOffset endOffset = new ControlFlow.DeferredOffset();
       addInstruction(new GotoInstruction(endOffset));
 
       elseOffset.setOffset(getInstructionCount());
@@ -2211,15 +2211,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       return new ControlFlowAnalyzer(targetFactory, psiBlock, false).buildControlFlow();
     }
     PsiFile file = psiBlock.getContainingFile();
-    ConcurrentMap<PsiElement, Optional<ControlFlow>> fileMap =
+    ConcurrentHashMap<PsiElement, Optional<ControlFlow>> fileMap =
       CachedValuesManager.getCachedValue(file, () ->
         CachedValueProvider.Result.create(new ConcurrentHashMap<>(), PsiModificationTracker.MODIFICATION_COUNT));
-    Optional<ControlFlow> cf = fileMap.computeIfAbsent(psiBlock, psi -> {
+    return fileMap.computeIfAbsent(psiBlock, psi -> {
       DfaValueFactory factory = new DfaValueFactory(file.getProject());
       ControlFlow flow = new ControlFlowAnalyzer(factory, psiBlock, true).buildControlFlow();
       return Optional.ofNullable(flow);
-    });
-    return cf.map(flow -> new ControlFlow(flow, targetFactory)).orElse(null);
+    }).map(flow -> new ControlFlow(flow, targetFactory)).orElse(null);
   }
 
   private static class CannotAnalyzeException extends RuntimeException {

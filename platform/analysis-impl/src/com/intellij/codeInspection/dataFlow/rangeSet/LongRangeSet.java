@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ThreeState;
+import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1820,7 +1821,7 @@ public abstract class LongRangeSet {
       }
       else {
         //noinspection HardCodedStringLiteral
-        suffix = "<" + BitSet.valueOf(new long[]{myBits}).stream().mapToObj(String::valueOf).collect(Collectors.joining(", ")) + "> mod " + myMod;
+        suffix = IntStreamEx.of(BitSet.valueOf(new long[]{myBits})).joining(", ", "<", "> mod " + myMod);
       }
       return suffix;
     }

@@ -11,7 +11,7 @@ import com.intellij.codeInspection.dataFlow.jvm.TrapTracker
 import com.intellij.codeInspection.dataFlow.jvm.transfer.*
 import com.intellij.codeInspection.dataFlow.jvm.transfer.TryCatchTrap.CatchClauseDescriptor
 import com.intellij.codeInspection.dataFlow.lang.ir.*
-import com.intellij.codeInspection.dataFlow.lang.ir.DeferredOffset
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow.DeferredOffset
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet
@@ -551,7 +551,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun processDoWhileExpression(expr: KtDoWhileExpression) {
-        val offset = FixedOffset(flow.instructionCount)
+        val offset = ControlFlow.FixedOffset(flow.instructionCount)
         processExpression(expr.body)
         addInstruction(PopInstruction())
         processExpression(expr.condition)
@@ -562,7 +562,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun processWhileExpression(expr: KtWhileExpression) {
-        val startOffset = FixedOffset(flow.instructionCount)
+        val startOffset = ControlFlow.FixedOffset(flow.instructionCount)
         val condition = expr.condition
         processExpression(condition)
         val endOffset = DeferredOffset()
@@ -586,7 +586,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val parameterVar = factory.varFactory.createVariableValue(KtVariableDescriptor(parameter))
         val parameterType = parameter.type()
         val pushLoopCondition = processForRange(expr, parameterVar, parameterType)
-        val startOffset = FixedOffset(flow.instructionCount)
+        val startOffset = ControlFlow.FixedOffset(flow.instructionCount)
         val endOffset = DeferredOffset()
         addInstruction(FlushVariableInstruction(parameterVar))
         pushLoopCondition()

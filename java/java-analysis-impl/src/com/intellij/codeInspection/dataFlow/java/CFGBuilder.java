@@ -580,7 +580,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder doTry(@NotNull PsiElement anchor) {
-    DeferredOffset offset = new DeferredOffset();
+    ControlFlow.DeferredOffset offset = new ControlFlow.DeferredOffset();
     myAnalyzer.pushTrap(new TryCatchAllTrap(anchor, offset));
     myBranches.add(() -> offset.setOffset(myAnalyzer.getInstructionCount()));
     return this;

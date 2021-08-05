@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.dataFlow.jvm.transfer;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
-import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlowOffset;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
@@ -15,9 +15,9 @@ import java.util.List;
 
 public class TryCatchAllTrap implements DfaControlTransferValue.Trap {
   private final @NotNull PsiElement myAnchor;
-  private final @NotNull ControlFlowOffset myTarget;
+  private final ControlFlow.@NotNull ControlFlowOffset myTarget;
 
-  public TryCatchAllTrap(@NotNull PsiElement anchor, @NotNull ControlFlowOffset target) {
+  public TryCatchAllTrap(@NotNull PsiElement anchor, ControlFlow.@NotNull ControlFlowOffset target) {
     myAnchor = anchor;
     myTarget = target;
   }
