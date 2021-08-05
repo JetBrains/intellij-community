@@ -2531,6 +2531,63 @@ class Abc {
     def element = elements[0]
     assert element.lookupString == "out"
     LookupElementPresentation presentation = renderElement(element)
-    assert renderElement(element).tailText == null
+    assert presentation.tailText == null
+  }
+
+  void testLocalFromTryBlock() {
+    myFixture.configureByText("Test.java", "class Test {\n" +
+                                           "  void test() {\n" +
+                                           "    try {\n" +
+                                           "      int myvar = foo();\n" +
+                                           "    }\n" +
+                                           "    catch (RuntimeException ex) {\n" +
+                                           "    }\n" +
+                                           "    my<caret>\n" +
+                                           "  }\n" +
+                                           "\n" +
+                                           "  native int foo();\n" +
+                                           "}")
+    myFixture.completeBasic()
+    myFixture.checkResult("class Test {\n" +
+                          "  void test() {\n" +
+                          "      int myvar = 0;\n" +
+                          "      try {\n" +
+                          "          myvar = foo();\n" +
+                          "      } catch (RuntimeException ex) {\n" +
+                          "      }\n" +
+                          "      myvar\n" +
+                          "  }\n" +
+                          "\n" +
+                          "  native int foo();\n" +
+                          "}")
+  }
+
+  void testLocalFromAnotherIfBranch() {
+    myFixture.configureByText("Test.java", "class Test {\n" +
+                                           "  void test(int x) {\n" +
+                                           "    if (x > 0) {\n" +
+                                           "      String result = \"positive\";\n" +
+                                           "    } else if (x < 0) {\n" +
+                                           "      re<caret>\n" +
+                                           "    }\n" +
+                                           "  }\n" +
+                                           "}")
+    myFixture.completeBasic()
+    assert myFixture.lookupElements[0].lookupString == "return"
+    def element = myFixture.lookupElements[1]
+    assert element.lookupString == "result"
+    LookupElementPresentation presentation = renderElement(element)
+    assert presentation.tailText == " (from if-then block)"
+    selectItem(element)
+    myFixture.checkResult("class Test {\n" +
+                          "  void test(int x) {\n" +
+                          "      String result = null;\n" +
+                          "      if (x > 0) {\n" +
+                          "          result = \"positive\";\n" +
+                          "      } else if (x < 0) {\n" +
+                          "          result\n" +
+                          "      }\n" +
+                          "  }\n" +
+                          "}")
   }
 }
