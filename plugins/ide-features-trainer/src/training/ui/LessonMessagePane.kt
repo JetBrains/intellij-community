@@ -626,7 +626,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
 
     val xOffset = JBUI.scale(2).toDouble()
     val yOffset = topLineY - activeTaskInset
-    val width = this.bounds.width - activeTaskInset - xOffset - JBUIScale.scale(2) // 1 + 1 line width
+    val width = this.bounds.width - 2*xOffset - JBUIScale.scale(2) // 1 + 1 line width
     val height = textHeight + 2 * activeTaskInset - JBUIScale.scale(2) + (lastActiveMessage.textProperties?.spaceBelow ?: 0)
     g2d.draw(RoundRectangle2D.Double(xOffset, yOffset, width, height, arc.toDouble(), arc.toDouble()))
     g2d.color = color
