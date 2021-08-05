@@ -173,6 +173,9 @@ final class JarPackager {
     MethodHandle createZipSource = BuildHelper.getInstance(buildContext).createZipSource
     for (String libraryName in layout.projectLibrariesToUnpack.get(jarPath)) {
       JpsLibrary library = buildContext.project.libraryCollection.findLibrary(libraryName)
+      if (library == null) {
+        buildContext.messages.error("Project library '$libraryName' from $jarPath should be unpacked but it isn't found")
+      }
       for (File ioFile : library.getFiles(JpsOrderRootType.COMPILED)) {
         Path file = ioFile.toPath()
         sourceList.add(createZipSource.invokeWithArguments(file, new IntConsumer() {
