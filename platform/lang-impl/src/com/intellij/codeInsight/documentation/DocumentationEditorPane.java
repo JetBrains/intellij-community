@@ -15,8 +15,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.Highlighter;
 import javax.swing.text.StyledDocument;
+import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -88,5 +92,56 @@ class DocumentationEditorPane extends JEditorPane {
 
     // changing font will change the doc's CSS as myEditorPane has JEditorPane.HONOR_DISPLAY_PROPERTIES via UIUtil.getHTMLEditorKit
     setFont(UIUtil.getFontWithFallback(fontName, Font.PLAIN, JBUIScale.scale(size.getSize())));
+  }
+
+  private Object myHighlightedTag;
+
+  private @Nullable HTMLDocument.Iterator getLink(int n) {
+    if (n >= 0) {
+      HTMLDocument document = (HTMLDocument)getDocument();
+      int linkCount = 0;
+      for (HTMLDocument.Iterator it = document.getIterator(HTML.Tag.A); it.isValid(); it.next()) {
+        if (it.getAttributes().isDefined(HTML.Attribute.HREF) && linkCount++ == n) {
+          return it;
+        }
+      }
+    }
+    return null;
+  }
+
+  void highlightLink(int n) {
+    Highlighter highlighter = getHighlighter();
+    HTMLDocument.Iterator link = getLink(n);
+    if (link != null) {
+      int startOffset = link.getStartOffset();
+      int endOffset = link.getEndOffset();
+      try {
+        if (myHighlightedTag == null) {
+          myHighlightedTag = highlighter.addHighlight(startOffset, endOffset, DocumentationLinkHighlightPainter.INSTANCE);
+        }
+        else {
+          highlighter.changeHighlight(myHighlightedTag, startOffset, endOffset);
+        }
+        setCaretPosition(startOffset);
+        if (!ScreenReader.isActive()) {
+          // scrolling to target location explicitly, as we've disabled auto-scrolling to caret
+          scrollRectToVisible(modelToView(startOffset));
+        }
+      }
+      catch (BadLocationException e) {
+        DocumentationManager.LOG.warn("Error highlighting link", e);
+      }
+    }
+    else if (myHighlightedTag != null) {
+      highlighter.removeHighlight(myHighlightedTag);
+      myHighlightedTag = null;
+    }
+  }
+
+  @Nullable String getLinkHref(int n) {
+    HTMLDocument.Iterator link = getLink(n);
+    return link != null
+           ? (String)link.getAttributes().getAttribute(HTML.Attribute.HREF)
+           : null;
   }
 }

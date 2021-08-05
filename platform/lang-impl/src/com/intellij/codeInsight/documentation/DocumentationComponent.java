@@ -65,8 +65,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.TextUI;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Highlighter;
 import javax.swing.text.View;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
@@ -119,7 +117,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final JComponent myControlPanel;
   private boolean myControlPanelVisible;
   private int myHighlightedLink = -1;
-  private Object myHighlightingTag;
   private final boolean myStoreSize;
   private boolean myManuallyResized;
 
@@ -933,54 +930,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return linkCount;
   }
 
-  @Nullable
-  private HTMLDocument.Iterator getLink(int n) {
-    if (n >= 0) {
-      HTMLDocument document = (HTMLDocument)myEditorPane.getDocument();
-      int linkCount = 0;
-      for (HTMLDocument.Iterator it = document.getIterator(HTML.Tag.A); it.isValid(); it.next()) {
-        if (it.getAttributes().isDefined(HTML.Attribute.HREF) && linkCount++ == n) return it;
-      }
-    }
-    return null;
-  }
-
   private void highlightLink(int n) {
     myHighlightedLink = n;
-    Highlighter highlighter = myEditorPane.getHighlighter();
-    HTMLDocument.Iterator link = getLink(n);
-    if (link != null) {
-      int startOffset = link.getStartOffset();
-      int endOffset = link.getEndOffset();
-      try {
-        if (myHighlightingTag == null) {
-          myHighlightingTag = highlighter.addHighlight(startOffset, endOffset, DocumentationLinkHighlightPainter.INSTANCE);
-        }
-        else {
-          highlighter.changeHighlight(myHighlightingTag, startOffset, endOffset);
-        }
-        myEditorPane.setCaretPosition(startOffset);
-        if (!ScreenReader.isActive()) {
-          // scrolling to target location explicitly, as we've disabled auto-scrolling to caret
-          myEditorPane.scrollRectToVisible(myEditorPane.modelToView(startOffset));
-        }
-      }
-      catch (BadLocationException e) {
-        LOG.warn("Error highlighting link", e);
-      }
-    }
-    else if (myHighlightingTag != null) {
-      highlighter.removeHighlight(myHighlightingTag);
-      myHighlightingTag = null;
-    }
-  }
-
-  private void activateLink(int n) {
-    HTMLDocument.Iterator link = getLink(n);
-    if (link != null) {
-      String href = (String)link.getAttributes().getAttribute(HTML.Attribute.HREF);
-      myManager.navigateByLink(this, null, href);
-    }
+    myEditorPane.highlightLink(n);
   }
 
   private static class Context {
@@ -1048,7 +1000,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private class ActivateLinkAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      activateLink(myHighlightedLink);
+      String href = myEditorPane.getLinkHref(myHighlightedLink);
+      if (href != null) {
+        myManager.navigateByLink(DocumentationComponent.this, null, href);
+      }
     }
   }
 
