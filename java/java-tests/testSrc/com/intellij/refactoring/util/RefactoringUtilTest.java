@@ -71,6 +71,7 @@ public class RefactoringUtilTest extends LightIdeaTestCase {
 
     Language l = createMock(Language.class);
     expect(l.getID()).andStubReturn("MOCK_LANGUAGE_DIALECT");
+    expect(l.getBaseLanguage()).andStubReturn(null);
     expect(l.getUserData(anyObject())).andReturn(null).anyTimes();
     l.putUserData(anyObject(), anyObject());
     expectLastCall().anyTimes();
