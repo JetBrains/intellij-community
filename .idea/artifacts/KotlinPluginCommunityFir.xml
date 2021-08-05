@@ -201,11 +201,17 @@
         <element id="library" level="project" name="kotlinc.high-level-api" />
         <element id="library" level="project" name="kotlinc.high-level-api-fir" />
         <element id="library" level="project" name="kotlinc.low-level-api-fir" />
-        <element id="archive" name="uast-kotlin-idea-fir">
+        <element id="archive" name="uast-kotlin-idea-fir.jar">
           <element id="module-output" name="kotlin.uast.uast-kotlin-idea-fir" />
         </element>
-        <element id="archive" name="uast-kotlin-fir">
+        <element id="archive" name="uast-kotlin-fir.jar">
           <element id="module-output" name="kotlin.uast.uast-kotlin-fir" />
+        </element>
+        <element id="archive" name="uast-kotlin-base.jar">
+          <element id="module-output" name="kotlin.uast.uast-kotlin-base" />
+        </element>
+        <element id="archive" name="uast-kotlin-idea-base.jar">
+          <element id="module-output" name="kotlin.uast.uast-kotlin-idea-base" />
         </element>
       </element>
       <element id="directory" name="kotlinc">
