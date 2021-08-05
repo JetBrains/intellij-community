@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ModalityState
 class SingleAlarm @JvmOverloads constructor(
   private val task: Runnable,
   private val delay: Int,
-  private val parentDisposable: Disposable,
+  private val parentDisposable: Disposable?,
   private val threadToUse: ThreadToUse = ThreadToUse.SWING_THREAD,
   private val modalityState: ModalityState? = computeDefaultModality(threadToUse)
 ) : Alarm(threadToUse, parentDisposable) {
