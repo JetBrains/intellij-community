@@ -16,7 +16,6 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
     val nonPublicModules = setOf("intellij.idea.ultimate.build",
                                  "intellij.idea.community.build",
                                  "buildSrc",
-                                 "intellij.platform.testGuiFramework",
                                  "intellij.workspaceModel.performanceTesting")
     val libraries = HashMap<JpsLibrary, JpsModule>()
     project.modules.filter { it.name !in nonPublicModules

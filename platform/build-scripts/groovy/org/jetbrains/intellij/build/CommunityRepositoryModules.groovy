@@ -116,11 +116,6 @@ final class CommunityRepositoryModules {
       withModule("intellij.gradle.jps")
     },
     plugin("intellij.gradle.java.maven"),
-    plugin("intellij.platform.testGuiFramework") {
-      mainJarName = "testGuiFramework.jar"
-      withProjectLibrary("fest")
-      withProjectLibrary("fest-swing")
-    },
     plugin("intellij.junit") {
       mainJarName = "idea-junit.jar"
       withModule("intellij.junit.rt", "junit-rt.jar")
