@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
-import com.intellij.ui.JreHiDpiUtil;
 import org.cef.browser.CefBrowser;
 import org.cef.handler.CefRenderHandler;
 import org.jetbrains.annotations.NotNull;
@@ -11,8 +10,6 @@ import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-
-import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
 
 /**
  * A wrapper over {@link CefBrowser} that forwards paint requests and notifications to a custom {@link CefRenderHandler}.
@@ -121,18 +118,5 @@ public abstract class JBCefOsrHandlerBrowser extends JBCefBrowserBase {
                 return renderHandler;
               }
             }));
-  }
-
-  /**
-   * Returns normal (unscaled) size of the provided scaled size if IDE-managed HiDPI mode is enabled.
-   * In JRE-managed HiDPI mode the method has no effect.
-   * <p></p>
-   * This method should be applied to size values (for instance, font size) previously scaled (explicitly or implicitly)
-   * via {@link com.intellij.ui.scale.JBUIScale#scale(int)}, before the values are used in html (in CSS, for instance).
-   *
-   * @see com.intellij.ui.scale.ScaleType
-   */
-  public static int normalizeScaledSize(int scaledSize) {
-    return JreHiDpiUtil.isJreHiDPIEnabled() ? scaledSize : ROUND.round(scaledSize / JBCefApp.getForceDeviceScaleFactor());
   }
 }

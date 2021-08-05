@@ -36,7 +36,7 @@ public class HwFacadeHelper {
   @SuppressWarnings("UseJBColor")
   public static final Color TRANSPARENT_COLOR = new Color(1, 1, 1, 0);
 
-  private final JComponent myTarget;
+  private final @NotNull JComponent myTarget;
   private JWindow myHwFacade;
   private ComponentAdapter myOwnerListener;
   private ComponentAdapter myTargetListener;
@@ -83,7 +83,30 @@ public class HwFacadeHelper {
     }
   }
 
-  public HwFacadeHelper(JComponent target) {
+  public static HwFacadeHelper create(@NotNull JComponent target) {
+    return JBCefApp.isSupported() ?
+      new HwFacadeHelper(target) :
+      // do not provoke any JBCef* class loading
+      new HwFacadeHelper(target) {
+        @Override
+        public void addNotify() {
+        }
+        @Override
+        public void show() {
+        }
+        @Override
+        public void removeNotify() {
+        }
+        @Override
+        public void hide() {
+        }
+        @Override
+        public void paint(Graphics g, Consumer<? super Graphics> targetPaint) {
+        }
+      };
+  }
+
+  private HwFacadeHelper(@NotNull JComponent target) {
     myTarget = target;
   }
 
