@@ -28,6 +28,12 @@ internal object ReplaceBySourceAsGraph {
                                       replaceWith: WorkspaceEntityStorage, sourceFilter: (EntitySource) -> Boolean) {
     replaceWith as AbstractEntityStorage
 
+    if (LOG.isTraceEnabled) {
+      thisBuilder.assertConsistency()
+      replaceWith.assertConsistency()
+      LOG.trace("Before starting replaceBySource no consistency issues were found")
+    }
+
     val initialStore = if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED) thisBuilder.toStorage() else null
 
     LOG.debug { "Performing replace by source" }

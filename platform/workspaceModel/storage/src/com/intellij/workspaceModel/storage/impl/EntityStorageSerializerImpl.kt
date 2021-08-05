@@ -497,6 +497,11 @@ class EntityStorageSerializerImpl(
           family?.entities?.asSequence()?.filterNotNull()?.forEach { entityData -> builder.createAddEvent(entityData) }
         }
 
+        if (LOG.isTraceEnabled) {
+          builder.assertConsistency()
+          LOG.trace("Builder loaded from caches has no consistency issues")
+        }
+
         builder
       }
       catch (e: Exception) {

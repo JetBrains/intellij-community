@@ -138,7 +138,16 @@ internal class WorkspaceEntityStorageBuilderImpl(
       // Update indexes
       indexes.entityAdded(pEntityData, this)
 
-      LOG.debug { "New entity added: $clazz-${pEntityData.id}" }
+      if (LOG.isTraceEnabled) {
+        LOG.trace {
+          "New entity added: $clazz-${pEntityData.id}. PersistentId: ${pEntityData.persistentId(this)}. Store: $this.\n${
+            currentStackTrace(10)
+          }"
+        }
+      }
+      else {
+        LOG.debug { "New entity added: $clazz-${pEntityData.id}. PersistentId: ${pEntityData.persistentId(this)}." }
+      }
 
       return pEntityData.createEntity(this)
     }
@@ -266,6 +275,11 @@ internal class WorkspaceEntityStorageBuilderImpl(
       LOG.debug { "Removing ${e.javaClass}..." }
       e as WorkspaceEntityBase
       removeEntity(e.id)
+
+      if (LOG.isTraceEnabled) {
+        this.assertConsistency()
+        LOG.trace("After remove operation storage has no consistency issues")
+      }
     }
     finally {
       unlockWrite()
@@ -500,7 +514,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     fun from(storage: WorkspaceEntityStorage): WorkspaceEntityStorageBuilderImpl {
       storage as AbstractEntityStorage
-      return when (storage) {
+      val newBuilder = when (storage) {
         is WorkspaceEntityStorageImpl -> {
           val copiedBarrel = MutableEntitiesBarrel.from(storage.entitiesByType)
           val copiedRefs = MutableRefsTable.from(storage.refs)
@@ -514,6 +528,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
           WorkspaceEntityStorageBuilderImpl(copiedBarrel, copiedRefs, copiedIndexes, storage.trackStackTrace)
         }
       }
+      LOG.trace { "Create new builder $newBuilder from $storage.\n${currentStackTrace(10)}" }
+      return newBuilder
     }
 
     internal fun <T : WorkspaceEntity> addReplaceEvent(builder: WorkspaceEntityStorageBuilderImpl,
@@ -905,3 +921,5 @@ internal data class NotThisEntityId(val id: EntityId)
 
 internal fun EntityId.asThis(): ThisEntityId = ThisEntityId(this)
 internal fun EntityId.notThis(): NotThisEntityId = NotThisEntityId(this)
+
+fun currentStackTrace(depth: Int): String = Throwable().stackTrace.take(depth).joinToString(separator = "\n") { it.toString() }
