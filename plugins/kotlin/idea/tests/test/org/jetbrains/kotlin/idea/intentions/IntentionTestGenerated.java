@@ -4550,6 +4550,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public void testBasic() throws Exception {
             runTest("testData/intentions/convertConcatenationToBuildString/basic.kt");
         }
+
+        @TestMetadata("withComments.kt")
+        public void testWithComments() throws Exception {
+            runTest("testData/intentions/convertConcatenationToBuildString/withComments.kt");
+        }
+
+        @TestMetadata("withComments2.kt")
+        public void testWithComments2() throws Exception {
+            runTest("testData/intentions/convertConcatenationToBuildString/withComments2.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
