@@ -709,4 +709,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testFinallyEphemeralNpe() { doTest(); }
   public void testTypeParameterAsSuperClass() { doTest(); }
   public void testSuppressConstantBooleans() { doTestWith(insp -> insp.REPORT_CONSTANT_REFERENCE_VALUES = true); }
+  public void testTempVarsInContracts() { doTest(); }
 }
