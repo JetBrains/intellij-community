@@ -10,10 +10,10 @@ UFile (package = ) [public abstract interface Callback {...]
             UParameter (name = factory) [@org.jetbrains.annotations.NotNull var factory: kotlin.jvm.functions.Function0<? extends T>]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:Void
-                UThrowExpression [throw <anonymous class>()] : PsiType:Void
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<anonymous class>()] : PsiType:UnsupportedOperationException
+                UThrowExpression [throw <init>()] : PsiType:Void
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : PsiType:UnsupportedOperationException
                         UIdentifier (Identifier (UnsupportedOperationException)) [UIdentifier (Identifier (UnsupportedOperationException))]
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:UnsupportedOperationException
+                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:UnsupportedOperationException
         UMethod (name = Model) [public fun Model() {...}]
             UBlockExpression [{...}]
                 UBlockExpression [{...}] : PsiType:Unit
@@ -32,8 +32,8 @@ UFile (package = ) [public abstract interface Callback {...]
                                                 UParameter (name = throwable) [@org.jetbrains.annotations.NotNull var throwable: java.lang.Throwable]
                                                     UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                                                 UBlockExpression [{...}] : PsiType:Void
-                                                    UThrowExpression [throw <anonymous class>("")] : PsiType:Void
-                                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<anonymous class>("")] : PsiType:UnsupportedOperationException
+                                                    UThrowExpression [throw <init>("")] : PsiType:Void
+                                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("")] : PsiType:UnsupportedOperationException
                                                             UIdentifier (Identifier (UnsupportedOperationException)) [UIdentifier (Identifier (UnsupportedOperationException))]
-                                                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:UnsupportedOperationException
+                                                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:UnsupportedOperationException
                                                             ULiteralExpression (value = "") [""] : PsiType:String

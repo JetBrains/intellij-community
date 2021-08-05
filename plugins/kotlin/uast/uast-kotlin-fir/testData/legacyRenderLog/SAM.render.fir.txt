@@ -35,12 +35,12 @@ public final class SAMKt {
         return <anonymous class>()
     }
     public static final fun test1() : void {
-        var thread1: java.lang.Thread = <anonymous class>({
+        var thread1: java.lang.Thread = <init>({
             println("hello1")
         })
     }
     public static final fun test2() : void {
-        var thread2: java.lang.Thread = <anonymous class>(Runnable({
+        var thread2: java.lang.Thread = <init>(Runnable({
             println("hello2")
         }))
     }

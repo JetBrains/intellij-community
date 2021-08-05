@@ -13,7 +13,7 @@ UFile (package = )
                 UThrowExpression
                     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
                         UIdentifier (Identifier (UnsupportedOperationException))
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null)
         UMethod (name = Model)
             UBlockExpression
                 UBlockExpression
@@ -35,5 +35,5 @@ UFile (package = )
                                                     UThrowExpression
                                                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
                                                             UIdentifier (Identifier (UnsupportedOperationException))
-                                                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null)
                                                             ULiteralExpression (value = "")

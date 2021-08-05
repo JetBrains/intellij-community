@@ -11,11 +11,11 @@ UFile (package = ) [public final class NonTrivialIdentifiersKt {...]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] = external invoke()()
                     UIdentifier (Identifier (()) [UIdentifier (Identifier (())]
                     USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] = external invoke()()
-                UDeclarationsExpression [var p: A = <anonymous class>()] = Undetermined
-                    ULocalVariable (name = p) [var p: A = <anonymous class>()]
-                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+                UDeclarationsExpression [var p: A = <init>()] = Undetermined
+                    ULocalVariable (name = p) [var p: A = <init>()]
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
                             UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>()()
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [invoke({ ...})] = external invoke({
     invoke({
         invoke()
