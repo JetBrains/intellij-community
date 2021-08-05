@@ -24,6 +24,7 @@ abstract class SettingComponent<V : Any, T : SettingType<V>>(
 
     abstract val validationIndicator: ValidationIndicator?
     override val title: String? get() = setting.title
+    override val tooltipText: String? = setting.tooltipText
 
     override fun onInit() {
         super.onInit()

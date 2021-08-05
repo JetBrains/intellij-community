@@ -57,6 +57,8 @@ abstract class BuildSystemPlugin(context: Context) : Plugin(context) {
                     )
                 }
             }
+
+            tooltipText = KotlinNewProjectWizardBundle.message("plugin.buildsystem.setting.type.tooltip")
         }
 
         val buildSystemData by property<List<BuildSystemData>>(emptyList())

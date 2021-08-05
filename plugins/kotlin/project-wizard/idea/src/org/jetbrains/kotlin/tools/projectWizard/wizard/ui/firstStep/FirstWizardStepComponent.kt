@@ -239,11 +239,13 @@ private class JdkComponent(ideWizard: IdeWizard) : TitledComponent(ideWizard.con
     }
 
     override val title: String = KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.project.jdk")
+    override val tooltipText: String? = KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.project.jdk.desc")
     override val component: JComponent = jdkComboBox
 }
 
 private class KotlinRuntimeComponentComponent(ideWizard: IdeWizard) : TitledComponent(ideWizard.context) {
     override val title: String = KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.kotlin.runtime")
+    override val tooltipText: String? = KotlinNewProjectWizardUIBundle.message("additional.buildsystem.settings.kotlin.runtime.desc")
     override val component: JComponent = ideWizard.jpsData.libraryOptionsPanel.simplePanel
 
     init {
