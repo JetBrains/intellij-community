@@ -826,7 +826,6 @@
         <action id="ProjectView.FoldersAlwaysOnTop"
                 class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FoldersAlwaysOnTop"/>
       </group>
-      <separator/>
       <action id="ProjectView.OpenInPreviewTab"
               class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$OpenInPreviewTab"/>
       <action id="ProjectView.AutoscrollToSource"
