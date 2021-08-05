@@ -1,4 +1,9 @@
 <idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.html.htmlLikeLanguage"
+                    beanClass="com.intellij.lang.html.HTMLLikeMetaLanguage$HtmlLikeTemplateEP"
+                    dynamic="true"/>
+  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <gotoTargetRendererProvider implementation="com.intellij.xml.impl.schema.GotoXmlSchemaTypeRendererProvider"/>
     <definitionsSearch implementation="com.intellij.xml.impl.schema.SchemaDefinitionsSearch"/>
@@ -20,5 +25,7 @@
                     id="xml.catalog"/>
     </projectConfigurable>
 
+    <metaLanguage implementation="com.intellij.lang.html.HTMLLikeMetaLanguage"/>
+    <html.htmlLikeLanguage language="HTML"/>
   </extensions>
 </idea-plugin>
