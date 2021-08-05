@@ -30,6 +30,7 @@ KotlinUFile(
         KotlinUMethod(
         )
         KotlinConstructorUMethod(
+            UComment(// Single-line comment bound to object)
         )
     )
 )
