@@ -6,7 +6,7 @@ UFile (package = ) [public final class Ea101715Kt {...]
                     ULocalVariable (name = a) [var a: Obj = <init>(555)]
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(555)] = external <init>(555)((long)555)
                             UIdentifier (Identifier (Obj)) [UIdentifier (Identifier (Obj))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>(555)((long)555)
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Obj) [<init>] = external <init>(555)((long)555)
                             ULiteralExpression (value = 555) [555] = (long)555
     UClass (name = Obj) [public final class Obj {...}]
         UField (name = INSTANCE) [@null public static final var INSTANCE: Obj]

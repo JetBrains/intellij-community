@@ -12,7 +12,7 @@ UFile (package = ) [public final class A {...]
             UBlockExpression [{...}]
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(i.toString())]
                     UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>]
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>]
                     UQualifiedReferenceExpression [i.toString()] : PsiType:String
                         USimpleNameReferenceExpression (identifier = i) [i] : PsiType:int
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : PsiType:String
@@ -36,7 +36,7 @@ UFile (package = ) [public final class A {...]
             UBlockExpression [{...}]
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(i.toString())]
                     UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>]
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: AWithInit) [<init>]
                     UQualifiedReferenceExpression [i.toString()] : PsiType:String
                         USimpleNameReferenceExpression (identifier = i) [i] : PsiType:int
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : PsiType:String
@@ -66,7 +66,7 @@ UFile (package = ) [public final class A {...]
             UBlockExpression [{...}]
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(i.toString())]
                     UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>]
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: AWith2Init) [<init>]
                     UQualifiedReferenceExpression [i.toString()] : PsiType:String
                         USimpleNameReferenceExpression (identifier = i) [i] : PsiType:int
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : PsiType:String
@@ -98,7 +98,7 @@ UFile (package = ) [public final class A {...]
             UBlockExpression [{...}]
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()]
                     UIdentifier (Identifier ()) [UIdentifier (Identifier ())]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>]
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Object) [<init>]
                 UBinaryExpression (operator = =) [a = i.toString()] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = a) [a] : PsiType:String
                     UQualifiedReferenceExpression [i.toString()] : PsiType:String
@@ -112,7 +112,7 @@ UFile (package = ) [public final class A {...]
             UBlockExpression [{...}]
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()]
                     UIdentifier (Identifier ()) [UIdentifier (Identifier ())]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>]
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Object) [<init>]
                 UBinaryExpression (operator = =) [a = s] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = a) [a] : PsiType:String
                     USimpleNameReferenceExpression (identifier = s) [s] : PsiType:String
@@ -129,7 +129,7 @@ UFile (package = ) [public final class A {...]
             UBlockExpression [{...}]
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()]
                     UIdentifier (Identifier ()) [UIdentifier (Identifier ())]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>]
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Object) [<init>]
                 UBlockExpression [{...}] : PsiType:Unit
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [println()] : PsiType:Unit
                         UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
@@ -147,7 +147,7 @@ UFile (package = ) [public final class A {...]
             UBlockExpression [{...}]
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()]
                     UIdentifier (Identifier ()) [UIdentifier (Identifier ())]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>]
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Object) [<init>]
                 UBinaryExpression (operator = =) [a = s] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = a) [a] : PsiType:String
                     USimpleNameReferenceExpression (identifier = s) [s] : PsiType:String

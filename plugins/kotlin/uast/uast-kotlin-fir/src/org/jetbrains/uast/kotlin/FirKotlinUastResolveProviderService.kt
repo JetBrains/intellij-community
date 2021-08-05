@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.firKotlinUastPlugin
 import org.jetbrains.uast.kotlin.internal.nullability
+import org.jetbrains.uast.kotlin.internal.toPsiClass
 import org.jetbrains.uast.kotlin.internal.toPsiMethod
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 
@@ -107,17 +108,17 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         when (ktElement) {
             is KtCallElement -> {
                 analyseForUast(ktElement) {
-                    return ktElement.resolveCall()?.toPsiMethod()
+                    return ktElement.resolveCall()?.let { toPsiMethod(it) }
                 }
             }
             is KtBinaryExpression -> {
                 analyseForUast(ktElement) {
-                    return ktElement.resolveCall()?.toPsiMethod()
+                    return ktElement.resolveCall()?.let { toPsiMethod(it) }
                 }
             }
             is KtUnaryExpression -> {
                 analyseForUast(ktElement) {
-                    return ktElement.resolveCall()?.toPsiMethod()
+                    return ktElement.resolveCall()?.let { toPsiMethod(it) }
                 }
             }
             else ->
@@ -168,8 +169,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val resolvedAnnotationCall = ktCallElement.resolveCall() as? KtAnnotationCall ?: return false
             val resolvedAnnotationConstructorSymbol =
                 resolvedAnnotationCall.targetFunction.candidates.singleOrNull() as? KtConstructorSymbol ?: return false
-            // TODO: check if the containing class's kind is Annotation
-            return false
+            val psiClass = toPsiClass(resolvedAnnotationConstructorSymbol.annotatedType.type, ktCallElement) ?: return false
+            return psiClass.isAnnotationType
         }
     }
 
@@ -177,7 +178,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         analyseForUast(ktCallElement) {
             val resolvedFunctionLikeSymbol = ktCallElement.resolveCall()?.targetFunction?.candidates?.singleOrNull() ?: return null
             return when (resolvedFunctionLikeSymbol) {
-                is KtConstructorSymbol -> null // TODO: PsiClass for the containing class
+                is KtConstructorSymbol -> toPsiClass(resolvedFunctionLikeSymbol.annotatedType.type, ktCallElement)
                 // TODO: SAM constructor
                 else -> null
             }
@@ -189,8 +190,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val resolvedAnnotationCall = ktAnnotationEntry.resolveCall() as? KtAnnotationCall ?: return null
             val resolvedAnnotationConstructorSymbol =
                 resolvedAnnotationCall.targetFunction.candidates.singleOrNull() as? KtConstructorSymbol ?: return null
-            // TODO: PsiClass for the containing class
-            return null
+            return toPsiClass(resolvedAnnotationConstructorSymbol.annotatedType.type, ktAnnotationEntry)
         }
     }
 

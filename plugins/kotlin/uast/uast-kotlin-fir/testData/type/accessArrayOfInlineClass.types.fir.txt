@@ -39,7 +39,7 @@ UFile (package = ) [public final class AccessArrayOfInlineClassKt {...]
                     UThrowExpression [throw <init>(t)] : PsiType:Void
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(t)] : PsiType:AssertionError
                             UIdentifier (Identifier (AssertionError)) [UIdentifier (Identifier (AssertionError))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:AssertionError
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: AssertionError) [<init>] : PsiType:AssertionError
                             USimpleNameReferenceExpression (identifier = t) [t] : PsiType:Z
                 UReturnExpression [return "OK"] : PsiType:Void
                     ULiteralExpression (value = "OK") ["OK"] : PsiType:String

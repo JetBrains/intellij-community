@@ -6,7 +6,7 @@ UFile (package = )
                     ULocalVariable (name = a)
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
                             UIdentifier (Identifier (A))
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null)
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A)
                             ULiteralExpression (value = 17)
                 UDeclarationsExpression
                     ULocalVariable (name = x)
