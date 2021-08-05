@@ -15,8 +15,8 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.serviceContainer.NonInjectable
+import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import com.intellij.util.pooledThreadSingleAlarm
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
@@ -145,7 +145,7 @@ open class BasePasswordSafe @NonInjectable constructor(val settings: PasswordSaf
 
 class PasswordSafeImpl : BasePasswordSafe(), SettingsSavingComponent {
   // SecureRandom (used to generate master password on first save) can be blocking on Linux
-  private val saveAlarm = pooledThreadSingleAlarm(delay = 0) {
+  private val saveAlarm = SingleAlarm.pooledThreadSingleAlarm(delay = 0, ApplicationManager.getApplication()) {
     val currentThread = Thread.currentThread()
     ShutDownTracker.getInstance().executeWithStopperThread(currentThread) {
       (currentProviderIfComputed as? KeePassCredentialStore)?.save(createMasterKeyEncryptionSpec())

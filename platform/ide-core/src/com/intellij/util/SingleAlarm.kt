@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ModalityState
 class SingleAlarm @JvmOverloads constructor(
   private val task: Runnable,
   private val delay: Int,
-  private val parentDisposable: Disposable? = null,
+  private val parentDisposable: Disposable,
   private val threadToUse: ThreadToUse = ThreadToUse.SWING_THREAD,
   private val modalityState: ModalityState? = computeDefaultModality(threadToUse)
 ) : Alarm(threadToUse, parentDisposable) {
@@ -17,6 +17,8 @@ class SingleAlarm @JvmOverloads constructor(
 
   constructor(task: Runnable, delay: Int, threadToUse: ThreadToUse, parentDisposable: Disposable)
     : this(task, delay = delay, parentDisposable = parentDisposable, threadToUse = threadToUse, modalityState = computeDefaultModality(threadToUse))
+
+  constructor(task: Runnable, delay: Int) : this(task, delay, ThreadToUse.SWING_THREAD, ApplicationManager.getApplication())
 
   init {
     if (threadToUse == ThreadToUse.SWING_THREAD && modalityState == null) {
@@ -63,15 +65,16 @@ class SingleAlarm @JvmOverloads constructor(
     LOG.assertTrue(unfinishedTasks.size == 1)
     return unfinishedTasks.first()
   }
-}
 
-fun pooledThreadSingleAlarm(delay: Int, parentDisposable: Disposable = ApplicationManager.getApplication(), task: () -> Unit): SingleAlarm {
-  return SingleAlarm(Runnable(task), delay = delay, threadToUse = Alarm.ThreadToUse.POOLED_THREAD, parentDisposable = parentDisposable)
-}
-
-private fun computeDefaultModality(threadToUse: Alarm.ThreadToUse): ModalityState? {
-  return when (threadToUse) {
-    Alarm.ThreadToUse.SWING_THREAD -> ModalityState.NON_MODAL
-    else -> null
+  companion object {
+    private fun computeDefaultModality(threadToUse: ThreadToUse): ModalityState? {
+      return when (threadToUse) {
+        ThreadToUse.SWING_THREAD -> ModalityState.NON_MODAL
+        else -> null
+      }
+    }
+    fun pooledThreadSingleAlarm(delay: Int, parentDisposable: Disposable, task: () -> Unit): SingleAlarm {
+      return SingleAlarm(Runnable(task), delay = delay, threadToUse = ThreadToUse.POOLED_THREAD, parentDisposable = parentDisposable)
+    }
   }
 }

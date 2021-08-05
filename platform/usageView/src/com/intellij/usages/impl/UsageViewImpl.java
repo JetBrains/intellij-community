@@ -111,7 +111,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
     PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(getProject());
     documentManager.cancelAndRunWhenAllCommitted("UpdateUsageView", this::updateImmediately);
-  }, 300);
+  }, 300, this);
 
   private final ExclusionHandlerEx<DefaultMutableTreeNode> myExclusionHandler;
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<>();

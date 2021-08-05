@@ -45,8 +45,8 @@ import com.intellij.ui.tabs.impl.*;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SingleAlarm;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
@@ -63,6 +63,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public final class EditorTabbedContainer implements CloseAction.CloseTarget {
   private final EditorWindow myWindow;
@@ -474,7 +475,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
   @NotNull
   private static Runnable createKeepMousePositionRunnable(@NotNull MouseEvent event) {
-    return () -> new SingleAlarm(() -> {
+    return () -> EdtScheduledExecutorService.getInstance().schedule(() -> {
       Component component = event.getComponent();
       if (component != null && component.isShowing()) {
         Point p = component.getLocationOnScreen();
@@ -485,7 +486,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
         catch (AWTException ignored) {
         }
       }
-    }, 50).request();
+    }, 50, TimeUnit.MILLISECONDS);
   }
 
   public void processSplit() {

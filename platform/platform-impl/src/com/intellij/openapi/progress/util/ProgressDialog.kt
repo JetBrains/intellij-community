@@ -89,10 +89,8 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
 
   private val myTitlePanel = TitlePanel()
   private var myPopup: DialogWrapper? = null
-  private val myDisableCancelAlarm = SingleAlarm(this::setCancelButtonDisabledInEDT, 500, null, Alarm.ThreadToUse.SWING_THREAD,
-                                                 ModalityState.any())
-  private val myEnableCancelAlarm = SingleAlarm(this::setCancelButtonEnabledInEDT, 500, null, Alarm.ThreadToUse.SWING_THREAD,
-                                                ModalityState.any())
+  private val myDisableCancelAlarm = SingleAlarm(this::setCancelButtonDisabledInEDT, 500, ApplicationManager.getApplication(), Alarm.ThreadToUse.SWING_THREAD, ModalityState.any())
+  private val myEnableCancelAlarm = SingleAlarm(this::setCancelButtonEnabledInEDT, 500, ApplicationManager.getApplication(), Alarm.ThreadToUse.SWING_THREAD, ModalityState.any())
 
   init {
     setupUI()
