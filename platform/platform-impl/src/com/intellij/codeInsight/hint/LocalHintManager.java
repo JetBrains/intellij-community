@@ -17,11 +17,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -52,9 +48,7 @@ public class LocalHintManager implements ClientHintManager {
 
   private static final Logger LOG = Logger.getInstance(LocalHintManager.class);
 
-  private final MyEditorManagerListener myEditorManagerListener;
   private final EditorMouseListener myEditorMouseListener;
-
   private final DocumentListener myEditorDocumentListener;
   private final VisibleAreaListener myVisibleAreaListener;
   private final CaretListener myCaretMoveListener;
@@ -75,8 +69,6 @@ public class LocalHintManager implements ClientHintManager {
   }
 
   public LocalHintManager() {
-    myEditorManagerListener = new MyEditorManagerListener();
-
     myCaretMoveListener = new CaretListener() {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
@@ -91,13 +83,7 @@ public class LocalHintManager implements ClientHintManager {
       }
     };
 
-    final MyProjectManagerListener projectManagerListener = new MyProjectManagerListener();
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      projectManagerListener.projectOpened(project);
-    }
-
     MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect();
-    busConnection.subscribe(ProjectManager.TOPIC, projectManagerListener);
     busConnection.subscribe(AnActionListener.TOPIC, new MyAnActionListener());
     busConnection.subscribe(DynamicPluginListener.TOPIC, new MyDynamicPluginListener());
 
@@ -542,48 +528,10 @@ public class LocalHintManager implements ClientHintManager {
     }
   }
 
-  /**
-   * Hides all hints when selected editor changes. Unfortunately  user can change
-   * selected editor by mouse. These clicks are not AnActions so they are not
-   * fired by ActionManager.
-   */
-  private final class MyEditorManagerListener implements FileEditorManagerListener {
-    @Override
-    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-      hideHints(0, false, true);
-    }
-  }
-
-
   private final class MyDynamicPluginListener implements DynamicPluginListener {
     @Override
     public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
       cleanup();
-    }
-  }
-  /**
-   * We have to spy for all opened projects to register MyEditorManagerListener into
-   * all opened projects.
-   */
-  private final class MyProjectManagerListener implements ProjectManagerListener {
-    @Override
-    public void projectOpened(@NotNull Project project) {
-      project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myEditorManagerListener);
-    }
-
-    @Override
-    public void projectClosed(@NotNull Project project) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-
-      // avoid leak through com.intellij.codeInsight.hint.TooltipController.myCurrentTooltip
-      TooltipController.getInstance().cancelTooltips();
-      ApplicationManager.getApplication().invokeLater(() -> hideHints(0, false, false));
-
-      myQuestionAction = null;
-      myQuestionHint = null;
-      if (myLastEditor != null && project == myLastEditor.getProject()) {
-        updateLastEditor(null);
-      }
     }
   }
 
@@ -636,5 +584,14 @@ public class LocalHintManager implements ClientHintManager {
       updateLastEditor(null);
     }
     return result;
+  }
+
+  @Override
+  public void onProjectClosed(@NotNull Project project) {
+    myQuestionAction = null;
+    myQuestionHint = null;
+    if (myLastEditor != null && project == myLastEditor.getProject()) {
+      updateLastEditor(null);
+    }
   }
 }

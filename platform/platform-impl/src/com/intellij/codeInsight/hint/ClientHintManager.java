@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
@@ -73,4 +74,6 @@ public interface ClientHintManager {
   boolean isEscapeHandlerEnabled();
 
   boolean hideHints(int mask, boolean onlyOne, boolean editorChanged);
+
+  void onProjectClosed(@NotNull Project project);
 }

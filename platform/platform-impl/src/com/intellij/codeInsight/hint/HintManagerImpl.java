@@ -8,11 +8,17 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +28,10 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 
 public class HintManagerImpl extends HintManager {
+
   private static final Logger LOG = Logger.getInstance(HintManager.class);
+
+  private final MyEditorManagerListener myEditorManagerListener;
 
   @ApiStatus.Internal
   public static int getPriority(QuestionAction action) {
@@ -50,6 +59,18 @@ public class HintManagerImpl extends HintManager {
 
   public static HintManagerImpl getInstanceImpl() {
     return (HintManagerImpl)ApplicationManager.getApplication().getService(HintManager.class);
+  }
+
+  public HintManagerImpl() {
+    myEditorManagerListener = new MyEditorManagerListener();
+
+    final MyProjectManagerListener projectManagerListener = new MyProjectManagerListener();
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      projectManagerListener.projectOpened(project);
+    }
+
+    MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect();
+    busConnection.subscribe(ProjectManager.TOPIC, projectManagerListener);
   }
 
   /**
@@ -554,5 +575,39 @@ public class HintManagerImpl extends HintManager {
 
   static EditorHintListener getPublisher() {
     return EditorHintListenerHolder.ourEditorHintPublisher;
+  }
+
+  /**
+   * Hides all hints when selected editor changes. Unfortunately  user can change
+   * selected editor by mouse. These clicks are not AnActions so they are not
+   * fired by ActionManager.
+   */
+  private final class MyEditorManagerListener implements FileEditorManagerListener {
+    @Override
+    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+      hideHints(0, false, true);
+    }
+  }
+
+  /**
+   * We have to spy for all opened projects to register MyEditorManagerListener into
+   * all opened projects.
+   */
+  private final class MyProjectManagerListener implements ProjectManagerListener {
+    @Override
+    public void projectOpened(@NotNull Project project) {
+      project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myEditorManagerListener);
+    }
+
+    @Override
+    public void projectClosed(@NotNull Project project) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+
+      // avoid leak through com.intellij.codeInsight.hint.TooltipController.myCurrentTooltip
+      TooltipController.getInstance().cancelTooltips();
+      ApplicationManager.getApplication().invokeLater(() -> hideHints(0, false, false));
+
+      ClientHintManager.getCurrentInstance().onProjectClosed(project);
+    }
   }
 }
