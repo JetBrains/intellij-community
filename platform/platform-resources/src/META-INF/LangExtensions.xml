@@ -1402,9 +1402,6 @@
     <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor" order="last, after aditionalFiles"/>
     <psi.treeChangePreprocessor implementation="com.intellij.util.indexing.events.FileBasedIndexTreeChangePreprocessor"/>
 
-    <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarSlotManager"/>
-    <actionPromoter implementation="com.intellij.execution.runToolbar.RunToolbarActionPromoter"/>
-
     <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor$Factory"/>
     <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescriptor$Factory"/>
 
@@ -1439,9 +1436,4 @@
     <listener class="com.intellij.psi.codeStyle.CodeStyleSettingsMigrationNotifier"
               topic="com.intellij.psi.codeStyle.CodeStyleSettingsMigrationListener"/>
   </projectListeners>
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.execution.runToolbar.RunToolbarComponentService</implementation-class>
-    </component>
-  </project-components>
 </idea-plugin>
