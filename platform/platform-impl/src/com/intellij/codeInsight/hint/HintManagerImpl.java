@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -414,12 +414,12 @@ public class HintManagerImpl extends HintManager {
   }
 
   @Override
-  public void showErrorHint(@NotNull Editor editor, @NotNull String text) {
+  public void showErrorHint(@NotNull Editor editor, @NotNull @HintText String text) {
     showErrorHint(editor, text, ABOVE);
   }
 
   @Override
-  public void showErrorHint(@NotNull Editor editor, @NotNull String text, short position) {
+  public void showErrorHint(@NotNull Editor editor, @NotNull @HintText String text, short position) {
     ClientHintManager.getCurrentInstance().showErrorHint(editor, text, position);
   }
 
@@ -434,7 +434,7 @@ public class HintManagerImpl extends HintManager {
   }
 
   private void showInformationHint(@NotNull Editor editor,
-                                   @NotNull @NlsContexts.HintText String text,
+                                   @NotNull @HintText String text,
                                    @Nullable HyperlinkListener listener,
                                    @PositionFlags short position) {
     JComponent label = HintUtil.createInformationLabel(text, listener, null, null);
@@ -461,7 +461,7 @@ public class HintManagerImpl extends HintManager {
 
   @Override
   public void showErrorHint(@NotNull Editor editor,
-                            @NotNull String hintText,
+                            @NotNull @HintText String hintText,
                             int offset1,
                             int offset2,
                             short constraint,

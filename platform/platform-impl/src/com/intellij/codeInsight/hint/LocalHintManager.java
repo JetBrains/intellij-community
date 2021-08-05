@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
@@ -412,11 +413,13 @@ public class LocalHintManager implements ClientHintManager {
   }
 
   @Override
-  public void showErrorHint(@NotNull Editor editor, @NotNull String text, short position) {
+  public void showErrorHint(@NotNull Editor editor, @NotNull @HintText String text, short position) {
     JComponent label = HintUtil.createErrorLabel(text);
     LightweightHint hint = new LightweightHint(label);
     Point p = getHintPosition(hint, editor, position);
-    showEditorHint(hint, editor, p, HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0, false, position);
+    showEditorHint(hint, editor, p,
+                   HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING,
+                   0, false, position);
   }
 
   @Override
@@ -435,7 +438,7 @@ public class LocalHintManager implements ClientHintManager {
       });
     }
     Point p = getHintPosition(hint, editor, position);
-    showEditorHint(hint, editor, p, 
+    showEditorHint(hint, editor, p,
                    HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING, 0, false, position);
   }
 

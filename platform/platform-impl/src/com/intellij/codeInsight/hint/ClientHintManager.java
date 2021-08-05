@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hint;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.awt.RelativePoint;
@@ -56,7 +57,7 @@ public interface ClientHintManager {
 
   Point getHintPosition(@NotNull LightweightHint hint, @NotNull Editor editor, @HintManager.PositionFlags short constraint);
 
-  void showErrorHint(@NotNull Editor editor, @NotNull String text, short position);
+  void showErrorHint(@NotNull Editor editor, @NotNull @HintText String text, short position);
 
   void showInformationHint(@NotNull Editor editor,
                            @NotNull JComponent component,
