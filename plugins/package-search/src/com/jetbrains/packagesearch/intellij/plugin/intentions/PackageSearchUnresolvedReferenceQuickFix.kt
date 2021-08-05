@@ -9,8 +9,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.jetbrains.packagesearch.PackageSearchIcons
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.fus.FUSGroupIds
-import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
 import java.util.regex.Pattern
@@ -23,10 +21,6 @@ class PackageSearchUnresolvedReferenceQuickFix(private val ref: PsiReference) : 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
         PackageSearchToolWindowFactory.activateToolWindow(project) {
             project.packageSearchDataService.setSearchQuery(ref.canonicalText)
-            PackageSearchEventsLogger.logRunQuickFix(
-                FUSGroupIds.QuickFixTypes.UnresolvedReference,
-                FUSGroupIds.QuickFixFileTypes.from(file?.fileType)
-            )
         }
     }
 
