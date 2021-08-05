@@ -1,12 +1,10 @@
 package com.intellij.codeInspection.tests
 
 import com.intellij.codeInspection.JUnitRuleInspection
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 
-abstract class JUnitRuleInspectionTestBase : JavaCodeInsightFixtureTestCase() {
+abstract class JUnitRuleInspectionTestBase : UastInspectionTestBase(inspection) {
   override fun setUp() {
     super.setUp()
-    myFixture.enableInspections(inspection)
 
     myFixture.addClass("""
   package org.junit.rules;
@@ -52,15 +50,6 @@ abstract class JUnitRuleInspectionTestBase : JavaCodeInsightFixtureTestCase() {
 
   class SomeTestRule implements TestRule { }
   """.trimIndent())
-  }
-
-  override fun tearDown() {
-    try {
-      myFixture.disableInspections(inspection)
-    }
-    finally {
-      super.tearDown()
-    }
   }
 
   companion object {

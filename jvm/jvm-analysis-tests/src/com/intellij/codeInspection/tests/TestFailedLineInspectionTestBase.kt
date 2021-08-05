@@ -7,23 +7,12 @@ import com.intellij.execution.testframework.sm.runner.states.TestStateInfo
 import com.intellij.execution.testframework.sm.runner.ui.TestStackTraceParser
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.markup.EffectType
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import java.util.*
 
-abstract class TestFailedLineInspectionTestBase : JavaCodeInsightFixtureTestCase() {
+abstract class TestFailedLineInspectionTestBase : UastInspectionTestBase(inspection) {
   override fun setUp() {
     super.setUp()
-    myFixture.enableInspections(inspection)
     myFixture.addClass("package junit.framework; public class TestCase {}")
-  }
-
-  override fun tearDown() {
-    try {
-      myFixture.disableInspections(inspection)
-    }
-    finally {
-      super.tearDown()
-    }
   }
 
   protected fun doTest(fileName: String, fileExt: String, methodName: String, errorLn: Int, errorMessage: String) {

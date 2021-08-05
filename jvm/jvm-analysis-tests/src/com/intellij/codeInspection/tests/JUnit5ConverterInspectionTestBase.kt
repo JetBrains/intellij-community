@@ -3,18 +3,10 @@ package com.intellij.codeInspection.tests
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.JUnit5ConverterInspection
-import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 
-abstract class JUnit5ConverterInspectionTestBase : JavaCodeInsightFixtureTestCase() {
-  abstract val fileExt: String
-
+abstract class JUnit5ConverterInspectionTestBase : UastQfInspectionTestBase(inspection) {
   override fun setUp() {
     super.setUp()
-    myFixture.enableInspections(inspection)
-
     // JUnit 4
     myFixture.addClass("""
       package org.junit;
@@ -30,6 +22,9 @@ abstract class JUnit5ConverterInspectionTestBase : JavaCodeInsightFixtureTestCas
     """.trimIndent())
     myFixture.addClass("""
       package org.junit;
+      
+      import org.hamcrest.Matcher;
+      
       public class Assert {     
         public static void assertArrayEquals(Object[] expecteds, Object[] actuals) {}
         public static void assertArrayEquals(String message, Object[] expecteds, Object[] actuals) {}
@@ -39,7 +34,7 @@ abstract class JUnit5ConverterInspectionTestBase : JavaCodeInsightFixtureTestCas
         public static void assertEquals(Object expected, Object actual) {}
         public static void fail() {}
         public static void fail(String message) {}
-        public static <T> void assertThat(String reason, T actual, org.hamcrest.Matcher<? super T> matcher) {}
+        public static <T> void assertThat(String reason, T actual, Matcher<? super T> matcher) {}
         public static void assertNotEquals(double unexpected, double actual, double delta) {}
     }
     """.trimIndent())
@@ -95,35 +90,8 @@ abstract class JUnit5ConverterInspectionTestBase : JavaCodeInsightFixtureTestCas
     """.trimIndent())
   }
 
-  override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
-    super.tuneFixture(moduleBuilder)
-    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8)
-    moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().path)
-  }
-
   protected fun doConversionTest(name: String) {
     doQfAvailableTest(name, JvmAnalysisBundle.message("jvm.inspections.junit5.converter.quickfix"))
-  }
-
-  protected fun doQfAvailableTest(name: String, hint: String) {
-    myFixture.configureByFile("$name.$fileExt")
-    val action = myFixture.getAvailableIntention(hint) ?: throw AssertionError("Quickfix '$hint' is not available.")
-    myFixture.launchAction(action)
-    myFixture.checkResultByFile("$name.after.$fileExt")
-  }
-
-  protected fun doQfUnavailableTest(name: String, hint: String) {
-    myFixture.configureByFile("$name.$fileExt")
-    assertEmpty("Quickfix '$hint' is available but should not.", myFixture.filterAvailableIntentions(hint))
-  }
-
-  override fun tearDown() {
-    try {
-      myFixture.disableInspections(inspection)
-    }
-    finally {
-      super.tearDown()
-    }
   }
 
   companion object {
