@@ -74,7 +74,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.eclipse",
     "intellij.platform.langInjection",
     "intellij.java.debugger.streams",
-    "intellij.android.androidCwm",
     "intellij.android.smali",
     "intellij.completionMlRanking",
     "intellij.completionMlRankingModels",

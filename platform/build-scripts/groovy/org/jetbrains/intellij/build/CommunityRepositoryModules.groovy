@@ -165,8 +165,6 @@ final class CommunityRepositoryModules {
       withResource("lib/bundles", "lib/bundles")
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
-    // required for android plugin
-    plugin("intellij.android.androidCwm"),
     plugin("intellij.android.smali"),
     plugin("intellij.completionMlRanking"),
     plugin("intellij.completionMlRankingModels") {
