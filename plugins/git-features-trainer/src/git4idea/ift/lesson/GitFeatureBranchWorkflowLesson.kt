@@ -160,9 +160,9 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
 
     task("Git.Branches") {
       text(GitLessonsBundle.message("git.feature.branch.new.commits.explanation", strong(main)))
-      highlightLatestCommitsFromBranch("$remoteName/$main", sequenceLength = 2)
-      proceedLink()
       illustration(illustration2)
+      highlightLatestCommitsFromBranch("$remoteName/$main", sequenceLength = 2)
+      proceedLink(4)
     }
 
     task {
