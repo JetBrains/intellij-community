@@ -75,7 +75,7 @@ UFile (package = ) [import java.lang.Thread...]
     println("hello1")
 })(Undetermined)
                             UIdentifier (Identifier (Thread)) [UIdentifier (Identifier (Thread))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>({
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Thread) [<init>] = external <init>({
     println("hello1")
 })(Undetermined)
                             ULambdaExpression [{ ...}] = Undetermined
@@ -94,7 +94,7 @@ UFile (package = ) [import java.lang.Thread...]
     println("hello2")
 })(Undetermined))
                             UIdentifier (Identifier (Thread)) [UIdentifier (Identifier (Thread))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>(Runnable({
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Thread) [<init>] = external <init>(Runnable({
     println("hello2")
 }))(external Runnable({
     println("hello2")

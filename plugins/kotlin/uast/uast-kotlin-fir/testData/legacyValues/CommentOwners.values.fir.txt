@@ -66,7 +66,7 @@ UFile (package = ) [public final class CommentOwnersKt {...]
             UBlockExpression [{...}] = external <init>()()
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
                     UIdentifier (Identifier ()) [UIdentifier (Identifier ())]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>()()
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Object) [<init>] = external <init>()()
         UClass (name = NestedClass) [public static final class NestedClass {...}]
             UMethod (name = NestedClass) [public fun NestedClass() = UastEmptyExpression]
     UClass (name = MyBooleanEnum) [public final enum MyBooleanEnum {...}]

@@ -18,7 +18,7 @@ UFile (package = ) [public final class SuperCallsKt {...]
                             UBlockExpression [{...}] = external <init>("inner class")("inner class")
                                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("inner class")] = external <init>("inner class")("inner class")
                                     UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>("inner class")("inner class")
+                                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] = external <init>("inner class")("inner class")
                                     ULiteralExpression (value = "inner class") ["inner class"] = "inner class"
         UMethod (name = getAnon) [public static final fun getAnon() : A = UastEmptyExpression]
         UMethod (name = cons) [public static final fun cons(@org.jetbrains.annotations.NotNull a: A) : void {...}]
@@ -42,7 +42,7 @@ UFile (package = ) [public final class SuperCallsKt {...]
             UBlockExpression [{...}] = external <init>(i.toString())(external toString()())
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(i.toString())] = external <init>(i.toString())(external toString()())
                     UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>(i.toString())(external toString()())
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] = external <init>(i.toString())(external toString()())
                     UQualifiedReferenceExpression [i.toString()] = external toString()()
                         USimpleNameReferenceExpression (identifier = i) [i] = Undetermined
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] = external toString()()
@@ -55,7 +55,7 @@ UFile (package = ) [public final class SuperCallsKt {...]
             UBlockExpression [{...}] = external <init>(param)(Undetermined)
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(param)] = external <init>(param)(Undetermined)
                     UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>(param)(Undetermined)
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] = external <init>(param)(Undetermined)
                     USimpleNameReferenceExpression (identifier = param) [param] = Undetermined
     UClass (name = C) [public final class C : A {...}]
         UMethod (name = foo) [public fun foo(@org.jetbrains.annotations.NotNull a: long) : void {...}]
@@ -74,7 +74,7 @@ UFile (package = ) [public final class SuperCallsKt {...]
             UBlockExpression [{...}] = external <init>(p)(Undetermined)
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(p)] = external <init>(p)(Undetermined)
                     UIdentifier (Identifier (super)) [UIdentifier (Identifier (super))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>(p)(Undetermined)
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] = external <init>(p)(Undetermined)
                     USimpleNameReferenceExpression (identifier = p) [p] = Undetermined
         UMethod (name = C) [public fun C(@org.jetbrains.annotations.NotNull i: int) {...}]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
@@ -82,7 +82,7 @@ UFile (package = ) [public final class SuperCallsKt {...]
             UBlockExpression [{...}] = external println()()
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(i)] = external <init>(i)(Undetermined)
                     UIdentifier (Identifier (super)) [UIdentifier (Identifier (super))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>(i)(Undetermined)
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] = external <init>(i)(Undetermined)
                     USimpleNameReferenceExpression (identifier = i) [i] = Undetermined
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [println()] = external println()()
                     UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
@@ -94,5 +94,5 @@ UFile (package = ) [public final class SuperCallsKt {...]
             UBlockExpression [{...}] = external <init>("text")("text")
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("text")] = external <init>("text")("text")
                     UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>("text")("text")
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] = external <init>("text")("text")
                     ULiteralExpression (value = "text") ["text"] = "text"
