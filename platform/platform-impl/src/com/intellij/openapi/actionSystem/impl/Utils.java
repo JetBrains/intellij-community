@@ -557,7 +557,7 @@ public final class Utils {
         if (reasonStr.contains("write-action") || reasonStr.contains("fast-track")) {
           continue;
         }
-        ExceptionUtil.rethrow(ex);
+        throw ex;
       }
       catch (Throwable ex) {
         ExceptionUtil.rethrow(ex);
@@ -566,6 +566,7 @@ public final class Utils {
     if (retries > 1) {
       LOG.warn("Maximum number of retries to show a menu reached (" + retries + "): " + lastCancellation.reason);
     }
+    throw Objects.requireNonNull(lastCancellation);
   }
 
   static class ProcessCanceledWithReasonException extends ProcessCanceledException {
