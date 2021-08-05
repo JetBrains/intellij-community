@@ -13,5 +13,5 @@ UFile (package = A.B.C) [package A.B.C...]
                             USimpleNameReferenceExpression (identifier = C) [C] = external C()
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
                             UIdentifier (Identifier (Foo)) [UIdentifier (Identifier (Foo))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>()()
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Foo) [<init>] = external <init>()()
         UMethod (name = Bar) [public fun Bar() = UastEmptyExpression]

@@ -128,7 +128,7 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                     USimpleNameReferenceExpression (identifier = with, resolvesTo = null) [with] : PsiType:Unit
                     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : PsiType:A
                         UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:A
+                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] : PsiType:A
                     ULambdaExpression [{ ...}] : PsiType:Function1<? super A, ? extends Unit>
                         UBlockExpression [{...}] : PsiType:Unit
                             UQualifiedReferenceExpression ["def".with2Receivers(8, 7.0)] : PsiType:Unit
