@@ -11,25 +11,31 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.Abstrac
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtModifierList
+import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class AddConstructorCreateCallableFromUsageFix(
     private val request: CreateConstructorRequest,
-    private val modifierList: KtModifierList,
+    modifierList: KtModifierList,
     providedText: String,
     familyName: String,
-    private val targetKtClass: KtClass
+    targetKtClass: KtClass
 ) : AbstractCreateCallableFromUsageFixWithTextAndFamilyName<KtClass>(
     providedText = providedText,
     familyName = familyName,
     originalExpression = targetKtClass
 ) {
+    private val modifierListPointer = modifierList.createSmartPointer()
+
     init {
         init()
     }
 
-    override val callableInfo: ConstructorInfo
+    override val callableInfo: ConstructorInfo?
         get() = run {
+            val targetKtClass = element.safeAs<KtClass>() ?: return@run null
+            val modifierList = modifierListPointer.element ?: return@run null
             val resolutionFacade = targetKtClass.getResolutionFacade()
             val nullableAnyType = resolutionFacade.moduleDescriptor.builtIns.nullableAnyType
             val helper = JvmPsiConversionHelper.getInstance(targetKtClass.project)

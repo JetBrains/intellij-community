@@ -12,24 +12,29 @@ import org.jetbrains.kotlin.idea.quickfix.crossLanguage.KotlinElementActionsFact
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtModifierList
+import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
 class AddMethodCreateCallableFromUsageFix(
     private val request: CreateMethodRequest,
-    private val modifierList: KtModifierList,
+    modifierList: KtModifierList,
     providedText: String,
     familyName: String,
-    private val targetContainer: KtElement
+    targetContainer: KtElement
 ) : AbstractCreateCallableFromUsageFixWithTextAndFamilyName<KtElement>(
     providedText = providedText,
     familyName = familyName,
     originalExpression = targetContainer
 ) {
+    private val modifierListPointer = modifierList.createSmartPointer()
+
     init {
         init()
     }
 
     override val callableInfo: FunctionInfo?
         get() = run {
+            val targetContainer = element ?: return@run null
+            val modifierList = modifierListPointer.element ?: return@run null
             val resolutionFacade = KotlinCacheService.getInstance(targetContainer.project)
                 .getResolutionFacadeByFile(targetContainer.containingFile, JvmPlatforms.unspecifiedJvmPlatform) ?: return null
             val returnTypeInfo = request.returnType.toKotlinTypeInfo(resolutionFacade)

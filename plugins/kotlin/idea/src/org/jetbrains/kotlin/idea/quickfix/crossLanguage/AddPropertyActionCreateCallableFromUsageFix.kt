@@ -10,22 +10,26 @@ import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
 class AddPropertyActionCreateCallableFromUsageFix(
     targetContainer: KtElement,
-    val modifierList: KtModifierList,
+    modifierList: KtModifierList,
     val propertyType: JvmType,
     val propertyName: String,
     val setterRequired: Boolean,
     val isLateinitPreferred: Boolean = setterRequired,
     classOrFileName: String?
 ) : AbstractPropertyActionCreateCallableFromUsageFix(targetContainer, classOrFileName) {
+    private val modifierListPointer = modifierList.createSmartPointer()
     init {
         init()
     }
 
-    override val propertyInfo: PropertyInfo
+    override val propertyInfo: PropertyInfo?
         get() = run {
+            val targetContainer = element ?: return@run null
+            val modifierList = modifierListPointer.element ?: return@run null
             val resolutionFacade = targetContainer.getResolutionFacade()
             val nullableAnyType = resolutionFacade.moduleDescriptor.builtIns.nullableAnyType
 

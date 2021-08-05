@@ -22,8 +22,9 @@ class AddFieldActionCreateCallableFromUsageFix(
         init()
     }
 
-    override val propertyInfo: PropertyInfo
+    override val propertyInfo: PropertyInfo?
         get() = run {
+            val targetContainer = element ?: return@run null
             val resolutionFacade = targetContainer.getResolutionFacade()
             val typeInfo = request.fieldType.toKotlinTypeInfo(resolutionFacade)
             val writable = JvmModifier.FINAL !in request.modifiers
