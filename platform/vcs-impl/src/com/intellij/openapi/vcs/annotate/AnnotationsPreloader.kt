@@ -16,7 +16,9 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.update.DisposableUpdate
@@ -26,6 +28,10 @@ import com.intellij.vcs.CacheableAnnotationProvider
 @Service(Level.PROJECT)
 internal class AnnotationsPreloader(private val project: Project) {
   private val updateQueue = MergingUpdateQueue("Annotations preloader queue", 1000, true, null, project, null, false)
+
+  init {
+    project.messageBus.connect().subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { refreshSelectedFiles() })
+  }
 
   fun schedulePreloading(file: VirtualFile) {
     if (project.isDisposed || file.fileType.isBinary) return
@@ -53,6 +59,13 @@ internal class AnnotationsPreloader(private val project: Project) {
         }
       }
     })
+  }
+
+  private fun refreshSelectedFiles() {
+    if (!isEnabled()) return
+
+    val selectedFiles = FileEditorManager.getInstance(project).selectedFiles
+    for (file in selectedFiles) schedulePreloading(file)
   }
 
   internal class AnnotationsPreloaderFileEditorManagerListener(private val project: Project) : FileEditorManagerListener {
