@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface SpacingConfiguration {
+
   /**
    * Horizontal gap between unrelated settings in one row
    */
@@ -15,6 +16,17 @@ interface SpacingConfiguration {
    * The horizontal left indent of one level
    */
   val horizontalIndent: Int
+
+  /**
+   * Top and bottom gaps for components like CheckBox, JTextField etc
+   */
+  val verticalComponentGap: Int
+
+  /**
+   * Vertical gap after comment
+   */
+  val verticalCommentBottomGap: Int
+
 }
 
 // https://jetbrains.github.io/ui/controls/input_field/#spacing
@@ -24,5 +36,7 @@ fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
 
     override val horizontalUnrelatedGap = JBUI.scale(16)
     override val horizontalIndent = JBUI.scale(20)
+    override val verticalComponentGap = JBUI.scale(6)
+    override val verticalCommentBottomGap = JBUI.scale(6)
   }
 }

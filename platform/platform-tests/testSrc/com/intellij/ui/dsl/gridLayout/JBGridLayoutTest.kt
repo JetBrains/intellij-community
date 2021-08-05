@@ -35,7 +35,7 @@ class JBGridLayoutTest {
   }
 
   @Test
-  fun testOneCellVisualPaddings() {
+  fun testOneCellGaps() {
     val panel = JPanel(JBGridLayout())
     val gaps = Gaps(1, 2, 3, 4)
     RowsGridBuilder(panel).cell(label(), gaps = gaps)
@@ -43,11 +43,29 @@ class JBGridLayoutTest {
   }
 
   @Test
-  fun testOneCellGaps() {
+  fun testOneCellVisualPaddings() {
     val panel = JPanel(JBGridLayout())
-    val gaps = Gaps(1, 2, 3, 4)
-    RowsGridBuilder(panel).cell(label(), visualPaddings = gaps)
-    assertEquals(panel.preferredSize, Dimension(PREFERRED_WIDTH - gaps.width, PREFERRED_HEIGHT - gaps.height))
+    val visualPaddings = Gaps(1, 2, 3, 4)
+    val label = label()
+    RowsGridBuilder(panel)
+      .cell(label, visualPaddings = visualPaddings)
+    doLayout(panel, 200, 100)
+    assertEquals(-visualPaddings.left, label.x)
+    assertEquals(-visualPaddings.top, label.y)
+    assertEquals(panel.preferredSize, Dimension(PREFERRED_WIDTH - visualPaddings.width, PREFERRED_HEIGHT - visualPaddings.height))
+    assertEquals(PREFERRED_SIZE, label.size)
+
+    panel.removeAll()
+    RowsGridBuilder(panel)
+      .resizableColumns(setOf(0))
+      .row(resizable = true)
+      .cell(label, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.BOTTOM, visualPaddings = visualPaddings)
+    doLayout(panel, 200, 100)
+    assertEquals(-visualPaddings.left, label.x)
+    assertEquals(100 - PREFERRED_HEIGHT + visualPaddings.bottom, label.y)
+    assertEquals(panel.preferredSize, Dimension(PREFERRED_WIDTH - visualPaddings.width, PREFERRED_HEIGHT - visualPaddings.height))
+    assertEquals(200 + visualPaddings.width, label.width)
+    assertEquals(PREFERRED_HEIGHT, label.height)
   }
 
   @Test

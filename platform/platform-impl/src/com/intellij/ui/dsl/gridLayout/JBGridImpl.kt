@@ -63,21 +63,21 @@ internal class JBGridImpl : JBGrid {
     layoutData.visibleCellsData.forEach { layoutCellData ->
       val cell = layoutCellData.cell
       val constraints = cell.constraints
-      var x = columnsCoord[constraints.x]
-      var y = rowsCoord[constraints.y]
+      var visualX = columnsCoord[constraints.x]
+      var visualY = rowsCoord[constraints.y]
       val nextColumn = constraints.x + constraints.width
       val nextRow = constraints.y + constraints.height
-      val width = columnsCoord[nextColumn] - x - layoutCellData.gapWidth
-      val height = rowsCoord[nextRow] - y - layoutCellData.gapHeight
-      x += rect.x + constraints.gaps.left - constraints.visualPaddings.left
-      y += rect.y + constraints.gaps.top - constraints.visualPaddings.top
+      val visualWidth = columnsCoord[nextColumn] - visualX - layoutCellData.gapWidth
+      val visualHeight = rowsCoord[nextRow] - visualY - layoutCellData.gapHeight
+      visualX += rect.x + constraints.gaps.left
+      visualY += rect.y + constraints.gaps.top
 
       when (cell) {
         is JBComponentCell -> {
-          layoutComponent(cell.component, layoutCellData, x, y, width, height)
+          layoutComponent(cell.component, layoutCellData, visualX, visualY, visualWidth, visualHeight)
         }
         is JBGridCell -> {
-          (cell.content as JBGridImpl).layout(Rectangle(x, y, width, height))
+          (cell.content as JBGridImpl).layout(Rectangle(visualX, visualY, visualWidth, visualHeight))
         }
       }
     }
@@ -143,36 +143,42 @@ internal class JBGridImpl : JBGrid {
   }
 
   /**
-   * Layouts component into provided rectangle. ALl kinds of gaps and distances are applied in it
+   * Layouts visual bounds of [component] (size minus visualPaddings) into provided rectangle
    */
-  private fun layoutComponent(component: JComponent, layoutCellData: LayoutCellData, x: Int, y: Int, width: Int, height: Int) {
+  private fun layoutComponent(component: JComponent,
+                              layoutCellData: LayoutCellData,
+                              visualX: Int,
+                              visualY: Int,
+                              visualWidth: Int,
+                              visualHeight: Int) {
     val constraints = layoutCellData.cell.constraints
-    val resultWidth = if (constraints.horizontalAlign == HorizontalAlign.FILL)
-      width
+    val visualPaddings = constraints.visualPaddings
+    val resultVisualWidth = if (constraints.horizontalAlign == HorizontalAlign.FILL)
+      visualWidth
     else
-      min(width, layoutCellData.preferredSize.width)
-    val resultHeight = if (constraints.verticalAlign == VerticalAlign.FILL)
-      height
+      min(visualWidth, layoutCellData.preferredSize.width - visualPaddings.width)
+    val resultVisualHeight = if (constraints.verticalAlign == VerticalAlign.FILL)
+      visualHeight
     else
-      min(height, layoutCellData.preferredSize.height)
-    val resultX = x +
-                  when (constraints.horizontalAlign) {
-                    HorizontalAlign.LEFT -> 0
-                    HorizontalAlign.CENTER -> (width - resultWidth) / 2
-                    HorizontalAlign.RIGHT -> width - resultWidth
-                    HorizontalAlign.FILL -> 0
-                  }
-    val resultY = y +
-                  when (constraints.verticalAlign) {
-                    VerticalAlign.TOP -> 0
-                    VerticalAlign.CENTER -> (height - resultHeight) / 2
-                    VerticalAlign.BOTTOM -> height - resultHeight
-                    VerticalAlign.FILL -> 0
-                  }
+      min(visualHeight, layoutCellData.preferredSize.height - visualPaddings.height)
+    val resultVisualX = visualX +
+                        when (constraints.horizontalAlign) {
+                          HorizontalAlign.LEFT -> 0
+                          HorizontalAlign.CENTER -> (visualWidth - resultVisualWidth) / 2
+                          HorizontalAlign.RIGHT -> visualWidth - resultVisualWidth
+                          HorizontalAlign.FILL -> 0
+                        }
+    val resultVisualY = visualY +
+                        when (constraints.verticalAlign) {
+                          VerticalAlign.TOP -> 0
+                          VerticalAlign.CENTER -> (visualHeight - resultVisualHeight) / 2
+                          VerticalAlign.BOTTOM -> visualHeight - resultVisualHeight
+                          VerticalAlign.FILL -> 0
+                        }
 
     component.setBounds(
-      resultX, resultY,
-      resultWidth, resultHeight
+      resultVisualX - visualPaddings.left, resultVisualY - visualPaddings.top,
+      resultVisualWidth + visualPaddings.width, resultVisualHeight + visualPaddings.height
     )
   }
 
@@ -224,16 +230,16 @@ private data class LayoutCellData(val cell: JBCell, val preferredSize: Dimension
                                   var rightDistance: Int = 0, var bottomDistance: Int = 0) {
 
   val gapWidth: Int
-    get() = cell.constraints.gaps.width - cell.constraints.visualPaddings.width + rightDistance
+    get() = cell.constraints.gaps.width + rightDistance
 
   val gapHeight: Int
-    get() = cell.constraints.gaps.height - cell.constraints.visualPaddings.height + bottomDistance
+    get() = cell.constraints.gaps.height + bottomDistance
 
   val cellWidth: Int
-    get() = preferredSize.width + gapWidth
+    get() = preferredSize.width + gapWidth - cell.constraints.visualPaddings.width
 
   val cellHeight: Int
-    get() = preferredSize.height + gapHeight
+    get() = preferredSize.height + gapHeight - cell.constraints.visualPaddings.height
 }
 
 private sealed class JBCell constructor(val constraints: JBConstraints)

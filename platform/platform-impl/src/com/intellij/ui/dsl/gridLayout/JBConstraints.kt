@@ -21,38 +21,47 @@ enum class VerticalAlign {
 
 @ApiStatus.Experimental
 data class JBConstraints(
+
   /**
    * Grid destination
    */
   val grid: JBGrid,
+
   /**
    * Cell x coordinate
    */
   val x: Int,
+
   /**
    * Cell y coordinate
    */
   val y: Int,
+
   /**
    * Columns number occupied by the cell
    */
   val width: Int = 1,
+
   /**
    * Rows number occupied by the cell
    */
   val height: Int = 1,
+
   /**
    * Horizontal alignment of content inside the cell
    */
   val horizontalAlign: HorizontalAlign = HorizontalAlign.LEFT,
+
   /**
    * Vertical alignment of content inside the cell
    */
   val verticalAlign: VerticalAlign = VerticalAlign.TOP,
+
   /**
-   * Gaps between grid cell bounds and component
+   * Gaps between grid cell bounds and components visual bounds (component bounds minus [visualPaddings])
    */
   val gaps: Gaps = Gaps.EMPTY,
+
   /**
    * Visual gaps between component bounds and its content. Can be used when component has focus ring outside of
    * its usual size. In such case components size is increased on focus size (so focus ring is not clipped)

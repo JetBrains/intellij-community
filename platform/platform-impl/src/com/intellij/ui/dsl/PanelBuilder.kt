@@ -1,18 +1,24 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.JBGridLayout
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JToggleButton
+import javax.swing.*
+import javax.swing.text.JTextComponent
 
 @ApiStatus.Experimental
 class PanelBuilder {
+
+  companion object {
+    private val LOG = Logger.getInstance(PanelBuilder::class.java)
+
+    private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(JTextComponent::class, AbstractButton::class, JSpinner::class, JLabel::class)
+  }
 
   val spacing = createIntelliJSpacingConfiguration()
 
@@ -40,9 +46,24 @@ class PanelBuilder {
 
     for ((y, row) in rows.withIndex()) {
       for ((x, cell) in row.cells.withIndex()) {
-        val width = if (x == row.cells.size - 1) columnsCount - x else 1
+        val width: Int
+        var rightGap = cell.rightGap
+        if (x == row.cells.size - 1) {
+          width = columnsCount - x
+          if (cell.rightGap > 0) {
+            LOG.warn("Right gap is set for last cell and will be ignored: rightGap = $rightGap")
+            rightGap = 0
+          }
+        }
+        else {
+          width = 1
+        }
+
+        val insets = cell.component.insets
+        val verticalGap = getDefaultVerticalGap(cell.component)
         rowsGridBuilder.cell(cell.component, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
-                             gaps = Gaps(right = cell.rightGap))
+                             gaps = Gaps(top = verticalGap, bottom = verticalGap, right = rightGap),
+                             visualPaddings = Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right))
       }
 
       rowsGridBuilder.row()
@@ -50,6 +71,13 @@ class PanelBuilder {
     }
 
     return result
+  }
+
+  /**
+   * Returns default top and bottom gap for [component]
+   */
+  private fun getDefaultVerticalGap(component: JComponent): Int {
+    return if (DEFAULT_VERTICAL_GAP_COMPONENTS.any { clazz -> clazz.isInstance(component) }) spacing.verticalComponentGap else 0
   }
 
   /**
@@ -74,7 +102,8 @@ class PanelBuilder {
       builder.cell(comment, width = columnsCount)
     }
     else {
-      val gaps = if (anchorComponent is JToggleButton) Gaps(left = spacing.horizontalIndent) else Gaps.EMPTY
+      val gaps = Gaps(left = if (anchorComponent is JToggleButton) spacing.horizontalIndent else 0,
+                      bottom = spacing.verticalCommentBottomGap)
       builder.skip(column)
       builder.cell(comment, columnsCount - column, gaps = gaps)
     }
