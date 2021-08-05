@@ -94,7 +94,7 @@ abstract class GitBranchOperation {
   protected abstract void rollback();
 
   @NotNull
-  public abstract @NlsContexts.NotificationContent String getSuccessMessage();
+  protected abstract @NlsContexts.NotificationContent String getSuccessMessage();
 
   @NotNull
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -334,22 +334,15 @@ abstract class GitBranchOperation {
    * repositories.
    */
   protected void fatalUntrackedFilesError(@NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
+    String operationName = getOperationName();
     if (wereSuccessful()) {
-      showUntrackedFilesDialogWithRollback(root, relativePaths);
+      boolean ok = myUiHandler.showUntrackedFilesDialogWithRollback(operationName, getRollbackProposal(), root, relativePaths);
+      if (ok) {
+        rollback();
+      }
     }
     else {
-      showUntrackedFilesNotification(root, relativePaths);
-    }
-  }
-
-  private void showUntrackedFilesNotification(@NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
-    myUiHandler.showUntrackedFilesNotification(getOperationName(), root, relativePaths);
-  }
-
-  private void showUntrackedFilesDialogWithRollback(@NotNull VirtualFile root, @NotNull Collection<String> relativePaths) {
-    boolean ok = myUiHandler.showUntrackedFilesDialogWithRollback(getOperationName(), getRollbackProposal(), root, relativePaths);
-    if (ok) {
-      rollback();
+      myUiHandler.showUntrackedFilesNotification(operationName, root, relativePaths);
     }
   }
 
@@ -358,7 +351,7 @@ abstract class GitBranchOperation {
    * local changes.
    */
   @NotNull
-  Map<GitRepository, List<Change>> collectLocalChangesConflictingWithBranch(@NotNull Collection<? extends GitRepository> repositories,
+  private Map<GitRepository, List<Change>> collectLocalChangesConflictingWithBranch(@NotNull Collection<? extends GitRepository> repositories,
                                                                             @NotNull String otherBranch) {
     Map<GitRepository, List<Change>> changes = new HashMap<>();
     for (GitRepository repository : repositories) {
