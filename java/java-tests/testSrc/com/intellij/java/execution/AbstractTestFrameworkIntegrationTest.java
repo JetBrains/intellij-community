@@ -57,6 +57,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     ExecutionEnvironment
       environment = new ExecutionEnvironment(executor, ProgramRunner.getRunner(DefaultRunExecutor.EXECUTOR_ID, settings.getConfiguration()), settings, project);
     JavaTestFrameworkRunnableState<?> state = ((JavaTestConfigurationBase)configuration).getState(executor, environment);
+    state.downloadAdditionalDependencies(state.getJavaParameters());
     state.appendForkInfo(executor);
     state.appendRepeatMode();
 

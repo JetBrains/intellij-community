@@ -89,6 +89,14 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   public static ParamsGroup getJigsawOptions(JavaParameters parameters) {
     return parameters.getVMParametersList().getParamsGroup(JIGSAW_OPTIONS);
   }
+  public static ParamsGroup getOrCreateJigsawOptions(JavaParameters parameters) {
+    ParamsGroup group = getJigsawOptions(parameters);
+    if (group != null) {
+      return group;
+    }
+    
+    return parameters.getVMParametersList().addParamsGroup(JIGSAW_OPTIONS);
+  }
 
   private @Nullable TargetBoundServerSocket myTargetBoundServerSocket;
   protected File myTempFile;
@@ -144,6 +152,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   @NotNull
   private OSProcessHandler createHandler(Executor executor, SMTestRunnerResultsForm viewer) throws ExecutionException {
+    downloadAdditionalDependencies(getJavaParameters()); //required for fork info
     appendForkInfo(executor);
     appendRepeatMode();
 
@@ -173,6 +182,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
     return processHandler;
   }
+
+  /**
+   * Should start without explicit read lock so modal or bg progress to download additional dependencies may work normally
+   */
+  public void downloadAdditionalDependencies(JavaParameters javaParameters) throws ExecutionException { }
 
   @Override
   public TargetEnvironmentRequest createCustomTargetEnvironmentRequest() {
