@@ -32,9 +32,9 @@ import org.jetbrains.uast.generate.replace
 class JUnit5ConverterInspection : AbstractBaseUastLocalInspectionTool(UClass::class.java) {
   private fun shouldInspect(file: PsiFile): Boolean {
     if (!JavaVersionService.getInstance().isAtLeast(file, JavaSdkVersion.JDK_1_8)) return false
-    if (JavaPsiFacade.getInstance(file.project).findClass(
-        JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, file.resolveScope) == null
-    ) return false
+    if (JavaPsiFacade.getInstance(file.project).findClass(JUnitCommonClassNames.ORG_JUNIT_TEST, file.resolveScope) == null) return false
+    if (JavaPsiFacade.getInstance(file.project)
+        .findClass(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST, file.resolveScope) == null) return false
     return true
   }
 

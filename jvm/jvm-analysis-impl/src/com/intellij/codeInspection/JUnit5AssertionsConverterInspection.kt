@@ -5,6 +5,8 @@ import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.TestFrameworks
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.JavaSdkVersion
+import com.intellij.openapi.projectRoots.JavaVersionService
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.uast.UastHintedVisitorAdapter
@@ -17,13 +19,23 @@ import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class JUnit5AssertionsConverterInspection(val frameworkName: @NonNls String = "JUnit5") : AbstractBaseUastLocalInspectionTool() {
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
-    UastHintedVisitorAdapter.create(
+  private fun shouldInspect(file: PsiFile): Boolean {
+    if (!JavaVersionService.getInstance().isAtLeast(file, JavaSdkVersion.JDK_1_8)) return false
+    if (JavaPsiFacade.getInstance(file.project).findClass(JUnitCommonClassNames.ORG_JUNIT_ASSERT, file.resolveScope) == null) return false
+    if (JavaPsiFacade.getInstance(file.project)
+        .findClass(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, file.resolveScope) == null) return false
+    return true
+  }
+
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+    if (!shouldInspect(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
+    return UastHintedVisitorAdapter.create(
       holder.file.language,
       JUnit5AssertionsConverterVisitor(holder),
       arrayOf(UCallExpression::class.java, UCallableReferenceExpression::class.java),
       true
     )
+  }
 
   private fun getNewAssertClassName(methodName: @NonNls String): String = when {
     methodName == "assertThat" -> JUnitCommonClassNames.ORG_HAMCREST_MATCHER_ASSERT
