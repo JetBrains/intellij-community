@@ -154,7 +154,6 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         val getSourceDirSet = sourceSetClass.getMethodOrNull("getKotlin") ?: return null
         val getResourceDirSet = sourceSetClass.getMethodOrNull("getResources") ?: return null
         val getDependsOn = sourceSetClass.getMethodOrNull("getDependsOn") ?: return null
-        val getAdditionalVisibleSourceSets = sourceSetClass.getMethodOrNull("getAdditionalVisibleSourceSets")
         val languageSettings = getLanguageSettings(gradleSourceSet)?.let { buildLanguageSettings(it) } ?: return null
         val sourceDirs = (getSourceDirSet(gradleSourceSet) as? SourceDirectorySet)?.srcDirs ?: emptySet()
         val resourceDirs = (getResourceDirSet(gradleSourceSet) as? SourceDirectorySet)?.srcDirs ?: emptySet()
@@ -162,11 +161,6 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         @Suppress("UNCHECKED_CAST")
         val dependsOnSourceSets = (getDependsOn(gradleSourceSet) as? Set<Named>)?.mapTo(LinkedHashSet()) { it.name } ?: emptySet<String>()
 
-        val additionalVisibleSourceSets = getAdditionalVisibleSourceSets?.invoke(gradleSourceSet)
-            ?.let { it as List<*> }.orEmpty()
-            .map { it as Named }
-            .map { it.name }
-            .toSet()
 
         val sourceSetDependenciesBuilder: () -> Array<KotlinDependencyId> = {
             buildSourceSetDependencies(gradleSourceSet, dependencyResolver, project, androidDeps)
@@ -190,7 +184,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
             regularDependencies = sourceSetDependenciesBuilder,
             intransitiveDependencies = intransitiveSourceSetDependenciesBuilder,
             dependsOnSourceSets = dependsOnSourceSets,
-            additionalVisibleSourceSets = additionalVisibleSourceSets
+            additionalVisibleSourceSets = getAdditionalVisibleSourceSets(project, gradleSourceSet.name)
         )
     }
 

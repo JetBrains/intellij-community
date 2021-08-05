@@ -278,16 +278,4 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
             gradleUserHome = project.gradle.gradleUserHomeDir.absolutePath
         )
     }
-
-    private fun getAdditionalVisibleSourceSets(project: Project, sourceSetName: String): Set<String> {
-        val kotlinExtension = project.extensions.findByName("kotlin") ?: return emptySet()
-        val kotlinExtensionClass = kotlinExtension.javaClass
-        val getSourceSets = kotlinExtensionClass.getMethodOrNull("getSourceSets") ?: return emptySet()
-        val sourceSets = getSourceSets.invoke(kotlinExtension) as NamedDomainObjectCollection<*>
-        val sourceSet = sourceSets.findByName(sourceSetName) ?: return emptySet()
-        val sourceSetClass = sourceSet.javaClass
-        val getAdditionalVisibleSourceSets = sourceSetClass.getMethodOrNull("getAdditionalVisibleSourceSets") ?: return emptySet()
-        val additionalVisibleSourceSets = getAdditionalVisibleSourceSets.invoke(sourceSet) as List<*>
-        return additionalVisibleSourceSets.map { it as Named }.map { it.name }.toSet()
-    }
 }
