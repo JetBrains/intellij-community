@@ -113,15 +113,6 @@ public interface DfReferenceType extends DfType {
   }
 
   @Override
-  default boolean containsConstant(@NotNull DfConstantType<?> constant) {
-    DfReferenceType filtered = dropTypeConstraint();
-    if (getConstraint().isComparedByEquals()) {
-      filtered = filtered.dropLocality();
-    }
-    return filtered.isSuperType(constant);
-  }
-
-  @Override
   default DfType correctTypeOnFlush(DfType typeBeforeFlush) {
     DfaNullability inherentNullability = this.getNullability();
     if (inherentNullability == DfaNullability.NULLABLE) {

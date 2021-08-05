@@ -205,14 +205,6 @@ public interface DfType {
   }
 
   /**
-   * @param constant
-   * @return true given constant value may be contained by this supertype
-   */
-  default boolean containsConstant(@NotNull DfConstantType<?> constant) {
-    return isSuperType(constant);
-  }
-
-  /**
    * Checks whether processing the other type is not necessary to get the same analysis result if some value
    * has either this or other state at the same code location. {@code a.isMergeable(b)} implies 
    * {@code a.isSuperType(b)}. In most cases, these methods are equivalent but the difference may appear in

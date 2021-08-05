@@ -14,12 +14,6 @@ public interface DfLongType extends DfJvmIntegralType {
   LongRangeSet getRange();
 
   @Override
-  default boolean containsConstant(@NotNull DfConstantType<?> constant) {
-    Long value = constant.getConstantOfType(Long.class);
-    return value != null && getRange().contains(value);
-  }
-
-  @Override
   default @NotNull DfType eval(@NotNull DfType other, @NotNull LongRangeBinOp op) {
     if (!(other instanceof DfLongType || other instanceof DfIntType && op.isShift())) return DfTypes.LONG;
     LongRangeSet result = op.eval(getRange(), ((DfIntegralType)other).getRange(), getLongRangeType());
