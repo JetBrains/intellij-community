@@ -13,15 +13,29 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.lang.ref.WeakReference;
+import java.util.function.Consumer;
 
 public final class DocFontSizePopup {
   private static WeakReference<JBSlider> ourCurrentSlider;
 
   public static void show(@NotNull Runnable changeCallback, @NotNull Component parentComponent) {
+    show(parentComponent, size -> changeCallback.run());
+  }
+
+  public static void show(@NotNull Component parentComponent, @NotNull Consumer<? super @NotNull FontSize> changeCallback) {
+    show(parentComponent, DocumentationComponent.getQuickDocFontSize(), size -> {
+      DocumentationComponent.setQuickDocFontSize(size);
+      changeCallback.accept(size);
+    });
+  }
+
+  public static void show(
+    @NotNull Component parentComponent,
+    @NotNull FontSize initial,
+    @NotNull Consumer<? super @NotNull FontSize> changeCallback
+  ) {
     var slider = new JBSlider(SwingConstants.HORIZONTAL, 0, FontSize.values().length - 1, 3);
     slider.setOpaque(true);
     slider.setMinorTickSpacing(1);
@@ -29,14 +43,8 @@ public final class DocFontSizePopup {
     slider.setPaintTrack(true);
     slider.setSnapToTicks(true);
     UIUtil.setSliderIsFilled(slider, true);
-    updateSliderPosition(slider);
-    slider.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        DocumentationComponent.setQuickDocFontSize(FontSize.values()[slider.getValue()]);
-        changeCallback.run();
-      }
-    });
+    slider.setValueWithoutEvents(initial.ordinal());
+    slider.addChangeListener(e -> changeCallback.accept(FontSize.values()[slider.getValue()]));
     ourCurrentSlider = new WeakReference<>(slider);
 
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 3, 0));
@@ -51,12 +59,10 @@ public final class DocFontSizePopup {
                                            location.y - panel.getPreferredSize().height / 2)).getPointOn(parentComponent));
   }
 
-  public static void update() {
+  public static void update(@NotNull FontSize size) {
     JBSlider slider = SoftReference.dereference(ourCurrentSlider);
-    if (slider != null && slider.isShowing()) updateSliderPosition(slider);
-  }
-
-  private static void updateSliderPosition(@NotNull JBSlider slider) {
-    slider.setValueWithoutEvents(DocumentationComponent.getQuickDocFontSize().ordinal());
+    if (slider != null && slider.isShowing()) {
+      slider.setValueWithoutEvents(size.ordinal());
+    }
   }
 }

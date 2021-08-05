@@ -3,6 +3,7 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
+import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.scale.JBUIScale;
@@ -76,7 +77,7 @@ class DocumentationEditorPane extends JEditorPane {
     }
   }
 
-  void applyFontProps() {
+  void applyFontProps(@NotNull FontSize size) {
     Document document = getDocument();
     if (!(document instanceof StyledDocument)) {
       return;
@@ -86,6 +87,6 @@ class DocumentationEditorPane extends JEditorPane {
                       : getFont().getFontName();
 
     // changing font will change the doc's CSS as myEditorPane has JEditorPane.HONOR_DISPLAY_PROPERTIES via UIUtil.getHTMLEditorKit
-    setFont(UIUtil.getFontWithFallback(fontName, Font.PLAIN, JBUIScale.scale(DocumentationComponent.getQuickDocFontSize().getSize())));
+    setFont(UIUtil.getFontWithFallback(fontName, Font.PLAIN, JBUIScale.scale(size.getSize())));
   }
 }

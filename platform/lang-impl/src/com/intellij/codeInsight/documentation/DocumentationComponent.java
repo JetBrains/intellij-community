@@ -564,7 +564,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     highlightLink(-1);
 
     myEditorPane.setText(myText);
-    myEditorPane.applyFontProps();
+    myEditorPane.applyFontProps(getQuickDocFontSize());
 
     showHint();
 
@@ -1019,11 +1019,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      DocFontSizePopup.show(() -> {
-        myEditorPane.applyFontProps();
+      DocFontSizePopup.show(DocumentationComponent.this, size -> {
+        myEditorPane.applyFontProps(size);
         // resize popup according to new font size, if user didn't set popup size manually
         if (!myManuallyResized && myHint != null && myHint.getDimensionServiceKey() == null) showHint();
-      }, DocumentationComponent.this);
+      });
     }
   }
 
@@ -1120,8 +1120,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
 
       setQuickDocFontSize(newFontSize);
-      myEditorPane.applyFontProps();
-      DocFontSizePopup.update();
+      myEditorPane.applyFontProps(newFontSize);
+      DocFontSizePopup.update(newFontSize);
     }
   }
 
