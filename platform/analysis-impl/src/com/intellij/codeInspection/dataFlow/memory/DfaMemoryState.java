@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * Represents a memory state of abstract interpreter.
@@ -163,6 +164,13 @@ public interface DfaMemoryState {
    *                     to simplify memory state, if it's known that given variable is never used anymore.
    */
   void flushVariable(@NotNull DfaVariableValue variable, boolean canonicalize);
+
+  /**
+   * Flush all the variables for which filter returns true
+   *
+   * @param filter filter to check whether the variable should be flushed
+   */
+  void flushVariables(@NotNull Predicate<@NotNull DfaVariableValue> filter);
 
   /**
    * Mark this state as ephemeral. See {@link #isEphemeral()} for details.

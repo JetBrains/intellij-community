@@ -24,10 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 /**
  * Invariant: qualifiers of the variables used in myEqClasses or myVariableTypes must be canonical variables
@@ -273,7 +270,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public @Nullable DfaMemoryState tryJoinExactly(DfaMemoryState other) {
+  public @Nullable DfaMemoryState tryJoinExactly(@NotNull DfaMemoryState other) {
     DfaMemoryStateImpl that = (DfaMemoryStateImpl)other;
     StateMerger merger = new StateMerger(this, that);
     if (!merger.update(that.myEphemeral || !myEphemeral, myEphemeral || !that.myEphemeral)) return null;
@@ -1328,6 +1325,21 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public void flushVariable(@NotNull DfaVariableValue variable) {
     flushVariable(variable, true);
+  }
+
+  @Override
+  public void flushVariables(@NotNull Predicate<@NotNull DfaVariableValue> filter) {
+    Set<DfaVariableValue> vars = new HashSet<>();
+    for (EqClass aClass : myEqClasses) {
+      if (aClass != null) {
+        for (DfaVariableValue value : aClass) {
+          vars.add(value);
+        }
+      }
+    }
+    vars.addAll(myVariableTypes.keySet());
+    vars.removeIf(filter.negate());
+    vars.forEach(this::flushVariable);
   }
 
   @Override
