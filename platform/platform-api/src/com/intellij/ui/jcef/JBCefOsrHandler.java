@@ -17,10 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.nio.ByteBuffer;
@@ -83,8 +80,14 @@ class JBCefOsrHandler implements CefRenderHandler {
   @Override
   public Point getScreenPoint(CefBrowser browser, Point viewPoint) {
     Point pt = viewPoint.getLocation();
-    Point loc = myLocationOnScreenRef.get();
-    pt.translate(loc.x, loc.y);
+    Point loc = getLocation();
+    if (SystemInfoRt.isMac) {
+      Rectangle rect = myScreenBoundsProvider.fun(myComponent);
+      pt.setLocation(loc.x + pt.x, rect.height - loc.y - pt.y);
+    }
+    else {
+      pt.translate(loc.x, loc.y);
+    }
     return SystemInfoRt.isWindows ? scaleUp(pt) : pt;
   }
 
@@ -179,6 +182,10 @@ class JBCefOsrHandler implements CefRenderHandler {
   private void updateLocation() {
     // getLocationOnScreen() is an expensive op, so do not request it on every mouse move, but cache
     myLocationOnScreenRef.set(myComponent.getLocationOnScreen());
+  }
+
+  private @NotNull Point getLocation() {
+    return myLocationOnScreenRef.get().getLocation();
   }
 
   private void updateImage(int width, int height) {
