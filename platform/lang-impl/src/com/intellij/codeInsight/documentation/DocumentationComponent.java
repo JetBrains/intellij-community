@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -565,7 +564,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     highlightLink(-1);
 
     myEditorPane.setText(myText);
-    applyFontProps();
+    myEditorPane.applyFontProps();
 
     showHint();
 
@@ -739,19 +738,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       if (definition != null) return definition;
     }
     return null;
-  }
-
-  private void applyFontProps() {
-    Document document = myEditorPane.getDocument();
-    if (!(document instanceof StyledDocument)) {
-      return;
-    }
-    String fontName = Registry.is("documentation.component.editor.font") ?
-                      EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName() :
-                      myEditorPane.getFont().getFontName();
-
-    // changing font will change the doc's CSS as myEditorPane has JEditorPane.HONOR_DISPLAY_PROPERTIES via UIUtil.getHTMLEditorKit
-    myEditorPane.setFont(UIUtil.getFontWithFallback(fontName, Font.PLAIN, JBUIScale.scale(getQuickDocFontSize().getSize())));
   }
 
   private void goBack() {
@@ -1034,7 +1020,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       DocFontSizePopup.show(() -> {
-        applyFontProps();
+        myEditorPane.applyFontProps();
         // resize popup according to new font size, if user didn't set popup size manually
         if (!myManuallyResized && myHint != null && myHint.getDimensionServiceKey() == null) showHint();
       }, DocumentationComponent.this);
@@ -1134,7 +1120,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
 
       setQuickDocFontSize(newFontSize);
-      applyFontProps();
+      myEditorPane.applyFontProps();
       DocFontSizePopup.update();
     }
   }

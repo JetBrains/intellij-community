@@ -1,8 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -71,5 +74,18 @@ class DocumentationEditorPane extends JEditorPane {
     if (doc instanceof StyledDocument) {
       doc.putProperty("imageCache", new DocumentationImageProvider(this, myElementSupplier));
     }
+  }
+
+  void applyFontProps() {
+    Document document = getDocument();
+    if (!(document instanceof StyledDocument)) {
+      return;
+    }
+    String fontName = Registry.is("documentation.component.editor.font")
+                      ? EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName()
+                      : getFont().getFontName();
+
+    // changing font will change the doc's CSS as myEditorPane has JEditorPane.HONOR_DISPLAY_PROPERTIES via UIUtil.getHTMLEditorKit
+    setFont(UIUtil.getFontWithFallback(fontName, Font.PLAIN, JBUIScale.scale(DocumentationComponent.getQuickDocFontSize().getSize())));
   }
 }
