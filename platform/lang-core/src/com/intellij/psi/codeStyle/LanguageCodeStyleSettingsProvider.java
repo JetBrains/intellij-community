@@ -444,4 +444,9 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   public boolean supportsExternalFormats() {
     return true;
   }
+
+  @ApiStatus.Experimental
+  public boolean usesCommonKeepLineBreaks() {
+    return false;
+  }
 }
