@@ -7,7 +7,6 @@ import com.intellij.execution.ExecutorRegistryImpl
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.compound.SettingsAndEffectiveTarget
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import javax.swing.Icon
@@ -22,12 +21,10 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
     return executor.icon
   }
 
-  override fun setShortcutSet(shortcutSet: ShortcutSet) {}
-
   override fun actionPerformed(e: AnActionEvent) {
     e.project?.let { project ->
       if (canRun(e)) {
-        e.configuration()?.let {
+        getSelectedConfiguration(e)?.let {
           e.addWaitingForAProcess(executor.id)
           ExecutorRegistryImpl.RunnerHelper.run(project, it.configuration, it, e.dataContext, executor)
         }
@@ -36,7 +33,6 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
   }
 
   override fun update(e: AnActionEvent) {
-    super.update(e)
     e.presentation.text = executor.actionName
     e.presentation.isVisible = e.project?.let {
       e.presentation.isVisible && if (e.isItRunToolbarMainSlot()) {
@@ -55,10 +51,10 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
     return e.configuration()
   }
 
-  private fun canRun(e: AnActionEvent): Boolean {
+  protected fun canRun(e: AnActionEvent): Boolean {
     return e.project?.let { project->
       val activeTarget = ExecutionTargetManager.getActiveTarget(project)
-      return e.configuration()?.let {
+      return getSelectedConfiguration(e)?.let {
 
         val target = SettingsAndEffectiveTarget(it.configuration, activeTarget)
 

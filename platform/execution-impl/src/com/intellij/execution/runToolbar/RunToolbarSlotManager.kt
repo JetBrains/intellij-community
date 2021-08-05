@@ -8,11 +8,11 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import java.util.*
 import java.util.function.Function
@@ -64,6 +64,10 @@ class RunToolbarSlotManager(val project: Project) {
     }
   }
 
+  init {
+    addListener(RunToolbarShortcutHelper(project))
+  }
+
   internal var active: Boolean = false
     set(value) {
       if(field == value) return
@@ -104,13 +108,6 @@ class RunToolbarSlotManager(val project: Project) {
 
     slot.environment = env
     slot.waitingForProcess.clear()
-
-    /**
-     * TODO add listener of run toolbar availability
-     */
-    if(RunToolbarProcess.Companion.isAvailable()) {
-      RunManager.getInstance(project).selectedConfiguration = env.runnerAndConfigurationSettings
-    }
 
     activeProcesses.updateActiveProcesses(slotsData)
   }
@@ -172,15 +169,15 @@ class RunToolbarSlotManager(val project: Project) {
         slotDate.environment?.let {
           if (Messages.showOkCancelDialog(
               project,
-              "qwerty",
-              "qwerty",
-              "qwerty",
+              LangBundle.message("run.toolbar.remove.active.process.slot.message"),
+              LangBundle.message("run.toolbar.remove.active.process.slot.title", it.runnerAndConfigurationSettings?.name ?: ""),
+              LangBundle.message("run.toolbar.remove.active.process.slot.ok"),
               CommonBundle.getCancelButtonText(),
-              Messages.getQuestionIcon(), object : DialogWrapper.DoNotAskOption.Adapter() {
+              Messages.getQuestionIcon()/*, object : DialogWrapper.DoNotAskOption.Adapter() {
               override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
 
               }
-            }) == Messages.OK) {
+            }*/) == Messages.OK) {
             it.contentToReuse?.let {
               ExecutionManagerImpl.stopProcess(it)
             }

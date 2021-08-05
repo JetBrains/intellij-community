@@ -152,7 +152,12 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         }
         else {
           ExecutorAction wrappedAction = new RunToolbarProcessAction(process, executor);
+          ExecutorAction wrappedMainAction = new RunToolbarProcessMainAction(process, executor);
+
           registerActionInGroup(actionManager, process.getActionId(), wrappedAction, RunToolbarProcess.RUN_WIDGET_GROUP,
+                                myRunWidgetIdToAction);
+
+          registerActionInGroup(actionManager, process.getMainActionId(), wrappedMainAction, RunToolbarProcess.RUN_WIDGET_MAIN_GROUP,
                                 myRunWidgetIdToAction);
         }
       });
@@ -201,6 +206,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
     RunToolbarProcess.getProcessesByExecutorId(executor.getId()).forEach(process -> {
       unregisterAction(process.getActionId(), RunToolbarProcess.RUN_WIDGET_GROUP, myRunWidgetIdToAction);
+      unregisterAction(process.getMainActionId(), RunToolbarProcess.RUN_WIDGET_MAIN_GROUP, myRunWidgetIdToAction);
 
       if (executor instanceof ExecutorGroup) {
         unregisterAction(RunToolbarAdditionActionsHolder.getAdditionActionId(process), process.getMoreActionSubGroupName(),

@@ -12,6 +12,7 @@ interface RunToolbarProcess {
   companion object {
     const val RUN_WIDGET_MORE_ACTION_GROUP = "RunToolbarMoreActionGroup"
     const val RUN_WIDGET_GROUP = "RunToolbarProcessActionGroup"
+    const val RUN_WIDGET_MAIN_GROUP = "RunToolbarProcessMainActionGroup"
 
     const val ACTIVE_STATE_BUTTONS_COUNT = 3
 
@@ -38,6 +39,7 @@ interface RunToolbarProcess {
   val name: @Nls String
 
   val actionId: String
+  fun getMainActionId(): String = "main$actionId"
   val moreActionSubGroupName: String
 
   val showInBar: Boolean
