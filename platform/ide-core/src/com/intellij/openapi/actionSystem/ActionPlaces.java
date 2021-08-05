@@ -227,11 +227,11 @@ public abstract class ActionPlaces {
   }
 
   /**
-   * Returns {@code true} if the Mac system menu is enabled and the action is invoked from the regular menu or via a keyboard shortcut.
-   * (Used to avoid duplicate processing of the same action.)
+   * Returns {@code true} if the action is invoked from the regular menu or via a shortcut on macOS.
+   * Use only for actions that are registered in {@link com.intellij.ui.mac.MacOSApplicationProvider}, to avoid duplicate processing.
    */
   @ApiStatus.Internal
   public static boolean isMacSystemMenuAction(@NotNull AnActionEvent e) {
-    return SystemInfo.isMacSystemMenu && (MAIN_MENU.equals(e.getPlace()) || KEYBOARD_SHORTCUT.equals(e.getPlace()));
+    return SystemInfo.isMac && (MAIN_MENU.equals(e.getPlace()) || KEYBOARD_SHORTCUT.equals(e.getPlace()));
   }
 }
