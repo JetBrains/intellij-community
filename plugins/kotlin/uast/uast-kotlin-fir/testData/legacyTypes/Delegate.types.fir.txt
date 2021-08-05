@@ -27,7 +27,7 @@ UFile (package = ) [public final class MyColor {...]
                         UReturnExpression [return <init>(1, 2, 3)]
                             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [<init>(1, 2, 3)] : PsiType:MyColor
                                 UIdentifier (Identifier (MyColor)) [UIdentifier (Identifier (MyColor))]
-                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:MyColor
+                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: MyColor) [<init>] : PsiType:MyColor
                                 ULiteralExpression (value = 1) [1] : PsiType:int
                                 ULiteralExpression (value = 2) [2] : PsiType:int
                                 ULiteralExpression (value = 3) [3] : PsiType:int
@@ -35,7 +35,7 @@ UFile (package = ) [public final class MyColor {...]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [<init>(1, 2, 3)] : PsiType:MyColor
                 UIdentifier (Identifier (MyColor)) [UIdentifier (Identifier (MyColor))]
-                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:MyColor
+                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: MyColor) [<init>] : PsiType:MyColor
                 ULiteralExpression (value = 1) [1] : PsiType:int
                 ULiteralExpression (value = 2) [2] : PsiType:int
                 ULiteralExpression (value = 3) [3] : PsiType:int

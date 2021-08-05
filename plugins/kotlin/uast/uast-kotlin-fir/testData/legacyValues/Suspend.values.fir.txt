@@ -6,7 +6,7 @@ UFile (package = test.pkg) [package test.pkg...]
                     UQualifiedReferenceExpression [<init>().inner()] = external inner()()
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
                             UIdentifier (Identifier (Context)) [UIdentifier (Identifier (Context))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>()()
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Context) [<init>] = external <init>()()
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [inner()] = external inner()()
                             UIdentifier (Identifier (inner)) [UIdentifier (Identifier (inner))]
                             USimpleNameReferenceExpression (identifier = inner, resolvesTo = null) [inner] = external inner()()

@@ -6,7 +6,7 @@ UFile (package = ) [public final class PropertyReferencesKt {...]
                     ULocalVariable (name = a) [var a: A = <init>(17)]
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(17)] = external <init>(17)((long)17)
                             UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>(17)((long)17)
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] = external <init>(17)((long)17)
                             ULiteralExpression (value = 17) [17] = (long)17
                 UDeclarationsExpression [var x: int = -a.mutableProp] = Undetermined
                     ULocalVariable (name = x) [var x: int = -a.mutableProp]
