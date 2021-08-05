@@ -10,9 +10,9 @@ UFile (package = ) [public final class A {...]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<anonymous class>(i.toString())]
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(i.toString())]
                     UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>]
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>]
                     UQualifiedReferenceExpression [i.toString()] : PsiType:String
                         USimpleNameReferenceExpression (identifier = i) [i] : PsiType:int
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : PsiType:String
@@ -34,9 +34,9 @@ UFile (package = ) [public final class A {...]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<anonymous class>(i.toString())]
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(i.toString())]
                     UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>]
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>]
                     UQualifiedReferenceExpression [i.toString()] : PsiType:String
                         USimpleNameReferenceExpression (identifier = i) [i] : PsiType:int
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : PsiType:String
@@ -64,9 +64,9 @@ UFile (package = ) [public final class A {...]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<anonymous class>(i.toString())]
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(i.toString())]
                     UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>]
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>]
                     UQualifiedReferenceExpression [i.toString()] : PsiType:String
                         USimpleNameReferenceExpression (identifier = i) [i] : PsiType:int
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] : PsiType:String

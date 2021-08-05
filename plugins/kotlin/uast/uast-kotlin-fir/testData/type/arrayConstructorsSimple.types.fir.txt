@@ -3,10 +3,10 @@ UFile (package = ) [import kotlin.test.assertEquals...]
     UClass (name = ArrayConstructorsSimpleKt) [public final class ArrayConstructorsSimpleKt {...}]
         UMethod (name = simpleIntArray) [public static final fun simpleIntArray() : java.lang.Integer[] {...}]
             UBlockExpression [{...}]
-                UReturnExpression [return <anonymous class>(3, { var it: <ErrorType> ->...})]
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<anonymous class>(3, { var it: <ErrorType> ->...})] : PsiType:Integer[]
+                UReturnExpression [return <init>(3, { var it: <ErrorType> ->...})]
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<init>(3, { var it: <ErrorType> ->...})] : PsiType:Integer[]
                         UIdentifier (Identifier (Array)) [UIdentifier (Identifier (Array))]
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:Integer[]
+                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:Integer[]
                         ULiteralExpression (value = 3) [3] : PsiType:int
                         ULambdaExpression [{ var it: <ErrorType> ->...}] : PsiType:Function1<? super Integer, ? extends Integer>
                             UParameter (name = it) [var it: <ErrorType>]
@@ -15,10 +15,10 @@ UFile (package = ) [import kotlin.test.assertEquals...]
                                     USimpleNameReferenceExpression (identifier = it) [it] : PsiType:int
         UMethod (name = simpleDoubleArray) [public static final fun simpleDoubleArray() : java.lang.Double[] {...}]
             UBlockExpression [{...}]
-                UReturnExpression [return <anonymous class>(3, { var it: <ErrorType> ->...})]
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<anonymous class>(3, { var it: <ErrorType> ->...})] : PsiType:Double[]
+                UReturnExpression [return <init>(3, { var it: <ErrorType> ->...})]
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<init>(3, { var it: <ErrorType> ->...})] : PsiType:Double[]
                         UIdentifier (Identifier (Array)) [UIdentifier (Identifier (Array))]
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:Double[]
+                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:Double[]
                         ULiteralExpression (value = 3) [3] : PsiType:int
                         ULambdaExpression [{ var it: <ErrorType> ->...}] : PsiType:Function1<? super Integer, ? extends Double>
                             UParameter (name = it) [var it: <ErrorType>]
@@ -33,10 +33,10 @@ UFile (package = ) [import kotlin.test.assertEquals...]
                                         ULiteralExpression (value = 0.1) [0.1] : PsiType:double
         UMethod (name = simpleStringArray) [public static final fun simpleStringArray() : java.lang.String[] {...}]
             UBlockExpression [{...}]
-                UReturnExpression [return <anonymous class>(3, { var it: <ErrorType> ->...})]
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<anonymous class>(3, { var it: <ErrorType> ->...})] : PsiType:String[]
+                UReturnExpression [return <init>(3, { var it: <ErrorType> ->...})]
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<init>(3, { var it: <ErrorType> ->...})] : PsiType:String[]
                         UIdentifier (Identifier (Array)) [UIdentifier (Identifier (Array))]
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:String[]
+                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:String[]
                         ULiteralExpression (value = 3) [3] : PsiType:int
                         ULambdaExpression [{ var it: <ErrorType> ->...}] : PsiType:Function1<? super Integer, ? extends String>
                             UParameter (name = it) [var it: <ErrorType>]

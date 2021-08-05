@@ -24,18 +24,18 @@ UFile (package = ) [public final class MyColor {...]
                 USimpleNameReferenceExpression (identifier = lazy, resolvesTo = null) [lazy] : PsiType:Lazy<? extends MyColor>
                 ULambdaExpression [{ ...}] : PsiType:Function0<? extends MyColor>
                     UBlockExpression [{...}] : PsiType:MyColor
-                        UReturnExpression [return <anonymous class>(1, 2, 3)]
-                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [<anonymous class>(1, 2, 3)] : PsiType:MyColor
+                        UReturnExpression [return <init>(1, 2, 3)]
+                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [<init>(1, 2, 3)] : PsiType:MyColor
                                 UIdentifier (Identifier (MyColor)) [UIdentifier (Identifier (MyColor))]
-                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:MyColor
+                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:MyColor
                                 ULiteralExpression (value = 1) [1] : PsiType:int
                                 ULiteralExpression (value = 2) [2] : PsiType:int
                                 ULiteralExpression (value = 3) [3] : PsiType:int
-        UField (name = nonLazy) [@org.jetbrains.annotations.NotNull private final var nonLazy: MyColor = <anonymous class>(1, 2, 3)]
+        UField (name = nonLazy) [@org.jetbrains.annotations.NotNull private final var nonLazy: MyColor = <init>(1, 2, 3)]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [<anonymous class>(1, 2, 3)] : PsiType:MyColor
+            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [<init>(1, 2, 3)] : PsiType:MyColor
                 UIdentifier (Identifier (MyColor)) [UIdentifier (Identifier (MyColor))]
-                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:MyColor
+                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:MyColor
                 ULiteralExpression (value = 1) [1] : PsiType:int
                 ULiteralExpression (value = 2) [2] : PsiType:int
                 ULiteralExpression (value = 3) [3] : PsiType:int

@@ -23,9 +23,9 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Undetermined
         UMethod (name = call) [public static final fun call() : void {...}]
-            UBlockExpression [{...}] = external with(<anonymous class>(), {
+            UBlockExpression [{...}] = external with(<init>(), {
     "def".with2Receivers(8, 7.0)
-})(external <anonymous class>()(), Undetermined)
+})(external <init>()(), Undetermined)
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [global(2.2, 2)] = external global(2.2, 2)((float)2.200000047683716, (long)2)
                     UIdentifier (Identifier (global)) [UIdentifier (Identifier (global))]
                     USimpleNameReferenceExpression (identifier = global, resolvesTo = null) [global] = external global(2.2, 2)((float)2.200000047683716, (long)2)
@@ -125,16 +125,16 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toTypedArray()] = external toTypedArray()()
                                 UIdentifier (Identifier (toTypedArray)) [UIdentifier (Identifier (toTypedArray))]
                                 USimpleNameReferenceExpression (identifier = toTypedArray, resolvesTo = null) [toTypedArray] = external toTypedArray()()
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with(<anonymous class>(), { ...})] = external with(<anonymous class>(), {
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with(<init>(), { ...})] = external with(<init>(), {
     "def".with2Receivers(8, 7.0)
-})(external <anonymous class>()(), Undetermined)
+})(external <init>()(), Undetermined)
                     UIdentifier (Identifier (with)) [UIdentifier (Identifier (with))]
-                    USimpleNameReferenceExpression (identifier = with, resolvesTo = null) [with] = external with(<anonymous class>(), {
+                    USimpleNameReferenceExpression (identifier = with, resolvesTo = null) [with] = external with(<init>(), {
     "def".with2Receivers(8, 7.0)
-})(external <anonymous class>()(), Undetermined)
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+})(external <init>()(), Undetermined)
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
                         UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
+                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>()()
                     ULambdaExpression [{ ...}] = Undetermined
                         UBlockExpression [{...}] = external with2Receivers(8, 7.0)((long)8, (float)7.0)
                             UQualifiedReferenceExpression ["def".with2Receivers(8, 7.0)] = external with2Receivers(8, 7.0)((long)8, (float)7.0)

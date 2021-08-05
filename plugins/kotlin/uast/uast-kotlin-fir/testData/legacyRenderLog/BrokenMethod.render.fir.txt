@@ -15,7 +15,7 @@ public final class BrokenMethodKt {
                 public fun Used(@org.jetbrains.annotations.NotNull parameter: java.lang.Object) = UastEmptyExpression
                 public static final class Companion {
                     public final fun doStuff1(@org.jetbrains.annotations.NotNull $this$doStuff1: java.lang.Object) : TestUsed.Used {
-                        return <anonymous class>(this)
+                        return <init>(this)
                     }
                     private fun Companion() = UastEmptyExpression
                 }

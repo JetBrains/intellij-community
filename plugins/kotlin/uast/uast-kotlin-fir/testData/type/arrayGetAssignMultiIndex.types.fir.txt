@@ -33,11 +33,11 @@ UFile (package = ) [public final class ArrayGetAssignMultiIndexKt {...]
                     USimpleNameReferenceExpression (identifier = elem) [elem] : PsiType:String
         UMethod (name = box) [public static final fun box() : java.lang.String {...}]
             UBlockExpression [{...}] : PsiType:Void
-                UDeclarationsExpression [var s: java.lang.String[] = <anonymous class>(1, { var it: <ErrorType> ->...})]
-                    ULocalVariable (name = s) [var s: java.lang.String[] = <anonymous class>(1, { var it: <ErrorType> ->...})]
-                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<anonymous class>(1, { var it: <ErrorType> ->...})] : PsiType:String[]
+                UDeclarationsExpression [var s: java.lang.String[] = <init>(1, { var it: <ErrorType> ->...})]
+                    ULocalVariable (name = s) [var s: java.lang.String[] = <init>(1, { var it: <ErrorType> ->...})]
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<init>(1, { var it: <ErrorType> ->...})] : PsiType:String[]
                             UIdentifier (Identifier (Array)) [UIdentifier (Identifier (Array))]
-                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:String[]
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:String[]
                             ULiteralExpression (value = 1) [1] : PsiType:int
                             ULambdaExpression [{ var it: <ErrorType> ->...}] : PsiType:Function1<? super Integer, ? extends String>
                                 UParameter (name = it) [var it: <ErrorType>]

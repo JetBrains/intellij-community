@@ -1,6 +1,6 @@
 public final class Ea101715Kt {
     public static final fun a() : void {
-        var a: Obj = <anonymous class>(555)
+        var a: Obj = <init>(555)
     }
 }
 

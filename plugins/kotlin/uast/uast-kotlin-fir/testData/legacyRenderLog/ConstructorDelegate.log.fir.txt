@@ -7,7 +7,7 @@ UFile (package = )
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
                         UIdentifier (Identifier (BaseImpl))
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null)
                         USimpleNameReferenceExpression (identifier = i)
     UClass (name = Base)
         UMethod (name = print)
