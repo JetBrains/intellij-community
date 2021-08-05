@@ -1,6 +1,5 @@
 package com.jetbrains.packagesearch.intellij.plugin.fus
 
-import com.intellij.openapi.fileTypes.FileType
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 
 internal object FUSGroupIds {
@@ -24,35 +23,12 @@ internal object FUSGroupIds {
     const val PREFERENCES_UPDATE_SCOPES_ON_USAGE = "preferences_update_scopes_on_usage"
     const val PREFERENCES_DEFAULT_GRADLE_SCOPE_CHANGED = "preferences_default_gradle_scope"
     const val PREFERENCES_DEFAULT_MAVEN_SCOPE_CHANGED = "preferences_default_maven_scope"
-    const val QUICK_FIX_TYPE = "quick_fix_type"
     const val FILE_TYPE = "file_type"
     const val DETAILS_LINK_LABEL = "details_link_label"
     const val DETAILS_VISIBLE = "details_visible"
     const val SEARCH_QUERY_LENGTH = "search_query_length"
 
     // ENUMS
-
-    enum class QuickFixTypes { DependencyUpdate, UnresolvedReference }
-
-    enum class QuickFixFileTypes {
-        Missing, Other, Groovy, Kotlin, Xml, Scala;
-
-        companion object {
-
-            fun from(fileType: FileType?): QuickFixFileTypes {
-                if (fileType == null) return Missing
-
-                return when (fileType.name.lowercase()) {
-                    "groovy" -> Groovy
-                    "kotlin" -> Kotlin
-                    "xml" -> Xml
-                    "scala" -> Scala
-                    else -> Other
-                }
-            }
-        }
-    }
-
     enum class TargetModulesType {
         None, One, All;
 
@@ -68,7 +44,7 @@ internal object FUSGroupIds {
 
     enum class DetailsLinkTypes { PackageUsages, GitHub, Documentation, License, ProjectWebsite, Readme }
 
-    enum class ToggleTypes { PackageDetails, OnlyStable, OnlyKotlinMp }
+    enum class ToggleTypes { OnlyStable, OnlyKotlinMp }
 
     enum class IndexedRepositories(val ids: Set<String>, val urls: Set<String>) {
         OTHER(ids = emptySet(), urls = emptySet()),
@@ -106,11 +82,6 @@ internal object FUSGroupIds {
                 if (repositoryUrl.isNullOrBlank()) return null
                 return if (indexedRepositoryUrls.contains(repositoryUrl)) repositoryUrl else null
             }
-
-            fun forUrl(repositoryUrl: String?): IndexedRepositories {
-                if (repositoryUrl.isNullOrBlank()) return NONE
-                return values().find { it.urls.contains(repositoryUrl) } ?: OTHER
-            }
         }
     }
 
@@ -127,7 +98,6 @@ internal object FUSGroupIds {
     const val PREFERENCES_RESET = "preferences_reset"
     const val PACKAGE_SELECTED = "package_selected"
     const val TARGET_MODULES_SELECTED = "target_modules_selected"
-    const val RUN_QUICK_FIX = "run_quick_fix"
     const val DETAILS_LINK_CLICK = "details_link_click"
     const val TOGGLE = "toggle"
     const val SEARCH_QUERY_CHANGED = "search_query_changed"

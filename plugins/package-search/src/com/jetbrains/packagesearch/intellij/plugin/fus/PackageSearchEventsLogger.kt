@@ -24,7 +24,7 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
 
     companion object {
 
-        private const val VERSION = 4
+        private const val VERSION = 5
         private val GROUP = EventLogGroup(FUSGroupIds.GROUP_ID, VERSION)
 
         // FIELDS
@@ -45,8 +45,6 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
         internal val preferencesDefaultGradleScopeChangedField = EventFields.Boolean(FUSGroupIds.PREFERENCES_DEFAULT_GRADLE_SCOPE_CHANGED)
         internal val preferencesDefaultMavenScopeChangedField = EventFields.Boolean(FUSGroupIds.PREFERENCES_DEFAULT_MAVEN_SCOPE_CHANGED)
 
-        private val quickFixTypeField = EventFields.Enum<FUSGroupIds.QuickFixTypes>(FUSGroupIds.QUICK_FIX_TYPE)
-        private val quickFixFileTypeField = EventFields.Enum<FUSGroupIds.QuickFixFileTypes>(FUSGroupIds.FILE_TYPE)
         private val detailsLinkLabelField = EventFields.Enum<FUSGroupIds.DetailsLinkTypes>(FUSGroupIds.DETAILS_LINK_LABEL)
         private val toggleTypeField = EventFields.Enum<FUSGroupIds.ToggleTypes>(FUSGroupIds.DETAILS_VISIBLE)
         private val detailsVisibleField = EventFields.Boolean(FUSGroupIds.DETAILS_VISIBLE)
@@ -88,11 +86,6 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
             eventField1 = targetModulesField,
             eventField2 = targetModulesCountField,
             eventField3 = targetModulesMixedBuildSystemsField
-        )
-        private val runQuickFixEvent = GROUP.registerEvent(
-            eventId = FUSGroupIds.RUN_QUICK_FIX,
-            eventField1 = quickFixTypeField,
-            eventField2 = quickFixFileTypeField
         )
         private val detailsLinkClickEvent = GROUP.registerEvent(
             eventId = FUSGroupIds.DETAILS_LINK_CLICK,
@@ -179,10 +172,6 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
 
         fun logTargetModuleSelected(targetModules: TargetModules) = ifLoggingEnabled {
             targetModulesSelectedEvent.log(FUSGroupIds.TargetModulesType.from(targetModules), targetModules.size, targetModules.isMixedBuildSystems)
-        }
-
-        fun logRunQuickFix(type: FUSGroupIds.QuickFixTypes, fileType: FUSGroupIds.QuickFixFileTypes) = ifLoggingEnabled {
-            runQuickFixEvent.log(type, fileType)
         }
 
         fun logPackageSelected(isInstalled: Boolean) = ifLoggingEnabled {
