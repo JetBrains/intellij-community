@@ -30,7 +30,7 @@ public final class TopLevelClass {
         return TODO()
     }
     public fun TopLevelClass(@org.jetbrains.annotations.NotNull t: int) {
-        <anonymous class>()
+        <init>()
     }
     public static final class NestedClass {
         public fun NestedClass() = UastEmptyExpression

@@ -63,10 +63,10 @@ UFile (package = ) [public final class CommentOwnersKt {...]
         UMethod (name = TopLevelClass) [public fun TopLevelClass(@org.jetbrains.annotations.NotNull t: int) {...}]
             UParameter (name = t) [@org.jetbrains.annotations.NotNull var t: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] = external <anonymous class>()()
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+            UBlockExpression [{...}] = external <init>()()
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
                     UIdentifier (Identifier ()) [UIdentifier (Identifier ())]
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>()()
         UClass (name = NestedClass) [public static final class NestedClass {...}]
             UMethod (name = NestedClass) [public fun NestedClass() = UastEmptyExpression]
     UClass (name = MyBooleanEnum) [public final enum MyBooleanEnum {...}]
