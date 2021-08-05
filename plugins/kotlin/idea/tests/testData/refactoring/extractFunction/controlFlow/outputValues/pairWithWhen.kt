@@ -1,3 +1,4 @@
+// SUGGESTED_NAMES: pair, intIntPair, intPair
 // WITH_RUNTIME
 // PARAM_TYPES: kotlin.Int
 // PARAM_TYPES: kotlin.Int

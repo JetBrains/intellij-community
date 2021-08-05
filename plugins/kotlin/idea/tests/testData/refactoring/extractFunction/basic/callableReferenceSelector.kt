@@ -1,4 +1,5 @@
 // WITH_RUNTIME
+// SUGGESTED_NAMES: map, stringStringMap, stringMap
 // PARAM_DESCRIPTOR: value-parameter arg: kotlin.String defined in Foo.Companion.bar
 // PARAM_TYPES: kotlin.String
 

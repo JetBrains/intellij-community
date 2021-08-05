@@ -1,5 +1,5 @@
 // WITH_RUNTIME
-// SUGGESTED_NAMES: pair, getT
+// SUGGESTED_NAMES: pair, intIntPair, intPair, getT
 // PARAM_TYPES: kotlin.Int
 // PARAM_TYPES: kotlin.Int
 // PARAM_DESCRIPTOR: value-parameter a: kotlin.Int defined in foo

@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getOutermostParenthesizerOrThis
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.callUtil.getParentResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.types.ErrorUtils
@@ -22,7 +23,6 @@ import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeSmart
-import java.util.*
 
 object KotlinNameSuggester {
     fun suggestNamesByExpressionAndType(
@@ -194,7 +194,7 @@ object KotlinNameSuggester {
         val builtIns = myType.builtIns
         val typeChecker = KotlinTypeChecker.DEFAULT
         if (ErrorUtils.containsErrorType(myType)) return
-
+        val typeDescriptor = myType.constructor.declarationDescriptor
         when {
             typeChecker.equalTypes(builtIns.booleanType, myType) -> addName("b", validator)
             typeChecker.equalTypes(builtIns.intType, myType) -> addName("i", validator)
@@ -205,38 +205,86 @@ object KotlinNameSuggester {
             typeChecker.equalTypes(builtIns.shortType, myType) -> addName("sh", validator)
             typeChecker.equalTypes(builtIns.charType, myType) -> addName("c", validator)
             typeChecker.equalTypes(builtIns.stringType, myType) -> addName("s", validator)
-            KotlinBuiltIns.isArray(myType) || KotlinBuiltIns.isPrimitiveArray(myType) -> {
-                val elementType = builtIns.getArrayElementType(myType)
-                when {
-                    typeChecker.equalTypes(builtIns.booleanType, elementType) -> addName("booleans", validator)
-                    typeChecker.equalTypes(builtIns.intType, elementType) -> addName("ints", validator)
-                    typeChecker.equalTypes(builtIns.byteType, elementType) -> addName("bytes", validator)
-                    typeChecker.equalTypes(builtIns.longType, elementType) -> addName("longs", validator)
-                    typeChecker.equalTypes(builtIns.floatType, elementType) -> addName("floats", validator)
-                    typeChecker.equalTypes(builtIns.doubleType, elementType) -> addName("doubles", validator)
-                    typeChecker.equalTypes(builtIns.shortType, elementType) -> addName("shorts", validator)
-                    typeChecker.equalTypes(builtIns.charType, elementType) -> addName("chars", validator)
-                    typeChecker.equalTypes(builtIns.stringType, elementType) -> addName("strings", validator)
-                    else -> {
-                        val classDescriptor = TypeUtils.getClassDescriptor(elementType)
-                        if (classDescriptor != null) {
-                            val className = classDescriptor.name
-                            addName("arrayOf" + StringUtil.capitalize(className.asString()) + "s", validator)
-                        }
-                    }
-                }
-            }
             myType.isFunctionType -> addName("function", validator)
             else -> {
-                val descriptor = myType.constructor.declarationDescriptor
-                if (descriptor != null) {
-                    val className = descriptor.name
-                    if (!className.isSpecial) {
-                        addCamelNames(className.asString(), validator)
+                when {
+                    KotlinBuiltIns.isArray(myType) || KotlinBuiltIns.isPrimitiveArray(myType) -> {
+                        addNamesForArray(builtIns, myType, validator, typeChecker)
+                    }
+                    typeDescriptor != null && DescriptorUtils.isSubtypeOfClass(typeDescriptor.defaultType, builtIns.collection.original) ->
+                        addNameForCollectionsInheritors(type, validator)
+                    else -> {
+                        val name = getTypeName(myType)
+                        if (name != null) {
+                            addCamelNames(name, validator)
+                        }
+                        addNamesFromGenericParameters(myType, validator)
                     }
                 }
             }
         }
+    }
+
+    private fun MutableCollection<String>.addNamesForArray(
+        builtIns: KotlinBuiltIns,
+        myType: KotlinType,
+        validator: (String) -> Boolean,
+        typeChecker: KotlinTypeChecker
+    ) {
+        val elementType = builtIns.getArrayElementType(myType)
+        val className = getTypeName(elementType)
+        if (className != null) {
+            addCamelNames(StringUtil.pluralize(className), validator)
+            if (!typeChecker.equalTypes(builtIns.booleanType, elementType) &&
+                !typeChecker.equalTypes(builtIns.intType, elementType) &&
+                !typeChecker.equalTypes(builtIns.byteType, elementType) &&
+                !typeChecker.equalTypes(builtIns.longType, elementType) &&
+                !typeChecker.equalTypes(builtIns.floatType, elementType) &&
+                !typeChecker.equalTypes(builtIns.doubleType, elementType) &&
+                !typeChecker.equalTypes(builtIns.shortType, elementType) &&
+                !typeChecker.equalTypes(builtIns.charType, elementType) &&
+                !typeChecker.equalTypes(builtIns.stringType, elementType)
+            ) {
+                addName("arrayOf" + StringUtil.capitalize(className) + "s", validator)
+            }
+        }
+    }
+
+    private fun MutableCollection<String>.addNameForCollectionsInheritors(type: KotlinType, validator: (String) -> Boolean) {
+        val typeArgument = type.arguments.singleOrNull()?.type ?: return
+        val name = getTypeName(typeArgument)
+        if (name != null) {
+            addCamelNames(StringUtil.pluralize(name), validator)
+            val typeName = getTypeName(type)
+            if (typeName != null) {
+                addCamelNames(name + typeName, validator)
+            }
+        }
+    }
+
+    private fun MutableCollection<String>.addNamesFromGenericParameters(type: KotlinType, validator: (String) -> Boolean) {
+        val typeName = getTypeName(type) ?: return
+        val arguments = type.arguments
+        val builder = StringBuilder()
+        if (arguments.isEmpty()) return
+        for (argument in arguments) {
+            val name = getTypeName(argument.type)
+            if (name != null) {
+                builder.append(name)
+            }
+        }
+        addCamelNames(builder.append(typeName).toString(), validator)
+    }
+
+    private fun getTypeName(type: KotlinType): String? {
+        val descriptor = type.constructor.declarationDescriptor
+        if (descriptor != null) {
+            val className = descriptor.name
+            if (!className.isSpecial) {
+                return className.asString()
+            }
+        }
+        return null
     }
 
     private val ACCESSOR_PREFIXES = arrayOf("get", "is", "set")

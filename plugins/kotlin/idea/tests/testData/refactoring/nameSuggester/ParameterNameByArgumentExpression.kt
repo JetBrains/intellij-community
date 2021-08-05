@@ -8,4 +8,5 @@ items
 of
 sequence
 sequenceOf
+stringSequence
 */

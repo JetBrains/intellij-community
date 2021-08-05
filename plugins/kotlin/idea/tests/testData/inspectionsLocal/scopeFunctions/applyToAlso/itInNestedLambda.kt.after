@@ -1,7 +1,7 @@
 // WITH_RUNTIME
 
-val x = hashSetOf("abc").also { hashSet ->
-    hashSet.forEach {
-        println(hashSet)
+val x = hashSetOf("abc").also { strings ->
+    strings.forEach {
+        println(strings)
     }
 }
