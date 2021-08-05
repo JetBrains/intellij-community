@@ -12,6 +12,7 @@ import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.project.Project
 import org.intellij.lang.annotations.Language
 import training.dsl.TaskContext
+import training.dsl.TaskTextProperties
 import training.dsl.impl.LessonExecutor
 import training.dsl.impl.OpenPassedContext
 import training.learn.course.KLesson
@@ -105,9 +106,10 @@ class LessonManager {
   fun addMessage(@Language("HTML") text: String,
                  isInformer: Boolean = false,
                  visualNumber: Int? = null,
-                 useInternalParagraphStyle: Boolean = false) {
+                 useInternalParagraphStyle: Boolean = false,
+                 textProperties: TaskTextProperties? = null) {
     val state = if (isInformer) LessonMessagePane.MessageState.INFORMER else LessonMessagePane.MessageState.NORMAL
-    learnPanel?.addMessage(text, LessonMessagePane.MessageProperties(state, visualNumber, useInternalParagraphStyle))
+    learnPanel?.addMessage(text, LessonMessagePane.MessageProperties(state, visualNumber, useInternalParagraphStyle, textProperties))
   }
 
   fun addInactiveMessage(message: String, visualNumber: Int?) {

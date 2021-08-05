@@ -407,7 +407,7 @@ internal class LessonExecutor(val lesson: KLesson,
     }
   }
 
-  fun text(@Language("HTML") text: String, removeAfterDone: Boolean = false) {
+  fun text(@Language("HTML") text: String, removeAfterDone: Boolean = false, textProperties: TaskTextProperties? = null) {
     val taskInfo = taskActions[currentTaskIndex]
 
     if (removeAfterDone) taskInfo.removeAfterDoneMessages.add(LessonManager.instance.messagesNumber())
@@ -427,7 +427,7 @@ internal class LessonExecutor(val lesson: KLesson,
     // A little bit hacky here: visual index should be shown only for the first paragraph.
     // But it is passed here for all paragraphs.
     // But... LessonMessagePane will draw number only for the first active paragraph :)
-    LessonManager.instance.addMessage(text, !hasDetection, taskInfo.taskVisualIndex, useInternalParagraphStyle = removeAfterDone)
+    LessonManager.instance.addMessage(text, !hasDetection, taskInfo.taskVisualIndex, useInternalParagraphStyle = removeAfterDone, textProperties = textProperties)
   }
 
   private fun addAllInactiveMessages() {

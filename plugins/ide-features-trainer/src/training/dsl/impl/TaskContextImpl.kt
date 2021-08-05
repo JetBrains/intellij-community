@@ -183,7 +183,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
     val runtimeTextContext = RuntimeTextContext(runtimeContext)
     val text = callback(runtimeTextContext)
     if (text != null) {
-      lessonExecutor.text(text, runtimeTextContext.removeAfterDone)
+      lessonExecutor.text(text, runtimeTextContext.removeAfterDone, runtimeTextContext.textProperties)
     }
   }
 
