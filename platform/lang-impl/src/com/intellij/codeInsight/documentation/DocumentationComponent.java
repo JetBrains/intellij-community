@@ -65,7 +65,9 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.TextUI;
-import javax.swing.text.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Highlighter;
+import javax.swing.text.View;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
@@ -83,8 +85,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   public static final ColorKey COLOR_KEY = EditorColors.DOCUMENTATION_COLOR;
   public static final Color SECTION_COLOR = Gray.get(0x90);
-
-  private static final Highlighter.HighlightPainter LINK_HIGHLIGHTER = new LinkHighlighter();
 
   private static final int PREFERRED_HEIGHT_MAX_EM = 10;
   private static final JBDimension MAX_DEFAULT = new JBDimension(650, 500);
@@ -954,7 +954,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       int endOffset = link.getEndOffset();
       try {
         if (myHighlightingTag == null) {
-          myHighlightingTag = highlighter.addHighlight(startOffset, endOffset, LINK_HIGHLIGHTER);
+          myHighlightingTag = highlighter.addHighlight(startOffset, endOffset, DocumentationLinkHighlightPainter.INSTANCE);
         }
         else {
           highlighter.changeHighlight(myHighlightingTag, startOffset, endOffset);
@@ -1049,29 +1049,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       activateLink(myHighlightedLink);
-    }
-  }
-
-  private static class LinkHighlighter implements Highlighter.HighlightPainter {
-    private static final Stroke STROKE = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1, new float[]{1}, 0);
-
-    @Override
-    public void paint(Graphics g, int p0, int p1, Shape bounds, JTextComponent c) {
-      try {
-        Rectangle target = c.getUI().getRootView(c).modelToView(p0, Position.Bias.Forward, p1, Position.Bias.Backward, bounds).getBounds();
-        Graphics2D g2d = (Graphics2D)g.create();
-        try {
-          g2d.setStroke(STROKE);
-          g2d.setColor(c.getSelectionColor());
-          g2d.drawRect(target.x, target.y, target.width - 1, target.height - 1);
-        }
-        finally {
-          g2d.dispose();
-        }
-      }
-      catch (Exception e) {
-        LOG.warn("Error painting link highlight", e);
-      }
     }
   }
 
