@@ -68,7 +68,7 @@ public final class MacKeymapUtil {
 
   @NotNull
   public static String getKeyText(int code) {
-    if (!AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols")) {
+    if (!isNativeShortcutSymbolsDisabled()) {
       switch (code) {
         case KeyEvent.VK_BACK_SPACE:     return get(BACKSPACE, "Backspace");
         case KeyEvent.VK_ESCAPE:         return get(ESCAPE, "Escape");
@@ -132,10 +132,14 @@ public final class MacKeymapUtil {
 
   @NotNull
   private static String get(@NotNull String value, @NotNull String replacement) {
-    if (AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols")) {
+    if (isNativeShortcutSymbolsDisabled()) {
       return replacement;
     }
     Font font = UIUtil.getLabelFont();
     return font == null || font.canDisplayUpTo(value) == -1 ? value : replacement;
+  }
+
+  private static boolean isNativeShortcutSymbolsDisabled() {
+    return AdvancedSettings.getInstanceIfCreated() != null && AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols");
   }
 }
