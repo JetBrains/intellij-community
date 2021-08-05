@@ -15,3 +15,25 @@ UFile (package = )
                         UIdentifier (Identifier (UnsupportedOperationException))
                         USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
         UMethod (name = Model)
+            UBlockExpression
+                UBlockExpression
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
+                        UIdentifier (Identifier (crashMe))
+                        USimpleNameReferenceExpression (identifier = crashMe, resolvesTo = null)
+                        UQualifiedReferenceExpression
+                            UClassLiteralExpression
+                            USimpleNameReferenceExpression (identifier = java)
+                        ULambdaExpression
+                            UBlockExpression
+                                UReturnExpression
+                                    UObjectLiteralExpression
+                                        UClass (name = null)
+                                            UMethod (name = onError)
+                                                UParameter (name = throwable)
+                                                    UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+                                                UBlockExpression
+                                                    UThrowExpression
+                                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
+                                                            UIdentifier (Identifier (UnsupportedOperationException))
+                                                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                                            ULiteralExpression (value = "")
