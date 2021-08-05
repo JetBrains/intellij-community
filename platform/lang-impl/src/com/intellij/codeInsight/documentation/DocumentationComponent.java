@@ -1317,22 +1317,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private class MyScrollPane extends JBScrollPane {
     MyScrollPane() {
       super(myEditorPane, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_AS_NEEDED);
-      setLayout(new Layout() {
-        @Override
-        public void layoutContainer(Container parent) {
-          super.layoutContainer(parent);
-          if (!myCorner.isVisible()) return;
-          if (vsb != null) {
-            Rectangle bounds = vsb.getBounds();
-            vsb.setBounds(bounds.x, bounds.y, bounds.width, bounds.height - myCorner.getPreferredSize().height - 3);
-          }
-          if (hsb != null) {
-            Rectangle bounds = hsb.getBounds();
-            int vsbOffset = vsb != null ? vsb.getBounds().width : 0;
-            hsb.setBounds(bounds.x, bounds.y, bounds.width - myCorner.getPreferredSize().width - 3 + vsbOffset, bounds.height);
-          }
-        }
-      });
+      setLayout(new CornerAwareScrollPaneLayout(DocumentationComponent.this.myCorner));
     }
 
     @Override
