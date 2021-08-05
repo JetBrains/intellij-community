@@ -25,10 +25,10 @@ abstract class CreateParameterFromUsageFactory<E : KtElement> :
         diagnostic: Diagnostic,
         quickFixDataFactory: () -> CreateParameterData<E>?
     ): List<QuickFixWithDelegateFactory> = QuickFixWithDelegateFactory(actionPriority) {
-        originalElementPointer.element?.let {
-            CreateParameterFromUsageFix(it, quickFixDataFactory)
+        originalElementPointer.element?.let { element ->
+            CreateParameterFromUsageFix(element, quickFixDataFactory).takeIf { it.isAvailable(element.project, null, element.containingKtFile ) }
         }
-    }.let(::listOf)
+    }.let(::listOfNotNull)
 
     override fun createFix(originalElement: E, data: CreateParameterData<E>) = throw UnsupportedOperationException("should not be invoked")
 }

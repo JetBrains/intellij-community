@@ -42,6 +42,13 @@ class CreateParameterFromUsageFix<E : KtElement>(
         } ?: ""
     }
 
+    private val calculatedAvailable: Boolean by lazy {
+        element != null && parameterInfo() != null
+    }
+
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean =
+        element?.run { calculatedAvailable } ?: false
+
     override fun getText(): String = element?.run { calculatedText } ?: ""
 
     override fun startInWriteAction() = false

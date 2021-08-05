@@ -166,9 +166,9 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         val intention = findActionWithText(actionHint.expectedText)
         if (actionHint.shouldPresent()) {
             if (intention == null) {
-                fail(
-                    "Action with text '" + actionHint.expectedText + "' not found\nAvailable actions: " +
-                            myFixture.availableIntentions.joinToString(prefix = "[", postfix = "]") { it.text })
+                    fail(
+                    "Action with text '" + actionHint.expectedText + "' not found\nAvailable actions:\n" +
+                            myFixture.availableIntentions.joinToString(separator = "\n") { "// \"${it.text}\" \"true\"" })
                 return
             }
 
