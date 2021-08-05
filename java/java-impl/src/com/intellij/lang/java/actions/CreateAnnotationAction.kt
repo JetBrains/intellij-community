@@ -32,10 +32,11 @@ internal class CreateAnnotationAction(target: PsiModifierListOwner, override val
     private val LOG = logger<CreateAnnotationAction>()
     internal fun addAnnotationToModifierList(modifierList: PsiModifierList, annotationRequest: AnnotationRequest) {
       val project = modifierList.project
-      val annotation = modifierList.addAnnotation(annotationRequest.qualifiedName)
+      val list = AddAnnotationPsiFix.expandParameterIfNecessary(modifierList)
+      val annotation = list.addAnnotation(annotationRequest.qualifiedName)
       val psiElementFactory = PsiElementFactory.getInstance(project)
 
-      fillAnnotationAttributes(annotation, annotationRequest, psiElementFactory, modifierList)
+      fillAnnotationAttributes(annotation, annotationRequest, psiElementFactory, list)
 
       val formatter = CodeStyleManager.getInstance(project)
       val codeStyleManager = JavaCodeStyleManager.getInstance(project)

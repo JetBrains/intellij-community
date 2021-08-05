@@ -287,7 +287,9 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   }
 
   public static PsiAnnotation addPhysicalAnnotationTo(String fqn, PsiNameValuePair[] pairs, PsiAnnotationOwner owner) {
-    owner = expandParameterIfNecessary(owner);
+    if (owner instanceof PsiModifierList) {
+      owner = expandParameterIfNecessary((PsiModifierList)owner);
+    }
     PsiAnnotation inserted;
     try {
       inserted = owner.addAnnotation(fqn);
@@ -306,31 +308,29 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     }
     return inserted;
   }
-
-  private static PsiAnnotationOwner expandParameterIfNecessary(PsiAnnotationOwner owner) {
-    if (owner instanceof PsiModifierList) {
-      PsiParameter parameter = ObjectUtils.tryCast(((PsiModifierList)owner).getParent(), PsiParameter.class);
-      if (parameter != null && parameter.getTypeElement() == null) {
-        PsiParameterList list = ObjectUtils.tryCast(parameter.getParent(), PsiParameterList.class);
-        if (list != null && list.getParent() instanceof PsiLambdaExpression) {
-          PsiParameter[] parameters = list.getParameters();
-          int index = ArrayUtil.indexOf(parameters, parameter);
-          PsiParameterList newList;
-          if (PsiUtil.isLanguageLevel11OrHigher(list)) {
-            String newListText = StreamEx.of(parameters).map(p -> PsiKeyword.VAR + " " + p.getName()).joining(",", "(", ")");
-            newList = ((PsiLambdaExpression)JavaPsiFacade.getElementFactory(list.getProject())
-              .createExpressionFromText(newListText+" -> {}", null)).getParameterList();
-            newList = (PsiParameterList)new CommentTracker().replaceAndRestoreComments(list, newList);
-          } else {
-            newList = LambdaUtil.specifyLambdaParameterTypes((PsiLambdaExpression)list.getParent());
-          }
-          if (newList != null) {
-            list = newList;
-            parameter = list.getParameter(index);
-            LOG.assertTrue(parameter != null);
-            owner = parameter.getModifierList();
-            LOG.assertTrue(owner != null);
-          }
+  @NotNull
+  public static PsiModifierList expandParameterIfNecessary(PsiModifierList owner) {
+    PsiParameter parameter = ObjectUtils.tryCast(owner.getParent(), PsiParameter.class);
+    if (parameter != null && parameter.getTypeElement() == null) {
+      PsiParameterList list = ObjectUtils.tryCast(parameter.getParent(), PsiParameterList.class);
+      if (list != null && list.getParent() instanceof PsiLambdaExpression) {
+        PsiParameter[] parameters = list.getParameters();
+        int index = ArrayUtil.indexOf(parameters, parameter);
+        PsiParameterList newList;
+        if (PsiUtil.isLanguageLevel11OrHigher(list)) {
+          String newListText = StreamEx.of(parameters).map(p -> PsiKeyword.VAR + " " + p.getName()).joining(",", "(", ")");
+          newList = ((PsiLambdaExpression)JavaPsiFacade.getElementFactory(list.getProject())
+            .createExpressionFromText(newListText+" -> {}", null)).getParameterList();
+          newList = (PsiParameterList)new CommentTracker().replaceAndRestoreComments(list, newList);
+        } else {
+          newList = LambdaUtil.specifyLambdaParameterTypes((PsiLambdaExpression)list.getParent());
+        }
+        if (newList != null) {
+          list = newList;
+          parameter = list.getParameter(index);
+          LOG.assertTrue(parameter != null);
+          owner = parameter.getModifierList();
+          LOG.assertTrue(owner != null);
         }
       }
     }

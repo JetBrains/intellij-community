@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.java.JavaLanguage
@@ -41,6 +42,10 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
   override fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
     val declaration = target as? PsiModifierListOwner ?: return emptyList()
     if (declaration.language != JavaLanguage.INSTANCE) return emptyList()
+
+    if (!AddAnnotationPsiFix.isAvailable(target, request.qualifiedName)) {
+      return emptyList()
+    }
     return listOf(CreateAnnotationAction(declaration, request))
   }
 
