@@ -1,31 +1,31 @@
 UFile (package = ) [public final class ResolveKt {...]
     UClass (name = ResolveKt) [public final class ResolveKt {...}]
         UMethod (name = bar) [public static final fun bar() : void {...}]
-            UBlockExpression [{...}] = external <anonymous class>(1, 2)((long)1, (long)2)
-                UQualifiedReferenceExpression [<anonymous class>().foo()] = external foo()()
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+            UBlockExpression [{...}] = external <init>(1, 2)((long)1, (long)2)
+                UQualifiedReferenceExpression [<init>().foo()] = external foo()()
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
                         UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
+                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>()()
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] = external foo()()
                         UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
                         USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] = external foo()()
-                UQualifiedReferenceExpression [<anonymous class>().inlineFoo()] = external inlineFoo()()
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+                UQualifiedReferenceExpression [<init>().inlineFoo()] = external inlineFoo()()
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
                         UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
+                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>()()
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [inlineFoo()] = external inlineFoo()()
                         UIdentifier (Identifier (inlineFoo)) [UIdentifier (Identifier (inlineFoo))]
                         USimpleNameReferenceExpression (identifier = inlineFoo, resolvesTo = null) [inlineFoo] = external inlineFoo()()
-                UQualifiedReferenceExpression [listOf(<anonymous class>()).forEach({ var it: <ErrorType> ->...})] = external forEach({ var it: <ErrorType> ->
+                UQualifiedReferenceExpression [listOf(<init>()).forEach({ var it: <ErrorType> ->...})] = external forEach({ var it: <ErrorType> ->
 
     println(it)
 })(Undetermined)
-                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(<anonymous class>())] = external listOf(<anonymous class>())(external <anonymous class>()())
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(<init>())] = external listOf(<init>())(external <init>()())
                         UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                        USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf(<anonymous class>())(external <anonymous class>()())
-                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+                        USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf(<init>())(external <init>()())
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
                             UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>()()
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [forEach({ var it: <ErrorType> ->...})] = external forEach({ var it: <ErrorType> ->
 
     println(it)
@@ -62,18 +62,18 @@ UFile (package = ) [public final class ResolveKt {...]
                         USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf("")("")
                         ULiteralExpression (value = "") [""] = ""
                     USimpleNameReferenceExpression (identifier = indices) [indices] = external indices()
-                UDeclarationsExpression [var date: java.util.Date = java.util.<anonymous class>()] = Undetermined
-                    ULocalVariable (name = date) [var date: java.util.Date = java.util.<anonymous class>()]
-                        UQualifiedReferenceExpression [java.util.<anonymous class>()] = external <anonymous class>()()
+                UDeclarationsExpression [var date: java.util.Date = java.util.<init>()] = Undetermined
+                    ULocalVariable (name = date) [var date: java.util.Date = java.util.<init>()]
+                        UQualifiedReferenceExpression [java.util.<init>()] = external <init>()()
                             UQualifiedReferenceExpression [java.util] = external util()
                                 USimpleNameReferenceExpression (identifier = java) [java] = external java()
                                 USimpleNameReferenceExpression (identifier = util) [util] = external util()
-                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
                                 UIdentifier (Identifier (Date)) [UIdentifier (Identifier (Date))]
-                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
+                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>()()
                 UBinaryExpression (operator = =) [date.time = 1000] = Undetermined
                     UQualifiedReferenceExpression [date.time] = external time()
-                        USimpleNameReferenceExpression (identifier = date) [date] = (var date = external <anonymous class>()())
+                        USimpleNameReferenceExpression (identifier = date) [date] = (var date = external <init>()())
                         USimpleNameReferenceExpression (identifier = time) [time] = external time()
                     ULiteralExpression (value = 1000) [1000] = (long)1000
                 UQualifiedReferenceExpression [listOf("").last()] = external last()()
@@ -114,9 +114,9 @@ UFile (package = ) [public final class ResolveKt {...]
                         UBinaryExpressionWithType [2 as int] = 2
                             ULiteralExpression (value = 2) [2] = (long)2
                             UTypeReferenceExpression (name = int) [int] = Undetermined
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<anonymous class>(1, 2)] = external <anonymous class>(1, 2)((long)1, (long)2)
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<init>(1, 2)] = external <init>(1, 2)((long)1, (long)2)
                     UIdentifier (Identifier (IntRange)) [UIdentifier (Identifier (IntRange))]
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>(1, 2)((long)1, (long)2)
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>(1, 2)((long)1, (long)2)
                     ULiteralExpression (value = 1) [1] = (long)1
                     ULiteralExpression (value = 2) [2] = (long)2
         UMethod (name = barT) [public static final fun barT(@org.jetbrains.annotations.NotNull t: T) : void {...}]

@@ -2,7 +2,7 @@ package test.pkg
 
 public final class SuspendKt {
     public static final fun top() : int {
-        return <anonymous class>().inner()
+        return <init>().inner()
     }
 }
 

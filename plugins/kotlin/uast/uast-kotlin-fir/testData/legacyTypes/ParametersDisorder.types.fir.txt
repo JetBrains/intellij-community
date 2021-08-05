@@ -123,12 +123,12 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toTypedArray()] : PsiType:String[]
                                 UIdentifier (Identifier (toTypedArray)) [UIdentifier (Identifier (toTypedArray))]
                                 USimpleNameReferenceExpression (identifier = toTypedArray, resolvesTo = null) [toTypedArray] : PsiType:String[]
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with(<anonymous class>(), { ...})] : PsiType:Unit
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with(<init>(), { ...})] : PsiType:Unit
                     UIdentifier (Identifier (with)) [UIdentifier (Identifier (with))]
                     USimpleNameReferenceExpression (identifier = with, resolvesTo = null) [with] : PsiType:Unit
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<anonymous class>()] : PsiType:A
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : PsiType:A
                         UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:A
+                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:A
                     ULambdaExpression [{ ...}] : PsiType:Function1<? super A, ? extends Unit>
                         UBlockExpression [{...}] : PsiType:Unit
                             UQualifiedReferenceExpression ["def".with2Receivers(8, 7.0)] : PsiType:Unit

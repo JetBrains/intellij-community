@@ -23,6 +23,6 @@ public final class Foo : I, Base {
         })
     }
     public fun Foo() {
-        <anonymous class>()
+        <init>()
     }
 }

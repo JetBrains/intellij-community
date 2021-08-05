@@ -7,11 +7,11 @@ UFile (package = ) [public final class NonTrivialIdentifiersKt {...]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:Unit
                     UIdentifier (Identifier (()) [UIdentifier (Identifier (())]
                     USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:Unit
-                UDeclarationsExpression [var p: A = <anonymous class>()]
-                    ULocalVariable (name = p) [var p: A = <anonymous class>()]
-                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<anonymous class>()] : PsiType:A
+                UDeclarationsExpression [var p: A = <init>()]
+                    ULocalVariable (name = p) [var p: A = <init>()]
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : PsiType:A
                             UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:A
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:A
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [invoke({ ...})] : PsiType:Unit
                     UIdentifier (Identifier ({)) [UIdentifier (Identifier ({))]
                     USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:Unit
