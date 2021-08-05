@@ -126,10 +126,11 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     }
 
     private static boolean isMergeCasesFixAvailable(@NotNull BranchBase duplicate, @NotNull BranchBase original) {
-      if (duplicate.myIsPattern != original.myIsPattern) {
+      if (duplicate.myIsGuardedOrParenthesizedPattern || original.myIsGuardedOrParenthesizedPattern) return false;
+      if (duplicate.myIsTypeTestPattern != original.myIsTypeTestPattern) {
         return duplicate.myIsNull || original.myIsNull;
       }
-      return !duplicate.myIsPattern;
+      return !duplicate.myIsTypeTestPattern;
     }
 
 
@@ -477,7 +478,8 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     protected final PsiStatement @NotNull [] myStatements;
     protected final String @NotNull [] myCommentTexts;
     private final boolean myIsDefault;
-    private final boolean myIsPattern;
+    private final boolean myIsTypeTestPattern;
+    private final boolean myIsGuardedOrParenthesizedPattern;
     private final boolean myIsNull;
     private DuplicatesFinder myFinder;
 
@@ -489,26 +491,32 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
       myStatements = statements;
       myCommentTexts = commentTexts;
       myIsDefault = ContainerUtil.find(labels, PsiSwitchLabelStatementBase::isDefaultCase) != null;
-      myIsPattern = isPattern(labels);
+      myIsTypeTestPattern = isPatternBy(labels, PsiTypeTestPattern.class);
+      myIsGuardedOrParenthesizedPattern = isPatternBy(labels, PsiGuardedPattern.class, PsiParenthesizedPattern.class);
       myIsNull = isNull(labels);
     }
 
-    private boolean isPattern(T @NotNull [] labels) {
+    private boolean isPatternBy(T @NotNull [] labels, Class<? extends PsiPattern>... classes) {
       return ContainerUtil.find(labels, label -> {
-        PsiSwitchLabelStatementBase labelStatementBase = ObjectUtils.tryCast(label, PsiSwitchLabelStatementBase.class);
-        if (labelStatementBase == null) return false;
-        return PsiTreeUtil.getChildOfType(labelStatementBase.getCaseLabelElementList(), PsiPattern.class) != null;
-      }) != null;
+        PsiCaseLabelElement[] labelElements = getCaseLabelElements(label);
+        if (labelElements == null) return false;
+        return ContainerUtil.exists(labelElements, labelElement -> PsiTreeUtil.instanceOf(labelElement, classes));
+        }) != null;
     }
 
     private boolean isNull(T @NotNull [] labels) {
       if (labels.length != 1) return false;
-      PsiSwitchLabelStatementBase labelStatement = ObjectUtils.tryCast(labels[0], PsiSwitchLabelStatementBase.class);
-      if (labelStatement == null) return false;
-      PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
-      if (labelElementList == null) return false;
-      PsiCaseLabelElement[] labelElements = labelElementList.getElements();
+      PsiCaseLabelElement[] labelElements = getCaseLabelElements(labels[0]);
+      if (labelElements == null) return false;
       return labelElements.length == 1 && ExpressionUtils.isNullLiteral(ObjectUtils.tryCast(labelElements[0], PsiExpression.class));
+    }
+
+    private PsiCaseLabelElement[] getCaseLabelElements(T label) {
+      PsiSwitchLabelStatementBase labelStatementBase = ObjectUtils.tryCast(label, PsiSwitchLabelStatementBase.class);
+      if (labelStatementBase == null) return null;
+      PsiCaseLabelElementList labelElementList = labelStatementBase.getCaseLabelElementList();
+      if (labelElementList == null) return null;
+      return labelElementList.getElements();
     }
 
     boolean isDefault() {

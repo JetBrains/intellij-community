@@ -1,4 +1,4 @@
-// "Merge with 'case Number n && n.intValue() == 42'" "GENERIC_ERROR_OR_WARNING"
+// "Merge with 'case Number n && n.intValue() == 42'" "false"
 class C {
     void foo(Object o) {
         switch (o) {

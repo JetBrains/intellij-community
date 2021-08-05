@@ -1,4 +1,4 @@
-// "Merge with 'case null'" "GENERIC_ERROR_OR_WARNING"
+// "Merge with 'case null'" "false"
 class C {
   void foo(Object o) {
     switch (o) {
