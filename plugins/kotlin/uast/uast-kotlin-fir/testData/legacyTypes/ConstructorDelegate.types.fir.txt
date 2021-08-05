@@ -4,10 +4,10 @@ UFile (package = ) [public final class ConstructorDelegateKt {...]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:Void
-                UReturnExpression [return <anonymous class>(i)] : PsiType:Void
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<anonymous class>(i)] : PsiType:BaseImpl
+                UReturnExpression [return <init>(i)] : PsiType:Void
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(i)] : PsiType:BaseImpl
                         UIdentifier (Identifier (BaseImpl)) [UIdentifier (Identifier (BaseImpl))]
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:BaseImpl
+                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] : PsiType:BaseImpl
                         USimpleNameReferenceExpression (identifier = i) [i] : PsiType:int
     UClass (name = Base) [public abstract interface Base {...}]
         UMethod (name = print) [public abstract fun print() : void = UastEmptyExpression]

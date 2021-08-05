@@ -4,14 +4,14 @@ public final class LocalDeclarationsKt {
             public fun Local() = UastEmptyExpression
         }
         var bar: kotlin.jvm.functions.Function0<? extends Local> = fun () {
-                return <anonymous class>()
+                return <init>()
         }
         var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {
-                <anonymous class>()
+                <init>()
         }
         var someLocalFun: kotlin.jvm.functions.Function2<? super java.lang.Integer,? super java.lang.String,? extends java.lang.Integer> = fun (@org.jetbrains.annotations.NotNull var text: java.lang.String) {
                 return 42
         }
-        return bar() == <anonymous class>()
+        return bar() == <init>()
     }
 }

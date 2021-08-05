@@ -1,6 +1,6 @@
 public final class PropertyReferencesKt {
     public static final fun properties() : void {
-        var a: A = <anonymous class>(17)
+        var a: A = <init>(17)
         var x: int = -a.mutableProp
         a.mutableProp = 1
         a.mutableProp += x

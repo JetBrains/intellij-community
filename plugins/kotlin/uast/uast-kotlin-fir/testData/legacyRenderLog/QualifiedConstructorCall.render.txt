@@ -6,7 +6,7 @@ public final class Foo {
 
 public final class Bar {
     public final fun getFoo() : A.B.C.Foo {
-        return A.B.C.<anonymous class>()
+        return A.B.C.<init>()
     }
     public fun Bar() = UastEmptyExpression
 }
