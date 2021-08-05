@@ -37,6 +37,7 @@
         <sysproperty key="java.awt.headless" value="true"/>
         <sysproperty key="gant.script" value="@{script}"/>
         <sysproperty key="gant.target" value="@{target}"/>
+        <sysproperty key="idea.home.path" value="${project.home}"/>
         <syspropertyset refid="intellij.build.properties"/>
         <arg value="-f"/>
         <arg value="${project.home}/build/gant.xml"/>
