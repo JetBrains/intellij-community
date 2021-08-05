@@ -46,4 +46,4 @@ UFile (package = )
             UBlockExpression
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
                     UIdentifier (Identifier (Base))
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null)

@@ -15,7 +15,7 @@ public final class ParametersDisorderKt {
         java.lang.String.format("%i %i %i", arrayOf(1, 2, 3))
         java.lang.String.format("%i %i %i", arrayOf(1, 2, 3), arrayOf(4, 5, 6))
         java.lang.String.format("%i %i %i", "".chunked(2).toTypedArray())
-        with(<anonymous class>(), {
+        with(<init>(), {
             "def".with2Receivers(8, 7.0)
         })
     }

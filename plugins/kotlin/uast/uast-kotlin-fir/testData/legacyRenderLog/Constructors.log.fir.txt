@@ -12,7 +12,7 @@ UFile (package = )
             UBlockExpression
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
                     UIdentifier (Identifier (this))
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null)
                     UQualifiedReferenceExpression
                         USimpleNameReferenceExpression (identifier = i)
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
@@ -36,7 +36,7 @@ UFile (package = )
             UBlockExpression
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
                     UIdentifier (Identifier (this))
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null)
                     UQualifiedReferenceExpression
                         USimpleNameReferenceExpression (identifier = i)
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
@@ -66,7 +66,7 @@ UFile (package = )
             UBlockExpression
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
                     UIdentifier (Identifier (this))
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null)
                     UQualifiedReferenceExpression
                         USimpleNameReferenceExpression (identifier = i)
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))

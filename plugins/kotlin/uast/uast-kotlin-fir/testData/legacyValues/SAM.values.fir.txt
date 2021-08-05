@@ -69,13 +69,13 @@ UFile (package = ) [import java.lang.Thread...]
                         USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
         UMethod (name = test1) [public static final fun test1() : void {...}]
             UBlockExpression [{...}] = Undetermined
-                UDeclarationsExpression [var thread1: java.lang.Thread = <anonymous class>({ ...})] = Undetermined
-                    ULocalVariable (name = thread1) [var thread1: java.lang.Thread = <anonymous class>({ ...})]
-                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<anonymous class>({ ...})] = external <anonymous class>({
+                UDeclarationsExpression [var thread1: java.lang.Thread = <init>({ ...})] = Undetermined
+                    ULocalVariable (name = thread1) [var thread1: java.lang.Thread = <init>({ ...})]
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>({ ...})] = external <init>({
     println("hello1")
 })(Undetermined)
                             UIdentifier (Identifier (Thread)) [UIdentifier (Identifier (Thread))]
-                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>({
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>({
     println("hello1")
 })(Undetermined)
                             ULambdaExpression [{ ...}] = Undetermined
@@ -86,15 +86,15 @@ UFile (package = ) [import java.lang.Thread...]
                                         ULiteralExpression (value = "hello1") ["hello1"] = "hello1"
         UMethod (name = test2) [public static final fun test2() : void {...}]
             UBlockExpression [{...}] = Undetermined
-                UDeclarationsExpression [var thread2: java.lang.Thread = <anonymous class>(Runnable({ ...}))] = Undetermined
-                    ULocalVariable (name = thread2) [var thread2: java.lang.Thread = <anonymous class>(Runnable({ ...}))]
-                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<anonymous class>(Runnable({ ...}))] = external <anonymous class>(Runnable({
+                UDeclarationsExpression [var thread2: java.lang.Thread = <init>(Runnable({ ...}))] = Undetermined
+                    ULocalVariable (name = thread2) [var thread2: java.lang.Thread = <init>(Runnable({ ...}))]
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(Runnable({ ...}))] = external <init>(Runnable({
     println("hello2")
 }))(external Runnable({
     println("hello2")
 })(Undetermined))
                             UIdentifier (Identifier (Thread)) [UIdentifier (Identifier (Thread))]
-                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>(Runnable({
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>(Runnable({
     println("hello2")
 }))(external Runnable({
     println("hello2")

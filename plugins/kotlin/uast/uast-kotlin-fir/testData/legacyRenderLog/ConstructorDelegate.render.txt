@@ -1,6 +1,6 @@
 public final class ConstructorDelegateKt {
     public static final fun createBase(@org.jetbrains.annotations.NotNull i: int) : Base {
-        return <anonymous class>(i)
+        return <init>(i)
     }
 }
 
