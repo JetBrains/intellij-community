@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.ui.PopupLocationTracker;
+import com.intellij.ide.ui.PopupLocator;
 import com.intellij.ide.ui.ScreenAreaConsumer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -611,6 +612,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   private @NotNull RelativePoint getBestPositionFor(@NotNull Editor editor) {
     if (editor instanceof EditorEx) {
       DataContext context = ((EditorEx)editor).getDataContext();
+      PopupLocator popupLocator = PlatformDataKeys.CONTEXT_MENU_LOCATOR.getData(context);
+      if (popupLocator != null) {
+        Point result = popupLocator.getPositionFor(this);
+        if (result != null) return new RelativePoint(result);
+      }
       Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(context);
       if (dominantArea != null && !myRequestFocus) {
         final JLayeredPane layeredPane = editor.getContentComponent().getRootPane().getLayeredPane();

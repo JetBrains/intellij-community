@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.*;
+import com.intellij.ide.ui.PopupLocator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -72,6 +73,13 @@ public class PlatformDataKeys extends PlatformCoreDataKeys {
    * This point should be relative to the currently focused component
    */
   public static final DataKey<Point> CONTEXT_MENU_POINT = DataKey.create("contextMenuPoint");
+
+  /**
+   * Allows more precise positioning than {@link PlatformDataKeys#CONTEXT_MENU_POINT} by using information
+   * about popup, e.g. its size.
+   */
+  @ApiStatus.Experimental
+  public static final DataKey<PopupLocator> CONTEXT_MENU_LOCATOR = DataKey.create("contextMenuLocator");
 
   /**
    * It's allowed to assign multiple actions to the same keyboard shortcut. Actions system filters them on the current

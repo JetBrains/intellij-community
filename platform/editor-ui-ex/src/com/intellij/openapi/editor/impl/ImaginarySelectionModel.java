@@ -9,10 +9,10 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class ImaginarySelectionModel implements SelectionModel {
+public class ImaginarySelectionModel implements SelectionModel {
   private final ImaginaryEditor myEditor;
 
-  ImaginarySelectionModel(ImaginaryEditor editor) {
+  public ImaginarySelectionModel(ImaginaryEditor editor) {
     myEditor = editor;
   }
 
