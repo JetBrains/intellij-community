@@ -28,10 +28,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.EditorCssFontResolver;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -77,7 +74,6 @@ import javax.swing.plaf.TextUI;
 import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
-import javax.swing.text.html.ImageView;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
@@ -262,29 +258,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       UIUtil.doNotScrollToCaret(myEditorPane);
     }
     myEditorPane.setBackground(EditorColorsUtil.getGlobalOrDefaultColor(COLOR_KEY));
-    JBHtmlEditorKit editorKit = new JBHtmlEditorKit(true, true) {
-      @Override
-      public ViewFactory getViewFactory() {
-        JBHtmlFactory factory = new JBHtmlFactory() {
-          @Override
-          public View create(Element elem) {
-            View view = super.create(elem);
-            if (view instanceof ImageView) {
-              // we have to work with raw image, apply scaling manually
-              return new DocumentationScalingImageView(elem, myEditorPane);
-            }
-            return view;
-          }
-        };
-        factory.setAdditionalIconResolver(src -> {
-          ModuleType<?> id = ModuleTypeManager.getInstance().findByID(src);
-          return id == null ? null : id.getIcon();
-        });
-        return factory;
-      }
-    };
-    prepareCSS(editorKit);
-    myEditorPane.setEditorKit(editorKit);
+    myEditorPane.setEditorKit(new DocumentationHtmlEditorKit(myEditorPane));
     myEditorPane.setBorder(JBUI.Borders.empty());
     myScrollPane = new MyScrollPane();
     myScrollPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
@@ -537,50 +511,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         IdeFocusManager.getGlobalInstance().requestFocus(myScrollPane, true);
       }
     });
-  }
-
-  private static void prepareCSS(@NotNull JBHtmlEditorKit editorKit) {
-    Color borderColor = UIUtil.getTooltipSeparatorColor();
-    int leftPadding = 8;
-    int definitionTopPadding = 4;
-    editorKit.setFontResolver(EditorCssFontResolver.getGlobalInstance());
-    String editorFontStyle = "{font-family:\"" + EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER + "\"; font-size: 96%;}";
-    editorKit.getStyleSheet().addRule("tt" + editorFontStyle);
-    editorKit.getStyleSheet().addRule("code" + editorFontStyle);
-    editorKit.getStyleSheet().addRule("pre" + editorFontStyle);
-    editorKit.getStyleSheet().addRule(".pre" + editorFontStyle);
-    editorKit.getStyleSheet().addRule("html { padding-bottom: 8px; }");
-    editorKit.getStyleSheet().addRule("h1, h2, h3, h4, h5, h6 { margin-top: 0; padding-top: 1px; }");
-    editorKit.getStyleSheet().addRule("a { color: #" + ColorUtil.toHex(getLinkColor()) + "; text-decoration: none;}");
-    editorKit.getStyleSheet().addRule(".definition { padding: " + definitionTopPadding + "px 17px 1px " + leftPadding +
-                                      "px; border-bottom: thin solid #" + ColorUtil.toHex(borderColor) + "; }");
-    editorKit.getStyleSheet().addRule(".definition-only { padding: " + definitionTopPadding + "px 17px 0 " + leftPadding + "px; }");
-    editorKit.getStyleSheet().addRule(".definition-only pre { margin-bottom: 0 }");
-    editorKit.getStyleSheet().addRule(".content { padding: 5px 16px 0 " + leftPadding + "px; max-width: 100% }");
-    editorKit.getStyleSheet().addRule(".content-separated { padding: 5px 16px 5px " + leftPadding + "px; max-width: 100%;" +
-                                      "                     border-bottom: thin solid #" + ColorUtil.toHex(borderColor) + "; }");
-    editorKit.getStyleSheet().addRule(".content-only { padding: 8px 16px 0 " + leftPadding + "px; max-width: 100% }");
-    editorKit.getStyleSheet().addRule(".bottom { padding: 3px 16px 0 " + leftPadding + "px; }");
-    editorKit.getStyleSheet().addRule(".bottom-no-content { padding: 5px 16px 0 " + leftPadding + "px; }");
-    editorKit.getStyleSheet().addRule("p { padding: 1px 0 2px 0; }");
-    editorKit.getStyleSheet().addRule("ol { padding: 0 16px 0 0; }");
-    editorKit.getStyleSheet().addRule("ul { padding: 0 16px 0 0; }");
-    editorKit.getStyleSheet().addRule("li { padding: 1px 0 2px 0; }");
-    editorKit.getStyleSheet().addRule(".grayed { color: #909090; display: inline;}");
-    editorKit.getStyleSheet().addRule(".centered { text-align: center}");
-
-    // sections table
-    editorKit.getStyleSheet().addRule(".sections { padding: 0 16px 0 " + leftPadding + "px; border-spacing: 0; }");
-    editorKit.getStyleSheet().addRule("tr { margin: 0 0 0 0; padding: 0 0 0 0; }");
-    editorKit.getStyleSheet().addRule("table p { padding-bottom: 0}");
-    editorKit.getStyleSheet().addRule("td { margin: 4px 0 0 0; padding: 0 0 0 0; }");
-    editorKit.getStyleSheet().addRule("th { text-align: left; }");
-    editorKit.getStyleSheet().addRule("td pre { padding: 1px 0 0 0; margin: 0 0 0 0 }");
-    editorKit.getStyleSheet().addRule(".section { color: " + ColorUtil.toHtmlColor(SECTION_COLOR) + "; padding-right: 4px; white-space:nowrap;}");
-  }
-
-  private static Color getLinkColor() {
-    return JBUI.CurrentTheme.Link.Foreground.ENABLED;
   }
 
   @Override
