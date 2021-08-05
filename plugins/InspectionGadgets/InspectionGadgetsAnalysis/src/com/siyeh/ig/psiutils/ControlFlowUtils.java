@@ -16,7 +16,6 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -212,18 +211,16 @@ public final class ControlFlowUtils {
         }
         // this information doesn't exist in spec draft (14.22) for pattern in switch as expected
         // but for now javac considers the switch statement containing at least either case default label element or total pattern "incomplete normally"
-        if (HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(switchLabelStatement)) {
-          PsiCaseLabelElementList labelElementList = switchLabelStatement.getCaseLabelElementList();
-          if (labelElementList == null) {
-            continue;
+        PsiCaseLabelElementList labelElementList = switchLabelStatement.getCaseLabelElementList();
+        if (labelElementList == null) {
+          continue;
+        }
+        for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
+          if (labelElement instanceof PsiDefaultCaseLabelElement) {
+            hasDefaultCase = true;
           }
-          for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
-            if (labelElement instanceof PsiDefaultCaseLabelElement) {
-              hasDefaultCase = true;
-            }
-            else if (labelElement instanceof PsiPattern) {
-              hasTotalPattern = JavaPsiPatternUtil.isTotalForType(((PsiPattern)labelElement), selectorType);
-            }
+          else if (labelElement instanceof PsiPattern) {
+            hasTotalPattern = JavaPsiPatternUtil.isTotalForType(((PsiPattern)labelElement), selectorType);
           }
         }
       }
@@ -249,6 +246,8 @@ public final class ControlFlowUtils {
         return true;
       }
     }
+    // todo replace the code and comments below with the method that helps to understand whether
+    // todo we need to check every statement or only the last statement in the code block
     // 14.22. Unreachable Statements
     // We need to check every rule's body not just the last one if the switch block includes the switch rules
     boolean isLabeledRuleSwitch = statements[0] instanceof PsiSwitchLabeledRuleStatement;
