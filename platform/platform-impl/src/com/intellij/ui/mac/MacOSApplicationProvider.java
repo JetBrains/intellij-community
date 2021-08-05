@@ -2,7 +2,10 @@
 package com.intellij.ui.mac;
 
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.ide.*;
+import com.intellij.ide.CommandLineCustomHandler;
+import com.intellij.ide.CommandLineProcessor;
+import com.intellij.ide.CommandLineProcessorResult;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.AboutAction;
 import com.intellij.ide.actions.ShowSettingsAction;
 import com.intellij.ide.impl.ProjectUtil;
@@ -18,7 +21,6 @@ import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -27,6 +29,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.Callback;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,24 +40,24 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Future;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@ApiStatus.Internal
 public final class MacOSApplicationProvider {
   private static final Logger LOG = Logger.getInstance(MacOSApplicationProvider.class);
 
   private MacOSApplicationProvider() { }
 
   public static void initApplication() {
-    if (SystemInfoRt.isMac) {
-      try {
-        Worker.initMacApplication();
-      }
-      catch (Throwable t) {
-        LOG.warn(t);
-      }
+    try {
+      Worker.initMacApplication();
+    }
+    catch (Throwable t) {
+      LOG.warn(t);
     }
   }
 
@@ -90,9 +93,7 @@ public final class MacOSApplicationProvider {
 
       desktop.setOpenFileHandler(event -> {
         List<File> files = event.getFiles();
-        if (files.isEmpty()) {
-          return;
-        }
+        if (files.isEmpty()) return;
 
         List<Path> list = ContainerUtil.map(files, file -> file.toPath());
         if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
