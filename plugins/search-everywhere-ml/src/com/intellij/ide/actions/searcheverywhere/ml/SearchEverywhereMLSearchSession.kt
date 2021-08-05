@@ -27,7 +27,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   init {
     providersCaches = SearchEverywhereElementFeaturesProvider.getFeatureProviders()
       .associate { it::class.java to it.getDataToCache(project) }
-      .mapNotNull { it.value?.let { value -> it.key to value }}
+      .mapNotNull { it.value?.let { value -> it.key to value } }
       .toMap()
   }
 
@@ -110,7 +110,9 @@ class SearchEverywhereMlItemIdProvider {
   fun getId(element: Any): Int {
     val key = when (element) {
       is GotoActionModel.MatchedValue -> getActionKey(element)
-      is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> (element.item as PsiFileSystemItem).virtualFile
+      is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> {
+        (element.item as? PsiFileSystemItem)?.virtualFile ?: throw IllegalArgumentException("Illegal argument type ${element.javaClass.name}")
+      }
       is PsiFileSystemItem -> element.virtualFile
       else -> throw IllegalArgumentException("Illegal argument type ${element.javaClass.name}")
     }

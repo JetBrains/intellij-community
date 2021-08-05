@@ -68,7 +68,7 @@ internal class SearchEverywhereFileFeaturesProvider : SearchEverywhereElementFea
                                   elementPriority: Int,
                                   cache: Any?): Map<String, Any> {
     val item = when (element) {
-      is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> (element.item as PsiFileSystemItem)
+      is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> (element.item as? PsiFileSystemItem) ?: return emptyMap()
       is PsiFileSystemItem -> element
       else -> return emptyMap()
     }
