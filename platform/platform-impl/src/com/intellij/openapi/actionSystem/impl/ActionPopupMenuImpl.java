@@ -169,10 +169,12 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
     private void updateChildren(@Nullable RelativePoint point) {
       removeAll();
-      TimeoutUtil.run(
-        () -> Utils.fillMenu(myGroup, this, !UISettings.getInstance().getDisableMnemonics(),
-                             myPresentationFactory, myContext, myPlace, false, false, point),
-        1000, ms -> LOG.warn(ms + " ms to fill popup menu " + myPlace));
+      Utils.performWithRetries(() -> {
+        TimeoutUtil.run(
+          () -> Utils.fillMenu(myGroup, this, !UISettings.getInstance().getDisableMnemonics(),
+                               myPresentationFactory, myContext, myPlace, false, false, point),
+          1000, ms -> LOG.warn(ms + " ms to fill popup menu " + myPlace));
+      }, () -> false);
     }
 
     private void disposeMenu() {

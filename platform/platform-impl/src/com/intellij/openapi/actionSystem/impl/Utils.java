@@ -542,6 +542,32 @@ public final class Utils {
     return context instanceof PreCachedDataContext && ((PreCachedDataContext)context).isFrozenDataContext();
   }
 
+  static void performWithRetries(@NotNull Runnable runnable, @NotNull BooleanSupplier expire) {
+    Utils.ProcessCanceledWithReasonException lastCancellation = null;
+    int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
+    for (int i = 0; i < retries; i++) {
+      if (expire.getAsBoolean()) return;
+      try {
+        runnable.run();
+        return;
+      }
+      catch (Utils.ProcessCanceledWithReasonException ex) {
+        lastCancellation = ex;
+        String reasonStr = ex.reason instanceof String ? (String)ex.reason : "";
+        if (reasonStr.contains("write-action") || reasonStr.contains("fast-track")) {
+          continue;
+        }
+        ExceptionUtil.rethrow(ex);
+      }
+      catch (Throwable ex) {
+        ExceptionUtil.rethrow(ex);
+      }
+    }
+    if (retries > 1) {
+      LOG.warn("Maximum number of retries to show a menu reached (" + retries + "): " + lastCancellation.reason);
+    }
+  }
+
   static class ProcessCanceledWithReasonException extends ProcessCanceledException {
     final Object reason;
 

@@ -22,7 +22,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBMenu;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.plaf.beg.IdeaMenuUI;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
@@ -285,7 +284,7 @@ public final class ActionMenu extends JBMenu {
         clearItems();
       }
       if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
-        fillMenuWithRetries();
+        fillMenu();
       }
     }
   }
@@ -293,36 +292,12 @@ public final class ActionMenu extends JBMenu {
   @Override
   public void setPopupMenuVisible(boolean b) {
     if (b && !(SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace))) {
-      fillMenuWithRetries();
+      fillMenu();
       if (!isSelected()) {
         return;
       }
     }
     super.setPopupMenuVisible(b);
-  }
-
-  private void fillMenuWithRetries() {
-    int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
-    for (int i = 0; i < retries && !tryFillMenu(); i++) {
-      if (!isSelected()) break;
-    }
-  }
-
-  private boolean tryFillMenu() {
-    try {
-      fillMenu();
-    }
-    catch (Utils.ProcessCanceledWithReasonException ex) {
-      String reasonStr = ex.reason instanceof String ? (String)ex.reason : "";
-      if (reasonStr.contains("write-action") || reasonStr.contains("fast-track")) {
-        return false;
-      }
-      ExceptionUtil.rethrow(ex);
-    }
-    catch (Throwable ex) {
-      ExceptionUtil.rethrow(ex);
-    }
-    return true;
   }
 
   public void clearItems() {
@@ -346,6 +321,10 @@ public final class ActionMenu extends JBMenu {
   }
 
   public void fillMenu() {
+    Utils.performWithRetries(this::fillMenuInner, () -> !isSelected());
+  }
+
+  private void fillMenuInner() {
     DataContext context;
 
     if (myContext != null) {
