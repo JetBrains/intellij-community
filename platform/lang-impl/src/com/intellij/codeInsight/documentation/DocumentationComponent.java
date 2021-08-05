@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -37,11 +36,9 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
@@ -55,7 +52,10 @@ import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.MathUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -70,12 +70,13 @@ import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider, WidthBasedLayout {
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
@@ -114,7 +115,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final ActionButton myCorner;
 
   private final JScrollPane myScrollPane;
-  private final JEditorPane myEditorPane;
+  private final DocumentationHintEditorPane myEditorPane;
   private @Nls String myText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
   private final JComponent myControlPanel;
   private boolean myControlPanelVisible;
@@ -146,123 +147,17 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myStoreSize = storeSize;
 
     myScrollPane = new DocumentationScrollPane();
-    myEditorPane = new JEditorPane() {
-      {
-        enableEvents(AWTEvent.KEY_EVENT_MASK);
-      }
-
-      private final Map<KeyStroke, ActionListener> myKeyboardActions = DocumentationScrollPane.keyboardActions(myScrollPane);
-
-      @Override
-      protected void processKeyEvent(KeyEvent e) {
-        KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
-        ActionListener listener = myKeyboardActions.get(keyStroke);
-        if (listener != null) {
-          listener.actionPerformed(new ActionEvent(DocumentationComponent.this, 0, ""));
-          e.consume();
-          return;
-        }
-        super.processKeyEvent(e);
-      }
-
-      Point initialClick;
-
-      @Override
-      protected void processMouseEvent(MouseEvent e) {
-        if (e.getID() == MouseEvent.MOUSE_PRESSED && myHint != null) {
-          //DocumentationComponent.this.requestFocus();
-          initialClick = null;
-          StyledDocument document = (StyledDocument)getDocument();
-          int x = e.getX();
-          int y = e.getY();
-          if (!hasTextAt(document, x, y) &&
-              !hasTextAt(document, x + 3, y) &&
-              !hasTextAt(document, x - 3, y) &&
-              !hasTextAt(document, x, y + 3) &&
-              !hasTextAt(document, x, y - 3)) {
-            initialClick = e.getPoint();
-          }
-        }
-        super.processMouseEvent(e);
-      }
-
-      private boolean hasTextAt(StyledDocument document, int x, int y) {
-        Element element = document.getCharacterElement(viewToModel(new Point(x, y)));
-        try {
-          String text = document.getText(element.getStartOffset(), element.getEndOffset() - element.getStartOffset());
-          if (StringUtil.isEmpty(text.trim())) {
-            return false;
-          }
-        }
-        catch (BadLocationException ignored) {
-          return false;
-        }
-        return true;
-      }
-
-      @Override
-      protected void processMouseMotionEvent(MouseEvent e) {
-        if (e.getID() == MouseEvent.MOUSE_DRAGGED && myHint != null && initialClick != null) {
-          Point location = myHint.getLocationOnScreen();
-          myHint.setLocation(new Point(location.x + e.getX() - initialClick.x, location.y + e.getY() - initialClick.y));
-          e.consume();
-          return;
-        }
-        super.processMouseMotionEvent(e);
-      }
-
-      @Override
-      protected void paintComponent(Graphics g) {
-        GraphicsUtil.setupAntialiasing(g);
-        super.paintComponent(g);
-      }
-
-      @Override
-      public void setDocument(Document doc) {
-        super.setDocument(doc);
-        doc.putProperty("IgnoreCharsetDirective", Boolean.TRUE);
-        if (doc instanceof StyledDocument) {
-          doc.putProperty("imageCache", new DocumentationImageProvider(this, DocumentationComponent.this::getElement));
-        }
-      }
-    };
+    myEditorPane = new DocumentationHintEditorPane(
+      manager.getProject(),
+      DocumentationScrollPane.keyboardActions(myScrollPane),
+      this::getElement
+    );
     DataProvider helpDataProvider = dataId -> PlatformDataKeys.HELP_ID.is(dataId) ? DOCUMENTATION_TOPIC_ID : null;
     myEditorPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
     myText = "";
-    myEditorPane.setEditable(false);
-    if (ScreenReader.isActive()) {
-      // Note: Making the caret visible is merely for convenience
-      myEditorPane.getCaret().setVisible(true);
-    }
-    else {
-      myEditorPane.putClientProperty("caretWidth", 0); // do not reserve space for caret (making content one pixel narrower than component)
-      UIUtil.doNotScrollToCaret(myEditorPane);
-    }
-    myEditorPane.setBackground(EditorColorsUtil.getGlobalOrDefaultColor(COLOR_KEY));
-    myEditorPane.setEditorKit(new DocumentationHtmlEditorKit(myEditorPane));
-    myEditorPane.setBorder(JBUI.Borders.empty());
     myScrollPane.setViewportView(myEditorPane);
     myScrollPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
     myScrollPane.addMouseWheelListener(new FontSizeMouseWheelListener());
-
-    FocusListener focusAdapter = new FocusAdapter() {
-      @Override
-      public void focusLost(FocusEvent e) {
-        Component previouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(manager.getProject(getElement()));
-
-        if (previouslyFocused != myEditorPane) {
-          if (myHint != null && !myHint.isDisposed()) myHint.cancel();
-        }
-      }
-    };
-    myEditorPane.addFocusListener(focusAdapter);
-
-    Disposer.register(this, new Disposable() {
-      @Override
-      public void dispose() {
-        myEditorPane.removeFocusListener(focusAdapter);
-      }
-    });
 
     setLayout(new BorderLayout());
 
@@ -566,6 +461,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   public void setHint(JBPopup hint) {
     myHint = (AbstractPopup)hint;
+    myEditorPane.setHint(hint);
   }
 
   public JBPopup getHint() {
