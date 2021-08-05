@@ -14,6 +14,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.WatermarkIcon
 import training.FeaturesTrainerIcons
+import training.dsl.TaskTextProperties
 import training.learn.lesson.LessonManager
 import java.awt.*
 import java.awt.event.MouseAdapter
@@ -53,13 +54,15 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
 
   data class MessageProperties(val state: MessageState = MessageState.NORMAL,
                                val visualIndex: Int? = null,
-                               val useInternalParagraphStyle: Boolean = false)
+                               val useInternalParagraphStyle: Boolean = false,
+                               val textProperties: TaskTextProperties? = null)
 
   private data class LessonMessage(
     val messageParts: List<MessagePart>,
     var state: MessageState,
     val visualIndex: Int?,
     val useInternalParagraphStyle: Boolean,
+    val textProperties: TaskTextProperties?,
     var start: Int = 0,
     var end: Int = 0
   )
@@ -159,6 +162,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     StyleConstants.setFontSize(CODE, codeFontSize)
 
     StyleConstants.setFontFamily(LINK, fontFamily)
+    StyleConstants.setUnderline(LINK, true)
     StyleConstants.setFontSize(LINK, fontSize)
 
     StyleConstants.setSpaceAbove(TASK_PARAGRAPH_STYLE, UISettings.instance.taskParagraphAbove.toFloat())
@@ -226,7 +230,12 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
   }
 
   fun addMessage(messageParts: List<MessagePart>, properties: MessageProperties = MessageProperties()): () -> Rectangle? {
-    val lessonMessage = LessonMessage(messageParts, properties.state, properties.visualIndex, properties.useInternalParagraphStyle)
+    val lessonMessage = LessonMessage(messageParts,
+                                      properties.state,
+                                      properties.visualIndex,
+                                      properties.useInternalParagraphStyle,
+                                      properties.textProperties,
+    )
     when (properties.state) {
       MessageState.INACTIVE -> inactiveMessages
       MessageState.RESTORE -> restoreMessages
@@ -257,7 +266,15 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     var previous: LessonMessage? = null
     for (lessonMessage in allLessonMessages()) {
       if (previous?.messageParts?.firstOrNull()?.type != MessagePart.MessageType.ILLUSTRATION) {
+        val textProperties = previous?.textProperties
         paragraphStyle = when {
+          textProperties != null -> {
+            val customStyle = SimpleAttributeSet()
+            setCommonParagraphAttributes(customStyle)
+            StyleConstants.setSpaceAbove(customStyle, textProperties.spaceAbove.toFloat())
+            StyleConstants.setSpaceBelow(customStyle, textProperties.spaceBelow.toFloat())
+            customStyle
+          }
           previous?.useInternalParagraphStyle == true -> INTERNAL_PARAGRAPH_STYLE
           panelMode -> TASK_PARAGRAPH_STYLE
           else -> BALLOON_STYLE
@@ -301,7 +318,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
       thisLogger().error("No illustration for ${part.text}")
     }
     else {
-      val spaceAbove = spaceAboveIllustrationParagraph(illustration) + UISettings.instance.taskInternalParagraphAbove
+      val spaceAbove = spaceAboveIllustrationParagraph(illustration) + UISettings.instance.illustrationAbove
       val illustrationStyle = SimpleAttributeSet()
       StyleConstants.setSpaceAbove(illustrationStyle, spaceAbove.toFloat())
       setCommonParagraphAttributes(illustrationStyle)
@@ -310,7 +327,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     insertText(" ", REGULAR)
   }
 
-  private fun spaceAboveIllustrationParagraph(illustration: Icon) = illustration.iconHeight - getFontMetrics(this.font).height
+  private fun spaceAboveIllustrationParagraph(illustration: Icon) = illustration.iconHeight - getFontMetrics(this.font).height + UISettings.instance.illustrationBelow
 
   private fun addPlaceholderForIcon(icon: Icon) {
     var placeholder = " "
@@ -610,7 +627,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
     val xOffset = JBUI.scale(2).toDouble()
     val yOffset = topLineY - activeTaskInset
     val width = this.bounds.width - activeTaskInset - xOffset - JBUIScale.scale(2) // 1 + 1 line width
-    val height = textHeight + 2 * activeTaskInset - JBUIScale.scale(2)
+    val height = textHeight + 2 * activeTaskInset - JBUIScale.scale(2) + (lastActiveMessage.textProperties?.spaceBelow ?: 0)
     g2d.draw(RoundRectangle2D.Double(xOffset, yOffset, width, height, arc.toDouble(), arc.toDouble()))
     g2d.color = color
   }

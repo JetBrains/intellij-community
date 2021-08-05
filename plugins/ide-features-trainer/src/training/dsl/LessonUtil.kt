@@ -42,6 +42,7 @@ import training.learn.LessonsBundle
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
 import training.ui.LearningUiUtil
+import training.ui.UISettings
 import training.util.learningToolWindow
 import java.awt.Component
 import java.awt.Point
@@ -283,10 +284,11 @@ fun LessonContext.firstLessonCompletedMessage() {
   text(LessonsBundle.message("goto.action.propose.to.go.next.new.ui", LessonUtil.rawEnter()))
 }
 
-fun TaskContext.proceedLink() {
+fun TaskContext.proceedLink(additionalAbove: Int = 0) {
   val gotIt = CompletableFuture<Boolean>()
   runtimeText {
     removeAfterDone = true
+    textProperties = TaskTextProperties(UISettings.instance.taskInternalParagraphAbove + additionalAbove, 12)
     LessonsBundle.message("proceed.to.the.next.step", LearningUiManager.addCallback { gotIt.complete(true) })
   }
   addStep(gotIt)
