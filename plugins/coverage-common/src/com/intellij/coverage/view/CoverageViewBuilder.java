@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -101,7 +102,7 @@ public class CoverageViewBuilder extends AbstractListBuilder {
     ReadAction.nonBlocking(() -> node instanceof CoverageListRootNode
                                  ? myCoverageViewExtension.getSummaryForRootNode(node)
                                  : myCoverageViewExtension.getSummaryForNode(node))
-      .finishOnUiThread(ModalityState.NON_MODAL, (text) -> myParentTitle.setText(text))
+      .finishOnUiThread(ModalityState.NON_MODAL, (@Nls String text) -> myParentTitle.setText(text))
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
