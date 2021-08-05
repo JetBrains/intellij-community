@@ -5132,6 +5132,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("char.kt")
+        public void testChar() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/char.kt");
+        }
+
         @TestMetadata("downTo.kt")
         public void testDownTo() throws Exception {
             runTest("testData/inspectionsLocal/emptyRange/downTo.kt");
@@ -5145,6 +5150,26 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/inspectionsLocal/emptyRange/simple.kt");
+        }
+
+        @TestMetadata("unsignedByte.kt")
+        public void testUnsignedByte() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/unsignedByte.kt");
+        }
+
+        @TestMetadata("unsignedInt.kt")
+        public void testUnsignedInt() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/unsignedInt.kt");
+        }
+
+        @TestMetadata("unsignedLong.kt")
+        public void testUnsignedLong() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/unsignedLong.kt");
+        }
+
+        @TestMetadata("unsignedShort.kt")
+        public void testUnsignedShort() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/unsignedShort.kt");
         }
 
         @TestMetadata("until.kt")
