@@ -10,6 +10,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBSlider;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -17,10 +18,12 @@ import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public final class DocFontSizePopup {
+
   private static WeakReference<JBSlider> ourCurrentSlider;
 
-  public static void show(@NotNull Runnable changeCallback, @NotNull Component parentComponent) {
+  public static void show(@NotNull Component parentComponent, @NotNull Runnable changeCallback) {
     show(parentComponent, size -> changeCallback.run());
   }
 
