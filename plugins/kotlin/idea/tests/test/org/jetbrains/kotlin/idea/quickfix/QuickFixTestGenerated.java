@@ -13430,6 +13430,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/convertKClassToJavaClass.kt");
             }
 
+            @TestMetadata("convertKClassToJavaClassSubtype.kt")
+            public void testConvertKClassToJavaClassSubtype() throws Exception {
+                runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/convertKClassToJavaClassSubtype.kt");
+            }
+
+            @TestMetadata("convertKClassToJavaClassTypeMismatch.kt")
+            public void testConvertKClassToJavaClassTypeMismatch() throws Exception {
+                runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/convertKClassToJavaClassTypeMismatch.kt");
+            }
+
             @TestMetadata("convertKClassToJavaClassVariable.kt")
             public void testConvertKClassToJavaClassVariable() throws Exception {
                 runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/convertKClassToJavaClassVariable.kt");
