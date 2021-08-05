@@ -37,7 +37,14 @@ public final class AWith2Init {
 }
 
 public final class AOnlyInit {
-    public fun AOnlyInit() = UastEmptyExpression
+    public fun AOnlyInit() {
+        {
+            println(1)
+        }
+        {
+            println(2)
+        }
+    }
 }
 
 public final class AWithSecondary {

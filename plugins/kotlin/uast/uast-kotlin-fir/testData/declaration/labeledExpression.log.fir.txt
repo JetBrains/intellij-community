@@ -43,3 +43,7 @@ UFile (package = )
                                     UThisExpression (label = Foo)
                                     USimpleNameReferenceExpression (identifier = p)
         UMethod (name = Foo)
+            UBlockExpression
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
+                    UIdentifier (Identifier (Base))
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)

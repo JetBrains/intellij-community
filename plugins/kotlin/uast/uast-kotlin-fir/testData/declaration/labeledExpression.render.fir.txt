@@ -22,5 +22,7 @@ public final class Foo : I, Base {
             return this.p
         })
     }
-    public fun Foo() = UastEmptyExpression
+    public fun Foo() {
+        <anonymous class>()
+    }
 }
