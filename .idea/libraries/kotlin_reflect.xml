@@ -1,16 +1,16 @@
 <component name="libraryTable">
   <library name="kotlin-reflect" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-reflect:1.5.10-release-936">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-reflect:1.5.10-release-941">
       <exclude>
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.5.10-release-936/kotlin-reflect-1.5.10-release-936.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.5.10-release-941/kotlin-reflect-1.5.10-release-941.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.5.10-release-936/kotlin-reflect-1.5.10-release-936-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.5.10-release-941/kotlin-reflect-1.5.10-release-941-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
