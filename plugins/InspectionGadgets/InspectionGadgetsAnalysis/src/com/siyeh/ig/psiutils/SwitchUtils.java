@@ -491,6 +491,10 @@ public final class SwitchUtils {
     return constants;
   }
 
+  /**
+   * Returns {@code true} if the element represents a {@code default} section
+   * or list of case labels contains default element, {@code false} otherwise.
+   */
   public static boolean isDefaultLabel(@Nullable PsiSwitchLabelStatementBase label) {
     if (label == null) return false;
     if (label.isDefaultCase()) return true;

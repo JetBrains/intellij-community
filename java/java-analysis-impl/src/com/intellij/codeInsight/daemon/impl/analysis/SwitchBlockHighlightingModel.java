@@ -175,6 +175,7 @@ public class SwitchBlockHighlightingModel {
       }
       for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
         PsiExpression expr = ObjectUtils.tryCast(labelElement, PsiExpression.class);
+        // ignore patterns/case defaults. If they appear here, insufficient language level will be reported
         if (expr == null) continue;
         HighlightInfo result = HighlightUtil.checkAssignability(mySelectorType, expr.getType(), expr, expr);
         if (result != null) {
