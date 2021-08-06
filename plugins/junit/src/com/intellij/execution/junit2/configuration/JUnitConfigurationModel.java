@@ -115,13 +115,7 @@ public class JUnitConfigurationModel {
         testObject != JUnitConfiguration.BY_SOURCE_CHANGES) {
       try {
         data.METHOD_NAME = getJUnitTextValue(METHOD);
-        final PsiClass testClass = !myProject.isDefault() && !StringUtil.isEmptyOrSpaces(className) ? JUnitUtil.findPsiClass(className, module, myProject) : null;
-        if (testClass != null && testClass.isValid()) {
-          data.setMainClass(testClass);
-        }
-        else {
-          data.MAIN_CLASS_NAME = className;
-        }
+        data.MAIN_CLASS_NAME = className;
       }
       catch (ProcessCanceledException | IndexNotReadyException e) {
         data.MAIN_CLASS_NAME = className;
