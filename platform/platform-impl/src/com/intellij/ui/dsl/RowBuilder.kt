@@ -15,6 +15,11 @@ private annotation class RowBuilderMarker
 @RowBuilderMarker
 interface RowBuilder {
 
+  /**
+   * Makes cells of the row independent of parent grid, which means the row has own grid
+   */
+  fun independent(): RowBuilder
+
   fun <T : JComponent> cell(component: T): CellBuilder<T>
 
   fun panel(init: PanelBuilder.() -> Unit): PanelBuilder

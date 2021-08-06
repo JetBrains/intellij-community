@@ -9,9 +9,11 @@ import javax.swing.JComponent
  * Builds grid layout row by row
  */
 @ApiStatus.Experimental
-class RowsGridBuilder(private val panel: JComponent, private val grid: JBGrid = (panel.layout as JBGridLayout).rootGrid) {
+class RowsGridBuilder(private val panel: JComponent, grid: JBGrid? = null) {
 
   private val GRID_EMPTY = -1
+  private val layout = panel.layout as JBGridLayout
+  private val grid = grid ?: layout.rootGrid
   private var x = 0
   private var y = GRID_EMPTY
 
@@ -71,7 +73,22 @@ class RowsGridBuilder(private val panel: JComponent, private val grid: JBGrid = 
     val constraints = JBConstraints(grid, x, y, width = width, verticalAlign = verticalAlign, horizontalAlign = horizontalAlign,
                                     gaps = gaps, visualPaddings = visualPaddings)
     panel.add(component, constraints)
-    return skip()
+    return skip(width)
+  }
+
+  fun subGrid(width: Int = 1,
+              horizontalAlign: HorizontalAlign = HorizontalAlign.LEFT,
+              verticalAlign: VerticalAlign = VerticalAlign.TOP,
+              gaps: Gaps = Gaps.EMPTY,
+              visualPaddings: Gaps = Gaps.EMPTY): JBGrid {
+    if (y == GRID_EMPTY) {
+      y = 0
+    }
+
+    val constraints = JBConstraints(grid, x, y, width = width, verticalAlign = verticalAlign, horizontalAlign = horizontalAlign,
+                                    gaps = gaps, visualPaddings = visualPaddings)
+    skip(width)
+    return layout.addLayoutSubGrid(constraints)
   }
 
   /**

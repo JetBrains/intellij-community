@@ -17,6 +17,9 @@ import javax.swing.JLabel
 @ApiStatus.Experimental
 internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig, val label: JLabel?) : RowBuilder {
 
+  var independent = false
+    private set
+
   val cells: List<CellBuilderBase<*>>
     get() = _cells
 
@@ -24,6 +27,11 @@ internal class RowBuilderImpl(private val dialogPanelConfig: DialogPanelConfig, 
 
   init {
     label?.let { cell(it) }
+  }
+
+  override fun independent(): RowBuilder {
+    independent = true
+    return this
   }
 
   override fun <T : JComponent> cell(component: T): CellBuilder<T> {

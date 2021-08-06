@@ -61,38 +61,58 @@ internal class PanelBuilderImpl(private val dialogPanelConfig: DialogPanelConfig
   }
 
   fun build(panel: DialogPanel, grid: JBGrid) {
-    val columnsCount = rows.maxOf { it.cells.size }
+    val maxColumnsCount = rows.maxOf { it.cells.size }
     val rowsGridBuilder = RowsGridBuilder(panel, grid = grid)
 
-    for ((rowIndex, row) in rows.withIndex()) {
-      for ((cellIndex, cell) in row.cells.withIndex()) {
-        val width: Int
-        var rightGap = cell.rightGap
-        if (cellIndex == row.cells.size - 1) {
-          width = columnsCount - cellIndex
-          if (cell.rightGap > 0) {
-            LOG.warn("Right gap is set for last cell and will be ignored: rightGap = $rightGap")
-            rightGap = 0
-          }
-        }
-        else {
-          width = 1
-        }
+    for (row in rows) {
+      if (row.independent) {
+        val subGrid = rowsGridBuilder.subGrid(width = maxColumnsCount, horizontalAlign = HorizontalAlign.FILL,
+                                              verticalAlign = VerticalAlign.FILL)
+        buildRow(row, maxColumnsCount, panel, RowsGridBuilder(panel, subGrid))
+      }
+      else {
+        buildRow(row, maxColumnsCount, panel, rowsGridBuilder)
+      }
+      rowsGridBuilder.row()
 
-        // todo
-        if (cell is CellBuilderImpl<*>) {
-          val insets = cell.component.insets
-          val verticalGap = getDefaultVerticalGap(cell.component)
-          val gaps = Gaps(top = verticalGap, bottom = verticalGap, right = rightGap)
-          val visualPaddings = Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
-          rowsGridBuilder.cell(cell.component, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
-                               gaps = gaps,
-                               visualPaddings = visualPaddings)
+      createCommentRow(rowsGridBuilder, row, maxColumnsCount)
+    }
+  }
+
+  private fun buildRow(row: RowBuilderImpl, maxColumnsCount: Int, panel: DialogPanel, rowsGridBuilder: RowsGridBuilder) {
+    for ((cellIndex, cell) in row.cells.withIndex()) {
+      val width: Int
+      var rightGap = cell.rightGap
+      if (cellIndex == row.cells.size - 1) {
+        width = maxColumnsCount - cellIndex
+        if (cell.rightGap > 0) {
+          LOG.warn("Right gap is set for last cell and will be ignored: rightGap = $rightGap")
+          rightGap = 0
         }
       }
+      else {
+        width = 1
+      }
 
-      rowsGridBuilder.row()
-      createCommentRow(rowsGridBuilder, row, columnsCount)
+      when (cell) {
+        is CellBuilderImpl<*> -> {
+          val insets = cell.component.insets
+          val visualPaddings = Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
+          val verticalGap = getDefaultVerticalGap(cell.component)
+          val gaps = Gaps(top = verticalGap, bottom = verticalGap, right = rightGap)
+          rowsGridBuilder.cell(cell.component, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
+                               gaps = gaps, visualPaddings = visualPaddings)
+        }
+        is PanelBuilderImpl -> {
+          // todo visualPaddings
+          val gaps = Gaps(right = rightGap)
+          val subGrid = rowsGridBuilder.subGrid(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
+                                                gaps = gaps)
+
+          cell.build(panel, subGrid)
+        }
+        else -> throw IllegalArgumentException()
+      }
     }
   }
 

@@ -4,4 +4,4 @@ package com.intellij.ui.dsl
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-interface PanelBuilder: PanelBuilderBase, CellBuilderBase<PanelBuilder>
+interface PanelBuilder : PanelBuilderBase, CellBuilderBase<PanelBuilder>
