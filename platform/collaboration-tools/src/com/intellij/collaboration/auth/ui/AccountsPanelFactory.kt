@@ -43,6 +43,8 @@ object AccountsPanelFactory {
       accountsList.setPaintBusy(it)
     }
 
+    accountsList.addListSelectionListener { model.selectedAccount = accountsList.selectedValue }
+
     accountsList.emptyText.apply {
       appendText(CollaborationToolsBundle.message("accounts.none.added"))
       appendSecondaryText(CollaborationToolsBundle.message("accounts.add.link"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {

@@ -153,6 +153,8 @@ Includes the following features:</p>
 
     <treeStructureProvider implementation="org.intellij.plugins.markdown.ui.projectTree.MarkdownTreeStructureProvider"/>
 
+    <projectService serviceImplementation="org.intellij.plugins.markdown.google.accounts.GoogleProjectDefaultAccountHolder"/>
+    <applicationService serviceImplementation="org.intellij.plugins.markdown.google.accounts.GooglePersistentAccounts"/>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.google.authorization.GoogleOAuthService"/>
     <filePasteProvider implementation="org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsImportPasteProvider"/>
 
@@ -165,6 +167,8 @@ Includes the following features:</p>
                          nonDefaultProject="false"
                          key="markdown.settings.name"
                          instance="org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable"/>
+
+    <projectConfigurable parentId="Settings.Markdown" instance="org.intellij.plugins.markdown.google.ui.GoogleSettingsConfigurable"/>
 
     <!--suppress DeprecatedClassUsageInspection -->
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>

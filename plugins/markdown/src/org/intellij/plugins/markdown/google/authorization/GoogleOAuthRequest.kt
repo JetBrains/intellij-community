@@ -8,12 +8,18 @@ import com.intellij.openapi.components.service
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.DigestUtil
-import org.intellij.plugins.markdown.google.utils.GoogleCredentialUtils
+import org.intellij.plugins.markdown.google.GoogleAppCredentialsException
+import org.intellij.plugins.markdown.google.utils.GoogleAccountsUtils
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.ide.RestService
 import java.util.*
 
-internal class GoogleOAuthRequest(googleAppCred: GoogleCredentialUtils.GoogleAppCredentials) : OAuthRequest<GoogleCredentials> {
+internal fun getGoogleAuthRequest(): GoogleOAuthRequest {
+  val googleAppCred = GoogleAccountsUtils.getGoogleAppCredentials() ?: throw GoogleAppCredentialsException()
+  return GoogleOAuthRequest(googleAppCred)
+}
+
+internal class GoogleOAuthRequest(googleAppCred: GoogleAccountsUtils.GoogleAppCredentials) : OAuthRequest<GoogleCredentials> {
   private val port: Int get() = BuiltInServerManager.getInstance().port
 
   private val encoder = Base64.getUrlEncoder().withoutPadding()

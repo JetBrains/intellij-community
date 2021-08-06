@@ -9,11 +9,11 @@ import com.intellij.util.Urls
 import org.apache.commons.lang.time.DateUtils
 import org.intellij.plugins.markdown.google.authorization.GoogleOAuthService.Companion.getLocalDateTime
 import org.intellij.plugins.markdown.google.authorization.GoogleOAuthService.Companion.jacksonMapper
-import org.intellij.plugins.markdown.google.utils.GoogleCredentialUtils
+import org.intellij.plugins.markdown.google.utils.GoogleAccountsUtils
 import java.net.http.HttpHeaders
 
 internal class GoogleOAuthCredentialsAcquirer(
-  private val googleAppCred: GoogleCredentialUtils.GoogleAppCredentials,
+  private val googleAppCred: GoogleAccountsUtils.GoogleAppCredentials,
   private val authorizationCodeUrl: Url,
   private val codeVerifier: String
 ) : OAuthCredentialsAcquirer<GoogleCredentials> {

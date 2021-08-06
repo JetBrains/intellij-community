@@ -10,8 +10,8 @@ internal object MarkdownNotifier {
   val notificationGroup
     get() = requireNotNull(NotificationGroupManager.getInstance().getNotificationGroup("Markdown"))
 
-  fun showErrorNotification(project: Project, @NlsSafe msg: String) {
-    notificationGroup.createNotification(msg, NotificationType.ERROR).notify(project)
+  fun showErrorNotification(project: Project, @NlsSafe msg: String, @NlsSafe title: String = "") {
+    notificationGroup.createNotification(title, msg, NotificationType.ERROR).notify(project)
   }
 
   fun showWarningNotification(project: Project, @NlsSafe msg: String) {

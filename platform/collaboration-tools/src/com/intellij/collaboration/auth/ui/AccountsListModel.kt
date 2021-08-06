@@ -13,6 +13,7 @@ import javax.swing.ListModel
 interface AccountsListModel<A: Account, Cred> {
   var accounts: Set<A>
   var defaultAccount: A?
+  var selectedAccount: A?
   val newCredentials: Map<A, Cred>
 
   val accountsListModel: ListModel<A>
