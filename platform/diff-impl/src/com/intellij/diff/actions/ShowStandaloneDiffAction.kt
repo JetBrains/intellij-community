@@ -2,6 +2,7 @@
 package com.intellij.diff.actions
 
 import com.intellij.diff.editor.DiffEditorTabFilesManager.Companion.isDiffInEditor
+import com.intellij.diff.tools.external.ExternalDiffTool
 import com.intellij.idea.ActionsBundle.message
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider
@@ -37,7 +38,9 @@ class ShowStandaloneDiffAction : ExtendableAction(EP_NAME), DumbAware {
         description = message("action.Diff.ShowStandaloneDiff.window.description")
       }
 
-      isEnabledAndVisible = project != null && Registry.`is`("show.editor.diff.preview", true)
+      isEnabledAndVisible = project != null &&
+                            Registry.`is`("show.editor.diff.preview", true) &&
+                            !ExternalDiffTool.isDefault()
     }
   }
 }
