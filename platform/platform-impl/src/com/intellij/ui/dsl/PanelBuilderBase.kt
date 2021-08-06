@@ -2,6 +2,13 @@
 package com.intellij.ui.dsl
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import javax.swing.JLabel
 
 @ApiStatus.Experimental
-interface PanelBuilder: PanelBuilderBase, CellBuilderBase<PanelBuilder>
+interface PanelBuilderBase {
+
+  fun row(@Nls label: String, init: RowBuilder.() -> Unit): RowBuilder
+
+  fun row(label: JLabel? = null, init: RowBuilder.() -> Unit): RowBuilder
+}

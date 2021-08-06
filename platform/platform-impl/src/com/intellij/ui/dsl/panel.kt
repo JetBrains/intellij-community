@@ -2,26 +2,38 @@
 package com.intellij.ui.dsl
 
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.dsl.gridLayout.JBGridLayout
+import com.intellij.ui.dsl.impl.DialogPanelConfig
+import com.intellij.ui.dsl.impl.PanelBuilderImpl
 import org.jetbrains.annotations.ApiStatus
 
+/*
+todo
+remove first/last gaps
+panel in ShelfProjectConfigurable
+*/
+
 @ApiStatus.Experimental
-fun panel(init: PanelBuilder.() -> Unit): DialogPanel {
-  val builder = PanelBuilder()
+fun panel(init: PanelBuilderBase.() -> Unit): DialogPanel { // Dialog panel content supports only PanelBuilderBase, no CellBuilderBase
+  val dialogPanelConfig = DialogPanelConfig()
+  val builder = PanelBuilderImpl(dialogPanelConfig)
   builder.init()
 
-  val panel = builder.build()
-  initPanel(builder, panel)
-  return panel
+  val layout = JBGridLayout()
+  val result = DialogPanel(layout = layout)
+  builder.build(result, layout.rootGrid)
+  initPanel(dialogPanelConfig, result)
+  return result
 }
 
-private fun initPanel(builder: PanelBuilder, panel: DialogPanel) {
+private fun initPanel(dialogPanelConfig: DialogPanelConfig, panel: DialogPanel) {
   /* todo
   panel.preferredFocusedComponent = builder.builder.preferredFocusedComponent
   panel.validateCallbacks = builder.builder.validateCallbacks
   panel.componentValidateCallbacks = builder.builder.componentValidateCallbacks
   panel.customValidationRequestors = builder.builder.customValidationRequestors
   */
-  panel.applyCallbacks = builder.applyCallbacks
-  panel.resetCallbacks = builder.resetCallbacks
-  panel.isModifiedCallbacks = builder.isModifiedCallbacks
+  panel.applyCallbacks = dialogPanelConfig.applyCallbacks
+  panel.resetCallbacks = dialogPanelConfig.resetCallbacks
+  panel.isModifiedCallbacks = dialogPanelConfig.isModifiedCallbacks
 }
