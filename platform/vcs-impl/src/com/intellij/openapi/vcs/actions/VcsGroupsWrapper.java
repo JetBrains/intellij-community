@@ -50,7 +50,7 @@ public class VcsGroupsWrapper extends ActionGroup implements DumbAware {
   private static Set<String> collectVcses(@NotNull Project project, @NotNull DataContext dataContext) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
 
-    return VcsContextUtil.selectedFilesIterable(dataContext)
+    return VcsContextUtil.selectedFilePathsIterable(dataContext)
       .filterMap(vcsManager::getVcsFor)
       .map(AbstractVcs::getName)
       .unique()
