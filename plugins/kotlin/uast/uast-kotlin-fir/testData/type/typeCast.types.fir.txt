@@ -60,6 +60,7 @@ UFile (package = ) [import java.lang.Runnable...]
                             UClass (name = null) [final class null : java.lang.Runnable {...}]
                                 UMethod (name = run) [public fun run() : void {...}]
                                     UBlockExpression [{...}] : PsiType:Unit
+                                UMethod (name = ) [private fun () = UastEmptyExpression]
                 UIfExpression [if (foo(r, true) !== UastEmptyExpression <other> UastEmptyExpression) return "Fail: " + r] : PsiType:Unit
                     UBinaryExpression (operator = !==) [foo(r, true) !== UastEmptyExpression <other> UastEmptyExpression] : PsiType:boolean
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [foo(r, true)] : PsiType:Runnable
