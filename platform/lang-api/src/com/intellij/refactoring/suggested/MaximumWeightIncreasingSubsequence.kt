@@ -33,7 +33,7 @@ internal fun <T : Comparable<T>> findMaximumWeightIncreasingSubsequence(list: Li
   }
 
   val result = IntArrayList()
-  var index = list.indices.maxBy { subsequenceWeight[it] }!!
+  var index = list.indices.maxByOrNull { subsequenceWeight[it] }!!
   while (index >= 0) {
     result.add(index)
     index = subsequenceLastButOneItems[index]

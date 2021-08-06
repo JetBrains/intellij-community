@@ -87,7 +87,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
       val comparator = compareBy<LocalChangeList> { if (it.isDefault) -1 else 0 }
         .thenBy { if (it.changes.isEmpty()) -1 else 0 }
         .then(ChangesUtil.CHANGELIST_COMPARATOR)
-      return lists.minWith(comparator)
+      return lists.minWithOrNull(comparator)
     }
 
     private fun askTargetList(project: Project, changes: Collection<Change>): LocalChangeList? {

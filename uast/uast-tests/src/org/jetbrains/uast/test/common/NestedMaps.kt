@@ -171,7 +171,7 @@ inline fun <A : Appendable, K, V> A.printMapAsAlignedLists(
 ): A {
   val stringifiedKeys = map.mapValues { keyToList(it.key) }
 
-  val maxContextLength = stringifiedKeys.values.maxBy { it.size }?.size ?: 10
+  val maxContextLength = stringifiedKeys.values.maxByOrNull { it.size }?.size ?: 10
   val contextElementWidths = stringifiedKeys.values
     .fold(MutableList(maxContextLength) { 1 }) { acc, stringifiedContext ->
       stringifiedContext.forEachIndexed { i, s ->
@@ -210,8 +210,8 @@ fun <A : Appendable, K, V> A.printMapAsAlignedTrees(
     .uncurry(leafKey)
 
   // for pretty alignment
-  val valuePadding = max(1, stringifiedKeys.values.asSequence().map { it.lastOrNull()?.length ?: 0 }.max()!!)
-  val treeDepth = stringifiedKeys.values.asSequence().map { it.size }.max()!!
+  val valuePadding = max(1, stringifiedKeys.values.asSequence().map { it.lastOrNull()?.length ?: 0 }.maxOrNull()!!)
+  val treeDepth = stringifiedKeys.values.asSequence().map { it.size }.maxOrNull()!!
 
   prettyPrintTree(
     tree,
