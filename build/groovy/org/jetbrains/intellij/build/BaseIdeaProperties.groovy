@@ -45,7 +45,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.tasks.core",
     "intellij.repository.search",
     "intellij.maven.model",
-    "intellij.packageSearch",
     "intellij.gradle",
     "intellij.gradle.java",
     "intellij.vcs.git",
@@ -81,6 +80,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.lombok"
     "intellij.maven",
     "intellij.java.guiForms.designer",
+    "intellij.packageSearch",
     "intellij.statsCollector",
     "intellij.xpath",
     "intellij.xslt.debugger",
