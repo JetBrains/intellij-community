@@ -4431,6 +4431,114 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/convertArgumentToSet")
+    public static class ConvertArgumentToSet extends AbstractIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("infixIntersect.kt")
+        public void testInfixIntersect() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/infixIntersect.kt");
+        }
+
+        @TestMetadata("infixSubtract.kt")
+        public void testInfixSubtract() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/infixSubtract.kt");
+        }
+
+        @TestMetadata("iterableMinusArrayListOf.kt")
+        public void testIterableMinusArrayListOf() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/iterableMinusArrayListOf.kt");
+        }
+
+        @TestMetadata("iterableMinusArrayOfIndirect.kt")
+        public void testIterableMinusArrayOfIndirect() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/iterableMinusArrayOfIndirect.kt");
+        }
+
+        @TestMetadata("iterableMinusArrayOfQualified.kt")
+        public void testIterableMinusArrayOfQualified() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/iterableMinusArrayOfQualified.kt");
+        }
+
+        @TestMetadata("iterableMinusListOfImportAlias.kt")
+        public void testIterableMinusListOfImportAlias() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/iterableMinusListOfImportAlias.kt");
+        }
+
+        @TestMetadata("iterableMinusListOfIndirect.kt")
+        public void testIterableMinusListOfIndirect() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/iterableMinusListOfIndirect.kt");
+        }
+
+        @TestMetadata("iterableMinusListOfQualified.kt")
+        public void testIterableMinusListOfQualified() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/iterableMinusListOfQualified.kt");
+        }
+
+        @TestMetadata("iterableMinusListOfShadowed.kt")
+        public void testIterableMinusListOfShadowed() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/iterableMinusListOfShadowed.kt");
+        }
+
+        @TestMetadata("iterableMinusMutableListOf.kt")
+        public void testIterableMinusMutableListOf() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/iterableMinusMutableListOf.kt");
+        }
+
+        @TestMetadata("iterableMinusSequenceOfIndirect.kt")
+        public void testIterableMinusSequenceOfIndirect() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/iterableMinusSequenceOfIndirect.kt");
+        }
+
+        @TestMetadata("iterableMinusSequenceOfIndirectQualified.kt")
+        public void testIterableMinusSequenceOfIndirectQualified() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/iterableMinusSequenceOfIndirectQualified.kt");
+        }
+
+        @TestMetadata("listOfInferredConstant.kt")
+        public void testListOfInferredConstant() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/listOfInferredConstant.kt");
+        }
+
+        @TestMetadata("listOfLargeArgumentCount.kt")
+        public void testListOfLargeArgumentCount() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/listOfLargeArgumentCount.kt");
+        }
+
+        @TestMetadata("listOfThresholdArgumentCount.kt")
+        public void testListOfThresholdArgumentCount() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/listOfThresholdArgumentCount.kt");
+        }
+
+        @TestMetadata("listOfWithSomeNonConstantArguments.kt")
+        public void testListOfWithSomeNonConstantArguments() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/listOfWithSomeNonConstantArguments.kt");
+        }
+
+        @TestMetadata("outerScopeArgumentValue.kt")
+        public void testOuterScopeArgumentValue() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/outerScopeArgumentValue.kt");
+        }
+
+        @TestMetadata("outerScopeListOf.kt")
+        public void testOuterScopeListOf() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/outerScopeListOf.kt");
+        }
+
+        @TestMetadata("outerScopeMutableListOf.kt")
+        public void testOuterScopeMutableListOf() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/outerScopeMutableListOf.kt");
+        }
+
+        @TestMetadata("shadowedFunctionName.kt")
+        public void testShadowedFunctionName() throws Exception {
+            runTest("testData/intentions/convertArgumentToSet/shadowedFunctionName.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertArrayParameterToVararg")
     public static class ConvertArrayParameterToVararg extends AbstractIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
