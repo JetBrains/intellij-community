@@ -236,12 +236,10 @@ fun KtExpression?.receiverTypeIfSelectorIsSizeOrLength(): KotlinType? {
     }
     val resolvedCall = selector.resolveToCall() ?: return null
     val receiverType = (resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver)?.type ?: return null
-    return if ((receiverType.constructor.supertypes + receiverType).any(predicate)) receiverType else null
+    return receiverType.takeIf { (it.constructor.supertypes + it).any(predicate) }
 }
 
-fun KtExpression?.isSizeOrLength(): Boolean {
-    return receiverTypeIfSelectorIsSizeOrLength() != null
-}
+fun KtExpression?.isSizeOrLength() = receiverTypeIfSelectorIsSizeOrLength() != null
 
 private val COUNT_FUNCTIONS = listOf(FqName("kotlin.collections.count"), FqName("kotlin.text.count"))
 

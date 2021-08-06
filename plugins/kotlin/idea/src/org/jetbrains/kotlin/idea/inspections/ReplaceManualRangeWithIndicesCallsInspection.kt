@@ -10,39 +10,56 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.inspections.collections.isMap
+import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.intentions.getArguments
 import org.jetbrains.kotlin.idea.intentions.receiverTypeIfSelectorIsSizeOrLength
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ReplaceManualRangeWithIndicesCallsInspection : AbstractKotlinInspection() {
-    val rangeFunctions = setOf("until", "rangeTo")
+    companion object {
+        private val rangeFunctionNames = setOf("until", "rangeTo", "..")
+
+        private val rangeFunctionFqNames = listOf(
+            "Char",
+            "Byte", "Short", "Int", "Long",
+            "UByte", "UShort", "UInt", "ULong"
+        ).map { FqName("kotlin.$it.rangeTo") } + FqName("kotlin.ranges.until")
+    }
+
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
         override fun visitBinaryExpression(binaryExpression: KtBinaryExpression) {
-            val find = rangeFunctions.find { it == binaryExpression.operationReference.text }
-            if (binaryExpression.operationToken == KtTokens.RANGE || find != null) {
-                val operator = find ?: "rangeTo"
-                visitRange(holder, binaryExpression, binaryExpression.left ?: return, binaryExpression.right ?: return, operator)
-            }
+            val left = binaryExpression.left ?: return
+            val right = binaryExpression.right ?: return
+            val operator = binaryExpression.operationReference
+            visitRange(holder, binaryExpression, left, right, operator)
         }
 
         override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
-            val find = rangeFunctions.find { it == expression.selectorExpression?.text }
-            if (find != null) {
-                val call = (expression.parent as? KtCallExpression) ?: return
-                val firstArg = call.valueArguments.first().getArgumentExpression() ?: return
-                visitRange(holder, expression, expression.receiverExpression, firstArg, find)
-            }
+            val call = expression.callExpression ?: return
+            val left = expression.receiverExpression
+            val right = call.valueArguments.singleOrNull()?.getArgumentExpression() ?: return
+            val operator = call.calleeExpression ?: return
+            visitRange(holder, expression, left, right, operator)
         }
     }
 
-    private fun visitRange(holder: ProblemsHolder, range: KtExpression, left: KtExpression, right: KtExpression, rangeFunction: String) {
+    private fun visitRange(holder: ProblemsHolder, range: KtExpression, left: KtExpression, right: KtExpression, operator: KtExpression) {
+        if (operator.text !in rangeFunctionNames) return
+        val functionFqName = range.resolveToCall()?.resultingDescriptor?.fqNameOrNull() ?: return
+        if (functionFqName !in rangeFunctionFqNames) return
+        val rangeFunction = functionFqName.shortName().asString()
+
         if (left.toIntConstant() != 0) return
         val sizeOrLengthCall = right.sizeOrLengthCall(rangeFunction) ?: return
-        val collection = (sizeOrLengthCall as? KtQualifiedExpression)?.receiverExpression
+        val collection = sizeOrLengthCall.safeAs<KtQualifiedExpression>()?.receiverExpression
         if (collection != null && collection !is KtSimpleNameExpression) return
 
         val parent = range.parent.parent
