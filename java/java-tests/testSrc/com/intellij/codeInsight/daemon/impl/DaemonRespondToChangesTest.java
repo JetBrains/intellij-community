@@ -17,10 +17,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspectionBase;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -91,6 +88,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.inline.InlineRefactoringActionHandler;
@@ -1325,15 +1323,22 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Top level element is not completed", info.getDescription());
   }
 
-  public static ProperTextRange makeEditorWindowVisible(Point viewPosition, Editor editor) {
+  public static ProperTextRange makeEditorWindowVisible(@NotNull Point viewPosition, @NotNull Editor editor) {
     ((EditorImpl)editor).getScrollPane().getViewport().setSize(1000, 1000);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     ((EditorImpl)editor).getScrollPane().getViewport().setViewPosition(viewPosition);
-    ((EditorImpl)editor).getScrollPane().getViewport().setExtentSize(new Dimension(100, ((EditorImpl)editor).getPreferredHeight() -
-                                                                                        viewPosition.y));
+    ((EditorImpl)editor).getScrollPane().getViewport().setExtentSize(new Dimension(100, ((EditorImpl)editor).getPreferredHeight() - viewPosition.y));
     return VisibleHighlightingPassFactory.calculateVisibleRange(editor);
+  }
+
+  private static void makeWholeEditorWindowVisible(@NotNull EditorImpl editor) {
+    editor.getScrollPane().getViewport().setSize(1000, editor.getPreferredHeight());
+
+    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    editor.getScrollPane().getViewport().setViewPosition(new Point(0, 0));
+    editor.getScrollPane().getViewport().setExtentSize(new Dimension(100, editor.getPreferredHeight()));
   }
 
 
@@ -2916,6 +2921,103 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(text, document.getText());  // retain non-phys document until after highlighting
     assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
     assertTrue(PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments());
+  }
+
+  public void testLocalInspectionPassMustRunFastOrFertileInspectionsFirstToReduceLatency() {
+    @Language("JAVA")
+    String text = "class LQF {\n" +
+                  "    int f;\n" +
+                  "    public void me() {\n" +
+                  "        //\n" +
+                  "    }\n" +
+                  " void foo//<caret>\n" +
+                  "(){}"+
+                  "}";
+    configureByText(JavaFileType.INSTANCE, text);
+    makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
+    //Registry.get("inspection.sort").setValue(false);
+
+    AtomicReference<String> diagnosticText = new AtomicReference<>("1st run");
+    AtomicInteger stallMs = new AtomicInteger();
+    LocalInspectionTool tool = new LocalInspectionTool() {
+      @Nls
+      @NotNull
+      @Override
+      public String getGroupDisplayName() {
+        return "fegna";
+      }
+
+      @Nls
+      @NotNull
+      @Override
+      public String getDisplayName() {
+        return getGroupDisplayName();
+      }
+
+      @NotNull
+      @Override
+      public String getShortName() {
+        return getGroupDisplayName();
+      }
+
+      @NotNull
+      @Override
+      public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+        return new JavaElementVisitor() {
+          @Override
+          public void visitField(PsiField field) {
+            holder.registerProblem(field.getNameIdentifier(), diagnosticText.get());
+            System.out.println("reported: "+diagnosticText);
+            super.visitField(field);
+          }
+
+          @Override
+          public void visitElement(@NotNull PsiElement element) {
+            // stall every other element to exacerbate latency problems if the order is wrong
+            TimeoutUtil.sleep(stallMs.get());
+          }
+        };
+      }
+    };
+    disposeOnTearDown(() -> disableInspectionTool(tool.getShortName()));
+    for (Tools tools : ProjectInspectionProfileManager.getInstance(getProject()).getCurrentProfile().getAllEnabledInspectionTools(getProject())) {
+      disableInspectionTool(tools.getTool().getShortName());
+    }
+    enableInspectionTool(tool);
+
+    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+    HighlightInfo i = assertOneElement(infos);
+    assertEquals(diagnosticText.get(), i.getDescription());
+
+    diagnosticText.set("Aha, field, finally!");
+    stallMs.set(10000);
+    backspace();
+    backspace();
+    type("blah");
+    makeWholeEditorWindowVisible((EditorImpl)myEditor); // get "visible area first" optimization out of the way
+
+    // now when the LIP restarted we should get back our inspection result very fast, despite very slow processing of every other element
+    long deadline = System.currentTimeMillis() + 10_000;
+    while (!daemonIsWorkingOrPending()) {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      if (System.currentTimeMillis() > deadline) {
+        fail("Too long waiting for daemon to start");
+      }
+    }
+    PsiField field = ((PsiJavaFile)getFile()).getClasses()[0].getFields()[0];
+    TextRange range = field.getNameIdentifier().getTextRange();
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(getEditor().getDocument(), getProject(), true);
+    while (daemonIsWorkingOrPending()) {
+      if (System.currentTimeMillis() > deadline) {
+        DaemonRespondToChangesPerformanceTest.dumpThreadsToConsole();
+        fail("Too long waiting for daemon to finish");
+      }
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      boolean found = !DaemonCodeAnalyzerEx.processHighlights(model, getProject(), HighlightSeverity.WARNING, range.getStartOffset(), range.getEndOffset(), info -> !diagnosticText.get().equals(info.getDescription()));
+      if (found) {
+        break;
+      }
+    }
   }
 }
 
