@@ -2,6 +2,8 @@
     "mainFile": "Main.kt",
     "usages": [
         "Doo.kt",
-        "Foo.kt"
+        "Foo.kt",
+        "Child.kt",
+        "ChildUsage.kt"
     ]
 }

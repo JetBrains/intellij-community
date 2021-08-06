@@ -262,17 +262,32 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
 
     private fun referentFiles(element: PsiElement): Set<VirtualFile>? = tryWithReadLock(fun(): Set<VirtualFile>? {
         val storage = storage ?: return null
-        val originalFqNames = extractFqNames(element) ?: return null
+        val originalElement = element.unwrapped ?: return null
+        val originalFqNames = extractFqNames(originalElement) ?: return null
         val virtualFile = PsiUtilCore.getVirtualFile(element) ?: return null
         if (projectFileIndex.isInSource(virtualFile) && virtualFile in dirtyScopeHolder) return null
         if (projectFileIndex.isInLibrary(virtualFile)) return null
+        val additionalFqNames = findSubclassesFqNamesIfApplicable(originalElement)?.let { subclassesFqNames ->
+            subclassesFqNames.flatMap { subclass -> originalFqNames.map { subclass.child(it.shortName()) } }
+        }.orEmpty()
 
-        return originalFqNames.flatMapTo(mutableSetOf()) { currentFqName ->
+        return originalFqNames.plus(additionalFqNames).flatMapTo(mutableSetOf()) { currentFqName ->
             val name = currentFqName.shortName().asString()
             val scope = currentFqName.parent().takeUnless(FqName::isRoot)?.asString() ?: ""
             storage.get(LookupSymbol(name, scope)).mapNotNull { VfsUtil.findFile(Path(it), true) }
         }
     })
+
+    private fun findSubclassesFqNamesIfApplicable(element: PsiElement): List<FqName>? {
+        val originalClassFqName = when (element) {
+            is KtClassOrObject -> null
+            is PsiMember -> element.containingClass?.getKotlinFqName()
+            is KtCallableDeclaration -> element.containingClassOrObject?.takeUnless { it is KtObjectDeclaration }?.fqName
+            else -> null
+        } ?: return null
+
+        return storage?.getSubtypesOf(originalClassFqName, true)?.toList()
+    }
 
     private val isInsideLibraryScopeThreadLocal = ThreadLocal.withInitial { false }
     private fun isInsideLibraryScope(): Boolean = CompilerReferenceService.getInstanceIfEnabled(project)
@@ -387,11 +402,10 @@ private fun executeOnBuildThread(compilationFinished: () -> Unit): Unit =
     }
 
 private fun extractFqNames(element: PsiElement): List<FqName>? {
-    val originalElement = element.unwrapped ?: return null
-    extractFqName(originalElement)?.let { return listOf(it) }
-    return when (originalElement) {
-        is PsiMethod -> extractFqNamesFromPsiMethod(originalElement)
-        is KtParameter -> extractFqNamesFromParameter(originalElement)
+    extractFqName(element)?.let { return listOf(it) }
+    return when (element) {
+        is PsiMethod -> extractFqNamesFromPsiMethod(element)
+        is KtParameter -> extractFqNamesFromParameter(element)
         else -> null
     }
 }
@@ -400,14 +414,14 @@ private fun extractFqName(element: PsiElement): FqName? = when (element) {
     is KtClassOrObject, is PsiClass -> element.getKotlinFqName()
     is KtConstructor<*> -> element.getContainingClassOrObject().fqName
     is KtNamedFunction -> element.fqName
-    is KtProperty -> element.takeUnless(KtProperty::isOverridable)?.fqName
-    is PsiField -> element.takeIf { it.hasModifier(JvmModifier.STATIC) }?.getKotlinFqName()
+    is KtProperty -> element.fqName
+    is PsiField -> element.getKotlinFqName()
     else -> null
 }
 
 private fun extractFqNamesFromParameter(parameter: KtParameter): List<FqName>? {
     val parameterFqName = parameter.takeIf(KtParameter::hasValOrVar)?.fqName ?: return null
-    if (parameter.containingClass()?.isData() == false) return parameterFqName.takeUnless { parameter.isOverridable }?.let(::listOf)
+    if (parameter.containingClass()?.isData() == false) return parameterFqName.let(::listOf)
 
     val parameterIndex = parameter.parameterIndex().takeUnless { it == -1 }?.plus(1) ?: return null
     return listOf(parameterFqName, FqName(parameterFqName.parent().asString() + ".component$parameterIndex"))

@@ -1,6 +1,12 @@
 {
     "mainFile": "K.kt",
-    "shouldBeUsage" : [
+    "usages": [
+        "k_.kt",
+        "kk_.kt",
+        "kkk_.kt",
+        "kkkk_.kt"
+    ],
+    "shouldBeUsage": [
         "jk_.kt",
         "jjk_.kt",
         "jkk_.kt",
@@ -8,13 +14,9 @@
         "jjkk_.kt",
         "jkjk_.kt",
         "jkkk_.kt",
-        "k_.kt",
-        "kk_.kt",
         "kjk_.kt",
-        "kkk_.kt",
         "kjjk_.kt",
         "kjkk_.kt",
-        "kkjk_.kt",
-        "kkkk_.kt"
+        "kkjk_.kt"
     ]
 }
