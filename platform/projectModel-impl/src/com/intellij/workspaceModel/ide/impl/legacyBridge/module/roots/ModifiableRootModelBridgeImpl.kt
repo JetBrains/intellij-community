@@ -60,7 +60,8 @@ internal class ModifiableRootModelBridgeImpl(
   private var savedModuleEntity: ModuleEntity
 
   init {
-    savedModuleEntity = entityStorageOnDiff.current.findModuleEntity(module) ?: error("Cannot find module entity for '$moduleBridge'")
+    savedModuleEntity = entityStorageOnDiff.current.findModuleEntity(module)
+                        ?: error("Cannot find module entity for '$moduleBridge'. Store: $diff")
   }
 
   override fun getModificationCount(): Long = diff.modificationCount
