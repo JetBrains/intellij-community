@@ -3,8 +3,8 @@ class <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>My<!>(val <!HIGHLIGHTI
 fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>My<!>?.<!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>(): <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!> {
     if (this == null) return 42
     if (<!HIGHLIGHTING("descr='Implicit receiver smart cast to My'; textAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!> == null) {
-        if (<!HIGHLIGHTING("descr='Implicit receiver smart cast to My'; textAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("descr='Smart cast to kotlin/Int?'; textAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!> != null) {
-            return <!HIGHLIGHTING("descr='Implicit receiver smart cast to My'; textAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("descr='Smart cast to kotlin/Int'; textAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!>
+        if (<!HIGHLIGHTING("descr='Implicit receiver smart cast to My'; textAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("descr='Smart cast to kotlin/Nothing?'; textAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!> != null) {
+            return <!HIGHLIGHTING("descr='Implicit receiver smart cast to My'; textAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("descr='Smart cast to kotlin/Nothing'; textAttributesKey='KOTLIN_SMART_CAST_VALUE'"), HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>x<!>
         }
         return 13
     }
