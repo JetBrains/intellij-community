@@ -58,7 +58,11 @@ abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase() {
     protected fun findSubOrSuperTypes(name: String, deep: Boolean, subtypes: Boolean): List<String>? {
         val service = KotlinCompilerReferenceIndexService[project]
         val fqName = FqName(name)
-        val sequence = if (subtypes) service.getSubtypesOfInTests(fqName, deep) else service.getSupertypesOfInTests(fqName, deep)
+        val sequence = if (subtypes)
+            service.getSubtypesOfInTests(fqName, deep)
+        else
+            throw NotImplementedError("supertypes not supported")
+
         return sequence?.map { it.asString() }?.sorted()?.toList()
     }
 

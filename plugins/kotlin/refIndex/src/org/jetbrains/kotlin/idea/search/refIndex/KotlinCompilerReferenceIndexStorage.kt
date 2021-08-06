@@ -26,8 +26,6 @@ class KotlinCompilerReferenceIndexStorage(
     pathConverter,
 ) {
     companion object {
-        private const val SUPERTYPES = "supertypes"
-
         /**
          * [org.jetbrains.kotlin.incremental.AbstractIncrementalCache.Companion.SUBTYPES]
          */
@@ -41,16 +39,13 @@ class KotlinCompilerReferenceIndexStorage(
     private val String.storagePath: Path get() = targetDataDir.resolve(asStorageName)
 
     private val subtypesStorage = ClassOneToManyStorage(SUBTYPES.storagePath)
-    private val supertypesStorage = ClassOneToManyStorage(SUPERTYPES.storagePath)
 
     override fun close() {
         subtypesStorage.closeAndClean()
-        supertypesStorage.closeAndClean()
         super.close()
     }
 
     fun getSubtypesOf(fqName: FqName, deep: Boolean): Sequence<FqName> = subtypesStorage[fqName, deep]
-    fun getSupertypesOf(fqName: FqName, deep: Boolean): Sequence<FqName> = supertypesStorage[fqName, deep]
 
     fun initialize(buildDataPaths: BuildDataPaths) {
         for (buildTargetType in JavaModuleBuildTargetType.ALL_TYPES) {
@@ -74,9 +69,6 @@ class KotlinCompilerReferenceIndexStorage(
             source.processKeysWithExistingMapping { key ->
                 source[key]?.let { values ->
                     subtypesStorage.add(key, values)
-                    for (value in values) {
-                        supertypesStorage.add(value, key)
-                    }
                 }
 
                 true

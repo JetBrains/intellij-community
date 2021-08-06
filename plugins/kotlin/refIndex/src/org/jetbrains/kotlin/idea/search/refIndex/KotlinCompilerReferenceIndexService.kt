@@ -258,9 +258,6 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
     fun getSubtypesOfInTests(fqName: FqName, deep: Boolean): Sequence<FqName>? = storage?.getSubtypesOf(fqName, deep)
 
     @TestOnly
-    fun getSupertypesOfInTests(fqName: FqName, deep: Boolean): Sequence<FqName>? = storage?.getSupertypesOf(fqName, deep)
-
-    @TestOnly
     fun findReferenceFilesInTests(element: PsiElement): Set<VirtualFile>? = referentFiles(element)
 
     private fun referentFiles(element: PsiElement): Set<VirtualFile>? = tryWithReadLock(fun(): Set<VirtualFile>? {

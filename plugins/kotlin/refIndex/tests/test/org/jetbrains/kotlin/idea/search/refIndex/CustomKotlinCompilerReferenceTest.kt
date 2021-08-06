@@ -117,8 +117,8 @@ class CustomKotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
 
         rebuildProject()
         forEachBoolean { deep ->
-            assertEquals(emptyList<String>(), findSubOrSuperTypes("one.two.K", deep, subtypes = false))
-            assertEquals(emptyList<String>(), findSubOrSuperTypes("Another", deep, subtypes = false))
+            //assertEquals(emptyList<String>(), findSubOrSuperTypes("one.two.K", deep, subtypes = false))
+            //assertEquals(emptyList<String>(), findSubOrSuperTypes("Another", deep, subtypes = false))
 
             assertEquals(emptyList<String>(), findSubOrSuperTypes("one.two.KKK", deep, subtypes = true))
             assertEquals(emptyList<String>(), findSubOrSuperTypes("Another", deep, subtypes = true))
@@ -127,7 +127,7 @@ class CustomKotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         assertEquals(subtypes, findSubOrSuperTypes("one.two.K", deep = false, subtypes = true))
         assertEquals(deepSubtypes, findSubOrSuperTypes("one.two.K", deep = true, subtypes = true))
 
-        assertEquals(listOf("one.two.KK"), findSubOrSuperTypes("one.two.KKK", deep = false, subtypes = false))
-        assertEquals(listOf("one.two.K", "one.two.KK"), findSubOrSuperTypes("one.two.KKK", deep = true, subtypes = false))
+        //assertEquals(listOf("one.two.KK"), findSubOrSuperTypes("one.two.KKK", deep = false, subtypes = false))
+        //assertEquals(listOf("one.two.K", "one.two.KK"), findSubOrSuperTypes("one.two.KKK", deep = true, subtypes = false))
     }
 }
