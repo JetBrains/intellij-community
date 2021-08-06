@@ -269,6 +269,8 @@ public final class SVGLoader {
 
   /**
    * Loads an image with the specified {@code width} and {@code height} (in user space). Size specified in svg file is ignored.
+   * <p></p>
+   * Note: always pass {@code url} when it is available.
    */
   public static Image load(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext scaleContext, double width, double height) throws IOException {
     try {
