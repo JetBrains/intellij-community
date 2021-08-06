@@ -4,8 +4,8 @@ package com.intellij.execution.runToolbar
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.containers.ComparatorUtil
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import java.awt.Component
 import java.awt.Dimension
@@ -14,7 +14,23 @@ import javax.swing.JComponent
 
 open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionGroup) : SegmentedActionToolbarComponent(place, group) {
   companion object {
-    private val LOG = Logger.getInstance(FixWidthSegmentedActionToolbarComponent::class.java)
+    private val RUN_CONFIG_WIDTH_UNSCALED = 180
+    private val ARROW_WIDTH_UNSCALED = 28
+
+    val RUN_CONFIG_WIDTH: Int
+      get() {
+        return JBUI.scale(RUN_CONFIG_WIDTH_UNSCALED)
+      }
+    val ARROW_WIDTH: Int
+      get() {
+        return JBUI.scale(ARROW_WIDTH_UNSCALED)
+      }
+
+    val CONFIG_WITH_ARROW_WIDTH: Int
+      get() {
+        return JBUI.scale(ARROW_WIDTH_UNSCALED + RUN_CONFIG_WIDTH_UNSCALED)
+      }
+
     private var runConfigWidth: JBValue.Float? = null
     private var rightSideWidth: JBValue.Float? = null
   }
@@ -118,7 +134,7 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
           right_stable.contains(getComponent(it))
         }.sumOf { getChildPreferredSize(it).width }
 
-        (rightWidth + (runConfigWidth?.get() ?: 0) - stablePrefWidth).let {
+        (rightWidth + CONFIG_WITH_ARROW_WIDTH - stablePrefWidth).let {
           if(it > 0) it else null
         } ?.let {
           var offset = 0

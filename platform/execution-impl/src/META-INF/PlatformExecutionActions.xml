@@ -20,9 +20,9 @@
     </group>
 
     <group id="RunToolbarMainActionsGroup" popup="false">
+      <action class="com.intellij.execution.runToolbar.RunToolbarMainSlotActive"/>
       <action id="RunToolbarShowHidePopupAction" class="com.intellij.execution.runToolbar.RunToolbarShowHidePopupAction" icon="com.intellij.icons.AllIcons.Toolbar.AddSlot"/>
-      <reference id="RunToolbarProcessStartedAction"/>
-      <action id="RunToolbarMainMultipleProcessStartedAction" class="com.intellij.execution.runToolbar.RunToolbarMainMultipleProcessStartedAction"/>
+      <action id="RunToolbarMainSlotInfoAction" class="com.intellij.execution.runToolbar.RunToolbarMainSlotInfoAction"/>
       <reference id="RunToolbarRunConfigurationsAction"/>
       <reference id="RunToolbarRerunAction"/>
       <reference id="RunToolbarAdditionalProcessActions"/>

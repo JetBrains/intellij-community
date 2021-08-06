@@ -43,7 +43,7 @@ class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTR
     return object : RunConfigurationsComboBoxButton(presentation) {
       override fun getPreferredSize(): Dimension? {
         val d = super.getPreferredSize()
-        d.width = JBUIScale.scale(180)
+        d.width = FixWidthSegmentedActionToolbarComponent.RUN_CONFIG_WIDTH
         return d
       }
 

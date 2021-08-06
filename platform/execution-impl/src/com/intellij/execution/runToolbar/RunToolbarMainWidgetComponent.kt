@@ -3,25 +3,32 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
-import java.beans.PropertyChangeEvent
-import java.beans.PropertyChangeListener
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.IdeFrame
+import java.awt.event.ContainerEvent
+import java.awt.event.ContainerListener
+import javax.swing.SwingUtilities
 
 class RunToolbarMainWidgetComponent(val presentation: Presentation, place: String, group: ActionGroup) :
   FixWidthSegmentedActionToolbarComponent(place, group) {
   companion object {
-    var RUN_TOOLBAR_MAIN_WIDGET_COMPONENT_KEY: DataKey<RunToolbarMainWidgetComponent> = DataKey.create(
-      "RUN_TOOLBAR_MAIN_WIDGET_COMPONENT_KEY")
-    internal val PROP_POJECT = Key<Project>("PROP_POJECT")
+    private var counter: MutableMap<Project, Int> = mutableMapOf()
   }
 
-  init {
-    presentation.addPropertyChangeListener(
-      PropertyChangeListener { evt: PropertyChangeEvent -> presentationChanged(evt) })
+  private var project: Project? = null
+  private var popupController: RunToolbarPopupController? = null
+
+  private val componentListener = object : ContainerListener {
+    override fun componentAdded(e: ContainerEvent) {
+      rebuildPopupControllerComponent()
+    }
+
+    override fun componentRemoved(e: ContainerEvent) {
+      rebuildPopupControllerComponent()
+    }
   }
 
   internal var isOpened = false
@@ -30,22 +37,61 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
       //updateActionsImmediately(true)
     }
 
-  private fun presentationChanged(event: PropertyChangeEvent) {
-    presentation.getClientProperty(PROP_POJECT)?.let { project ->
+  override fun addNotify() {
+    super.addNotify()
+
+    (SwingUtilities.getWindowAncestor(this) as? IdeFrame)?.project?.let {
+      project = it
+      popupController = RunToolbarPopupController(it, this)
+
+      val value = counter.getOrDefault(it, 0) + 1
+      counter[it] = value
+      if (value == 1) {
+        RunToolbarSlotManager.getInstance(it).active = true
+      }
+
       DataManager.registerDataProvider(component, DataProvider { key ->
         when {
           RunToolbarData.RUN_TOOLBAR_DATA_KEY.`is`(key) -> {
-            RunToolbarSlotManager.getInstance(project).mainSlotData
+            RunToolbarSlotManager.getInstance(it).mainSlotData
           }
           RunToolbarData.RUN_TOOLBAR_POPUP_STATE_KEY.`is`(key) -> {
             isOpened
-          }
-          RUN_TOOLBAR_MAIN_WIDGET_COMPONENT_KEY.`is`(key) -> {
-            this@RunToolbarMainWidgetComponent
           }
           else -> null
         }
       })
     }
+
+    rebuildPopupControllerComponent()
+    addContainerListener(componentListener)
   }
+
+  private fun rebuildPopupControllerComponent() {
+    popupController?.let {
+      it.updateControllerComponents(components.filter{it is PopupControllerComponent}.toMutableList())
+    }
+  }
+
+  override fun removeNotify() {
+    project?.let { project ->
+      counter[project]?.let {
+        val value = maxOf(it - 1, 0)
+        counter[project] = value
+        if (value == 0) {
+          RunToolbarSlotManager.getInstance(project).active = false
+        }
+      }
+    }
+    removeContainerListener(componentListener)
+    popupController?.let {
+      if(!Disposer.isDisposed(it)) {
+        Disposer.dispose(it)
+      }
+    }
+
+    super.removeNotify()
+  }
+
+
 }

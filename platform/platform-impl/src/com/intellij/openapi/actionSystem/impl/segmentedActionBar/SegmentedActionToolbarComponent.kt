@@ -4,14 +4,16 @@ package com.intellij.openapi.actionSystem.impl.segmentedActionBar
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import java.awt.*
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.border.Border
+
 
 open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, val paintBorderForSingleItem: Boolean = true) : ActionToolbarImpl(place, group, true) {
   companion object {
@@ -33,7 +35,7 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
     }
 
     fun paintButtonDecorations(g: Graphics2D, c: JComponent, paint: Paint): Boolean {
-      return painter.paintButtonDecorations(g, c, paint)
+      return SegmentedBarPainter.paintButtonDecorations(g, c, paint)
     }
   }
 
@@ -48,7 +50,7 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
     }
 
     override fun paintBackground(g: Graphics, component: JComponent, state: Int) {
-      painter.paintActionButtonBackground(g, component, state)
+      SegmentedBarPainter.paintActionButtonBackground(g, component, state)
     }
   }
 
@@ -71,11 +73,10 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
 
     var component = super.createCustomComponent(action, presentation)
 
-    if (action is ComboBoxAction && component is JPanel && component.getComponentCount() == 1) {
-      val child = component.getComponent(0) as? JComponent
-      if (child != null) {
-        component.remove(child)
-        component = child
+    if (action is ComboBoxAction) {
+      UIUtil.uiTraverser(component).filter(ComboBoxButton::class.java).firstOrNull()?.let {
+        component.remove(it)
+        component = it
       }
     }
 
@@ -133,24 +134,24 @@ open class SegmentedActionToolbarComponent(place: String, group: ActionGroup, va
   }
 
   private fun isSuitableAction(it: AnAction): Boolean {
-    return it !is Separator || (it is ComboBoxAction) && (it !is CustomComponentAction) || (it is BarCustomComponentAction)
+    return true
   }
 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
-    painter.paintActionBarBackground(this, g)
+    SegmentedBarPainter.paintActionBarBackground(this, g)
   }
 
   override fun paintBorder(g: Graphics) {
     if(isActive || paintBorderForSingleItem) {
-      painter.paintActionBarBorder(this, g)
+      SegmentedBarPainter.paintActionBarBorder(this, g)
     }
   }
 
   override fun paint(g: Graphics) {
     super.paint(g)
     if(isActive || paintBorderForSingleItem) {
-      painter.paintActionBarBorder(this, g)
+      SegmentedBarPainter.paintActionBarBorder(this, g)
     }
   }
 

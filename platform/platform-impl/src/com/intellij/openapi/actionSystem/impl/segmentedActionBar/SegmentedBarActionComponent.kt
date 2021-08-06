@@ -63,5 +63,3 @@ open class SegmentedBarActionComponent(private val place: String = ActionPlaces.
     return SegmentedActionToolbarComponent(place, group)
   }
 }
-
-interface BarCustomComponentAction
