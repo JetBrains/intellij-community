@@ -22,6 +22,7 @@ import org.junit.runners.Parameterized
 import java.io.File
 
 
+@Suppress("ACCIDENTAL_OVERRIDE")
 abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImportingTestCase() {
 
     sealed class KotlinVersionRequirement {
