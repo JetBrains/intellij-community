@@ -18,8 +18,10 @@ import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.destructuringDeclarationVisitor
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
@@ -44,7 +46,13 @@ class IncompleteDestructuringInspection : AbstractKotlinInspection() {
 }
 
 private fun KtDestructuringDeclaration.primaryParameters(): List<ValueParameterDescriptor>? {
-    val type = initializer?.getType(analyze(BodyResolveMode.PARTIAL)) ?: return null
+    val initializer = this.initializer
+    val parameter = this.parent as? KtParameter
+    val type = when {
+        initializer != null -> initializer.getType(analyze(BodyResolveMode.PARTIAL))
+        parameter != null -> analyze(BodyResolveMode.PARTIAL)[BindingContext.VALUE_PARAMETER, parameter]?.type
+        else -> null
+    } ?: return null
     val classDescriptor = type.constructor.declarationDescriptor as? ClassDescriptor ?: return null
     return classDescriptor.constructors.firstOrNull { it.isPrimary }?.valueParameters
 }

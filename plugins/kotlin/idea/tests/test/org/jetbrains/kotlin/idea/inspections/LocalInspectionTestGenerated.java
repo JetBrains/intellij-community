@@ -6081,6 +6081,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/incompleteDestructuringInspection/hasType.kt");
         }
 
+        @TestMetadata("lambdaParameter.kt")
+        public void testLambdaParameter() throws Exception {
+            runTest("testData/inspectionsLocal/incompleteDestructuringInspection/lambdaParameter.kt");
+        }
+
+        @TestMetadata("loopParameter.kt")
+        public void testLoopParameter() throws Exception {
+            runTest("testData/inspectionsLocal/incompleteDestructuringInspection/loopParameter.kt");
+        }
+
         @TestMetadata("negative.kt")
         public void testNegative() throws Exception {
             runTest("testData/inspectionsLocal/incompleteDestructuringInspection/negative.kt");
