@@ -24,4 +24,13 @@
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereActionFeaturesProvider"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.filePrediction.features.history.FileHistoryManagerWrapper$ProjectClosureListener"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
+  </applicationListeners>
+  <projectListeners>
+    <listener class="com.intellij.filePrediction.features.history.FileHistoryManagerWrapper$EditorManagerListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
 </idea-plugin>
