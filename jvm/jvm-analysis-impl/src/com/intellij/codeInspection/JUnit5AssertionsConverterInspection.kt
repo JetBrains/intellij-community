@@ -3,12 +3,10 @@ package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.TestFrameworks
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.JavaVersionService
 import com.intellij.psi.*
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import com.siyeh.ig.testFrameworks.AbstractAssertHint
@@ -25,6 +23,8 @@ class JUnit5AssertionsConverterInspection(val frameworkName: @NonNls String = "J
     if (JavaPsiFacade.getInstance(file.project).findClass(JUnitCommonClassNames.ORG_JUNIT_ASSERT, file.resolveScope) == null) return false
     if (JavaPsiFacade.getInstance(file.project)
         .findClass(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, file.resolveScope) == null) return false
+    if (file !is PsiClassOwner) return false
+    if (file.classes.all {  TestFrameworks.detectFramework(it)?.name != frameworkName }) return false
     return true
   }
 
@@ -62,17 +62,11 @@ class JUnit5AssertionsConverterInspection(val frameworkName: @NonNls String = "J
 
     private fun doCheck(node: UExpression, toHighlight: () -> PsiElement?, createHint: () -> AbstractAssertHint<UExpression>?) {
       val sourcePsi = node.sourcePsi ?: return
-      val project = sourcePsi.project
-      val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
-      JavaPsiFacade.getInstance(project).findClass(
-        JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
-      ) ?: return
       val hint = createHint() ?: return
       val psiMethod = hint.method
       if (!psiMethod.hasModifierProperty(PsiModifier.STATIC)) return
       if (!hint.isMessageOnFirstPosition) return
-      val file = sourcePsi.containingFile
-      if (file !is PsiClassOwner) return
+      val file = sourcePsi.containingFile as PsiClassOwner
       for (psiClass in file.classes) {
         val testFramework = TestFrameworks.detectFramework(psiClass) ?: continue
         if (frameworkName == testFramework.name) {
@@ -121,7 +115,7 @@ class JUnit5AssertionsConverterInspection(val frameworkName: @NonNls String = "J
           uElement.replace(newCallableReferences) ?: return
         }
         is UIdentifier -> { // UCallExpression
-          val methodCall = uElement.getUCallExpression(MAX_CALL_SEARCH_LIMIT) ?: return
+          val methodCall = uElement.getParentOfType<UCallExpression>() ?: return
           val methodName = methodCall.methodName ?: return
           val assertHint = UAssertHint.create(methodCall) {
             AbstractAssertHint.ASSERT_METHOD_2_PARAMETER_COUNT[it]
@@ -151,9 +145,5 @@ class JUnit5AssertionsConverterInspection(val frameworkName: @NonNls String = "J
     override fun getName(): String = JvmAnalysisBundle.message("jvm.inspections.junit5.assertions.converter.quickfix", baseClassName)
 
     override fun getFamilyName(): String = JvmAnalysisBundle.message("jvm.inspections.junit5.assertions.converter.familyName")
-  }
-
-  companion object {
-    const val MAX_CALL_SEARCH_LIMIT = 2
   }
 }
