@@ -154,8 +154,6 @@ internal class PackageSearchDataService(
     init {
         logDebug("PKGSDataService#Starting up the Package Search root model...")
 
-        checkNotificationsSetupIsCorrect()
-
         launchLoop(1.toDuration(HOURS)) {
             refreshKnownRepositories(TraceInfo(TraceInfo.TraceSource.INIT))
         }
@@ -199,12 +197,6 @@ internal class PackageSearchDataService(
                 showErrorNotification(message = PackageSearchBundle.message("packagesearch.search.client.searching.failed.timeout"))
             }
             else -> showErrorNotification(message = PackageSearchBundle.message("packagesearch.search.client.searching.failed"))
-        }
-    }
-
-    private fun checkNotificationsSetupIsCorrect() {
-        checkNotNull(NotificationGroupManager.getInstance().getNotificationGroup(PACKAGE_SEARCH_NOTIFICATION_GROUP_ID)) {
-            "Notification group $PACKAGE_SEARCH_NOTIFICATION_GROUP_ID is not registered"
         }
     }
 
@@ -613,6 +605,10 @@ internal class PackageSearchDataService(
         @Nls subtitle: String? = null,
         @Nls message: String
     ) {
+        if (NotificationGroupManager.getInstance().getNotificationGroup(PACKAGE_SEARCH_NOTIFICATION_GROUP_ID) == null) {
+            logError { "Notification group $PACKAGE_SEARCH_NOTIFICATION_GROUP_ID is not properly registered" }
+        }
+
         @Suppress("DialogTitleCapitalization") // It's the Package Search plugin name
         NotificationGroupManager.getInstance().getNotificationGroup(PACKAGE_SEARCH_NOTIFICATION_GROUP_ID)
             .createNotification(
