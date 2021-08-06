@@ -40,6 +40,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,6 +53,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
+import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex;
 
 import java.io.File;
@@ -439,6 +441,24 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
     finally {
       myIsInsideLibraryScope.set(false);
+    }
+  }
+
+  public @NotNull SearchId @Nullable [] getDirectInheritorsNames(@NotNull Function<? super @NotNull NameEnumerator, ? extends @Nullable CompilerRef> compilerRefFunction) {
+    if (!myReadDataLock.tryLock()) return null;
+    try {
+      if (myReader == null) return null;
+      try {
+        CompilerRef hierarchyElement = compilerRefFunction.fun(myReader.getNameEnumerator());
+        if (hierarchyElement == null) return null;
+        return myReader.getDirectInheritorsNames(hierarchyElement);
+      }
+      catch (StorageException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    finally {
+      myReadDataLock.unlock();
     }
   }
 

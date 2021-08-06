@@ -140,7 +140,7 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
                                                              int hierarchyCardinality,
                                                              @NotNull Project project,
                                                              @NotNull CompilerReferenceServiceEx compilerRefService) {
-    CompilerRef.CompilerClassHierarchyElementDef[] directInheritors = compilerRefService.getDirectInheritors(classAsCompilerRef);
+    Collection<CompilerRef.CompilerClassHierarchyElementDef> directInheritors = compilerRefService.getDirectInheritors(classAsCompilerRef);
 
     if (hierarchyCardinality == -1) {
       hierarchyCardinality = compilerRefService.getInheritorCount(classAsCompilerRef);
@@ -150,8 +150,8 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
     }
     int finalHierarchyCardinality = hierarchyCardinality;
 
-    List<ClassAndInheritorCount> directInheritorStats = Stream
-      .of(directInheritors)
+    List<ClassAndInheritorCount> directInheritorStats = directInheritors
+      .stream()
       .filter(inheritor -> !(inheritor instanceof CompilerRef.CompilerAnonymousClassDef))
       .map(inheritor -> {
         ProgressManager.checkCanceled();

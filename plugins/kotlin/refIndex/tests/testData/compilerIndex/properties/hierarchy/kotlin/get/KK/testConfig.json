@@ -3,9 +3,7 @@
     "usages": [
         "kk_.kt",
         "kkk_.kt",
-        "kkkk_.kt"
-    ],
-    "shouldBeUsage": [
+        "kkkk_.kt",
         "jkk_.kt",
         "jjkk_.kt",
         "jkkk_.kt",

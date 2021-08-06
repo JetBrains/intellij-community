@@ -235,11 +235,12 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
   }
 
   @Override
-  public CompilerRef.CompilerClassHierarchyElementDef @NotNull [] getDirectInheritors(@NotNull CompilerRef.CompilerClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException {
+  public @NotNull Collection<CompilerRef.CompilerClassHierarchyElementDef> getDirectInheritors(@NotNull CompilerRef.CompilerClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException {
     try {
-      if (!myReadDataLock.tryLock()) return CompilerRef.CompilerClassHierarchyElementDef.EMPTY_ARRAY;
+      if (!myReadDataLock.tryLock()) return Collections.emptyList();
       try {
         if (myReader == null) throw new ReferenceIndexUnavailableException();
+
         return myReader.getDirectInheritors(baseClass);
       }
       finally {

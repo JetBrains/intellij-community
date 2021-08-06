@@ -3,9 +3,7 @@
         "Main.java",
         "JavaWrite.java",
         "JavaRead.java",
-        "Kotlin.kt"
-    ],
-    "shouldBeUsage": [
+        "Kotlin.kt",
         "KotlinWrite.kt",
         "KotlinRead.kt"
     ]

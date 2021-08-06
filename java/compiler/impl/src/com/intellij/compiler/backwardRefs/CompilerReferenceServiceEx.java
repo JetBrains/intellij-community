@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
 import org.jetbrains.jps.backwardRefs.SignatureData;
 
+import java.util.Collection;
 import java.util.SortedSet;
 
 /**
@@ -40,7 +41,7 @@ public interface CompilerReferenceServiceEx extends CompilerReferenceService {
 
   int getNameId(@NotNull String name) throws ReferenceIndexUnavailableException;
 
-  CompilerRef.CompilerClassHierarchyElementDef @NotNull [] getDirectInheritors(CompilerRef.CompilerClassHierarchyElementDef baseClass)
+  @NotNull Collection<CompilerRef.CompilerClassHierarchyElementDef> getDirectInheritors(CompilerRef.CompilerClassHierarchyElementDef baseClass)
     throws ReferenceIndexUnavailableException;
 
   int getInheritorCount(CompilerRef.CompilerClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException;

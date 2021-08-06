@@ -55,8 +55,13 @@ public interface LanguageCompilerRefAdapter {
 
   @Nullable
   static LanguageCompilerRefAdapter findAdapter(@NotNull PsiElement element) {
+    return findAdapter(element, false);
+  }
+
+  @Nullable
+  static LanguageCompilerRefAdapter findAdapter(@NotNull PsiElement element, boolean includeExternalLanguageHelper) {
     final VirtualFile file = PsiUtilCore.getVirtualFile(element);
-    return file == null ? null : findAdapter(file);
+    return file == null ? null : findAdapter(file, includeExternalLanguageHelper);
   }
 
   @NotNull

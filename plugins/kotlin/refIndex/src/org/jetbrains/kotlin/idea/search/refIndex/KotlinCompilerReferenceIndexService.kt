@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.search.refIndex
 import com.intellij.compiler.CompilerReferenceService
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase
 import com.intellij.compiler.backwardRefs.DirtyScopeHolder
+import com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter
 import com.intellij.compiler.server.BuildManager
 import com.intellij.compiler.server.BuildManagerListener
 import com.intellij.compiler.server.CustomBuilderMessageHandler
@@ -36,14 +37,16 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
+import com.intellij.util.containers.generateRecursiveSequence
 import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.jps.backwardRefs.CompilerRef
+import org.jetbrains.jps.backwardRefs.NameEnumerator
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
 import org.jetbrains.jps.builders.storage.BuildDataPaths
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
@@ -263,7 +266,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
     private fun referentFiles(element: PsiElement): Set<VirtualFile>? = tryWithReadLock(fun(): Set<VirtualFile>? {
         val storage = storage ?: return null
         val originalElement = element.unwrapped ?: return null
-        val originalFqNames = extractFqNames(originalElement) ?: return null
+        val originalFqNames = extractFqNames(originalElement)?.asSequence() ?: return null
         val virtualFile = PsiUtilCore.getVirtualFile(element) ?: return null
         if (projectFileIndex.isInSource(virtualFile) && virtualFile in dirtyScopeHolder) return null
         if (projectFileIndex.isInLibrary(virtualFile)) return null
@@ -278,34 +281,54 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         }
     })
 
-    private fun findSubclassesFqNamesIfApplicable(element: PsiElement): List<FqName>? {
-        val originalClassFqName = when (element) {
+    private fun findSubclassesFqNamesIfApplicable(element: PsiElement): Sequence<FqName>? {
+        val hierarchyElement = when (element) {
             is KtClassOrObject -> null
-            is PsiMember -> element.containingClass?.getKotlinFqName()
-            is KtCallableDeclaration -> element.containingClassOrObject?.takeUnless { it is KtObjectDeclaration }?.fqName
+            is PsiMember -> element.containingClass
+            is KtCallableDeclaration -> element.containingClassOrObject?.takeUnless { it is KtObjectDeclaration }
             else -> null
         } ?: return null
 
-        return storage?.getSubtypesOf(originalClassFqName, true)?.toList()
+        return getSubtypesOf(hierarchyElement)
     }
 
-    private val isInsideLibraryScopeThreadLocal = ThreadLocal.withInitial { false }
-    private fun isInsideLibraryScope(): Boolean = CompilerReferenceService.getInstanceIfEnabled(project)
-        ?.safeAs<CompilerReferenceServiceBase<*>>()
-        ?.isInsideLibraryScope
-        ?: isInsideLibraryScopeThreadLocal.get()
+    private fun getSubtypesOf(hierarchyElement: PsiElement): Sequence<FqName> {
+        val fqName = hierarchyElement.getKotlinFqName() ?: return emptySequence()
+        val kotlinInitialValues = getDirectSubtypesOfFromKotlin(fqName)
+        val javaInitialValues = LanguageCompilerRefAdapter.findAdapter(hierarchyElement, true)?.let { adapter ->
+            getDirectSubtypesOfFromJava { adapter.asCompilerRef(hierarchyElement, it) }
+        }.orEmpty()
 
-    private fun <T> computeInLibraryScope(action: () -> T): T = CompilerReferenceService.getInstanceIfEnabled(project)
-        ?.safeAs<CompilerReferenceServiceBase<*>>()
-        ?.computeInLibraryScope<T, Throwable>(action)
-        ?: run {
-            isInsideLibraryScopeThreadLocal.set(true)
-            try {
-                action()
-            } finally {
-                isInsideLibraryScopeThreadLocal.set(false)
-            }
+        return generateRecursiveSequence(kotlinInitialValues + javaInitialValues) { currentFqName ->
+            val javaValues = getDirectSubtypesOfFromJava { CompilerRef.JavaCompilerClassRef(it.tryEnumerate(currentFqName.asString())) }
+            val kotlinValues = getDirectSubtypesOfFromKotlin(currentFqName)
+            kotlinValues + javaValues
         }
+    }
+
+    private fun getDirectSubtypesOfFromKotlin(fqName: FqName): Sequence<FqName> = storage?.getSubtypesOf(fqName, false).orEmpty()
+
+    private fun getDirectSubtypesOfFromJava(numerator: (NameEnumerator) -> CompilerRef?): Sequence<FqName> =
+        compilerReferenceServiceBase?.getDirectInheritorsNames(numerator)?.asSequence()?.map { FqName(it.deserializedName) }.orEmpty()
+
+    private val compilerReferenceServiceBase: CompilerReferenceServiceBase<*>?
+        get() = CompilerReferenceService.getInstanceIfEnabled(project)?.safeAs()
+
+    private val isInsideLibraryScopeThreadLocal = ThreadLocal.withInitial { false }
+    private fun isInsideLibraryScope(): Boolean =
+        compilerReferenceServiceBase?.isInsideLibraryScope
+            ?: isInsideLibraryScopeThreadLocal.get()
+
+    private fun <T> computeInLibraryScope(action: () -> T): T =
+        compilerReferenceServiceBase?.computeInLibraryScope<T, Throwable>(action)
+            ?: run {
+                isInsideLibraryScopeThreadLocal.set(true)
+                try {
+                    action()
+                } finally {
+                    isInsideLibraryScopeThreadLocal.set(false)
+                }
+            }
 
     private fun findHierarchyInLibrary(basePsiElement: PsiElement): List<FqName> {
         val baseClass = when (basePsiElement) {

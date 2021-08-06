@@ -2,9 +2,7 @@
     "mainFile": "KKK.kt",
     "usages": [
         "kkk_.kt",
-        "kkkk_.kt"
-    ],
-    "shouldBeUsage": [
+        "kkkk_.kt",
         "jkkk_.kt"
     ]
 }
