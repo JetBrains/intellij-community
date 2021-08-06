@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.codeInsight.hint.ShowParameterInfoContext
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler
+import com.intellij.lang.parameterInfo.ParameterInfoHandler
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -11,14 +12,13 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.junit.Assert
 import java.io.File
 
@@ -68,12 +68,18 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
 
             val context = ShowParameterInfoContext(editor, project, file, editor.caretModel.offset, -1, true)
 
-            val handlers = ShowParameterInfoHandler.getHandlers(project, KotlinLanguage.INSTANCE)!!
-            val handler = handlers.firstOrNull { it.findElementForParameterInfo(context) != null }
-                ?: error("Could not find parameter info handler")
+            lateinit var handler: ParameterInfoHandler<PsiElement, Any>
+            lateinit var mockCreateParameterInfoContext: MockCreateParameterInfoContext
+            lateinit var parameterOwner: PsiElement
+            executeOnPooledThreadInReadAction {
+                val handlers = ShowParameterInfoHandler.getHandlers(project, KotlinLanguage.INSTANCE)
+                @Suppress("UNCHECKED_CAST")
+                handler = handlers.firstOrNull { it.findElementForParameterInfo(context) != null } as? ParameterInfoHandler<PsiElement, Any>
+                    ?: error("Could not find parameter info handler")
 
-            val mockCreateParameterInfoContext = MockCreateParameterInfoContext(file, myFixture)
-            val parameterOwner = handler.findElementForParameterInfo(mockCreateParameterInfoContext) as PsiElement
+                mockCreateParameterInfoContext = MockCreateParameterInfoContext(file, myFixture)
+                parameterOwner = handler.findElementForParameterInfo(mockCreateParameterInfoContext) as PsiElement
+            }
 
             val textToType = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// TYPE:")
             if (textToType != null) {
@@ -81,14 +87,17 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
                 PsiDocumentManager.getInstance(project).commitAllDocuments()
             }
 
-            //to update current parameter index
-            val updateContext = MockUpdateParameterInfoContext(file, myFixture, mockCreateParameterInfoContext)
-            val elementForUpdating = handler.findElementForUpdatingParameterInfo(updateContext)
-            if (elementForUpdating != null) {
-                handler.updateParameterInfo(elementForUpdating, updateContext)
+            lateinit var parameterInfoUIContext: MockParameterInfoUIContext
+            executeOnPooledThreadInReadAction {
+                //to update current parameter index
+                val updateContext = MockUpdateParameterInfoContext(file, myFixture, mockCreateParameterInfoContext)
+                val elementForUpdating = handler.findElementForUpdatingParameterInfo(updateContext)
+                if (elementForUpdating != null) {
+                    handler.updateParameterInfo(elementForUpdating, updateContext)
+                }
+                parameterInfoUIContext = MockParameterInfoUIContext(parameterOwner, updateContext.currentParameter)
             }
 
-            val parameterInfoUIContext = MockParameterInfoUIContext(parameterOwner, updateContext.currentParameter)
 
             mockCreateParameterInfoContext.itemsToShow?.forEach {
                 handler.updateUI(it, parameterInfoUIContext)
