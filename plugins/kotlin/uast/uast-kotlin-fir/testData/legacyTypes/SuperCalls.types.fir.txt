@@ -13,6 +13,8 @@ UFile (package = ) [public final class SuperCallsKt {...]
                                 UObjectLiteralExpression [anonymous object : A("inner literal") { }] : PsiType:A
                                     ULiteralExpression (value = "inner literal") ["inner literal"] : PsiType:String
                                     UClass (name = null) [final class null : A {...}]
+                                        UMethod (name = ) [private fun () = UastEmptyExpression]
+                    UMethod (name = ) [private fun () = UastEmptyExpression]
                     UClass (name = InnerClass) [public final class InnerClass : A {...}]
                         UMethod (name = InnerClass) [public fun InnerClass() {...}]
                             UBlockExpression [{...}]

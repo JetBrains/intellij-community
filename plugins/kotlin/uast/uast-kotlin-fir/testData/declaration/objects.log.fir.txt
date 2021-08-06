@@ -12,6 +12,7 @@ UFile (package = )
                                 UIdentifier (Identifier (println))
                                 USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
                                 ULiteralExpression (value = "I'm running")
+                    UMethod (name = )
         UMethod (name = getTopRunnable)
         UMethod (name = main)
             UBlockExpression

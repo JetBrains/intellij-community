@@ -11,6 +11,7 @@ UFile (package = )
                     UBlockExpression
                         UReturnExpression
                             ULiteralExpression (value = "bar")
+                UMethod (name = SHEET)
         UMethod (name = getExitAnimation)
         UMethod (name = getValue)
         UMethod (name = Style)
