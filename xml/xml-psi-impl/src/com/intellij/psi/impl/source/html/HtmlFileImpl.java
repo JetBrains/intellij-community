@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.html;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.html.HtmlCompatibleFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
@@ -37,7 +38,7 @@ import java.util.Collections;
 /**
  * @author maxim
  */
-public class HtmlFileImpl extends XmlFileImpl implements FileReferenceResolver, HtmlLikeFile {
+public class HtmlFileImpl extends XmlFileImpl implements FileReferenceResolver, HtmlCompatibleFile {
   public HtmlFileImpl(FileViewProvider provider) {
     this(provider, XmlElementType.HTML_FILE);
   }

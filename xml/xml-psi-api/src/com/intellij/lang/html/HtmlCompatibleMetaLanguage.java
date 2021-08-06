@@ -17,16 +17,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class HTMLLikeMetaLanguage extends MetaLanguage {
-  private static final ExtensionPointName<HtmlLikeTemplateEP> EP_NAME =
-    new ExtensionPointName<>("com.intellij.html.htmlLikeLanguage");
+public class HtmlCompatibleMetaLanguage extends MetaLanguage {
+  private static final ExtensionPointName<HtmlCompatibleLanguageEP> EP_NAME =
+    new ExtensionPointName<>("com.intellij.html.compatibleLanguage");
   private static final ClearableLazyValue<Set<String>> LANGS = ExtensionPointUtil.dropLazyValueOnChange(
     ClearableLazyValue.create(
       () -> ContainerUtil.map2Set(EP_NAME.getExtensionList(), e -> e.language)
     ), EP_NAME, null);
 
-  public HTMLLikeMetaLanguage() {
-    super("HTML-like");
+  public HtmlCompatibleMetaLanguage() {
+    super("HtmlCompatible");
   }
 
   @Override
@@ -40,7 +40,7 @@ public class HTMLLikeMetaLanguage extends MetaLanguage {
   }
 
   @ApiStatus.Experimental
-  public static class HtmlLikeTemplateEP extends BaseKeyedLazyInstance<String> {
+  public static class HtmlCompatibleLanguageEP extends BaseKeyedLazyInstance<String> {
 
     @Attribute("language")
     public String language;
