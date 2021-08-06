@@ -356,6 +356,17 @@ object EventFields {
   @JvmField
   val TimeToShowMs = LongEventField("time_to_show")
 
+  @JvmField
+  val StartTime = LongEventField("start_time")
+
+  /**
+   * Logger merges successive events with identical group id, event id and event data fields except for fields listed here.
+   *
+   * @see com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider.createEventsMergeStrategy
+   */
+  @JvmField
+  val FieldsIgnoredByMerge: List<EventField<*>> = arrayListOf(StartTime)
+
   @JvmStatic
   fun createAdditionalDataField(groupId: String, eventId: String): ObjectEventField {
     val additionalFields = mutableListOf<EventField<*>>()

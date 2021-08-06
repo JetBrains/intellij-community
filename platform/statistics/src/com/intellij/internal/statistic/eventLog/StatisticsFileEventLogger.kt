@@ -19,14 +19,15 @@ open class StatisticsFileEventLogger(private val recorderId: String,
                                      private val bucket: String,
                                      private val recorderVersion: String,
                                      private val writer: StatisticsEventLogWriter,
-                                     private val systemEventIdProvider: StatisticsSystemEventIdProvider) : StatisticsEventLogger, Disposable {
+                                     private val systemEventIdProvider: StatisticsSystemEventIdProvider,
+                                     private val mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(emptySet())
+) : StatisticsEventLogger, Disposable {
   protected val logExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("StatisticsFileEventLogger: $sessionId", 1)
 
   private var lastEvent: FusEvent? = null
   private var lastEventTime: Long = 0
   private var lastEventCreatedTime: Long = 0
   private var eventMergeTimeoutMs: Long
-  private val mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(hashSetOf("start_time"))
   private var lastEventFlushFuture: ScheduledFuture<CompletableFuture<Void>>? = null
 
   init {

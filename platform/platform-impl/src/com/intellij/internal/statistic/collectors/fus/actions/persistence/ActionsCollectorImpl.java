@@ -180,7 +180,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
     List<EventPair<?>> data = new ArrayList<>();
     if (stats != null) {
-      data.add(ActionsEventLogGroup.START_TIME.with(stats.startMs));
+      data.add(EventFields.StartTime.with(stats.startMs));
       if (stats.isDumb != null) {
         data.add(ActionsEventLogGroup.DUMB_START.with(stats.isDumb));
       }
