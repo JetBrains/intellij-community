@@ -149,6 +149,9 @@ class ClientSessionComponentStore : IComponentStore {
     }
   }
 
+  override fun unloadComponent(component: Any) {
+  }
+
   override fun initPersistencePlainComponent(component: Any, key: String) {
   }
 
@@ -169,6 +172,12 @@ class ClientSessionComponentStore : IComponentStore {
   }
 
   override fun removeComponent(name: String) {
+  }
+
+  override fun clearCaches() {
+  }
+
+  override fun release() {
   }
 }
 

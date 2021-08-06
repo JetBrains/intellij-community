@@ -1,4 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceGetOrSet")
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
@@ -20,8 +21,8 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SmartList
@@ -41,6 +42,7 @@ import java.io.IOException
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+import java.util.function.Consumer
 
 internal val LOG = logger<ComponentStoreImpl>()
 private val SAVE_MOD_LOG = Logger.getInstance("#configurationStore.save.skip")
@@ -87,9 +89,9 @@ abstract class ComponentStoreImpl : IComponentStore {
   internal fun getComponents(): Map<String, ComponentInfo> = components
 
   override fun clearCaches() {
-    components.values.forEach {
+    components.values.forEach(Consumer {
       it.updateModificationCount(-1)
-    }
+    })
     (storageManager as? StateStorageManagerImpl)?.clearStorages()
   }
 
@@ -107,8 +109,8 @@ abstract class ComponentStoreImpl : IComponentStore {
             return
           }
 
-          val info = createComponentInfo(component, stateSpec, serviceDescriptor)
-          initComponent(info, null, ThreeState.NO)
+          val info = createComponentInfo(component, null, serviceDescriptor)
+          initComponent(info = info, changedStorages = null, reloadData = ThreeState.NO)
         }
         else {
           componentName = stateSpec.name
