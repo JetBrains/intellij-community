@@ -289,6 +289,8 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
                     serviceImplementation="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupportFirImpl"/>
 
     <lang.findUsagesProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesProviderBase"/>
+    <lang.elementManipulator forClass="org.jetbrains.kotlin.psi.KtStringTemplateExpression"
+                             implementationClass="org.jetbrains.kotlin.psi.psiUtil.KtStringTemplateExpressionManipulator"/>
 
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker"
                         serviceImplementation="org.jetbrains.kotlin.idea.references.ReadWriteAccessCheckerDescriptorsFirImpl"/>
