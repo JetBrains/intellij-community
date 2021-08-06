@@ -7,9 +7,14 @@ import org.jetbrains.annotations.ApiStatus
 interface SpacingConfiguration {
 
   /**
-   * Horizontal gap between unrelated settings in one row
+   * Horizontal gap between label and related component
    */
-  val horizontalUnrelatedGap: Int
+  val horizontalLabelGap: Int
+
+  /**
+   * Default horizontal gap between components in one row
+   */
+  val horizontalDefaultGap: Int
 
   /**
    * The horizontal left indent of one level

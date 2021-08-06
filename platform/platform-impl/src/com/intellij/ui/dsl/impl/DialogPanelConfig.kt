@@ -20,7 +20,8 @@ internal class DialogPanelConfig {
 private fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
   return object : SpacingConfiguration {
 
-    override val horizontalUnrelatedGap = JBUI.scale(16)
+    override val horizontalLabelGap = JBUI.scale(6)
+    override val horizontalDefaultGap = JBUI.scale(16)
     override val horizontalIndent = JBUI.scale(20)
     override val verticalComponentGap = JBUI.scale(6)
     override val verticalCommentBottomGap = JBUI.scale(6)

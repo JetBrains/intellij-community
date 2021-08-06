@@ -33,8 +33,8 @@ internal class CellBuilderImpl<T : JComponent>(
     return this
   }
 
-  override fun rightUnrelatedGap(): CellBuilder<T> {
-    super.rightUnrelatedGap()
+  override fun rightLabelGap(): CellBuilder<T> {
+    super.rightLabelGap()
     return this
   }
 

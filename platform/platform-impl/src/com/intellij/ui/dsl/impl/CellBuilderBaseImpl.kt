@@ -4,6 +4,7 @@ package com.intellij.ui.dsl.impl
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.CellBuilderBase
+import com.intellij.ui.dsl.RIGHT_GAP_UNASSIGNED
 import com.intellij.ui.dsl.SpacingConfiguration
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -19,7 +20,7 @@ internal open class CellBuilderBaseImpl<T : CellBuilderBase<T>>(private val dial
   override var verticalAlign = VerticalAlign.CENTER
     protected set
 
-  override var rightGap = 0
+  override var rightGap = RIGHT_GAP_UNASSIGNED
     protected set
 
   override var comment: JComponent? = null
@@ -40,11 +41,8 @@ internal open class CellBuilderBaseImpl<T : CellBuilderBase<T>>(private val dial
     return this
   }
 
-  /**
-   * Separates next cell in current row with [SpacingConfiguration.horizontalUnrelatedGap]. Should not be used for last cell in a row
-   */
-  override fun rightUnrelatedGap(): CellBuilderBase<T> {
-    rightGap = dialogPanelConfig.spacing.horizontalUnrelatedGap
+  override fun rightLabelGap(): CellBuilderBase<T> {
+    rightGap = dialogPanelConfig.spacing.horizontalLabelGap
     return this
   }
 }

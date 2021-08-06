@@ -8,6 +8,8 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
+const val RIGHT_GAP_UNASSIGNED = -1
+
 @DslMarker
 private annotation class CellBuilderMarker
 
@@ -28,9 +30,10 @@ interface CellBuilderBase<T : CellBuilderBase<T>> {
               maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH): CellBuilderBase<T>
 
   /**
-   * Separates next cell in current row with [SpacingConfiguration.horizontalUnrelatedGap].
+   * Separates next cell in current row with [SpacingConfiguration.horizontalLabelGap]. This gap is set automatically
+   * by [PanelBuilderBase.row] methods and should be used only in rare cases like CheckBox with related TextField.
    * Should not be used for last cell in a row
    */
-  fun rightUnrelatedGap(): CellBuilderBase<T>
+  fun rightLabelGap(): CellBuilderBase<T>
 
 }
