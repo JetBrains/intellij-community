@@ -5,7 +5,7 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.entities.*
-import com.intellij.workspaceModel.storage.impl.ClassConversion
+import com.intellij.workspaceModel.storage.ClassConversion
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException

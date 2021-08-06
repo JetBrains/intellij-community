@@ -2,9 +2,7 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.google.common.collect.HashBiMap
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.PersistentEntityId
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntityData

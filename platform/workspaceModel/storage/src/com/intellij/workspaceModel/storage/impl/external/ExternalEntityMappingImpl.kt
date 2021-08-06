@@ -2,14 +2,12 @@
 package com.intellij.workspaceModel.storage.impl.external
 
 import com.google.common.collect.HashBiMap
-import com.intellij.workspaceModel.storage.ExternalEntityMapping
-import com.intellij.workspaceModel.storage.MutableExternalEntityMapping
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.NotThisEntityId
+import com.intellij.workspaceModel.storage.ThisEntityId
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.storage.impl.EntityId
-import com.intellij.workspaceModel.storage.impl.NotThisEntityId
-import com.intellij.workspaceModel.storage.impl.ThisEntityId
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.containers.BidirectionalMap
 import java.util.*

@@ -4,7 +4,10 @@ package com.intellij.workspaceModel.storage.impl
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.NotThisEntityId
+import com.intellij.workspaceModel.storage.ThisEntityId
+import com.intellij.workspaceModel.storage.asThis
 import java.io.File
 
 internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, val diff: WorkspaceEntityStorageBuilderImpl) {
