@@ -371,7 +371,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     }
     // Expression switch: if we cannot unwrap existing branch and the other one is default case, we cannot kill it either
     return (allBranches.size() <= 2 &&
-           !ContainerUtil.and(allBranches, branch -> branch == labelStatement || branch.isDefaultCase())) ||
+           !ContainerUtil.and(allBranches, branch -> branch == labelStatement || SwitchUtils.isDefaultLabel(branch))) ||
            (labelStatement instanceof PsiSwitchLabeledRuleStatement &&
             ((PsiSwitchLabeledRuleStatement)labelStatement).getBody() instanceof PsiExpressionStatement);
   }
