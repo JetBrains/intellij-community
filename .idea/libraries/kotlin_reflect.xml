@@ -1,16 +1,16 @@
 <component name="libraryTable">
   <library name="kotlin-reflect" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-reflect:1.5.255-SNAPSHOT">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-reflect:1.6.255-SNAPSHOT">
       <exclude>
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.5.255-SNAPSHOT/kotlin-reflect-1.5.255-SNAPSHOT.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.6.255-SNAPSHOT/kotlin-reflect-1.6.255-SNAPSHOT.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.5.255-SNAPSHOT/kotlin-reflect-1.5.255-SNAPSHOT-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.6.255-SNAPSHOT/kotlin-reflect-1.6.255-SNAPSHOT-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
