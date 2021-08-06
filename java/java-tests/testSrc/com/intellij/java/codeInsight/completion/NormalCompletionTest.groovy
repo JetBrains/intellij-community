@@ -2534,6 +2534,7 @@ class Abc {
     assert presentation.tailText == null
   }
 
+  @NeedsIndex.ForStandardLibrary(reason = "Control flow analysis needs standard library and necessary to provide variable initializer")
   void testLocalFromTryBlock() {
     myFixture.configureByText("Test.java", "class Test {\n" +
                                            "  void test() {\n" +
