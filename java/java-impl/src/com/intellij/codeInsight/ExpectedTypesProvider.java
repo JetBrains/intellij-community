@@ -1228,7 +1228,7 @@ public final class ExpectedTypesProvider {
 
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(containingClass.getProject());
       PsiMethodCallExpression call = ObjectUtils.tryCast(argument.getParent().getParent(), PsiMethodCallExpression.class);
-      AssertHint<PsiExpression> assertHint = AssertHint.createAssertEqualsLikeHintForCompletion(call, args, method, index);
+      AssertHint assertHint = AssertHint.createAssertEqualsLikeHintForCompletion(call, args, method, index);
       if (assertHint != null) {
         PsiExpression other = assertHint.getOtherExpression(argument);
         if (other != null) {

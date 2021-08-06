@@ -11,7 +11,8 @@ import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.siyeh.ig.junit.JUnitCommonClassNames
-import com.siyeh.ig.testFrameworks.AssertHint
+import com.siyeh.ig.testFrameworks.AbstractAssertHint
+import com.siyeh.ig.testFrameworks.UAssertHint
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.getUastElementFactory
@@ -47,19 +48,19 @@ class JUnit5AssertionsConverterInspection(val frameworkName: @NonNls String = "J
     override fun visitCallExpression(node: UCallExpression): Boolean {
       if (node.methodIdentifier == null) return true
       doCheck(node, { node.methodIdentifier?.sourcePsi }) {
-        AssertHint.create(node) { AssertHint.ASSERT_METHOD_2_PARAMETER_COUNT[it] }
+        UAssertHint.create(node) { AbstractAssertHint.ASSERT_METHOD_2_PARAMETER_COUNT[it] }
       }
       return true
     }
 
     override fun visitCallableReferenceExpression(node: UCallableReferenceExpression): Boolean {
       doCheck(node, { node.sourcePsi }) {
-        AssertHint.create(node) { AssertHint.ASSERT_METHOD_2_PARAMETER_COUNT[it] }
+        UAssertHint.create(node) { AbstractAssertHint.ASSERT_METHOD_2_PARAMETER_COUNT[it] }
       }
       return true
     }
 
-    private fun doCheck(node: UExpression, toHighlight: () -> PsiElement?, createHint: () -> AssertHint<UExpression>?) {
+    private fun doCheck(node: UExpression, toHighlight: () -> PsiElement?, createHint: () -> AbstractAssertHint<UExpression>?) {
       val sourcePsi = node.sourcePsi ?: return
       val project = sourcePsi.project
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
@@ -122,8 +123,8 @@ class JUnit5AssertionsConverterInspection(val frameworkName: @NonNls String = "J
         is UIdentifier -> { // UCallExpression
           val methodCall = uElement.getUCallExpression(MAX_CALL_SEARCH_LIMIT) ?: return
           val methodName = methodCall.methodName ?: return
-          val assertHint = AssertHint.create(methodCall) {
-            AssertHint.ASSERT_METHOD_2_PARAMETER_COUNT[it]
+          val assertHint = UAssertHint.create(methodCall) {
+            AbstractAssertHint.ASSERT_METHOD_2_PARAMETER_COUNT[it]
           } ?: return
           val arguments = methodCall.valueArguments.toMutableList()
           if ("assertThat" != methodName) {
