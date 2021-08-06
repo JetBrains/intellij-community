@@ -64,9 +64,7 @@ class RunToolbarSlotManager(val project: Project) {
     }
   }
 
-  init {
-    addListener(RunToolbarShortcutHelper(project))
-  }
+  private val runToolbarSettings = RunToolbarSettings.getInstance(project)
 
   internal var active: Boolean = false
     set(value) {
@@ -86,6 +84,16 @@ class RunToolbarSlotManager(val project: Project) {
   init {
     ApplicationManager.getApplication().invokeLater {
       slotsData[mainSlotData.id] = mainSlotData
+    }
+
+    addListener(RunToolbarShortcutHelper(project))
+
+    runToolbarSettings.getRunConfigurations().forEachIndexed { index, entry ->
+      if(index == 0) {
+        mainSlotData.configuration = entry
+      } else {
+        addNewSlot().configuration = entry
+      }
     }
   }
 
@@ -144,6 +152,9 @@ class RunToolbarSlotManager(val project: Project) {
     slotsData[slot.id] = slot
 
     slotListeners.forEach{ it.slotAdded() }
+
+    saveData()
+
     return slot
   }
 
@@ -195,6 +206,12 @@ class RunToolbarSlotManager(val project: Project) {
     } else {
       slotListeners.forEach { it.rebuildPopup() }
     }
+
+    saveData()
+  }
+
+  private fun saveData() {
+    runToolbarSettings.setRunConfigurations(slotsData.mapNotNull { it.value.configuration }.toMutableList())
   }
 }
 
