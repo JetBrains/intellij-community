@@ -3,9 +3,13 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
+import com.intellij.ide.actions.ShowSettingsUtilImpl
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
 import com.intellij.openapi.project.Project
+import com.intellij.ui.HoverHyperlinkLabel
+import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -70,13 +74,15 @@ class RunToolbarExtraSlotPane(val project: Project, val cancel: () -> Unit) {
     add(JPanel(MigLayout("ins 0, novisualpadding", "[min!]push[min!]")).apply {
       isOpaque = false
       border = JBUI.Borders.empty(2, 1, 0, 5)
-      this.add(JLabel(AllIcons.Toolbar.AddSlot).apply {
-        this.addMouseListener(object : MouseAdapter() {
-          override fun mouseClicked(e: MouseEvent) {
-            manager.addNewSlot()
-          }
-        })
+
+      this.add(HyperlinkLabel(LangBundle.message("run.toolbar.add.slot")).apply {
+        addHyperlinkListener {
+          manager.addNewSlot()
+        }
+
+        icon = AllIcons.Toolbar.AddSlot
       })
+
       this.add(JLabel(AllIcons.General.GearPlain))
     })
   }
