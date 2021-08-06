@@ -24,8 +24,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.project.Project;
@@ -70,8 +68,6 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -153,7 +149,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myText = "";
     myScrollPane.setViewportView(myEditorPane);
     myScrollPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
-    myScrollPane.addMouseWheelListener(new FontSizeMouseWheelListener());
+    myScrollPane.addMouseWheelListener(new FontSizeMouseWheelListener(myEditorPane::applyFontProps));
 
     setLayout(new BorderLayout());
 
@@ -1022,38 +1018,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       Registry.get("documentation.show.toolbar").setValue(state);
       updateControlState();
       showHint();
-    }
-  }
-
-  private final class FontSizeMouseWheelListener implements MouseWheelListener {
-
-    @Override
-    public void mouseWheelMoved(MouseWheelEvent e) {
-      if (!EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled() || !EditorUtil.isChangeFontSize(e)) {
-        return;
-      }
-
-      int rotation = e.getWheelRotation();
-      if (rotation == 0) return;
-      int change = Math.abs(rotation);
-      boolean increase = rotation <= 0;
-      FontSize newFontSize = getQuickDocFontSize();
-      for (; change > 0; change--) {
-        if (increase) {
-          newFontSize = newFontSize.larger();
-        }
-        else {
-          newFontSize = newFontSize.smaller();
-        }
-      }
-
-      if (newFontSize == getQuickDocFontSize()) {
-        return;
-      }
-
-      setQuickDocFontSize(newFontSize);
-      myEditorPane.applyFontProps(newFontSize);
-      DocFontSizePopup.update(newFontSize);
     }
   }
 
