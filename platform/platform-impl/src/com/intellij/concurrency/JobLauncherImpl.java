@@ -16,6 +16,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,14 +34,14 @@ public final class JobLauncherImpl extends JobLauncher {
   private final boolean logAllExceptions = System.getProperty("idea.job.launcher.log.all.exceptions", "false").equals("true");
 
   @Override
-  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull final List<? extends T> things,
+  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
                                                      ProgressIndicator progress,
                                                      boolean runInReadAction,
                                                      boolean failFastOnAcquireReadAction,
-                                                     @NotNull final Processor<? super T> thingProcessor) throws ProcessCanceledException {
+                                                     @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
     // supply our own indicator even if we haven't given one - to support cancellation
     // use StandardProgressIndicator by default to avoid assertion in SensitiveProgressWrapper() ctr later
-    final ProgressIndicator wrapper = progress == null ? new StandardProgressIndicatorBase() : new SensitiveProgressWrapper(progress);
+    ProgressIndicator wrapper = progress == null ? new StandardProgressIndicatorBase() : new SensitiveProgressWrapper(progress);
 
     Boolean result = processImmediatelyIfTooFew(things, wrapper, runInReadAction, thingProcessor);
     if (result != null) return result.booleanValue();
@@ -120,10 +121,10 @@ public final class JobLauncherImpl extends JobLauncher {
 
   // if {@code things} are too few to be processed in the real pool, returns TRUE if processed successfully, FALSE if not
   // returns null if things need to be processed in the real pool
-  private static <T> Boolean processImmediatelyIfTooFew(@NotNull final List<? extends T> things,
-                                                        @NotNull final ProgressIndicator progress,
+  private static <T> Boolean processImmediatelyIfTooFew(@NotNull List<? extends T> things,
+                                                        @NotNull ProgressIndicator progress,
                                                         boolean runInReadAction,
-                                                        @NotNull final Processor<? super T> thingProcessor) {
+                                                        @NotNull Processor<? super T> thingProcessor) {
     // commit can be invoked from within write action
     //if (runInReadAction && ApplicationManager.getApplication().isWriteAccessAllowed()) {
     //  throw new RuntimeException("Must not run invokeConcurrentlyUnderProgress() from under write action because of imminent deadlock");
@@ -134,7 +135,7 @@ public final class JobLauncherImpl extends JobLauncher {
         JobSchedulerImpl.getJobPoolParallelism() <= CORES_FORK_THRESHOLD ||
         runInReadAction && ApplicationManager.getApplication().isWriteAccessAllowed()
       ) {
-      final AtomicBoolean result = new AtomicBoolean(true);
+      AtomicBoolean result = new AtomicBoolean(true);
       Runnable runnable = () -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         //noinspection ForLoopReplaceableByForEach
         for (int i = 0; i < things.size(); i++) {
@@ -160,7 +161,7 @@ public final class JobLauncherImpl extends JobLauncher {
 
   @NotNull
   @Override
-  public Job<Void> submitToJobThread(@NotNull final Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback) {
+  public Job<Void> submitToJobThread(@NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback) {
     VoidForkJoinTask task = new VoidForkJoinTask(action, onDoneCallback);
     task.submit();
     return task;
@@ -262,11 +263,12 @@ public final class JobLauncherImpl extends JobLauncher {
    * If was unable to process some element (an exception occurred during {@code thingProcessor.process()} call), add it back to the {@code failedToProcess} queue.
    * @return true if all elements processed successfully, false if at least one processor returned false or exception occurred
    */
-  public <T> boolean processQueue(@NotNull final BlockingQueue<T> things,
-                                  @NotNull final Queue<T> failedToProcess,
-                                  @NotNull final ProgressIndicator progress,
-                                  @NotNull final T tombStone,
-                                  @NotNull final Processor<? super T> thingProcessor) {
+  @ApiStatus.Internal
+  public <T> boolean processQueue(@NotNull BlockingQueue<@NotNull T> things,
+                                  @NotNull Queue<@NotNull T> failedToProcess,
+                                  @NotNull ProgressIndicator progress,
+                                  @NotNull T tombStone,
+                                  @NotNull Processor<? super T> thingProcessor) {
     final class MyTask implements Callable<Boolean> {
       private final int mySeq;
       private boolean result;
@@ -318,13 +320,13 @@ public final class JobLauncherImpl extends JobLauncher {
       }
     }
     progress.checkCanceled(); // do not start up expensive threads if there's no need to
-    boolean isSmallEnough = things.contains(tombStone);
+    boolean isSmallEnough = things.contains(tombStone) && things.size() < 10;
     if (isSmallEnough) {
       try {
         // do not distribute for small queues
         return new MyTask(0).call();
       }
-      catch (RuntimeException e) {
+      catch (RuntimeException|Error e) {
         throw e;
       }
       catch (Exception e) {
@@ -333,22 +335,23 @@ public final class JobLauncherImpl extends JobLauncher {
     }
 
     List<ForkJoinTask<Boolean>> tasks = new ArrayList<>();
-    for (int i = 0; i < Math.max(1, JobSchedulerImpl.getJobPoolParallelism() - 1); i++) {
+    int n = Math.max(1, Math.min(things.size(), JobSchedulerImpl.getJobPoolParallelism()) - 1);
+    for (int i = 0; i < n; i++) {
       tasks.add(ForkJoinPool.commonPool().submit(new MyTask(i)));
     }
 
     boolean result = true;
-    RuntimeException exception = null;
+    Throwable exception = null;
     for (ForkJoinTask<Boolean> task : tasks) {
       try {
         result &= task.join();
       }
-      catch (RuntimeException e) {
+      catch (RuntimeException|Error e) {
         exception = e;
       }
     }
     if (exception != null) {
-      throw exception;
+      ExceptionUtil.rethrow(exception);
     }
     return result;
   }

@@ -56,7 +56,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   @NotNull
   public String getID() {
     if (myNameProvider instanceof LocalDefaultNameProvider) {
-      final String id = ((LocalDefaultNameProvider)myNameProvider).getDefaultID();
+      String id = ((LocalDefaultNameProvider)myNameProvider).getDefaultID();
       if (id != null) {
         return id;
       }
@@ -122,7 +122,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * @see PsiRecursiveVisitor
    */
   @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return buildVisitor(holder, isOnTheFly);
   }
 
@@ -138,14 +138,14 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * @see PsiRecursiveVisitor
    */
   @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
       public void visitFile(@NotNull PsiFile file) {
         addDescriptors(checkFile(file, holder.getManager(), isOnTheFly));
       }
 
-      private void addDescriptors(final ProblemDescriptor[] descriptors) {
+      private void addDescriptors(ProblemDescriptor[] descriptors) {
         if (descriptors != null) {
           for (ProblemDescriptor descriptor : descriptors) {
             if (descriptor != null) {
@@ -183,9 +183,9 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
   @NotNull
   public List<ProblemDescriptor> processFile(@NotNull PsiFile file, @NotNull InspectionManager manager) {
-    final ProblemsHolder holder = new ProblemsHolder(manager, file, false);
+    ProblemsHolder holder = new ProblemsHolder(manager, file, false);
     LocalInspectionToolSession session = new LocalInspectionToolSession(file, 0, file.getTextLength());
-    final PsiElementVisitor customVisitor = buildVisitor(holder, false, session);
+    PsiElementVisitor customVisitor = buildVisitor(holder, false, session);
     LOG.assertTrue(!(customVisitor instanceof PsiRecursiveVisitor),
                    "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive: " + customVisitor);
 
@@ -195,7 +195,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
     inspectionStarted(session, false);
 
-    final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(holder.getProject());
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(holder.getProject());
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
@@ -207,7 +207,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
       private void processInjectedFile(PsiElement element) {
         if (element instanceof PsiLanguageInjectionHost) {
-          final List<Pair<PsiElement, TextRange>> files = injectedLanguageManager.getInjectedPsiFiles(element);
+          List<Pair<PsiElement, TextRange>> files = injectedLanguageManager.getInjectedPsiFiles(element);
           if (files != null) {
             for (Pair<PsiElement, TextRange> pair : files) {
               pair.first.accept(new PsiRecursiveElementWalkingVisitor() {
