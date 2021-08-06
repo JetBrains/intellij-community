@@ -39,6 +39,7 @@ import com.intellij.util.Processor
 import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
+import org.jetbrains.jps.builders.storage.BuildDataPaths
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -50,7 +51,6 @@ import org.jetbrains.kotlin.idea.search.not
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.incremental.LookupStorage
 import org.jetbrains.kotlin.incremental.LookupSymbol
 import org.jetbrains.kotlin.incremental.storage.RelativeFileToPathConverter
 import org.jetbrains.kotlin.load.java.getPropertyNamesCandidatesByAccessorName
@@ -65,6 +65,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -73,13 +74,14 @@ import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
+import kotlin.system.measureNanoTime
 
 /**
  * Based on [com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase] and [com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl]
  */
 @Service(Service.Level.PROJECT)
 class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, ModificationTracker {
-    private var storage: LookupStorage? = null
+    private var storage: KotlinCompilerReferenceIndexStorage? = null
     private var activeBuildCount = 0
     private val compilationCounter = LongAdder()
     private val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
@@ -124,7 +126,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         dirtyScopeHolder.installVFSListener(this)
 
         val compilerManager = CompilerManager.getInstance(project)
-        val isUpToDate = compilerManager.takeIf { kotlinDataContainer != null }
+        val isUpToDate = compilerManager.takeIf { hasIncrementalIndex }
             ?.createProjectCompileScope(project)
             ?.let(compilerManager::isUpToDate)
             ?: false
@@ -195,24 +197,35 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         closeStorage()
     }
 
-    private val kotlinDataContainer: Path?
-        get() = BuildDataPathsImpl(BuildManager.getInstance().getProjectSystemDirectory(project)).targetsDataRoot
-            .toPath()
-            .resolve(SettingConstants.KOTLIN_DATA_CONTAINER_ID)
-            .takeIf { it.exists() && it.isDirectory() }
+    private val buildDataPaths: BuildDataPaths?
+        get() = BuildManager.getInstance().getProjectSystemDirectory(project)?.let(::BuildDataPathsImpl)
+
+    private val BuildDataPaths.kotlinDataContainer: Path?
+        get() = targetsDataRoot
+            ?.toPath()
+            ?.resolve(SettingConstants.KOTLIN_DATA_CONTAINER_ID)
+            ?.takeIf { it.exists() && it.isDirectory() }
             ?.listDirectoryEntries("${SettingConstants.KOTLIN_DATA_CONTAINER_ID}*")
             ?.firstOrNull()
+
+    private val hasIncrementalIndex: Boolean get() = buildDataPaths?.kotlinDataContainer != null
 
     private fun openStorage() {
         val basePath = runReadAction { projectIfNotDisposed?.basePath } ?: return
         val pathConverter = RelativeFileToPathConverter(File(basePath))
-        val targetDataDir = kotlinDataContainer?.toFile() ?: run {
+        val buildDataPaths = buildDataPaths
+        val kotlinDataPath = buildDataPaths?.kotlinDataContainer ?: run {
             LOG.warn("try to open storage without index directory")
             return
         }
 
-        storage = LookupStorage(targetDataDir, pathConverter)
-        LOG.info("kotlin CRI storage is opened")
+        val initializationTime = measureNanoTime {
+            storage = KotlinCompilerReferenceIndexStorage(kotlinDataPath, pathConverter).apply {
+                initialize(buildDataPaths)
+            }
+        }
+
+        LOG.info("kotlin CRI storage is opened (initialization time: ${TimeUnit.NANOSECONDS.toMillis(initializationTime)} ms)")
     }
 
     private fun closeStorage() {
@@ -237,6 +250,12 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
             )
         }
     }
+
+    @TestOnly
+    fun getSubtypesOfInTests(fqName: FqName, deep: Boolean): Sequence<FqName>? = storage?.getSubtypesOf(fqName, deep)
+
+    @TestOnly
+    fun getSupertypesOfInTests(fqName: FqName, deep: Boolean): Sequence<FqName>? = storage?.getSupertypesOf(fqName, deep)
 
     @TestOnly
     fun findReferenceFilesInTests(element: PsiElement): Set<VirtualFile>? = referentFiles(element)

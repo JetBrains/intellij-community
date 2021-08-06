@@ -2,14 +2,17 @@
 package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.psi.CommonClassNames
+import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.testFramework.SkipSlowTestLocally
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.test.KotlinRoot
+import java.util.*
 import kotlin.io.path.Path
+import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
-import kotlin.io.path.isDirectory
 import kotlin.reflect.KFunction
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredMemberFunctions
@@ -83,5 +86,48 @@ class CustomKotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
         myFixture.configureByFiles("Main.kt", "Bar.kt", "Foo.kt", "Doo.kt", "Empty.java", "JavaRead.java")
         // JvmName for constants isn't supported
         assertThrows(AssertionFailedError::class.java) { rebuildProject() }
+    }
+
+    fun `test sub and super types`() {
+        myFixture.addFileToProject(
+            "one/two/Main.kt",
+            """
+                package one.two
+                open class K
+                open class KK : K()
+                open class KK2 : K()
+                open class KKK : KK()
+                open class KKK2 : KK()
+            """.trimIndent()
+        )
+
+        val clazz = myFixture.findClass("one.two.K")
+        val deepSubtypes = ClassInheritorsSearch.search(clazz, true)
+            .findAll()
+            .map { it.getKotlinFqName().toString() }
+            .sorted()
+
+        val subtypes = ClassInheritorsSearch.search(clazz, false)
+            .findAll()
+            .map { it.getKotlinFqName().toString() }
+            .sorted()
+
+        assertEquals(listOf("one.two.KK", "one.two.KK2"), subtypes)
+        assertEquals(listOf("one.two.KK", "one.two.KK2", "one.two.KKK", "one.two.KKK2"), deepSubtypes)
+
+        rebuildProject()
+        forEachBoolean { deep ->
+            assertEquals(emptyList<String>(), findSubOrSuperTypes("one.two.K", deep, subtypes = false))
+            assertEquals(emptyList<String>(), findSubOrSuperTypes("Another", deep, subtypes = false))
+
+            assertEquals(emptyList<String>(), findSubOrSuperTypes("one.two.KKK", deep, subtypes = true))
+            assertEquals(emptyList<String>(), findSubOrSuperTypes("Another", deep, subtypes = true))
+        }
+
+        assertEquals(subtypes, findSubOrSuperTypes("one.two.K", deep = false, subtypes = true))
+        assertEquals(deepSubtypes, findSubOrSuperTypes("one.two.K", deep = true, subtypes = true))
+
+        assertEquals(listOf("one.two.KK"), findSubOrSuperTypes("one.two.KKK", deep = false, subtypes = false))
+        assertEquals(listOf("one.two.K", "one.two.KK"), findSubOrSuperTypes("one.two.KKK", deep = true, subtypes = false))
     }
 }

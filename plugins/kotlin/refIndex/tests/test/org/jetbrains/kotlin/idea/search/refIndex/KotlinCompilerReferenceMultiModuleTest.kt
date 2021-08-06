@@ -10,6 +10,88 @@ import com.intellij.testFramework.SkipSlowTestLocally
 
 @SkipSlowTestLocally
 class KotlinCompilerReferenceMultiModuleTest : KotlinCompilerReferenceTestBase() {
+    fun `test sub and super types`() {
+        val m1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "m1", myFixture.tempDirFixture.findOrCreateDir("m1"))
+        myFixture.addFileToProject("m1/k.kt", "package one\nopen class K")
+        myFixture.addFileToProject("m1/kk.kt", "package one\nopen class KK : K()")
+        myFixture.addFileToProject("m1/kkk.kt", "package one\nopen class KKK : KK()")
+
+        val m2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "m2", myFixture.tempDirFixture.findOrCreateDir("m2"))
+        myFixture.addFileToProject("m2/i.kt", "package two\ninterface I")
+        myFixture.addFileToProject("m2/ii.kt", "package two\ninterface II : I")
+        myFixture.addFileToProject("m2/iii.kt", "package two\ninterface III : II")
+        ModuleRootModificationUtil.addDependency(m2, m1)
+
+        val m3 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "m3", myFixture.tempDirFixture.findOrCreateDir("m3"))
+        myFixture.addFileToProject("m3/i2.kt", "package three\ninterface I2")
+        myFixture.addFileToProject("m3/ii2.kt", "package three\ninterface II2 : I2")
+
+        val m4 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "m4", myFixture.tempDirFixture.findOrCreateDir("m4"))
+        ModuleRootModificationUtil.addDependency(m4, m1)
+        ModuleRootModificationUtil.addDependency(m4, m2)
+        ModuleRootModificationUtil.addDependency(m4, m3)
+        myFixture.addFileToProject(
+            "m4/k_k2_i.kt",
+            """
+                package four
+                
+                import one.K
+                import two.I
+                
+                open class K_K2_I : K(), I
+            """.trimIndent(),
+        )
+
+        myFixture.addFileToProject(
+            "m4/kk2_i_k.kt",
+            """
+                package four
+                
+                import three.I2
+
+                open class K_K_K2_I_I2 : K_K2_I(), I2
+            """.trimIndent(),
+        )
+
+        myFixture.addFileToProject(
+            "m4/end_kk_iii_ii2.kt",
+            """
+                package four
+                
+                import one.KK
+                import two.III
+                import three.II2
+                
+                class END : KK(), III, II2
+            """.trimIndent(),
+        )
+
+        installCompiler()
+        rebuildProject()
+
+        assertEquals(listOf("four.K_K2_I", "one.KK"), findSubOrSuperTypes("one.K", deep = false, subtypes = true))
+        assertEquals(
+            listOf("four.END", "four.K_K2_I", "four.K_K_K2_I_I2", "one.KK", "one.KKK"),
+            findSubOrSuperTypes("one.K", deep = true, subtypes = true),
+        )
+
+        assertEquals(listOf("four.K_K2_I", "three.I2"), findSubOrSuperTypes("four.K_K_K2_I_I2", deep = false, subtypes = false))
+        assertEquals(
+            listOf("four.K_K2_I", "one.K", "three.I2", "two.I"),
+            findSubOrSuperTypes("four.K_K_K2_I_I2", deep = true, subtypes = false)
+        )
+
+        forEachBoolean { deep ->
+            assertEquals(listOf("two.I"), findSubOrSuperTypes("two.II", deep, subtypes = false))
+            assertEquals(emptyList<String>(), findSubOrSuperTypes("four.END", deep, subtypes = true))
+        }
+
+        assertEquals(
+            listOf("one.K", "one.KK", "three.I2", "three.II2", "two.I", "two.II", "two.III"),
+            findSubOrSuperTypes("four.END", deep = true, subtypes = false),
+        )
+    }
+
     /**
      * [org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService.buildScopeWithReferences]
      */
