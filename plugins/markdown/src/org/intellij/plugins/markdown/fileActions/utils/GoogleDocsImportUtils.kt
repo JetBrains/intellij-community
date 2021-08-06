@@ -14,9 +14,6 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownNotifier
 import org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportDocxDialog
 import org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsFileLoader
-import org.intellij.plugins.markdown.google.authorization.GoogleCredentials
-import org.intellij.plugins.markdown.google.utils.GoogleAccountsUtils.createCredentialsForGoogleApi
-import org.intellij.plugins.markdown.google.utils.GoogleAccountsUtils.tryToReLogin
 import java.io.File
 
 object GoogleDocsImportUtils {
@@ -46,7 +43,8 @@ object GoogleDocsImportUtils {
       MarkdownImportDocxDialog(loadedFile, importTaskTitle, importDialogTitle, project, fullFilePath).show()
     }
     catch (e: GoogleJsonResponseException) {
-      LOG.error(e.localizedMessage)
+      if (e.statusCode == 404) handleNotFoundError(project)
+      else LOG.error(e.localizedMessage)
     }
     finally {
       ApplicationManager.getApplication().runWriteAction {
@@ -55,5 +53,18 @@ object GoogleDocsImportUtils {
         }
       }
     }
+  }
+
+  private fun handleNotFoundError(project: Project) {
+    MarkdownNotifier.showErrorNotification(
+      project,
+      msg = MarkdownBundle.message("markdown.google.file.download.error.msg"),
+      title = MarkdownBundle.message("markdown.google.file.download.error.title")
+    )
+
+    LOG.error(
+      MarkdownBundle.message("markdown.google.file.download.error.title"),
+      MarkdownBundle.message("markdown.google.file.download.error.msg")
+    )
   }
 }
