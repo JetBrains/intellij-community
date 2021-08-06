@@ -13,6 +13,8 @@ UFile (package = )
                                 UObjectLiteralExpression
                                     ULiteralExpression (value = "inner literal")
                                     UClass (name = null)
+                                        UMethod (name = )
+                    UMethod (name = )
                     UClass (name = InnerClass)
                         UMethod (name = InnerClass)
                             UBlockExpression
