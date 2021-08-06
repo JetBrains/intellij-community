@@ -26,9 +26,6 @@ class KotlinCompilerReferenceIndexStorage(
     pathConverter,
 ) {
     companion object {
-        /**
-         * [org.jetbrains.kotlin.incremental.AbstractIncrementalCache.Companion.SUPERTYPES]
-         */
         private const val SUPERTYPES = "supertypes"
 
         /**
@@ -60,23 +57,26 @@ class KotlinCompilerReferenceIndexStorage(
             val buildTargetPath = buildDataPaths.getTargetTypeDataRoot(buildTargetType).toPath()
             if (buildTargetPath.notExists() || !buildTargetPath.isDirectory()) continue
             buildTargetPath.forEachDirectoryEntry { targetDataRoot ->
-                val workingPath =
-                    targetDataRoot.takeIf { it.isDirectory() }?.resolve(KOTLIN_CACHE_DIRECTORY_NAME)?.takeUnless { it.notExists() }
-                        ?: return@forEachDirectoryEntry
+                val workingPath = targetDataRoot.takeIf { it.isDirectory() }
+                    ?.resolve(KOTLIN_CACHE_DIRECTORY_NAME)
+                    ?.takeUnless { it.notExists() }
+                    ?: return@forEachDirectoryEntry
 
-                initializeStorage(workingPath.resolve(SUBTYPES.asStorageName), subtypesStorage)
-                initializeStorage(workingPath.resolve(SUPERTYPES.asStorageName), supertypesStorage)
+                initializeStorage(workingPath.resolve(SUBTYPES.asStorageName))
             }
         }
     }
 
-    private fun initializeStorage(sourcePath: Path, destination: ClassOneToManyStorage) {
-        if (sourcePath.notExists()) return
+    private fun initializeStorage(subtypesSourcePath: Path) {
+        if (subtypesSourcePath.notExists()) return
 
-        createKotlinDataReader(sourcePath).use { source ->
+        createKotlinDataReader(subtypesSourcePath).use { source ->
             source.processKeysWithExistingMapping { key ->
                 source[key]?.let { values ->
-                    destination.add(key, values)
+                    subtypesStorage.add(key, values)
+                    for (value in values) {
+                        supertypesStorage.add(value, key)
+                    }
                 }
 
                 true
@@ -112,6 +112,18 @@ private class ClassOneToManyStorage(storagePath: Path) {
         key,
         storage[key]?.plus(newValues)?.distinct() ?: newValues,
     )
+
+    fun add(key: String, newValue: String) {
+        val oldValues = storage[key]
+        if (oldValues == null) {
+            storage.put(key, listOf(newValue))
+            return
+        }
+
+        if (newValue in oldValues) return
+
+        storage.put(key, oldValues + newValue)
+    }
 
     operator fun get(key: FqName, deep: Boolean): Sequence<FqName> = get(key.asString(), deep).map(::FqName)
     operator fun get(key: String, deep: Boolean): Sequence<String> {
