@@ -61,7 +61,7 @@ class HtmlExporter(htmlSource: String,
     }
     catch (exception: IOException) {
       val name = File(url).name
-      MarkdownNotifier.notifyAboutConversionWarning(project, MarkdownBundle.message("markdown.export.style.not.found.msg", name))
+      MarkdownNotifier.showWarningNotification(project, MarkdownBundle.message("markdown.export.style.not.found.msg", name))
       null
     }
   }
@@ -112,7 +112,7 @@ class HtmlExporter(htmlSource: String,
     }
     catch (exception: IOException) {
       val name = File(url).name
-      MarkdownNotifier.notifyAboutConversionWarning(project, MarkdownBundle.message("markdown.export.images.not.found.msg", name))
+      MarkdownNotifier.showWarningNotification(project, MarkdownBundle.message("markdown.export.images.not.found.msg", name))
       null
     }
 

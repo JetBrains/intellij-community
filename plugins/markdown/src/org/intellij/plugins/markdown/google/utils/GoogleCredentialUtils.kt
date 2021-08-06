@@ -7,7 +7,8 @@ import com.google.api.client.auth.oauth2.TokenResponse
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import org.intellij.plugins.markdown.MarkdownNotifier.notifyNetworkProblems
+import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.MarkdownNotifier.showErrorNotification
 import org.intellij.plugins.markdown.google.authorization.GoogleCredentials
 import org.intellij.plugins.markdown.google.authorization.GoogleOAuthService
 import java.io.IOException
@@ -35,7 +36,7 @@ object GoogleCredentialUtils {
       return GoogleAppCredentials(clientId, clientSecret)
     }
     catch (e: IOException) {
-      notifyNetworkProblems(project)
+      showErrorNotification(project, MarkdownBundle.message("markdown.google.import.network.problems.msg"))
       LOG.error("Can't get google app credentials from https://www.jetbrains.com/config/markdown.json", e)
 
       return null
