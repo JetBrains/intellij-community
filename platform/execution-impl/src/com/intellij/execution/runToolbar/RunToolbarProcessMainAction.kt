@@ -7,8 +7,13 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.ide.macro.MacroManager
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 
 class RunToolbarProcessMainAction(process: RunToolbarProcess, executor: Executor) : RunToolbarProcessAction(process, executor) {
+  init {
+    templatePresentation.putClientProperty(ActionButtonWithText.SHORTCUT_SHOULD_SHOWN, true)
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     e.project?.let { project ->
       if (canRun(e)) {

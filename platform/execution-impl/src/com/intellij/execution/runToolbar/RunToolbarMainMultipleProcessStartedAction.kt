@@ -5,15 +5,19 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.util.ui.JBUI
+import java.awt.Color
 import java.awt.Dimension
 import java.beans.PropertyChangeEvent
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 
 class RunToolbarMainMultipleProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
   companion object {
-    private val PROP_ACTIVE_PROCESS = Key<RunToolbarProcess>("ACTIVE_PROCESS")
+    private val PROP_ACTIVE_PROCESS_COLOR = Key<Color>("ACTIVE_PROCESS_COLOR")
   }
 
   override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.FLEXIBLE
@@ -31,8 +35,9 @@ class RunToolbarMainMultipleProcessStartedAction : ComboBoxAction(), RTRunConfig
       if(!e.isItRunToolbarMainSlot() || !state.isActive() || e.isOpened() || state.isSingleMain())  return@let false
 
       val activeProcesses = manager.activeProcesses
-      activeProcesses.processes.keys.firstOrNull()?.let {
-        e.presentation.putClientProperty(PROP_ACTIVE_PROCESS, it)
+
+      manager.getMainOrFirstActiveProcess()?.let{
+        e.presentation.putClientProperty(PROP_ACTIVE_PROCESS_COLOR, it.pillColor)
       }
 
       activeProcesses.getText()?.let {
@@ -44,6 +49,13 @@ class RunToolbarMainMultipleProcessStartedAction : ComboBoxAction(), RTRunConfig
 
   override fun createComboBoxButton(presentation: Presentation): ComboBoxButton {
     return object : ComboBoxButton(presentation) {
+      private var project: Project? = null
+
+      override fun addNotify() {
+        super.addNotify()
+        project = (SwingUtilities.getWindowAncestor(this) as? IdeFrame)?.project
+      }
+
       override fun showPopup() {
 
       }
@@ -53,8 +65,8 @@ class RunToolbarMainMultipleProcessStartedAction : ComboBoxAction(), RTRunConfig
       }
 
       override fun presentationChanged(event: PropertyChangeEvent?) {
-        presentation.getClientProperty(PROP_ACTIVE_PROCESS)?.let {
-          putClientProperty("JButton.backgroundColor", it.pillColor)
+        presentation.getClientProperty(PROP_ACTIVE_PROCESS_COLOR)?.let {
+          putClientProperty("JButton.backgroundColor", it)
         }
 
         super.presentationChanged(event)

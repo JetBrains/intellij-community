@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.AbstractPopup
@@ -20,11 +21,9 @@ import com.intellij.ui.popup.ComponentPopupBuilderImpl
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.PositionTracker
 import com.intellij.util.ui.UIUtil
-import java.awt.AWTEvent
-import java.awt.Dialog
-import java.awt.Point
-import java.awt.Toolkit
+import java.awt.*
 import java.awt.event.*
+import java.beans.PropertyChangeEvent
 import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
@@ -32,7 +31,10 @@ import javax.swing.event.AncestorEvent
 import javax.swing.event.AncestorListener
 
 
-class RunToolbarExtraSlotsAction : AnAction(), CustomComponentAction, DumbAware {
+class RunToolbarShowHidePopupAction : AnAction(), CustomComponentAction, DumbAware {
+/*  companion object {
+    private val PROP_ACTIVE_PROCESS_COLOR = Key<Color>("ACTIVE_PROCESS_COLOR")
+  }*/
 
   override fun actionPerformed(e: AnActionEvent) {
 
@@ -41,19 +43,24 @@ class RunToolbarExtraSlotsAction : AnAction(), CustomComponentAction, DumbAware 
   override fun update(e: AnActionEvent) {
     e.project?.let {
       val slotManager = RunToolbarSlotManager.getInstance(it)
+
+/*      slotManager.getMainOrFirstActiveProcess()?.let{
+        e.presentation.putClientProperty(PROP_ACTIVE_PROCESS_COLOR, it.pillColor)
+      }*/
+
       val isOpened = e.dataContext.getData(RunToolbarMainWidgetComponent.RUN_TOOLBAR_MAIN_WIDGET_COMPONENT_KEY)?.isOpened
                      ?: false
       e.presentation.icon = when {
         isOpened -> {
-          e.presentation.text = ActionsBundle.message("action.RunToolbarExtraSlotsAction.hide.text")
+          e.presentation.text = ActionsBundle.message("action.RunToolbarShowHidePopupAction.hide.text")
           AllIcons.Toolbar.Collapse
         }
         slotManager.slotsCount() == 0 -> {
-          e.presentation.text = ActionsBundle.message("action.RunToolbarExtraSlotsAction.text")
+          e.presentation.text = ActionsBundle.message("action.RunToolbarShowHidePopupAction.text")
           AllIcons.Toolbar.AddSlot
         }
         else -> {
-          e.presentation.text = ActionsBundle.message("action.RunToolbarExtraSlotsAction.show.text")
+          e.presentation.text = ActionsBundle.message("action.RunToolbarShowHidePopupAction.show.text")
           AllIcons.Toolbar.Expand
         }
       }
@@ -124,6 +131,16 @@ class RunToolbarExtraSlotsAction : AnAction(), CustomComponentAction, DumbAware 
       }
       super.removeNotify()
     }
+
+/*    protected override fun presentationPropertyChanged(e: PropertyChangeEvent) {
+      super.presentationPropertyChanged(e)
+
+      presentation.getClientProperty(PROP_ACTIVE_PROCESS_COLOR)?.let {
+        putClientProperty("JButton.backgroundColor", it)
+        background = it
+      }
+
+    }*/
 
     private fun cancel() {
       pressedOnMainWidget = false

@@ -89,6 +89,10 @@ class RunToolbarSlotManager(val project: Project) {
     }
   }
 
+  internal fun getMainOrFirstActiveProcess(): RunToolbarProcess? {
+    return mainSlotData.environment?.getRunToolbarProcess() ?: activeProcesses.processes.keys.firstOrNull()
+  }
+
   internal fun slotsCount(): Int {
     return dataIds.size
   }
