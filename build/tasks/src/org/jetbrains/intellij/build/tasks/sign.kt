@@ -116,7 +116,7 @@ fun signMacApp(
       .startSpan().use {
         sftp.put(NioFileSource(scriptDir.resolve("entitlements.xml"), filePermission = regularFileMode), "$remoteDir/entitlements.xml")
         @Suppress("SpellCheckingInspection")
-        for (fileName in listOf("sign.sh", "notarize.sh", "signapp.sh", "makedmg.sh", "makedmg.pl")) {
+        for (fileName in listOf("sign.sh", "notarize.sh", "signapp.sh", "makedmg.sh", "makedmg.py")) {
           sftp.put(NioFileSource(scriptDir.resolve(fileName), filePermission = executableFileMode), "$remoteDir/$fileName")
         }
 
@@ -166,7 +166,7 @@ fun signMacApp(
         @Suppress("SpellCheckingInspection")
         processFile(localFile = dmgFile,
                     ssh = ssh,
-                    commandString = "'$remoteDir/makedmg.sh' '${fileNameWithoutExt}' '$fullBuildNumber'",
+                    commandString = "/bin/bash -l '$remoteDir/makedmg.sh' '${fileNameWithoutExt}' '$fullBuildNumber'",
                     artifactDir = artifactDir,
                     artifactBuilt = artifactBuilt,
                     taskLogClassifier = "dmg")
