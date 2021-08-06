@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.ide.impl.getTrustedState
 import com.intellij.openapi.Disposable
@@ -40,9 +39,6 @@ import kotlin.streams.asStream
 
 @State(name = "ExternalSystemProjectTracker", storages = [Storage(CACHE_FILE)])
 class AutoImportProjectTracker(private val project: Project) : ExternalSystemProjectTracker, PersistentStateComponent<AutoImportProjectTracker.State> {
-  private val AUTO_REPARSE_DELAY = DaemonCodeAnalyzerSettings.getInstance().autoReparseDelay
-  private val AUTO_RELOAD_DELAY = 2000
-
   private val settings get() = AutoImportProjectTrackerSettings.getInstance(project)
   private val projectStates = ConcurrentHashMap<State.Id, State.Project>()
   private val projectDataMap = ConcurrentHashMap<ExternalSystemProjectId, ProjectData>()
@@ -53,8 +49,8 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   )
   private val projectChangeOperation = AnonymousParallelOperationTrace(debugName = "Project change operation")
   private val projectRefreshOperation = CompoundParallelOperationTrace<String>(debugName = "Project refresh operation")
-  private val dispatcher = MergingUpdateQueue("AutoImportProjectTracker.dispatcher", AUTO_REPARSE_DELAY, false, null, project)
-  private val delayDispatcher = MergingUpdateQueue("AutoImportProjectTracker.delayDispatcher", AUTO_RELOAD_DELAY, false, null, project)
+  private val dispatcher = MergingUpdateQueue("AutoImportProjectTracker.dispatcher", 300, false, null, project)
+  private val delayDispatcher = MergingUpdateQueue("AutoImportProjectTracker.delayDispatcher", 2000, false, null, project)
   private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AutoImportProjectTracker.backgroundExecutor", 1)
 
   var isAsyncChangesProcessing by asyncChangesProcessingProperty
@@ -274,6 +270,11 @@ class AutoImportProjectTracker(private val project: Project) : ExternalSystemPro
   @TestOnly
   fun enableAutoImportInTests() {
     isDisabled.set(false)
+  }
+
+  @TestOnly
+  fun setAutoReloadDelay(delay: Int) {
+    delayDispatcher.setMergingTimeSpan(delay)
   }
 
   init {

@@ -4,7 +4,7 @@ package com.intellij.openapi.externalSystem.autoimport
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Project refresh listener of specific external system (gradle, maven, sbt or etc)
+ * Project refresh listener of specific external system (gradle, maven, sbt or etc.)
  * Needed to highlight bounds of project refresh on the side of a external system
  */
 @ApiStatus.Experimental

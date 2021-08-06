@@ -2,7 +2,6 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.core.CoreBundle
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -38,6 +37,7 @@ import org.jetbrains.concurrency.AsyncPromise
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 abstract class AutoImportTestCase : ExternalSystemTestCase() {
   override fun getTestsTempDir() = "tmp${System.currentTimeMillis()}"
@@ -56,13 +56,13 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
 
   private fun VirtualFile.findOrCreateChildDirectory(name: String): VirtualFile {
     val file = findChild(name) ?: createChildDirectory(null, name)
-    if (!file.isDirectory) throw IOException(IdeBundle.message("new.directory.failed.error", name))
+    if (!file.isDirectory) throw IOException("Cannot create directory $name")
     return file
   }
 
   private fun VirtualFile.findOrCreateChildFile(name: String): VirtualFile {
     val file = findChild(name) ?: createChildData(null, name)
-    if (file.isDirectory) throw IOException(IdeBundle.message("new.file.failed.error", name))
+    if (file.isDirectory) throw IOException("Cannot create file $name")
     return file
   }
 
@@ -253,6 +253,10 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
     projectTracker.isAsyncChangesProcessing = true
   }
 
+  protected fun setAutoReloadDelay(delay: Int) {
+    projectTracker.setAutoReloadDelay(delay)
+  }
+
   protected fun setAutoReloadType(type: AutoReloadType) {
     projectTrackerSettings.autoReloadType = type
   }
@@ -362,7 +366,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
   ): Pair<AutoImportProjectTracker.State, AutoImportProjectTrackerSettings.State> {
     return projectTrackerTest(state) {
       val projectId = ExternalSystemProjectId(TEST_EXTERNAL_SYSTEM_ID, projectPath)
-      val projectAware = MockProjectAware(projectId)
+      val projectAware = mockProjectAware(projectId)
       val file = findOrCreateVirtualFile(fileRelativePath)
       content?.let { file.replaceContent(it) }
       projectAware.registerSettingsFile(file.path)
@@ -378,7 +382,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
   ): Pair<AutoImportProjectTracker.State, AutoImportProjectTrackerSettings.State> {
     return projectTrackerTest(state) {
       val projectId = ExternalSystemProjectId(TEST_EXTERNAL_SYSTEM_ID, projectPath)
-      val projectAware = MockProjectAware(projectId)
+      val projectAware = mockProjectAware(projectId)
       register(projectAware, parentDisposable = it)
       SimpleTestBench(projectAware).test()
     }
@@ -445,6 +449,11 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
     fun registerSettingsFile(relativePath: String) = projectAware.registerSettingsFile(getPath(relativePath))
 
     fun onceDuringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit) = projectAware.onceDuringRefresh(action)
+    fun duringRefresh(times: Int, action: (ExternalSystemProjectReloadContext) -> Unit) = projectAware.duringRefresh(times, action)
+    fun onceAfterRefresh(action: (ExternalSystemRefreshStatus) -> Unit) = projectAware.onceAfterRefresh(action)
+    fun afterRefresh(times: Int, action: (ExternalSystemRefreshStatus) -> Unit) = projectAware.afterRefresh(times, action)
+    fun onceBeforeRefresh(action: () -> Unit) = projectAware.onceBeforeRefresh(action)
+    fun beforeRefresh(times: Int, action: () -> Unit) = projectAware.beforeRefresh(times, action)
 
     fun setRefreshStatus(status: ExternalSystemRefreshStatus) = projectAware.refreshStatus.set(status)
 
@@ -459,7 +468,7 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
 
     fun withLinkedProject(fileRelativePath: String, test: SimpleTestBench.(VirtualFile) -> Unit) {
       val projectId = ExternalSystemProjectId(projectAware.projectId.systemId, "$projectPath/$name")
-      val projectAware = MockProjectAware(projectId)
+      val projectAware = mockProjectAware(projectId)
       Disposer.newDisposable().use {
         val file = findOrCreateVirtualFile("$name/$fileRelativePath")
         projectAware.registerSettingsFile(file.path)
@@ -483,14 +492,18 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
       }
     }
 
-    fun waitForProjectRefresh(action: () -> Unit) {
-      Disposer.newDisposable(testDisposable, "waitForProjectRefresh").use {
+    fun waitForProjectRefresh(expectedRefreshes: Int = 1, action: () -> Unit) {
+      require(expectedRefreshes > 0)
+      Disposer.newDisposable(testDisposable, "waitForProjectRefresh").use { parentDisposable ->
         val promise = AsyncPromise<ExternalSystemRefreshStatus>()
+        val uncompletedRefreshes = AtomicInteger(expectedRefreshes)
         projectAware.subscribe(object : ExternalSystemProjectRefreshListener {
           override fun afterProjectRefresh(status: ExternalSystemRefreshStatus) {
-            promise.setResult(status)
+            if (uncompletedRefreshes.decrementAndGet() == 0) {
+              promise.setResult(status)
+            }
           }
-        }, it)
+        }, parentDisposable)
         action()
         invokeAndWaitIfNeeded {
           PlatformTestUtil.waitForPromise(promise, TimeUnit.SECONDS.toMillis(10))
@@ -498,6 +511,8 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
       }
     }
   }
+
+  fun mockProjectAware(projectId: ExternalSystemProjectId) = MockProjectAware(projectId, myProject)
 
   protected inner class SimpleModificationTestBench(
     projectAware: MockProjectAware,

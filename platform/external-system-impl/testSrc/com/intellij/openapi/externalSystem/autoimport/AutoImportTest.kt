@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.util.Parallel.Companion.parallel
 import com.intellij.openapi.util.Ref
 import org.junit.Test
 import java.io.File
+import java.util.concurrent.CountDownLatch
 
 class AutoImportTest : AutoImportTestCase() {
   @Test
@@ -227,8 +228,8 @@ class AutoImportTest : AutoImportTestCase() {
     val systemId2 = ProjectSystemId("External System 2")
     val projectId1 = ExternalSystemProjectId(systemId1, projectPath)
     val projectId2 = ExternalSystemProjectId(systemId2, projectPath)
-    val projectAware1 = MockProjectAware(projectId1)
-    val projectAware2 = MockProjectAware(projectId2)
+    val projectAware1 = mockProjectAware(projectId1)
+    val projectAware2 = mockProjectAware(projectId2)
 
     initialize()
 
@@ -524,7 +525,7 @@ class AutoImportTest : AutoImportTestCase() {
   fun `test files generation during refresh`() {
     val systemId = ProjectSystemId("External System")
     val projectId = ExternalSystemProjectId(systemId, projectPath)
-    val projectAware = MockProjectAware(projectId)
+    val projectAware = mockProjectAware(projectId)
 
     initialize()
     register(projectAware)
@@ -591,8 +592,8 @@ class AutoImportTest : AutoImportTestCase() {
     val systemId = ProjectSystemId("External System")
     val projectId1 = ExternalSystemProjectId(systemId, projectPath)
     val projectId2 = ExternalSystemProjectId(systemId, "$projectPath/sub-project")
-    val projectAware1 = MockProjectAware(projectId1)
-    val projectAware2 = MockProjectAware(projectId2)
+    val projectAware1 = mockProjectAware(projectId1)
+    val projectAware2 = mockProjectAware(projectId2)
 
     initialize()
 
@@ -918,6 +919,49 @@ class AutoImportTest : AutoImportTestCase() {
       assertState(refresh = 1, notified = true, event = "modification")
       file.replaceContent(byteArrayOf(1, 2, 3))
       assertState(refresh = 1, notified = false, event = "revert modification")
+    }
+  }
+
+  @Test
+  fun `test reload during reload`() {
+    simpleModificationTest {
+      enableAsyncExecution()
+
+      val expectedRefreshes = 10
+      val latch = CountDownLatch(expectedRefreshes)
+      duringRefresh(expectedRefreshes) {
+        latch.countDown()
+        latch.await()
+      }
+      beforeRefresh(expectedRefreshes - 1) {
+        forceRefreshProject()
+      }
+      waitForProjectRefresh(expectedRefreshes) {
+        forceRefreshProject()
+      }
+      assertState(refresh = expectedRefreshes, notified = false, event = "reloads")
+
+      waitForProjectRefresh {
+        modifySettingsFile(EXTERNAL)
+      }
+      assertState(refresh = expectedRefreshes + 1, notified = false, event = "external modification")
+    }
+  }
+
+  @Test
+  fun `test modification during reload`() {
+    simpleModificationTest {
+      enableAsyncExecution()
+      setAutoReloadDelay(100)
+
+      val expectedRefreshes = 10
+      duringRefresh(expectedRefreshes - 1) {
+        modifySettingsFile(EXTERNAL)
+      }
+      waitForProjectRefresh(expectedRefreshes) {
+        modifySettingsFile(EXTERNAL)
+      }
+      assertState(refresh = expectedRefreshes, notified = false, event = "reloads")
     }
   }
 }
