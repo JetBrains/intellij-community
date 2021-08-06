@@ -146,6 +146,11 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
     <projectService serviceInterface="org.jetbrains.uast.kotlin.FirKotlinUastResolveProviderService"
                     serviceImplementation="org.jetbrains.uast.kotlin.internal.FirIdeaKotlinUastResolveProviderService"/>
 
+    <registryKey key="kotlin.fir.uast.force.uinjectionhost"
+                 description="Whether to convert `KtStringTemplateExpression` to `KotlinStringTemplateUPolyadicExpression` in all cases"
+                 defaultValue="false"
+                 restartRequired="false"/>
+
     <completion.contributor language="kotlin"
                             id="KotlinCompletionContributor"
                             order="first"
