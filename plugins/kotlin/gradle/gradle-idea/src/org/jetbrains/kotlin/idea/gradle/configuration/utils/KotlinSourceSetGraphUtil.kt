@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.gradle.KotlinMPPGradleModel
 import org.jetbrains.kotlin.gradle.KotlinPlatform
 import org.jetbrains.kotlin.gradle.KotlinSourceSet
 
-@KotlinPluginInternalApi
+@IntellijInternalApi
 fun createSourceSetVisibilityGraph(model: KotlinMPPGradleModel): ImmutableGraph<KotlinSourceSet> {
     val graph = createSourceSetDependsOnGraph(model)
     graph.putInferredTestToProductionEdges()
@@ -79,11 +79,11 @@ private fun getFixedDependsOnSourceSets(
 /**
  * @see Graphs.transitiveClosure
  */
-@KotlinPluginInternalApi
+@IntellijInternalApi
 val <T> Graph<T>.transitiveClosure: Graph<T> get() = Graphs.transitiveClosure(this)
 
 /**
  * @see ImmutableGraph.copyOf
  */
-@KotlinPluginInternalApi
+@IntellijInternalApi
 val <T> Graph<T>.immutable: ImmutableGraph<T> get() = ImmutableGraph.copyOf(this)

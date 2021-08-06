@@ -3,13 +3,13 @@
 package org.jetbrains.kotlin.idea.gradle.configuration
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.LocalFileSystem
-import org.jetbrains.kotlin.idea.KotlinPluginInternalApi
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import java.util.*
 import kotlin.io.path.*
 
-@KotlinPluginInternalApi
+@IntellijInternalApi
 class GradlePropertiesFileFacade(private val baseDir: String) {
 
     fun readProperty(propertyName: String): String? {

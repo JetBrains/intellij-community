@@ -1,13 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.caches.project
 
-import org.jetbrains.kotlin.idea.KotlinPluginInternalApi
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.kotlin.platform.SimplePlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatformUnspecifiedTarget
 import org.jetbrains.kotlin.platform.konan.NativePlatformWithTarget
 
-@KotlinPluginInternalApi
+@IntellijInternalApi
 fun interface LibraryDependenciesFilter {
     operator fun invoke(platform: TargetPlatform, candidates: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate>
 }
@@ -17,7 +17,7 @@ fun interface LibraryDependenciesFilter {
  * jvm, js -> jvm, js, native {OK} (at least all platforms present)
  * jvm, js, native -> jvm, js {NO} (missing native platform)
  */
-@KotlinPluginInternalApi
+@IntellijInternalApi
 object DefaultLibraryDependenciesFilter : LibraryDependenciesFilter {
     override fun invoke(platform: TargetPlatform, candidates: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
         return candidates.filterTo(mutableSetOf()) { candidate -> platform representsSubsetOf candidate.platform }
@@ -33,7 +33,7 @@ object DefaultLibraryDependenciesFilter : LibraryDependenciesFilter {
  * source module analysis, since it is present there anyways (and by definition is the perfect fit for that source set)
  * see: https://youtrack.jetbrains.com/issue/KT-40814
  */
-@KotlinPluginInternalApi
+@IntellijInternalApi
 object SharedNativeLibraryToNativeInteropFallbackDependenciesFilter : LibraryDependenciesFilter {
     override fun invoke(platform: TargetPlatform, candidates: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
         /* Filter only works on shared native dependee libraries to interop dependency libraries */
@@ -91,7 +91,7 @@ private fun SimplePlatform.representsSubsetOf(to: SimplePlatform): Boolean {
 
 /* Operators on LibraryDependenciesFilter */
 
-@KotlinPluginInternalApi
+@IntellijInternalApi
 infix fun LibraryDependenciesFilter.union(other: LibraryDependenciesFilter): LibraryDependenciesFilter {
     if (this is LibraryDependenciesFilterUnion && other is LibraryDependenciesFilterUnion) {
         return LibraryDependenciesFilterUnion(this.filters + other.filters)
@@ -105,7 +105,7 @@ infix fun LibraryDependenciesFilter.union(other: LibraryDependenciesFilter): Lib
     return LibraryDependenciesFilterUnion(listOf(this, other))
 }
 
-@KotlinPluginInternalApi
+@IntellijInternalApi
 class LibraryDependenciesFilterUnion(
     val filters: List<LibraryDependenciesFilter>
 ) : LibraryDependenciesFilter {
