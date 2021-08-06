@@ -381,8 +381,12 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     return SequencePresentation(seq)
   }
 
-  fun button(default: InlayPresentation, clicked: InlayPresentation, clickListener: ClickListener?, hoverListener: HoverListener?) : InlayPresentation {
-    val defaultOrClicked: BiStatePresentation = object : BiStatePresentation({ default }, { clicked }, false) {
+  fun button(default: InlayPresentation,
+             clicked: InlayPresentation,
+             clickListener: ClickListener?,
+             hoverListener: HoverListener?,
+             initialState: Boolean = false): InlayPresentation {
+    val defaultOrClicked: BiStatePresentation = object : BiStatePresentation({ default }, { clicked }, initialState) {
       override val width: Int
         get() = max(default.width, clicked.width)
 
