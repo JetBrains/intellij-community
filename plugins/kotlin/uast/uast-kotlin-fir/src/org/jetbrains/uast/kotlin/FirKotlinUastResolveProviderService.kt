@@ -66,7 +66,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun getArgumentForParameter(ktCallElement: KtCallElement, index: Int, parent: UElement): UExpression? {
-        TODO("Not yet implemented")
+        // TODO: KtValueParameterSymbol doesn't have a way to retrieve 0-based index of the corresponding parameter.
+        return null
     }
 
     override fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression? {
