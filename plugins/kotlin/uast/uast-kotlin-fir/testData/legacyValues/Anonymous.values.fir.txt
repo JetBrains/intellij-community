@@ -10,6 +10,7 @@ UFile (package = ) [import java.io.Closeable...]
                             UClass (name = null) [final class null : java.lang.Runnable {...}]
                                 UMethod (name = run) [public fun run() : void {...}]
                                     UBlockExpression [{...}] = Undetermined
+                                UMethod (name = ) [private fun () = UastEmptyExpression]
                 UQualifiedReferenceExpression [runnable.run()] = external run()()
                     USimpleNameReferenceExpression (identifier = runnable) [runnable] = (var runnable = Undetermined)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [run()] = external run()()
@@ -44,6 +45,7 @@ UFile (package = ) [import java.io.Closeable...]
                                     UBlockExpression [{...}] = Undetermined
                                 UMethod (name = run) [public fun run() : void {...}]
                                     UBlockExpression [{...}] = Undetermined
+                                UMethod (name = ) [private fun () = UastEmptyExpression]
                 UDeclarationsExpression [var runnableIs: java.io.InputStream = anonymous object : InputStream(), Runnable { override fun read(): Int = 0; override fun run() {} }] = Undetermined
                     ULocalVariable (name = runnableIs) [var runnableIs: java.io.InputStream = anonymous object : InputStream(), Runnable { override fun read(): Int = 0; override fun run() {} }]
                         UObjectLiteralExpression [anonymous object : InputStream(), Runnable { override fun read(): Int = 0; override fun run() {} }] = Undetermined
@@ -54,6 +56,7 @@ UFile (package = ) [import java.io.Closeable...]
                                             ULiteralExpression (value = 0) [0] = (long)0
                                 UMethod (name = run) [public fun run() : void {...}]
                                     UBlockExpression [{...}] = Undetermined
+                                UMethod (name = ) [private fun () = UastEmptyExpression]
         UMethod (name = withErr) [public static final fun withErr() : void {...}]
             UBlockExpression [{...}] = Undetermined
                 UDeclarationsExpression [var runnable: java.lang.Object = anonymous null] = Undetermined

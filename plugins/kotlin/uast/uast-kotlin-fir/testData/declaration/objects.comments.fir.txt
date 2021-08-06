@@ -6,6 +6,8 @@ KotlinUFile(
             KotlinUAnonymousClass(
                 KotlinUMethod(
                 )
+                KotlinUMethod(
+                )
             )
         )
         KotlinUMethod(

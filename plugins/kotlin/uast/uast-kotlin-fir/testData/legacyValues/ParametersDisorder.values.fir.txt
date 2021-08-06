@@ -150,6 +150,7 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                     ULiteralExpression (value = 1) [1] = (long)1
                     ULiteralExpression (value = "foo") ["foo"] = "foo"
                     UClass (name = null) [final class null : Parent {...}]
+                        UMethod (name = ) [private fun () = UastEmptyExpression]
     UClass (name = A) [public final class A {...}]
         UMethod (name = with2Receivers) [public final fun with2Receivers(@org.jetbrains.annotations.NotNull $this$with2Receivers: java.lang.String, @org.jetbrains.annotations.NotNull a: int, @org.jetbrains.annotations.NotNull b: float) : void {...}]
             UParameter (name = $this$with2Receivers) [@org.jetbrains.annotations.NotNull var $this$with2Receivers: java.lang.String]
