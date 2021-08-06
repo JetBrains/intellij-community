@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
@@ -24,6 +25,7 @@ import java.util.function.Supplier;
  * @author Konstantin Bulenkov
  */
 public abstract class AnActionButton extends AnAction implements ShortcutProvider {
+  private static final Logger LOG = Logger.getInstance(AnActionButton.class);
   private boolean myEnabled = true;
   private boolean myVisible = true;
   private ShortcutSet myShortcut;
@@ -151,7 +153,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
                                                                                (Component)myContextComponent) != null);
   }
 
-  @Nullable
+  @NotNull
   public final RelativePoint getPreferredPopupPoint() {
     Container c = myContextComponent;
     ActionToolbar toolbar = null;
@@ -172,7 +174,8 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
         }
       }
     }
-    return null;
+    LOG.error("Can't find toolbar button");
+    return RelativePoint.getCenterOf(myContextComponent);
   }
 
   public void addActionButtonListener(ActionButtonListener l, Disposable parentDisposable) {
