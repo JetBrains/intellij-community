@@ -1,28 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component name="libraryTable">
   <library name="kotlinc.kotlin-scripting-compiler" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler:1.6.255-SNAPSHOT">
-      <exclude>
-        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core" />
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-scripting-js" />
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-util-klib" />
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-script-runtime" />
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-      </exclude>
-    </properties>
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler:1.6.255-SNAPSHOT" />
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler/1.6.255-SNAPSHOT/kotlin-scripting-compiler-1.6.255-SNAPSHOT.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.6.255-SNAPSHOT/kotlin-scripting-common-1.6.255-SNAPSHOT.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.6.255-SNAPSHOT/kotlin-scripting-jvm-1.6.255-SNAPSHOT.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.6.255-SNAPSHOT/kotlin-scripting-compiler-impl-1.6.255-SNAPSHOT.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler/1.6.255-SNAPSHOT/kotlin-scripting-compiler-1.6.255-SNAPSHOT-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.6.255-SNAPSHOT/kotlin-scripting-common-1.6.255-SNAPSHOT-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.6.255-SNAPSHOT/kotlin-scripting-jvm-1.6.255-SNAPSHOT-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.6.255-SNAPSHOT/kotlin-scripting-compiler-impl-1.6.255-SNAPSHOT-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
