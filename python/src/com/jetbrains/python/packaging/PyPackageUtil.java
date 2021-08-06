@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +31,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.ResolveResult;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiPackageUtil;
@@ -521,6 +523,9 @@ public final class PyPackageUtil {
       @Nullable
       @Override
       public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+        if (sdk instanceof Disposable && Disposer.isDisposed((Disposable)sdk)) {
+          throw new AlreadyDisposedException("SDK " + sdk + " (" + sdk.getClass() + ") is already disposed");
+        }
         final Set<VirtualFile> roots = getPackagingAwareSdkRoots(sdk);
         if (roots.isEmpty()) return null;
         allEvents:
