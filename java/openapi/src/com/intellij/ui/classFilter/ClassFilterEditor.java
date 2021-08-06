@@ -273,7 +273,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      return isEnabled() && myEditEnabled;
+      return isEnabled() && (columnIndex != 1 || myEditEnabled);
     }
 
     @Override
