@@ -5,6 +5,9 @@ import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
@@ -14,8 +17,10 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +47,10 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
     myForceImmediateUpdate = forceImmediateUpdate;
   }
 
+  /**
+   * @deprecated May block UI thread, use {@link ParameterHintsPass#asyncUpdate(PsiElement, Editor)} instead.
+   */
+  @Deprecated
   public static void syncUpdate(@NotNull PsiElement element, @NotNull Editor editor) {
     MethodInfoExcludeListFilter filter = MethodInfoExcludeListFilter.forLanguage(element.getLanguage());
     ParameterHintsPass pass = new ParameterHintsPass(element, editor, filter, true);
@@ -52,6 +61,29 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
       return; // cannot update synchronously, hints will be updated after indexing ends by the complete pass
     }
     pass.applyInformationToEditor();
+  }
+
+  /**
+   * Updates inlays recursively for a given element.
+   * Use {@link NonBlockingReadActionImpl#waitForAsyncTaskCompletion() } in tests to wait for the results.
+   */
+  public static @NotNull CancellablePromise<?> asyncUpdate(@NotNull PsiElement element, @NotNull Editor editor) {
+    MethodInfoExcludeListFilter filter = MethodInfoExcludeListFilter.forLanguage(element.getLanguage());
+    return ReadAction.nonBlocking(() -> {
+        try {
+          ParameterHintsPass pass = new ParameterHintsPass(element, editor, filter, true);
+          pass.doCollectInformation(new ProgressIndicatorBase());
+          return pass;
+        }
+        catch (IndexNotReadyException e) {
+          return null; // cannot update now, hints will be updated after indexing ends by the complete pass
+        }
+      }).finishOnUiThread(ModalityState.defaultModalityState(), pass -> {
+        if (pass != null) {
+          pass.applyInformationToEditor();
+        }
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -349,7 +349,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
         document.deleteString(offset, offset + commas.length());
       }
       else {
-        ParameterHintsPass.syncUpdate(methodCall, editor);
+        ParameterHintsPass.asyncUpdate(methodCall, editor);
         Disposer.register(controller, hintsDisposal);
       }
     });
