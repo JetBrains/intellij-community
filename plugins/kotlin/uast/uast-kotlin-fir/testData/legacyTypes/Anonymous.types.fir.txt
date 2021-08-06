@@ -10,6 +10,7 @@ UFile (package = ) [import java.io.Closeable...]
                             UClass (name = null) [final class null : java.lang.Runnable {...}]
                                 UMethod (name = run) [public fun run() : void {...}]
                                     UBlockExpression [{...}] : PsiType:Unit
+                                UMethod (name = ) [private fun () = UastEmptyExpression]
                 UQualifiedReferenceExpression [runnable.run()] : PsiType:Unit
                     USimpleNameReferenceExpression (identifier = runnable) [runnable] : PsiType:Object
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [run()] : PsiType:Unit
@@ -38,6 +39,7 @@ UFile (package = ) [import java.io.Closeable...]
                                     UBlockExpression [{...}] : PsiType:Unit
                                 UMethod (name = run) [public fun run() : void {...}]
                                     UBlockExpression [{...}] : PsiType:Unit
+                                UMethod (name = ) [private fun () = UastEmptyExpression]
                 UDeclarationsExpression [var runnableIs: java.io.InputStream = anonymous object : InputStream(), Runnable { override fun read(): Int = 0; override fun run() {} }]
                     ULocalVariable (name = runnableIs) [var runnableIs: java.io.InputStream = anonymous object : InputStream(), Runnable { override fun read(): Int = 0; override fun run() {} }]
                         UObjectLiteralExpression [anonymous object : InputStream(), Runnable { override fun read(): Int = 0; override fun run() {} }] : PsiType:InputStream
@@ -48,6 +50,7 @@ UFile (package = ) [import java.io.Closeable...]
                                             ULiteralExpression (value = 0) [0] : PsiType:int
                                 UMethod (name = run) [public fun run() : void {...}]
                                     UBlockExpression [{...}] : PsiType:Unit
+                                UMethod (name = ) [private fun () = UastEmptyExpression]
         UMethod (name = withErr) [public static final fun withErr() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
                 UDeclarationsExpression [var runnable: java.lang.Object = anonymous null]
