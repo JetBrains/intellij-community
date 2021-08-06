@@ -146,6 +146,11 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
         e.getPresentation().putClientProperty(Presentation.PROP_VALUE, getVariantName(mySelectedVariant));
         e.getPresentation().setVisible(isRemovable());
       }
+
+      @Override
+      public boolean isDumbAware() {
+        return true;
+      }
     };
     group.setPopup(true);
     return group;
