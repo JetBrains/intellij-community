@@ -116,7 +116,7 @@ class JdkAutoTest : JavaCodeInsightFixtureTestCase() {
 
     requireNotNull(proposal)
     //the most recent JDK should be returned
-    Assert.assertEquals(jdks.getValue(jdks.keys.max()!!).homePath, proposal.existingSdkHome)
+    Assert.assertEquals(jdks.getValue(jdks.keys.maxOrNull()!!).homePath, proposal.existingSdkHome)
   }
 
   @Test

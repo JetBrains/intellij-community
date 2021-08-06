@@ -185,7 +185,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   }
 
   private fun toReadable(history: Collection<VcsFileRevision>): String {
-    val maxSubjectLength = history.map { it.commitMessage?.length ?: 0 }.max() ?: 0
+    val maxSubjectLength = history.map { it.commitMessage?.length ?: 0 }.maxOrNull() ?: 0
     val sb = StringBuilder()
     for (revision in history) {
       val rev = revision as GitFileRevision
@@ -196,7 +196,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   }
 
   private fun toReadable(history: List<TestCommit>): String {
-    val maxSubjectLength = history.map { it.commitMessage.length }.max() ?: 0
+    val maxSubjectLength = history.map { it.commitMessage.length }.maxOrNull() ?: 0
     val sb = StringBuilder()
     for (commit in history) {
       val relPath = FileUtil.getRelativePath(File(projectPath), commit.file)

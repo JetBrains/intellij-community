@@ -31,7 +31,7 @@ class EditableAggregatedWordList : WordList {
 
     val current = words.all.map { it to words.getMetadata(it)!! }.toMap(HashMap())
 
-    val id = (namesToIds.values.max() ?: -1) + 1
+    val id = (namesToIds.values.maxOrNull() ?: -1) + 1
     namesToIds[name] = id
 
     for (word in list.all) {
