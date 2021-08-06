@@ -32,10 +32,9 @@ class ModifiableRootModelBridgeTest {
       val module = projectModel.createModule()
       val moduleRootManager = ModuleRootManager.getInstance(module) as ModuleRootComponentBridge
 
-      val initialStore = WorkspaceModel.getInstance(projectModel.project).entityStorage.current
-      val diff = initialStore.toBuilder()
+      val diff = WorkspaceModel.getInstance(projectModel.project).entityStorage.current.toBuilder()
 
-      val modifiableModel = moduleRootManager.getModifiableModel(diff, initialStore,
+      val modifiableModel = moduleRootManager.getModifiableModel(diff,
                                                                  RootConfigurationAccessor.DEFAULT_INSTANCE) as ModifiableRootModelBridge
 
       (ModuleManager.getInstance(projectModel.project) as ModuleManagerBridgeImpl).getModifiableModel(diff).disposeModule(module)

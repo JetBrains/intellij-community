@@ -111,12 +111,9 @@ class ModuleRootComponentBridge(
     moduleBridge,
     accessor)
 
-  fun getModifiableModel(diff: WorkspaceEntityStorageBuilder,
-                         initialStorage: WorkspaceEntityStorage,
-                         accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridgeImpl(diff, moduleBridge,
-                                                                                                                   accessor,
-                                                                                                                   false)
-
+  fun getModifiableModel(diff: WorkspaceEntityStorageBuilder, accessor: RootConfigurationAccessor): ModifiableRootModel {
+    return ModifiableRootModelBridgeImpl(diff, moduleBridge, accessor, false)
+  }
 
   override fun getDependencies(): Array<Module> = moduleDependencies
   override fun getDependencies(includeTests: Boolean): Array<Module> = getModuleDependencies(includeTests = includeTests)
