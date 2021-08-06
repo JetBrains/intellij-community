@@ -1,9 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.observable
 
-import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
+import com.intellij.openapi.observable.operations.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.use
 import org.junit.Test
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 
@@ -119,6 +122,51 @@ class CompoundParallelOperationTraceTest : CompoundParallelOperationTraceTestCas
 
       assertEquals(1, startedOperations.get())
       assertEquals(1, completedOperations.get())
+    }
+  }
+
+  @Test
+  fun `test operation listener start with TTL`() = testTrace<Int> {
+    val isStarted = AtomicBoolean(false)
+    val isFinished = AtomicBoolean(false)
+    trace.onceBeforeOperation { isStarted.set(true) }
+    trace.onceAfterOperation { isFinished.set(true) }
+    operation {
+      trace.startTask(1)
+      trace.finishTask(1)
+    }
+    assertTrue(isStarted.get())
+    assertTrue(isFinished.get())
+  }
+
+  @Test
+  fun `test operation listening with TTL`() = testTrace<Int> {
+    Disposer.newDisposable().use { parentDisposable ->
+      val ttl = 10
+      val unsubscribeIndex = 7
+
+      val startCounter = AtomicInteger(0)
+      val finishCounter = AtomicInteger(0)
+      val startDisposable = trace.beforeOperation(ttl) { startCounter.incrementAndGet() }
+      val finishDisposable = trace.afterOperation(ttl) { finishCounter.incrementAndGet() }
+
+      Disposer.register(parentDisposable, finishDisposable)
+
+      repeat(ttl) { index ->
+        if (index == unsubscribeIndex) {
+          Disposer.dispose(startDisposable)
+        }
+        operation {
+          trace.startTask(1)
+          trace.finishTask(1)
+        }
+      }
+      operation {
+        trace.startTask(1)
+        trace.finishTask(1)
+      }
+      assertEquals(unsubscribeIndex, startCounter.get())
+      assertEquals(ttl, finishCounter.get())
     }
   }
 }

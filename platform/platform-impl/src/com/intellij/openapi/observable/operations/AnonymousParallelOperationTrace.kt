@@ -4,16 +4,13 @@ package com.intellij.openapi.observable.operations
 import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace.Companion.task
 import org.jetbrains.annotations.NonNls
 
-class AnonymousParallelOperationTrace(@NonNls debugName: String? = null) {
-  private val delegate = CompoundParallelOperationTrace<Nothing?>(debugName)
+class AnonymousParallelOperationTrace private constructor(
+  private val delegate: CompoundParallelOperationTrace<Nothing?>
+) : ParallelOperationTrace by delegate {
+  constructor(@NonNls debugName: String? = null) : this(CompoundParallelOperationTrace<Nothing?>(debugName))
 
-  fun isOperationCompleted() = delegate.isOperationCompleted()
   fun startTask() = delegate.startTask(null)
   fun finishTask() = delegate.finishTask(null)
-  fun beforeOperation(listener: CompoundParallelOperationTrace.Listener) = delegate.beforeOperation(listener)
-  fun beforeOperation(listener: () -> Unit) = delegate.beforeOperation(listener)
-  fun afterOperation(listener: CompoundParallelOperationTrace.Listener) = delegate.afterOperation(listener)
-  fun afterOperation(listener: () -> Unit) = delegate.afterOperation(listener)
 
   companion object {
     fun <R> AnonymousParallelOperationTrace.task(action: () -> R): R = delegate.task(null, action)

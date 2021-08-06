@@ -1,17 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.observable.operations
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
-import java.util.concurrent.CopyOnWriteArrayList
+import com.intellij.openapi.observable.operations.ParallelOperationTrace.Listener
+import com.intellij.util.EventDispatcher
 
-class CompoundParallelOperationTrace<Id>(private val debugName: String? = null) {
+class CompoundParallelOperationTrace<Id>(private val debugName: String? = null) : ParallelOperationTrace {
 
   private val traces = LinkedHashMap<Id, Int>()
 
-  private val beforeOperationListeners = CopyOnWriteArrayList<() -> Unit>()
-  private val afterOperationListeners = CopyOnWriteArrayList<() -> Unit>()
+  private val eventDispatcher = EventDispatcher.create(Listener::class.java)
 
-  fun isOperationCompleted(): Boolean {
+  override fun isOperationCompleted(): Boolean {
     synchronized(this) {
       return traces.isEmpty()
     }
@@ -25,7 +26,7 @@ class CompoundParallelOperationTrace<Id>(private val debugName: String? = null) 
     }
     if (isOperationCompletedBeforeStart) {
       debug("Operation is started")
-      beforeOperationListeners.forEach { it() }
+      eventDispatcher.multicaster.onOperationStart()
     }
   }
 
@@ -37,7 +38,7 @@ class CompoundParallelOperationTrace<Id>(private val debugName: String? = null) 
     }
     if (isOperationCompletedAfterFinish) {
       debug("Operation is finished")
-      afterOperationListeners.forEach { it() }
+      eventDispatcher.multicaster.onOperationFinish()
     }
   }
 
@@ -57,20 +58,12 @@ class CompoundParallelOperationTrace<Id>(private val debugName: String? = null) 
     return taskCounter == 1
   }
 
-  fun beforeOperation(listener: Listener) {
-    beforeOperation(listener::listen)
+  override fun subscribe(listener: Listener) {
+    eventDispatcher.addListener(listener)
   }
 
-  fun beforeOperation(listener: () -> Unit) {
-    beforeOperationListeners.add(listener)
-  }
-
-  fun afterOperation(listener: Listener) {
-    afterOperation(listener::listen)
-  }
-
-  fun afterOperation(listener: () -> Unit) {
-    afterOperationListeners.add(listener)
+  override fun subscribe(listener: Listener, parentDisposable: Disposable) {
+    eventDispatcher.addListener(listener, parentDisposable)
   }
 
   private fun debug(message: String) {
@@ -78,10 +71,6 @@ class CompoundParallelOperationTrace<Id>(private val debugName: String? = null) 
       val debugPrefix = if (debugName == null) "" else "$debugName: "
       LOG.debug("$debugPrefix$message")
     }
-  }
-
-  interface Listener {
-    fun listen()
   }
 
   companion object {

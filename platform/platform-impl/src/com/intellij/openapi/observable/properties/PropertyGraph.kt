@@ -3,6 +3,7 @@ package com.intellij.openapi.observable.properties
 
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace.Companion.task
+import com.intellij.openapi.observable.operations.afterOperation
 import com.intellij.openapi.util.RecursionManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly

@@ -2,6 +2,7 @@
 package com.intellij.observable
 
 import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
+import com.intellij.openapi.observable.operations.ParallelOperationTrace
 import junit.framework.TestCase
 
 abstract class CompoundParallelOperationTraceTestCase : TestCase() {
@@ -31,7 +32,9 @@ abstract class CompoundParallelOperationTraceTestCase : TestCase() {
       mustBeComplete = true
     }
 
-    inner class MockCompoundParallelOperationTrace<Id>(private val delegate: CompoundParallelOperationTrace<Id>) {
+    inner class MockCompoundParallelOperationTrace<Id>(
+      private val delegate: CompoundParallelOperationTrace<Id>
+    ): ParallelOperationTrace by delegate {
       fun startTask(taskId: Id) {
         assertEquals(mustBeComplete, delegate.isOperationCompleted())
         delegate.startTask(taskId)

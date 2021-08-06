@@ -9,6 +9,8 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
+import com.intellij.openapi.observable.operations.afterOperation
+import com.intellij.openapi.observable.operations.beforeOperation
 import com.intellij.psi.ExternalChangeAction
 import com.intellij.util.EventDispatcher
 
