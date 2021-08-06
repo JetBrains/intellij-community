@@ -123,7 +123,7 @@ internal fun syncWithImports(module: Module) {
     matchResult.baseFilesOutput.forEach { (file, content) ->
       documentManager.getDocument(file)!!.setText(content.joinToString("\n"))
     }
-  }, emptyArray())
+  })
   psiManager.findFile(requirementsFile!!)?.navigate(true)
   if (matchResult.unhandledLines.isNotEmpty()) {
     val text = PyBundle.message("python.requirements.warning.unhandled.lines", matchResult.unhandledLines.joinToString(", "))
