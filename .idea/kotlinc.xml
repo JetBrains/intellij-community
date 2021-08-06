@@ -4,8 +4,8 @@
     <option name="jvmTarget" value="1.8" />
   </component>
   <component name="KotlinCommonCompilerArguments">
-    <option name="apiVersion" value="1.4" />
-    <option name="languageVersion" value="1.4" />
+    <option name="apiVersion" value="1.5" />
+    <option name="languageVersion" value="1.5" />
   </component>
   <component name="KotlinCompilerSettings">
     <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xopt-in=kotlin.io.path.ExperimentalPathApi -Xopt-in=kotlin.RequiresOptIn -Xopt-in=com.intellij.openapi.util.IntellijInternalApi" />
