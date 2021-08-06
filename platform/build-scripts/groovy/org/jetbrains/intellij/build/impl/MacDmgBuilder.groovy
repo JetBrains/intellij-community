@@ -264,7 +264,7 @@ final class MacDmgBuilder {
     uploadRegular(sftp, dmgImageCopy)
     Path scripts = buildContext.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
     uploadExecutable(sftp, scripts.resolve("makedmg.sh"))
-    uploadExecutable(sftp, scripts.resolve("makedmg.pl"))
+    uploadExecutable(sftp, scripts.resolve("makedmg.py"))
 
     sshExec(ssh, "$remoteDir/makedmg.sh ${targetFileName} ${buildContext.fullBuildNumber}", "makedmg-${targetFileName}.log")
 
