@@ -242,7 +242,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 val aClass = Class.forName(className)
                 assert(IntentionAction::class.java.isAssignableFrom(aClass)) { "$className should be inheritor of IntentionAction" }
 
-                val validActions = setOf(InTextDirectivesUtils.findLinesWithPrefixesRemoved(text, "// $ACTION_DIRECTIVE:"))
+                val validActions = InTextDirectivesUtils.findLinesWithPrefixesRemoved(text, "// $ACTION_DIRECTIVE:").toSet()
 
                 actions.removeAll { action -> !aClass.isAssignableFrom(action.javaClass) || validActions.contains(action.text) }
 
