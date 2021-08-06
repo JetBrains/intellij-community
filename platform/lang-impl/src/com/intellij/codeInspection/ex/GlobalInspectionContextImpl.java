@@ -488,7 +488,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
             getProject(),
             () -> {
               tool.checkFile(file, inspectionManager, holder, this, problemDescriptionProcessor);
-              return -1;
+              return holder.getResultCount();
             });
           InspectionToolResultExporter toolPresentation = getPresentation(toolWrapper);
           BatchModeDescriptorsUtil.addProblemDescriptors(holder.getResults(), false, this, null, CONVERT, toolPresentation);
@@ -634,7 +634,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
               getProject(),
               () -> {
                 tool.runInspection(scopeForState, inspectionManager, this, toolPresentation);
-                return -1;
+                return toolPresentation.getProblemDescriptors().size();
               });
 
             //skip phase when we are sure that scope already contains everything, unused declaration though needs to proceed with its suspicious code
