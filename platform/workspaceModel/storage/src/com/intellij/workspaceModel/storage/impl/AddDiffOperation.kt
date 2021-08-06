@@ -5,9 +5,6 @@ import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.NotThisEntityId
-import com.intellij.workspaceModel.storage.ThisEntityId
-import com.intellij.workspaceModel.storage.asThis
 import java.io.File
 
 internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, val diff: WorkspaceEntityStorageBuilderImpl) {
@@ -65,7 +62,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
           //   So we should check if entity at this id was added in this transaction. If replaceMap has a value with this entity id
           //   this means that this entity was added in this transaction and there was a gup before and we should not remove anything.
           if (!replaceMap.containsValue(sourceEntityId)) {
-            target.indexes.removeFromIndices(sourceEntityId.id)
+            target.indexes.entityRemoved(sourceEntityId.id)
             if (target.entityDataById(sourceEntityId.id) != null) {
               target.removeEntity(sourceEntityId.id)
             }
@@ -194,7 +191,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     target.entitiesByType.replaceById(newTargetEntityData, sourceEntityId.id.clazz)
 
     // Restore soft references
-    target.updatePersistentIdIndexes(newTargetEntityData.createEntity(target), oldPersistentId, newTargetEntityData)
+    target.indexes.updatePersistentIdIndexes(target, newTargetEntityData.createEntity(target), oldPersistentId, newTargetEntityData)
 
 
     val addedChildrenMap = HashMultimap.create<ConnectionId, ChildEntityId>()

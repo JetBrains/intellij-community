@@ -20,7 +20,6 @@ import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMa
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
-import it.unimi.dsi.fastutil.ints.IntSet
 import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
@@ -115,7 +114,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       pEntityData.persistentId(this)?.let { persistentId ->
         val ids = indexes.persistentIdIndex.getIdsByEntry(persistentId)
         if (ids != null) {
-          // Oh oh. This persistent id exists already
+          // Oh, oh. This persistent id exists already
           // Fallback strategy: remove existing entity with all it's references
           val existingEntityData = entityDataByIdOrDie(ids)
           val existingEntity = existingEntityData.createEntity(this)
@@ -184,7 +183,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         if (newPersistentId != null) {
           val ids = indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
           if (beforePersistentId != newPersistentId && ids != null) {
-            // Oh oh. This persistent id exists already.
+            // Oh, oh. This persistent id exists already.
             // Remove an existing entity and replace it with the new one.
 
             val existingEntityData = entityDataByIdOrDie(ids)
@@ -209,41 +208,12 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
       val updatedEntity = copiedData.createEntity(this)
 
-      updatePersistentIdIndexes(updatedEntity, beforePersistentId, copiedData, modifiableEntity)
+      this.indexes.updatePersistentIdIndexes(this, updatedEntity, beforePersistentId, copiedData, modifiableEntity)
 
       return updatedEntity
     }
     finally {
       unlockWrite()
-    }
-  }
-
-  internal fun <T : WorkspaceEntity> updatePersistentIdIndexes(updatedEntity: WorkspaceEntity,
-                                                               beforePersistentId: PersistentEntityId<*>?,
-                                                               copiedData: WorkspaceEntityData<T>,
-                                                               modifiableEntity: ModifiableWorkspaceEntityBase<*>? = null) {
-    val entityId = (updatedEntity as WorkspaceEntityBase).id
-    if (updatedEntity is WorkspaceEntityWithPersistentId) {
-      val newPersistentId = updatedEntity.persistentId()
-      if (beforePersistentId != null && beforePersistentId != newPersistentId) {
-        indexes.persistentIdIndex.index(entityId, newPersistentId)
-        updateComposedIds(beforePersistentId, newPersistentId)
-      }
-    }
-    indexes.simpleUpdateSoftReferences(copiedData, modifiableEntity)
-  }
-
-  private fun updateComposedIds(beforePersistentId: PersistentEntityId<*>, newPersistentId: PersistentEntityId<*>) {
-    val idsWithSoftRef = HashSet(indexes.softLinks.getIdsByEntry(beforePersistentId))
-    for (entityId in idsWithSoftRef) {
-      val entity = this.entitiesByType.getEntityDataForModification(entityId)
-      val editingBeforePersistentId = entity.persistentId(this)
-      (entity as SoftLinkable).updateLink(beforePersistentId, newPersistentId)
-
-      // Add an entry to changelog
-      this.changeLog.addReplaceEvent(entityId, entity, emptyList(), emptySet(), emptyMap())
-      // TODO :: Avoid updating of all soft links for the dependent entity
-      updatePersistentIdIndexes(entity.createEntity(this), editingBeforePersistentId, entity)
     }
   }
 
@@ -301,18 +271,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
   }
 
-  internal fun addDiffAndReport(message: String,
-                                left: WorkspaceEntityStorage?,
-                                right: WorkspaceEntityStorage) {
-    reportConsistencyIssue(message, AddDiffException(message), null, left, right, this)
-  }
-
-  sealed class EntityDataChange<T : WorkspaceEntityData<out WorkspaceEntity>> {
-    data class Added<T : WorkspaceEntityData<out WorkspaceEntity>>(val entity: T) : EntityDataChange<T>()
-    data class Removed<T : WorkspaceEntityData<out WorkspaceEntity>>(val entity: T) : EntityDataChange<T>()
-    data class Replaced<T : WorkspaceEntityData<out WorkspaceEntity>>(val oldEntity: T, val newEntity: T) : EntityDataChange<T>()
-  }
-
   override fun collectChanges(original: WorkspaceEntityStorage): Map<Class<*>, List<EntityChange<*>>> {
     try {
       lockWrite()
@@ -331,6 +289,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
             res.getOrPut(entityId.clazz.findEntityClass<WorkspaceEntity>()) { ArrayList() }.add(EntityChange.Removed(removedEntity))
           }
           is ChangeEntry.ReplaceEntity<*> -> {
+            @Suppress("DuplicatedCode")
             val oldData = originalImpl.entityDataById(entityId) ?: continue
             val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
             val replaceToData = change.newData.createEntity(this) as WorkspaceEntityBase
@@ -382,23 +341,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
   }
 
-  private fun applyDiffProtection(diff: AbstractEntityStorage, method: String) {
-    LOG.trace { "Applying $method. Builder: $diff" }
-    if (diff.storageIsAlreadyApplied) {
-      LOG.error("Builder is already applied.\n Info: \n${diff.applyInfo}")
-    }
-    else {
-      diff.storageIsAlreadyApplied = true
-      var info = "Applying builder using $method. Previous stack trace >>>>\n"
-      if (LOG.isTraceEnabled) {
-        val currentStackTrace = ExceptionUtil.currentStackTrace()
-        info += "\n$currentStackTrace"
-      }
-      info += "<<<<"
-      diff.applyInfo = info
-    }
-  }
-
   @Suppress("UNCHECKED_CAST")
   override fun <T> getMutableExternalMapping(identifier: String): MutableExternalEntityMapping<T> {
     try {
@@ -425,8 +367,27 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
   }
 
-  fun removeExternalMapping(identifier: String) {
-    indexes.externalMappings[identifier]?.clearMapping()
+  internal fun addDiffAndReport(message: String,
+                                left: WorkspaceEntityStorage?,
+                                right: WorkspaceEntityStorage) {
+    reportConsistencyIssue(message, AddDiffException(message), null, left, right, this)
+  }
+
+  private fun applyDiffProtection(diff: AbstractEntityStorage, method: String) {
+    LOG.trace { "Applying $method. Builder: $diff" }
+    if (diff.storageIsAlreadyApplied) {
+      LOG.error("Builder is already applied.\n Info: \n${diff.applyInfo}")
+    }
+    else {
+      diff.storageIsAlreadyApplied = true
+      var info = "Applying builder using $method. Previous stack trace >>>>\n"
+      if (LOG.isTraceEnabled) {
+        val currentStackTrace = ExceptionUtil.currentStackTrace()
+        info += "\n$currentStackTrace"
+      }
+      info += "<<<<"
+      diff.applyInfo = info
+    }
   }
 
   // modificationCount is not incremented
@@ -443,7 +404,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     // Update index
     //   Please don't join it with the previous loop
-    for (id in accumulator) indexes.removeFromIndices(id)
+    for (id in accumulator) indexes.entityRemoved(id)
 
     accumulator.forEach {
       LOG.debug { "Cascade removing: ${ClassToIntConverter.getClassOrDie(it.clazz)}-${it.arrayId}" }
@@ -642,128 +603,6 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
 
   override fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E> = EntityReferenceImpl((e as WorkspaceEntityBase).id)
 
-  internal fun assertConsistency() {
-    entitiesByType.assertConsistency(this)
-    // Rules:
-    //  1) Refs should not have links without a corresponding entity
-    //    1.1) For abstract containers: EntityId has the class of ConnectionId
-    //  2) There is no child without a parent under the hard reference
-
-    refs.oneToManyContainer.forEach { (connectionId, map) ->
-
-      // Assert correctness of connection id
-      assert(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY)
-
-      //  1) Refs should not have links without a corresponding entity
-      map.forEachKey { childId, parentId ->
-        assertResolvable(connectionId.parentClass, parentId)
-        assertResolvable(connectionId.childClass, childId)
-      }
-
-      //  2) All children should have a parent if the connection has a restriction for that
-      if (!connectionId.isParentNullable) {
-        checkStrongConnection(map.keys, connectionId.childClass, connectionId.parentClass, connectionId)
-      }
-    }
-
-    refs.oneToOneContainer.forEach { (connectionId, map) ->
-
-      // Assert correctness of connection id
-      assert(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ONE)
-
-      //  1) Refs should not have links without a corresponding entity
-      map.forEachKey { childId, parentId ->
-        assertResolvable(connectionId.parentClass, parentId)
-        assertResolvable(connectionId.childClass, childId)
-      }
-
-      //  2) Connections satisfy connectionId requirements
-      if (!connectionId.isParentNullable) checkStrongConnection(map.keys, connectionId.childClass, connectionId.parentClass, connectionId)
-    }
-
-    refs.oneToAbstractManyContainer.forEach { (connectionId, map) ->
-
-      // Assert correctness of connection id
-      assert(connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY)
-
-      map.forEach { (childId, parentId) ->
-        //  1) Refs should not have links without a corresponding entity
-        assertResolvable(parentId.id.clazz, parentId.id.arrayId)
-        assertResolvable(childId.id.clazz, childId.id.arrayId)
-
-        //  1.1) For abstract containers: EntityId has the class of ConnectionId
-        assertCorrectEntityClass(connectionId.parentClass, parentId.id)
-        assertCorrectEntityClass(connectionId.childClass, childId.id)
-      }
-
-      //  2) Connections satisfy connectionId requirements
-      if (!connectionId.isParentNullable) {
-        checkStrongAbstractConnection(map.keys.map { it.id }.toMutableSet(), map.keys.map { it.id.clazz }.toSet(), connectionId.debugStr())
-      }
-    }
-
-    refs.abstractOneToOneContainer.forEach { (connectionId, map) ->
-
-      // Assert correctness of connection id
-      assert(connectionId.connectionType == ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE)
-
-      map.forEach { (childId, parentId) ->
-        //  1) Refs should not have links without a corresponding entity
-        assertResolvable(parentId.id.clazz, parentId.id.arrayId)
-        assertResolvable(childId.id.clazz, childId.id.arrayId)
-
-        //  1.1) For abstract containers: EntityId has the class of ConnectionId
-        assertCorrectEntityClass(connectionId.parentClass, parentId.id)
-        assertCorrectEntityClass(connectionId.childClass, childId.id)
-      }
-
-      //  2) Connections satisfy connectionId requirements
-      if (!connectionId.isParentNullable) {
-        checkStrongAbstractConnection(map.keys.mapTo(HashSet()) { it.id }, map.keys.toMutableSet().map { it.id.clazz }.toSet(),
-                                      connectionId.debugStr())
-      }
-    }
-
-    indexes.assertConsistency(this)
-  }
-
-  private fun checkStrongConnection(connectionKeys: IntSet, entityFamilyClass: Int, connectionTo: Int, connectionId: ConnectionId) {
-    var counter = 0
-    val entityFamily = entitiesByType[entityFamilyClass] ?: ImmutableEntityFamily()
-    entityFamily.entities.forEachIndexed { i, entity ->
-      if (entity == null) return@forEachIndexed
-      assert(i in connectionKeys) {
-        """
-          |Storage inconsistency. Hard reference broken.
-          |Existing entity $entity
-          |Misses a reference to ${connectionTo.findWorkspaceEntity()}
-          |Reference id: $i
-          |ConnectionId: $connectionId
-          """.trimMargin()
-      }
-      counter++
-    }
-
-    assert(counter == connectionKeys.size) { "Store is inconsistent" }
-  }
-
-  private fun checkStrongAbstractConnection(connectionKeys: Set<EntityId>, entityFamilyClasses: Set<Int>, debugInfo: String) {
-    val keys = connectionKeys.toMutableSet()
-    entityFamilyClasses.forEach { entityFamilyClass ->
-      checkAllStrongConnections(entityFamilyClass, keys, debugInfo)
-    }
-    assert(keys.isEmpty()) { "Store is inconsistent. $debugInfo" }
-  }
-
-  private fun checkAllStrongConnections(entityFamilyClass: Int, keys: MutableSet<EntityId>, debugInfo: String) {
-    val entityFamily = entitiesByType.entityFamilies[entityFamilyClass] ?: error("Entity family doesn't exist. $debugInfo")
-    entityFamily.entities.forEach { entity ->
-      if (entity == null) return@forEach
-      val removed = keys.remove(entity.createEntityId())
-      assert(removed) { "Entity $entity doesn't have a correct connection. $debugInfo" }
-    }
-  }
-
   internal fun assertConsistencyInStrictMode(message: String,
                                              sourceFilter: ((EntitySource) -> Boolean)?,
                                              left: WorkspaceEntityStorage?,
@@ -786,12 +625,12 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     }
   }
 
-  fun reportConsistencyIssue(message: String,
-                             e: Throwable,
-                             sourceFilter: ((EntitySource) -> Boolean)?,
-                             left: WorkspaceEntityStorage?,
-                             right: WorkspaceEntityStorage?,
-                             resulting: WorkspaceEntityStorage) {
+  internal fun reportConsistencyIssue(message: String,
+                                      e: Throwable,
+                                      sourceFilter: ((EntitySource) -> Boolean)?,
+                                      left: WorkspaceEntityStorage?,
+                                      right: WorkspaceEntityStorage?,
+                                      resulting: WorkspaceEntityStorage) {
     val entitySourceFilter = if (sourceFilter != null) {
       val allEntitySources = (left as? AbstractEntityStorage)?.indexes?.entitySourceIndex?.entries()?.toHashSet() ?: hashSetOf()
       allEntitySources.addAll((right as? AbstractEntityStorage)?.indexes?.entitySourceIndex?.entries() ?: emptySet())
@@ -799,12 +638,12 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     }
     else null
 
-    var _message = "$message\n\nEntity source filter: $entitySourceFilter"
-    _message += "\n\nVersion: ${EntityStorageSerializerImpl.SERIALIZER_VERSION}"
+    var finalMessage = "$message\n\nEntity source filter: $entitySourceFilter"
+    finalMessage += "\n\nVersion: ${EntityStorageSerializerImpl.SERIALIZER_VERSION}"
 
     val zipFile = if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED) {
       val dumpDirectory = getStoreDumpDirectory()
-      _message += "\nSaving store content at: $dumpDirectory"
+      finalMessage += "\nSaving store content at: $dumpDirectory"
       serializeContentToFolder(dumpDirectory, left, right, resulting)
     }
     else null
@@ -812,10 +651,10 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     if (zipFile != null) {
       val attachment = Attachment("workspaceModelDump.zip", zipFile.readBytes(), "Zip of workspace model store")
       attachment.isIncluded = true
-      LOG.error(_message, e, attachment)
+      LOG.error(finalMessage, e, attachment)
     }
     else {
-      LOG.error(_message, e)
+      LOG.error(finalMessage, e)
     }
   }
 
@@ -842,18 +681,6 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
       zipFile
     }
     else null
-  }
-
-  private fun assertResolvable(clazz: Int, id: Int) {
-    assert(entitiesByType[clazz]?.get(id) != null) {
-      "Reference to ${clazz.findEntityClass<WorkspaceEntity>()}-:-$id cannot be resolved"
-    }
-  }
-
-  private fun assertCorrectEntityClass(connectionClass: Int, entityId: EntityId) {
-    assert(connectionClass.findEntityClass<WorkspaceEntity>().isAssignableFrom(entityId.clazz.findEntityClass<WorkspaceEntity>())) {
-      "Entity storage with connection class ${connectionClass.findEntityClass<WorkspaceEntity>()} contains entity data of wrong type $entityId"
-    }
   }
 
   companion object {

@@ -7,6 +7,7 @@ import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.ChangeEntry
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.junit.Assert.*

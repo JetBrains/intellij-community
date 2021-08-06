@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.storage
 
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageImpl
+import com.intellij.workspaceModel.storage.impl.assertConsistency
 
 fun WorkspaceEntityStorage.checkConsistency() {
   if (this is WorkspaceEntityStorageImpl) {

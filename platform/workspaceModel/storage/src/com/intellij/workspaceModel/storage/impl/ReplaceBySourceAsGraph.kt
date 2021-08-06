@@ -197,7 +197,7 @@ internal object ReplaceBySourceAsGraph {
     for ((localEntity, entityId) in localMatchedEntities.values()) {
       val entityClass = ClassConversion.entityDataToEntity(localEntity.javaClass).toClassId()
       thisBuilder.entitiesByType.remove(localEntity.id, entityClass)
-      thisBuilder.indexes.removeFromIndices(entityId.id)
+      thisBuilder.indexes.entityRemoved(entityId.id)
       if (localEntity is SoftLinkable) thisBuilder.indexes.removeFromSoftLinksIndex(localEntity)
       thisBuilder.changeLog.addRemoveEvent(entityId.id)
     }
@@ -389,7 +389,7 @@ internal object ReplaceBySourceAsGraph {
     val clonedEntityId = matchedEntityId.id.copy(arrayId = clonedEntity.id)
     thisBuilder.entitiesByType.replaceById(clonedEntity, clonedEntityId.clazz)
 
-    thisBuilder.updatePersistentIdIndexes(clonedEntity.createEntity(thisBuilder), persistentIdBefore, clonedEntity)
+    thisBuilder.indexes.updatePersistentIdIndexes(thisBuilder, clonedEntity.createEntity(thisBuilder), persistentIdBefore, clonedEntity)
     thisBuilder.indexes.virtualFileIndex.updateIndex(matchedEntityId.id, clonedEntityId, replaceWith.indexes.virtualFileIndex)
     replaceWith.indexes.entitySourceIndex.getEntryById(matchedEntityId.id)
       ?.also { thisBuilder.indexes.entitySourceIndex.index(clonedEntityId, it) }

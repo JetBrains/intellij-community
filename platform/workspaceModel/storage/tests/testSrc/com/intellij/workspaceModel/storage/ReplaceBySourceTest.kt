@@ -5,6 +5,7 @@ import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.assertConsistency
 import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
 import org.hamcrest.CoreMatchers.isA
 import org.junit.Assert.assertEquals

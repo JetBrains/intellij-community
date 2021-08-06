@@ -7,6 +7,7 @@ import com.intellij.workspaceModel.storage.entities.SourceEntity
 import com.intellij.workspaceModel.storage.entities.addSourceEntity
 import com.intellij.workspaceModel.storage.impl.ClassToIntConverter
 import com.intellij.workspaceModel.storage.impl.EntityId
+import com.intellij.workspaceModel.storage.impl.assertConsistency
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
