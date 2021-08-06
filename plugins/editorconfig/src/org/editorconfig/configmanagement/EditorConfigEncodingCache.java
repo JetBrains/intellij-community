@@ -108,6 +108,16 @@ public class EditorConfigEncodingCache implements PersistentStateComponent<Eleme
     return null;
   }
 
+  public void setEncoding(@NotNull VirtualFile file, String charsetStr) {
+    if (Utils.isApplicableTo(file) && !Utils.isEditorConfigFile(file)) {
+      Charset charset = ConfigEncodingManager.toCharset(charsetStr);
+      if (charset != null) {
+        CharsetData charsetData = new CharsetData(charset, ConfigEncodingManager.UTF8_BOM_ENCODING.equals(charsetStr));
+        myCharsetMap.put(getKey(file), charsetData);
+      }
+    }
+  }
+
   private void cacheEncoding(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     final String key = getKey(virtualFile);
     if (!myCharsetMap.containsKey(key)) {
