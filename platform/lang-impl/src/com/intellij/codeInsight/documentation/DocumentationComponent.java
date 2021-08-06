@@ -75,7 +75,10 @@ import java.util.List;
 
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider, WidthBasedLayout {
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
-  private static final String DOCUMENTATION_TOPIC_ID = "reference.toolWindows.Documentation";
+  static final DataProvider HELP_DATA_PROVIDER =
+    dataId -> PlatformCoreDataKeys.HELP_ID.is(dataId)
+              ? "reference.toolWindows.Documentation"
+              : null;
 
   public static final ColorKey COLOR_KEY = EditorColors.DOCUMENTATION_COLOR;
   public static final Color SECTION_COLOR = Gray.get(0x90);
@@ -144,11 +147,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       DocumentationScrollPane.keyboardActions(myScrollPane),
       this::getElement
     );
-    DataProvider helpDataProvider = dataId -> PlatformDataKeys.HELP_ID.is(dataId) ? DOCUMENTATION_TOPIC_ID : null;
-    myEditorPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
     myText = "";
     myScrollPane.setViewportView(myEditorPane);
-    myScrollPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
     myScrollPane.addMouseWheelListener(new FontSizeMouseWheelListener(myEditorPane::applyFontProps));
 
     setLayout(new BorderLayout());
@@ -321,6 +321,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     else if (myManager.myToolWindow != null) {
       Disposer.register(myManager.myToolWindow.getContentManager(), this);
     }
+    myEditorPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, HELP_DATA_PROVIDER);
+    myScrollPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, HELP_DATA_PROVIDER);
 
     updateControlState();
   }
