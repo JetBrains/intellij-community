@@ -780,6 +780,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(toolWindowId);
     if (!(toolWindow instanceof ToolWindowEx)) return false;
 
+    toolWindow.getContentManager(); // ensure decorator is initialized
     InternalDecorator decorator = ((ToolWindowEx)toolWindow).getDecorator();
     Boolean isShared = UIUtil.getClientProperty(decorator, InternalDecoratorImpl.SHARED_ACCESS_KEY);
     return isShared == Boolean.TRUE;
