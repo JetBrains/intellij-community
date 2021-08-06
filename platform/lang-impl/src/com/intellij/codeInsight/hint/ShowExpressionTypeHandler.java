@@ -9,6 +9,7 @@ import com.intellij.lang.ExpressionTypeProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExpressionTypes;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -22,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -56,11 +58,17 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
       @Override
       public void pass(@NotNull PsiElement expression) {
         ExpressionTypeProvider provider = Objects.requireNonNull(map.get(expression));
-        //noinspection unchecked
-        final String informationHint = provider.getInformationHint(expression);
         TextRange range = expression.getTextRange();
         editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-        displayHint(new DisplayedTypeInfo(expression, provider, editor), informationHint);
+        ReadAction.nonBlocking(() -> {
+            //noinspection unchecked
+            return provider.getInformationHint(expression);
+          })
+          .submit(AppExecutorUtil.getAppExecutorService())
+          .onSuccess(hint -> {
+            // noinspection HardCodedStringLiteral
+            displayHint(new DisplayedTypeInfo(expression, provider, editor), hint);
+          });
       }
     };
     if (map.isEmpty()) {
